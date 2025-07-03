@@ -57,12 +57,6 @@ public class HomeController {
         return "redirect:" + redirectUrl;
     }
 
-    @GetMapping("/logout")
-    public String logout() {
-        log.info("Logout accessed");
-        return "redirect:/?message=logout_success";
-    }
-
     // Helper methods
     private boolean isAuthenticated(Authentication authentication) {
         return authentication != null &&
@@ -108,7 +102,7 @@ public class HomeController {
             case "session_expired":
                 return "Phiên đăng nhập đã hết hạn";
             case "login_failed":
-                return "Đăng nhập thất bại";
+                return "Tên đăng nhập hoặc mật khẩu không chính xác";
             default:
                 return "Đã xảy ra lỗi, vui lòng thử lại";
         }

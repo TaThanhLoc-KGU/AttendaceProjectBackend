@@ -27,12 +27,6 @@
 
         <!-- Body -->
         <div class="login-body">
-            <!-- Alert Messages -->
-            <div id="alertMessage" class="alert d-none" role="alert">
-                <i class="fas fa-info-circle"></i>
-                <span id="alertText"></span>
-            </div>
-
             <!-- Server Messages -->
             <div th:if="${error}" class="alert alert-danger">
                 <i class="fas fa-exclamation-triangle"></i>
@@ -44,8 +38,8 @@
                 <span th:text="${message}"></span>
             </div>
 
-            <!-- Login Form -->
-            <form id="loginForm" novalidate>
+            <!-- Login Form - CHANGED: Form action and method -->
+            <form th:action="@{/login}" method="post" id="loginForm">
                 <!-- Username -->
                 <div class="form-group">
                     <label for="username">Tên đăng nhập</label>
@@ -55,7 +49,6 @@
                                id="username"
                                name="username"
                                placeholder="Nhập tên đăng nhập"
-                               th:value="${username}"
                                required
                                autocomplete="username">
                         <i class="input-icon fas fa-user"></i>
@@ -94,13 +87,10 @@
 
                 <!-- Submit Button -->
                 <button type="submit" class="btn-login" id="loginBtn">
-                        <span class="loading-spinner">
-                            <i class="fas fa-spinner fa-spin"></i>
-                        </span>
                     <span class="btn-text">
-                            <i class="fas fa-sign-in-alt"></i>
-                            Đăng nhập
-                        </span>
+                        <i class="fas fa-sign-in-alt"></i>
+                        Đăng nhập
+                    </span>
                 </button>
 
                 <!-- Forgot Password -->
@@ -162,13 +152,10 @@
                     Hủy
                 </button>
                 <button type="submit" form="forgotPasswordForm" class="btn btn-primary" id="resetPasswordBtn">
-                        <span class="loading-spinner">
-                            <i class="fas fa-spinner fa-spin"></i>
-                        </span>
                     <span class="btn-text">
-                            <i class="fas fa-paper-plane me-2"></i>
-                            Gửi yêu cầu
-                        </span>
+                        <i class="fas fa-paper-plane me-2"></i>
+                        Gửi yêu cầu
+                    </span>
                 </button>
             </div>
         </div>
@@ -177,22 +164,114 @@
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script th:src="@{/js/auth.js}"></script>
 
-<!-- Initialize -->
-<script th:inline="javascript">
-    // Pass server data to JavaScript
-    window.serverData = {
-        error: /*[[${error}]]*/ null,
-        message: /*[[${message}]]*/ null,
-        username: /*[[${username}]]*/ null
-    };
-
-    // Initialize when DOM is loaded
+<!-- Basic Form Enhancement Script -->
+<script>
     document.addEventListener('DOMContentLoaded', function() {
-        AuthManager.init();
+        // Password toggle functionality
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        if (togglePassword && passwordInput) {
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.type === 'password' ? 'text' : 'password';
+                passwordInput.type = type;
+                const icon = this.querySelector('i');
+                icon.classList.toggle('fa-eye', type === 'password');
+                icon.classList.toggle('fa-eye-slash', type === 'text');
+            });
+        }
+
+        // Form validation
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', function(e) {
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value;
+
+                if (!username || !password) {
+                    e.preventDefault();
+                    if (!username) {
+                        showFieldError(document.getElementById('username'), 'Vui lòng nhập tên đăng nhập');
+                    }
+                    if (!password) {
+                        showFieldError(document.getElementById('password'), 'Vui lòng nhập mật khẩu');
+                    }
+                }
+            });
+        }
+
+        // Forgot password form
+        const forgotForm = document.getElementById('forgotPasswordForm');
+        if (forgotForm) {
+            forgotForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const username = document.getElementById('resetUsername').value.trim();
+
+                if (!username) {
+                    showFieldError(document.getElementById('resetUsername'), 'Vui lòng nhập tên đăng nhập');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/auth/forgot-password?username=${encodeURIComponent(username)}`, {
+                        method: 'POST'
+                    });
+
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('forgotPasswordModal'));
+                    modal.hide();
+
+                    if (response.ok) {
+                        showAlert('Yêu cầu đặt lại mật khẩu đã được gửi. Kiểm tra email của bạn.', 'success');
+                    } else {
+                        showAlert('Lỗi khi gửi yêu cầu đặt lại mật khẩu.', 'danger');
+                    }
+                } catch (error) {
+                    showAlert('Không thể kết nối đến server.', 'danger');
+                }
+            });
+        }
+
+        // Input validation
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', function() {
+                clearFieldError(this);
+            });
+        });
     });
 
+    function showFieldError(input, message) {
+        input.classList.add('is-invalid');
+        const feedback = input.parentElement.nextElementSibling;
+        if (feedback && feedback.classList.contains('invalid-feedback')) {
+            feedback.textContent = message;
+        }
+    }
+
+    function clearFieldError(input) {
+        input.classList.remove('is-invalid');
+        const feedback = input.parentElement.nextElementSibling;
+        if (feedback && feedback.classList.contains('invalid-feedback')) {
+            feedback.textContent = '';
+        }
+    }
+
+    function showAlert(message, type = 'info') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+        const container = document.querySelector('.login-body');
+        container.insertBefore(alertDiv, container.firstChild);
+
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
 </script>
 </body>
 </html>

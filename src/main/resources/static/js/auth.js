@@ -32,7 +32,6 @@ let AuthManager = {
             return;
         }
 
-        this.addAuthInterceptor(); // Thêm interceptor
         this.bindEvents();
         this.setupPasswordToggle();
         this.handleServerMessages();
@@ -209,6 +208,7 @@ let AuthManager = {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({
                 username: credentials.username,
                 password: credentials.password
@@ -219,7 +219,7 @@ let AuthManager = {
         try {
             data = await response.json();
         } catch (e) {
-            data = { message: 'Invalid response from server' };
+            data = { message: 'Phản hồi server không hợp lệ' };
         }
 
         return { response, data };
@@ -227,24 +227,24 @@ let AuthManager = {
 
     // Xử lý phản hồi đăng nhập
     async handleLoginResponse({ response, data }, credentials) {
-        if (response.ok && data.accessToken && data.user) {
-            console.log('✅ Login successful for user:', data.user.username);
-
-            // Reset login attempts
+        if (response.ok) {
+            console.log('✅ Đăng nhập thành công cho user:', data.username);
             this.state.loginAttempts = 0;
             localStorage.removeItem('loginAttempts');
             localStorage.removeItem('lockoutTime');
 
-            // Lưu dữ liệu xác thực
-            this.saveAuthData(data, credentials.rememberMe);
+            if (credentials.rememberMe) {
+                localStorage.setItem('rememberMe', 'true');
+                localStorage.setItem('savedUsername', data.username);
+            } else {
+                localStorage.removeItem('rememberMe');
+                localStorage.removeItem('savedUsername');
+            }
 
-            // Hiển thị thông báo thành công
             this.showAlert('Đăng nhập thành công! Đang chuyển hướng...', 'success');
-
-            // Chuyển hướng sau delay
-            setTimeout(() => this.redirectByRole(data.user.vaiTro), this.config.redirectDelay);
+            setTimeout(() => this.redirectByRole(data.vaiTro), this.config.redirectDelay);
         } else {
-            console.log('❌ Login failed:', data.message);
+            console.log('❌ Đăng nhập thất bại:', data.message);
             this.state.loginAttempts++;
             localStorage.setItem('loginAttempts', this.state.loginAttempts);
 
@@ -603,20 +603,6 @@ let AuthManager = {
         };
         return messages[messageCode] || messageCode;
     },
-    // Trong AuthManager, thêm hàm để gửi token trong mọi yêu cầu
-    addAuthInterceptor() {
-        const originalFetch = window.fetch;
-        window.fetch = async (url, options = {}) => {
-            const token = localStorage.getItem('accessToken');
-            if (token) {
-                options.headers = {
-                    ...options.headers,
-                    'Authorization': `Bearer ${token}`
-                };
-            }
-            return originalFetch(url, options);
-        };
-    }
 };
 
 

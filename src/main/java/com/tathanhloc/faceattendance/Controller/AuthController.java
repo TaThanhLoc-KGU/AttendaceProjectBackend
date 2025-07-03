@@ -1,17 +1,9 @@
 package com.tathanhloc.faceattendance.Controller;
 
-import com.tathanhloc.faceattendance.DTO.JwtAuthResponse;
-import com.tathanhloc.faceattendance.DTO.TaiKhoanDTO;
-import com.tathanhloc.faceattendance.DTO.TokenRefreshRequest;
-import com.tathanhloc.faceattendance.DTO.TokenRefreshResponse;
 import com.tathanhloc.faceattendance.DTO.UserProfileDTO;
-import com.tathanhloc.faceattendance.Exception.TokenRefreshException;
 import com.tathanhloc.faceattendance.Model.LoginRequest;
-import com.tathanhloc.faceattendance.Model.RefreshToken;
 import com.tathanhloc.faceattendance.Model.TaiKhoan;
 import com.tathanhloc.faceattendance.Security.CustomUserDetails;
-import com.tathanhloc.faceattendance.Security.JwtTokenProvider;
-import com.tathanhloc.faceattendance.Service.RefreshTokenService;
 import com.tathanhloc.faceattendance.Service.TaiKhoanService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,8 +26,6 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final TaiKhoanService taiKhoanService;
     private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider tokenProvider;
-    private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
@@ -43,7 +33,6 @@ public class AuthController {
         log.info("Username: {}", request.getUsername());
 
         try {
-            // Authenticate user
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getUsername(),
@@ -52,30 +41,14 @@ public class AuthController {
             );
 
             log.info("Authentication successful for user: {}", request.getUsername());
-
-            // Set authentication in security context
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            // Get user details
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             TaiKhoan user = userDetails.getTaiKhoan();
 
-            // Generate JWT token
-            String jwt = tokenProvider.generateToken(authentication);
-            log.info("JWT token generated for user: {}", user.getUsername());
-
-            // Create refresh token
-            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
-            log.info("Refresh token created for user: {}", user.getUsername());
-
-            // Convert to DTO
-            TaiKhoanDTO userDTO = taiKhoanService.convertToDTO(user);
-
-            // Create response
-            JwtAuthResponse response = new JwtAuthResponse(jwt, refreshToken.getToken(), userDTO);
-
+            UserProfileDTO profile = buildUserProfileDTO(user);
             log.info("Login successful for user: {} with role: {}", user.getUsername(), user.getVaiTro());
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(profile);
 
         } catch (BadCredentialsException e) {
             log.error("Bad credentials for user: {}", request.getUsername());
@@ -99,37 +72,14 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/refresh-token")
-    public ResponseEntity<?> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
-        String requestRefreshToken = request.getRefreshToken();
-        log.info("Refresh token request received");
-
-        try {
-            return refreshTokenService.findByToken(requestRefreshToken)
-                    .map(refreshTokenService::verifyExpiration)
-                    .map(RefreshToken::getTaiKhoan)
-                    .map(user -> {
-                        String token = tokenProvider.generateTokenFromUsername(user.getUsername());
-                        log.info("New token generated for user: {}", user.getUsername());
-                        return ResponseEntity.ok(new TokenRefreshResponse(token, requestRefreshToken, "Bearer"));
-                    })
-                    .orElseThrow(() -> new TokenRefreshException(requestRefreshToken,
-                            "Refresh token không tồn tại trong hệ thống!"));
-        } catch (Exception e) {
-            log.error("Refresh token failed: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(createErrorResponse("Refresh token không hợp lệ"));
-        }
-    }
-
     @PostMapping("/logout")
-    public ResponseEntity<?> logoutUser(@RequestParam Long userId) {
+    public ResponseEntity<?> logoutUser() {
         try {
-            refreshTokenService.deleteByUserId(userId);
-            log.info("User logged out: {}", userId);
+            SecurityContextHolder.clearContext();
+            log.info("User logged out");
             return ResponseEntity.ok(createSuccessResponse("Đăng xuất thành công!"));
         } catch (Exception e) {
-            log.error("Logout failed for user: {}", userId, e);
+            log.error("Logout failed", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Đăng xuất thất bại"));
         }
@@ -146,31 +96,7 @@ public class AuthController {
         try {
             TaiKhoan tk = userDetails.getTaiKhoan();
             log.info("Current user info requested: {}", tk.getUsername());
-
-            String hoTen = null;
-            String maSo = null;
-            String email = null;
-
-            if (tk.getSinhVien() != null) {
-                hoTen = tk.getSinhVien().getHoTen();
-                maSo = tk.getSinhVien().getMaSv();
-                email = tk.getSinhVien().getEmail();
-            } else if (tk.getGiangVien() != null) {
-                hoTen = tk.getGiangVien().getHoTen();
-                maSo = tk.getGiangVien().getMaGv();
-                email = tk.getGiangVien().getEmail();
-            }
-
-            UserProfileDTO profile = UserProfileDTO.builder()
-                    .id(tk.getId())
-                    .username(tk.getUsername())
-                    .vaiTro(tk.getVaiTro().name())
-                    .isActive(tk.getIsActive())
-                    .hoTen(hoTen)
-                    .maSo(maSo)
-                    .email(email)
-                    .build();
-
+            UserProfileDTO profile = buildUserProfileDTO(tk);
             return ResponseEntity.ok(profile);
         } catch (Exception e) {
             log.error("Error getting current user info", e);
@@ -212,27 +138,7 @@ public class AuthController {
             }
 
             TaiKhoan updated = taiKhoanService.changePassword(userDetails.getUsername(), newPassword);
-
-            String hoTen = null, maSo = null, email = null;
-            if (updated.getSinhVien() != null) {
-                hoTen = updated.getSinhVien().getHoTen();
-                maSo = updated.getSinhVien().getMaSv();
-                email = updated.getSinhVien().getEmail();
-            } else if (updated.getGiangVien() != null) {
-                hoTen = updated.getGiangVien().getHoTen();
-                maSo = updated.getGiangVien().getMaGv();
-                email = updated.getGiangVien().getEmail();
-            }
-
-            UserProfileDTO profile = UserProfileDTO.builder()
-                    .id(updated.getId())
-                    .username(updated.getUsername())
-                    .vaiTro(updated.getVaiTro().name())
-                    .isActive(updated.getIsActive())
-                    .hoTen(hoTen)
-                    .maSo(maSo)
-                    .email(email)
-                    .build();
+            UserProfileDTO profile = buildUserProfileDTO(updated);
 
             log.info("Password changed successfully for user: {}", userDetails.getUsername());
             return ResponseEntity.ok(profile);
@@ -243,32 +149,33 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/validate-token")
-    public ResponseEntity<?> validateToken(@RequestHeader("Authorization") String authHeader) {
-        try {
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(createErrorResponse("Token không hợp lệ"));
-            }
+    // Helper methods
+    private UserProfileDTO buildUserProfileDTO(TaiKhoan tk) {
+        String hoTen = null;
+        String maSo = null;
+        String email = null;
 
-            String token = authHeader.substring(7);
-            boolean isValid = tokenProvider.validateToken(token);
-
-            if (!isValid) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(createErrorResponse("Token không hợp lệ hoặc đã hết hạn"));
-            }
-
-            String username = tokenProvider.getUsernameFromToken(token);
-            return ResponseEntity.ok(createSuccessResponse("Token hợp lệ cho người dùng: " + username));
-        } catch (Exception e) {
-            log.error("Token validation failed", e);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(createErrorResponse("Lỗi xác thực token"));
+        if (tk.getSinhVien() != null) {
+            hoTen = tk.getSinhVien().getHoTen();
+            maSo = tk.getSinhVien().getMaSv();
+            email = tk.getSinhVien().getEmail();
+        } else if (tk.getGiangVien() != null) {
+            hoTen = tk.getGiangVien().getHoTen();
+            maSo = tk.getGiangVien().getMaGv();
+            email = tk.getGiangVien().getEmail();
         }
+
+        return UserProfileDTO.builder()
+                .id(tk.getId())
+                .username(tk.getUsername())
+                .vaiTro(tk.getVaiTro().name())
+                .isActive(tk.getIsActive())
+                .hoTen(hoTen)
+                .maSo(maSo)
+                .email(email)
+                .build();
     }
 
-    // Helper methods
     private Object createErrorResponse(String message) {
         return new ErrorResponse(message);
     }
