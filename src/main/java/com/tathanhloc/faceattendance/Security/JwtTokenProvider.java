@@ -16,7 +16,7 @@ public class JwtTokenProvider {
 
     private final SecretKey jwtSigningKey;
 
-    @Value("${app.jwt.expiration:86400000}")
+    @Value("${app.jwt.expiration:86400000}") // 24 hours default
     private int jwtExpirationInMs;
 
     public JwtTokenProvider(SecretKey jwtSigningKey) {
@@ -25,38 +25,36 @@ public class JwtTokenProvider {
 
     public String generateToken(Authentication authentication) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
-
-        return Jwts.builder()
-                .claim("sub", userDetails.getUsername())
-                .claim("iat", now)
-                .claim("exp", expiryDate)
-                .signWith(jwtSigningKey)
-                .compact();
+        return generateTokenFromUsername(userDetails.getUsername());
     }
 
     public String generateTokenFromUsername(String username) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 
+        log.debug("Generating JWT token for user: {} with expiry: {}", username, expiryDate);
+
         return Jwts.builder()
-                .claim("sub", username)
-                .claim("iat", now)
-                .claim("exp", expiryDate)
+                .subject(username)
+                .issuedAt(now)
+                .expiration(expiryDate)
                 .signWith(jwtSigningKey)
                 .compact();
     }
 
     public String getUsernameFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(jwtSigningKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(jwtSigningKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
 
-        return claims.getSubject();
+            return claims.getSubject();
+        } catch (Exception e) {
+            log.error("Error extracting username from token: {}", e.getMessage());
+            return null;
+        }
     }
 
     public boolean validateToken(String authToken) {
@@ -65,17 +63,21 @@ public class JwtTokenProvider {
                     .verifyWith(jwtSigningKey)
                     .build()
                     .parseSignedClaims(authToken);
+
+            log.debug("JWT token is valid");
             return true;
         } catch (MalformedJwtException ex) {
-            log.error("Token JWT không hợp lệ");
+            log.error("Invalid JWT token format");
         } catch (ExpiredJwtException ex) {
-            log.error("Token JWT đã hết hạn");
+            log.error("Expired JWT token");
         } catch (UnsupportedJwtException ex) {
-            log.error("Token JWT không được hỗ trợ");
+            log.error("Unsupported JWT token");
         } catch (IllegalArgumentException ex) {
-            log.error("Chuỗi claims JWT trống");
+            log.error("JWT claims string is empty");
         } catch (SignatureException ex) {
-            log.error("Xác thực chữ ký JWT thất bại");
+            log.error("JWT signature validation failed");
+        } catch (Exception ex) {
+            log.error("JWT token validation failed: {}", ex.getMessage());
         }
         return false;
     }

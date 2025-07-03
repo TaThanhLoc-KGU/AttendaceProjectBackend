@@ -1,18 +1,18 @@
 /**
  * ========================================
- * FACE ATTENDANCE - AUTH MANAGER
- * Quản lý đăng nhập và xác thực
+ * FACE ATTENDANCE - AUTH MANAGER (FINAL)
+ * Đã được viết lại để đảm bảo đăng nhập hoạt động mượt mà
  * ========================================
  */
 
-const AuthManager = {
+let AuthManager = {
     // Cấu hình
     config: {
         apiBaseUrl: '/api',
-        redirectDelay: 1500,
-        alertTimeout: 5000,
-        maxLoginAttempts: 3,
-        lockoutTime: 15 * 60 * 1000 // 15 phút
+        redirectDelay: 1000, // Delay chuyển hướng sau khi đăng nhập thành công (ms)
+        alertTimeout: 5000, // Thời gian hiển thị thông báo (ms)
+        maxLoginAttempts: 3, // Số lần thử đăng nhập tối đa
+        lockoutTime: 15 * 60 * 1000 // 15 phút khóa tài khoản
     },
 
     // Trạng thái
@@ -25,44 +25,60 @@ const AuthManager = {
     // Khởi tạo
     init() {
         console.log('🚀 AuthManager initializing...');
+        console.log('📍 Current URL:', window.location.href);
+
+        if (!window.localStorage || !window.fetch || !window.Promise) {
+            alert('Trình duyệt không được hỗ trợ. Vui lòng sử dụng trình duyệt hiện đại hơn.');
+            return;
+        }
+
+        this.addAuthInterceptor(); // Thêm interceptor
         this.bindEvents();
-        this.checkExistingLogin();
         this.setupPasswordToggle();
         this.handleServerMessages();
         this.checkLockout();
+
+        if (this.isOnLoginPage() && !this.hasUrlParameters()) {
+            this.checkExistingLogin();
+        } else {
+            this.loadRememberedCredentials();
+        }
+
         console.log('✅ AuthManager initialized');
     },
 
-    // Bind các sự kiện
+    // Kiểm tra có đang ở trang login không
+    isOnLoginPage() {
+        const path = window.location.pathname;
+        return ['/', '/index', '/index.html', '/login'].includes(path);
+    },
+
+    // Kiểm tra có tham số URL (error, message, skipRedirect)
+    hasUrlParameters() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.has('error') || urlParams.has('message') || urlParams.has('skipRedirect');
+    },
+
+    // Gắn sự kiện
     bindEvents() {
-        // Form đăng nhập
         const loginForm = document.getElementById('loginForm');
         if (loginForm) {
             loginForm.addEventListener('submit', (e) => this.handleLogin(e));
         }
 
-        // Form quên mật khẩu
         const forgotForm = document.getElementById('forgotPasswordForm');
         if (forgotForm) {
             forgotForm.addEventListener('submit', (e) => this.handleForgotPassword(e));
         }
 
-        // Enter key handling
+        // Xử lý phím Enter
         document.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && !this.state.isLoading && !this.state.isLocked) {
                 this.handleEnterKey(e);
             }
         });
 
-        // Modal events
-        const forgotModal = document.getElementById('forgotPasswordModal');
-        if (forgotModal) {
-            forgotModal.addEventListener('hidden.bs.modal', () => {
-                this.resetForgotForm();
-            });
-        }
-
-        // Real-time validation
+        // Xác thực real-time
         const inputs = document.querySelectorAll('input[required]');
         inputs.forEach(input => {
             input.addEventListener('blur', () => this.validateField(input));
@@ -70,29 +86,77 @@ const AuthManager = {
         });
     },
 
+    // Kiểm tra đăng nhập hiện tại
+    async checkExistingLogin() {
+        console.log('🔍 Checking existing login...');
+
+        const token = localStorage.getItem('accessToken');
+        const userStr = localStorage.getItem('user');
+
+        if (!token || !userStr) {
+            console.log('🔓 No auth data found');
+            this.loadRememberedCredentials();
+            return;
+        }
+
+        try {
+            const user = JSON.parse(userStr);
+            console.log('👤 Found user:', user.username, 'Role:', user.vaiTro);
+
+            // Kiểm tra token hợp lệ qua API
+            const isValid = await this.validateToken(token);
+            if (isValid) {
+                console.log('✅ Valid token, redirecting...');
+                this.redirectByRole(user.vaiTro);
+            } else {
+                console.log('❌ Invalid or expired token');
+                this.clearAuthData();
+                this.loadRememberedCredentials();
+            }
+        } catch (error) {
+            console.error('❌ Error in checkExistingLogin:', error);
+            this.clearAuthData();
+            this.loadRememberedCredentials();
+        }
+    },
+
+    // Load thông tin đăng nhập đã lưu
+    loadRememberedCredentials() {
+        const rememberMe = localStorage.getItem('rememberMe');
+        const savedUsername = localStorage.getItem('savedUsername');
+
+        if (rememberMe === 'true' && savedUsername) {
+            const usernameInput = document.getElementById('username');
+            const rememberCheckbox = document.getElementById('rememberMe');
+            if (usernameInput) usernameInput.value = savedUsername;
+            if (rememberCheckbox) rememberCheckbox.checked = true;
+            console.log('💾 Loaded remembered username:', savedUsername);
+        }
+    },
+
     // Xử lý đăng nhập
     async handleLogin(event) {
         event.preventDefault();
+        console.log('🔐 Login attempt started...');
 
         if (this.state.isLoading || this.state.isLocked) {
+            console.log('🛑 Login blocked - loading or locked');
             return;
         }
 
         const form = event.target;
         const formData = new FormData(form);
-
         const credentials = {
             username: formData.get('username')?.trim(),
             password: formData.get('password'),
             rememberMe: formData.get('remember-me') === 'on'
         };
 
-        // Validate form
         if (!this.validateLoginForm(credentials)) {
+            console.log('❌ Form validation failed');
             return;
         }
 
-        // Check login attempts
         if (this.state.loginAttempts >= this.config.maxLoginAttempts) {
             this.lockAccount();
             return;
@@ -104,7 +168,6 @@ const AuthManager = {
 
             const response = await this.makeLoginRequest(credentials);
             await this.handleLoginResponse(response, credentials);
-
         } catch (error) {
             console.error('❌ Login error:', error);
             this.handleLoginError(error);
@@ -113,12 +176,12 @@ const AuthManager = {
         }
     },
 
-    // Validate form đăng nhập
+    // Xác thực form đăng nhập
     validateLoginForm(credentials) {
         let isValid = true;
-
-        // Username validation
         const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+
         if (!credentials.username) {
             this.showFieldError(usernameInput, 'Vui lòng nhập tên đăng nhập');
             isValid = false;
@@ -127,8 +190,6 @@ const AuthManager = {
             isValid = false;
         }
 
-        // Password validation
-        const passwordInput = document.getElementById('password');
         if (!credentials.password) {
             this.showFieldError(passwordInput, 'Vui lòng nhập mật khẩu');
             isValid = false;
@@ -140,7 +201,7 @@ const AuthManager = {
         return isValid;
     },
 
-    // Gửi request đăng nhập
+    // Gửi yêu cầu đăng nhập
     async makeLoginRequest(credentials) {
         const response = await fetch(`${this.config.apiBaseUrl}/auth/login`, {
             method: 'POST',
@@ -154,45 +215,41 @@ const AuthManager = {
             })
         });
 
-        let data = {};
-        const contentType = response.headers.get('content-type');
-
-        if (contentType && contentType.includes('application/json')) {
+        let data;
+        try {
             data = await response.json();
-        } else {
-            const text = await response.text();
-            data = { message: text };
+        } catch (e) {
+            data = { message: 'Invalid response from server' };
         }
 
         return { response, data };
     },
 
-    // Xử lý response đăng nhập
+    // Xử lý phản hồi đăng nhập
     async handleLoginResponse({ response, data }, credentials) {
-        if (response.ok && data.accessToken) {
-            // Đăng nhập thành công
+        if (response.ok && data.accessToken && data.user) {
+            console.log('✅ Login successful for user:', data.user.username);
+
+            // Reset login attempts
             this.state.loginAttempts = 0;
             localStorage.removeItem('loginAttempts');
             localStorage.removeItem('lockoutTime');
 
-            // Lưu thông tin đăng nhập
+            // Lưu dữ liệu xác thực
             this.saveAuthData(data, credentials.rememberMe);
 
             // Hiển thị thông báo thành công
             this.showAlert('Đăng nhập thành công! Đang chuyển hướng...', 'success');
 
-            // Chuyển hướng
-            setTimeout(() => {
-                this.redirectByRole(data.user.vaiTro);
-            }, this.config.redirectDelay);
-
+            // Chuyển hướng sau delay
+            setTimeout(() => this.redirectByRole(data.user.vaiTro), this.config.redirectDelay);
         } else {
-            // Đăng nhập thất bại
+            console.log('❌ Login failed:', data.message);
             this.state.loginAttempts++;
             localStorage.setItem('loginAttempts', this.state.loginAttempts);
 
-            const errorMessage = data.message || 'Tên đăng nhập hoặc mật khẩu không chính xác';
             const attemptsLeft = this.config.maxLoginAttempts - this.state.loginAttempts;
+            const errorMessage = data.message || 'Tên đăng nhập hoặc mật khẩu không chính xác';
 
             if (attemptsLeft > 0) {
                 this.showAlert(`${errorMessage}. Còn ${attemptsLeft} lần thử.`, 'danger');
@@ -204,30 +261,106 @@ const AuthManager = {
 
     // Xử lý lỗi đăng nhập
     handleLoginError(error) {
-        if (error.name === 'TypeError' && error.message.includes('fetch')) {
-            this.showAlert('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.', 'danger');
+        this.state.loginAttempts++;
+        localStorage.setItem('loginAttempts', this.state.loginAttempts);
+
+        const attemptsLeft = this.config.maxLoginAttempts - this.state.loginAttempts;
+        const errorMessage = error.message.includes('fetch') ?
+            'Không thể kết nối đến server. Vui lòng kiểm tra mạng.' :
+            'Đã xảy ra lỗi. Vui lòng thử lại sau.';
+
+        if (attemptsLeft > 0) {
+            this.showAlert(`${errorMessage} Còn ${attemptsLeft} lần thử.`, 'danger');
         } else {
-            this.showAlert('Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.', 'danger');
+            this.lockAccount();
         }
     },
 
-    // Khóa tài khoản tạm thời
+    // Kiểm tra token hợp lệ qua API
+    async validateToken(token) {
+        try {
+            const response = await fetch(`${this.config.apiBaseUrl}/auth/validate-token`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+            const data = await response.json();
+            return response.ok && data.success;
+        } catch (error) {
+            console.error('❌ Token validation failed:', error);
+            return false;
+        }
+    },
+
+    // Chuyển hướng theo vai trò
+    redirectByRole(role) {
+        console.log('🔄 Redirecting for role:', role);
+
+        const routes = {
+            'ADMIN': '/admin/dashboard',
+            'GIANGVIEN': '/lecturer/dashboard',
+            'SINHVIEN': '/student/dashboard'
+        };
+
+        const targetRoute = routes[role];
+        if (!targetRoute) {
+            console.error('❌ Unknown role:', role);
+            this.showAlert('Vai trò người dùng không hợp lệ', 'danger');
+            this.clearAuthData();
+            return;
+        }
+
+        // Tránh chuyển hướng lặp
+        if (window.location.pathname !== targetRoute) {
+            console.log(`🔄 Redirecting to ${targetRoute}`);
+            window.location.href = targetRoute;
+        } else {
+            console.log('📍 Already on target page');
+        }
+    },
+
+    // Lưu dữ liệu xác thực
+    saveAuthData(data, rememberMe) {
+        try {
+            localStorage.setItem('accessToken', data.accessToken);
+            localStorage.setItem('refreshToken', data.refreshToken || '');
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('loginTime', new Date().toISOString());
+
+            if (rememberMe) {
+                localStorage.setItem('rememberMe', 'true');
+                localStorage.setItem('savedUsername', data.user.username);
+            } else {
+                localStorage.removeItem('rememberMe');
+                localStorage.removeItem('savedUsername');
+            }
+
+            console.log('✅ Auth data saved');
+        } catch (error) {
+            console.error('❌ Error saving auth data:', error);
+        }
+    },
+
+    // Xóa dữ liệu xác thực
+    clearAuthData() {
+        ['accessToken', 'refreshToken', 'user', 'loginTime'].forEach(key => localStorage.removeItem(key));
+        console.log('🗑️ Auth data cleared');
+    },
+
+    // Khóa tài khoản
     lockAccount() {
         this.state.isLocked = true;
         const lockoutEnd = Date.now() + this.config.lockoutTime;
         localStorage.setItem('lockoutTime', lockoutEnd);
 
-        const minutes = Math.ceil(this.config.lockoutTime / 60000);
-        this.showAlert(`Tài khoản tạm thời bị khóa do đăng nhập sai quá nhiều lần. Vui lòng thử lại sau ${minutes} phút.`, 'warning');
-
-        // Disable form
+        this.showAlert(`Tài khoản bị khóa do quá số lần thử. Vui lòng đợi ${this.config.lockoutTime / 60000} phút.`, 'warning');
         this.setFormDisabled(true);
-
-        // Start countdown
         this.startLockoutCountdown(lockoutEnd);
     },
 
-    // Kiểm tra lockout
+    // Kiểm tra trạng thái khóa
     checkLockout() {
         const lockoutTime = localStorage.getItem('lockoutTime');
         const loginAttempts = localStorage.getItem('loginAttempts');
@@ -245,20 +378,20 @@ const AuthManager = {
                 this.setFormDisabled(true);
                 this.startLockoutCountdown(lockoutEnd);
             } else {
-                // Lockout hết hạn
+                this.state.isLocked = false;
                 localStorage.removeItem('lockoutTime');
                 localStorage.removeItem('loginAttempts');
                 this.state.loginAttempts = 0;
-                this.state.isLocked = false;
+                this.setFormDisabled(false);
+                this.showAlert('Tài khoản đã được mở khóa.', 'info');
             }
         }
     },
 
-    // Countdown lockout
+    // Đếm ngược thời gian khóa
     startLockoutCountdown(lockoutEnd) {
         const countdownInterval = setInterval(() => {
-            const now = Date.now();
-            const timeLeft = lockoutEnd - now;
+            const timeLeft = lockoutEnd - Date.now();
 
             if (timeLeft <= 0) {
                 clearInterval(countdownInterval);
@@ -268,12 +401,10 @@ const AuthManager = {
                 localStorage.removeItem('loginAttempts');
                 this.state.loginAttempts = 0;
                 this.hideAlert();
-                this.showAlert('Tài khoản đã được mở khóa. Bạn có thể đăng nhập lại.', 'info');
+                this.showAlert('Tài khoản đã được mở khóa.', 'info');
             } else {
                 const minutes = Math.ceil(timeLeft / 60000);
-                const seconds = Math.ceil((timeLeft % 60000) / 1000);
-                const timeString = minutes > 0 ? `${minutes} phút ${seconds} giây` : `${seconds} giây`;
-                this.showAlert(`Tài khoản tạm thời bị khóa. Thời gian còn lại: ${timeString}`, 'warning');
+                this.showAlert(`Tài khoản bị khóa. Còn lại: ${minutes} phút.`, 'warning');
             }
         }, 1000);
     },
@@ -281,165 +412,43 @@ const AuthManager = {
     // Xử lý quên mật khẩu
     async handleForgotPassword(event) {
         event.preventDefault();
-
         if (this.state.isLoading) return;
 
         const form = event.target;
-        const formData = new FormData(form);
-        const username = formData.get('resetUsername')?.trim();
-
-        // Validate
+        const username = form.querySelector('#resetUsername')?.value.trim();
         const usernameInput = document.getElementById('resetUsername');
+
         if (!username) {
             this.showFieldError(usernameInput, 'Vui lòng nhập tên đăng nhập');
             return;
         }
 
-        if (username.length < 3) {
-            this.showFieldError(usernameInput, 'Tên đăng nhập phải có ít nhất 3 ký tự');
-            return;
-        }
-
         try {
             this.setLoadingState(true, 'resetPasswordBtn');
-
             const response = await fetch(`${this.config.apiBaseUrl}/auth/forgot-password?username=${encodeURIComponent(username)}`, {
                 method: 'POST',
-                headers: {
-                    'Accept': 'application/json'
-                }
+                headers: { 'Accept': 'application/json' }
             });
 
+            const modal = bootstrap.Modal.getInstance(document.getElementById('forgotPasswordModal'));
+            modal.hide();
+
             if (response.ok) {
-                // Đóng modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('forgotPasswordModal'));
-                modal.hide();
-
-                // Hiển thị thông báo thành công
-                this.showAlert('Yêu cầu đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra email của bạn.', 'success');
-
-                // Reset form
+                this.showAlert('Yêu cầu đặt lại mật khẩu đã được gửi. Kiểm tra email của bạn.', 'success');
                 this.resetForgotForm();
-
             } else {
-                const errorText = await response.text();
-                this.showAlert(errorText || 'Có lỗi xảy ra khi gửi yêu cầu đặt lại mật khẩu', 'danger');
+                const data = await response.json();
+                this.showAlert(data.message || 'Lỗi khi gửi yêu cầu đặt lại mật khẩu.', 'danger');
             }
-
         } catch (error) {
             console.error('❌ Forgot password error:', error);
-            this.showAlert('Không thể kết nối đến server. Vui lòng thử lại sau.', 'danger');
+            this.showAlert('Không thể kết nối đến server.', 'danger');
         } finally {
             this.setLoadingState(false, 'resetPasswordBtn');
         }
     },
 
-    // Lưu dữ liệu authentication
-    saveAuthData(data, rememberMe) {
-        try {
-            // Lưu token
-            localStorage.setItem('accessToken', data.accessToken);
-            if (data.refreshToken) {
-                localStorage.setItem('refreshToken', data.refreshToken);
-            }
-
-            // Lưu user info
-            localStorage.setItem('user', JSON.stringify(data.user));
-            localStorage.setItem('loginTime', new Date().toISOString());
-
-            // Remember me
-            if (rememberMe) {
-                localStorage.setItem('rememberMe', 'true');
-                localStorage.setItem('savedUsername', data.user.username);
-            } else {
-                localStorage.removeItem('rememberMe');
-                localStorage.removeItem('savedUsername');
-            }
-
-            console.log('✅ Auth data saved successfully');
-        } catch (error) {
-            console.error('❌ Error saving auth data:', error);
-        }
-    },
-
-    // Chuyển hướng theo vai trò
-    redirectByRole(role) {
-        const routes = {
-            'ADMIN': '/admin/dashboard',
-            'GIANGVIEN': '/lecturer/dashboard',
-            'SINHVIEN': '/student/dashboard'
-        };
-
-        const targetRoute = routes[role];
-        if (targetRoute) {
-            console.log(`🔄 Redirecting to ${targetRoute} for role: ${role}`);
-            window.location.href = targetRoute;
-        } else {
-            console.error('❌ Unknown role:', role);
-            this.showAlert('Vai trò người dùng không hợp lệ', 'danger');
-            this.clearAuthData();
-        }
-    },
-
-    // Kiểm tra đăng nhập hiện tại
-    checkExistingLogin() {
-        try {
-            const token = localStorage.getItem('accessToken');
-            const userStr = localStorage.getItem('user');
-
-            if (token && userStr) {
-                const user = JSON.parse(userStr);
-
-                // Kiểm tra token còn hạn không
-                if (this.isTokenValid(token)) {
-                    console.log('✅ Valid token found, redirecting...');
-                    this.redirectByRole(user.vaiTro);
-                    return;
-                }
-            }
-
-            // Load remembered username
-            const rememberMe = localStorage.getItem('rememberMe');
-            const savedUsername = localStorage.getItem('savedUsername');
-
-            if (rememberMe === 'true' && savedUsername) {
-                const usernameInput = document.getElementById('username');
-                const rememberCheckbox = document.getElementById('rememberMe');
-
-                if (usernameInput) usernameInput.value = savedUsername;
-                if (rememberCheckbox) rememberCheckbox.checked = true;
-            }
-
-            // Xóa dữ liệu không hợp lệ
-            this.clearAuthData();
-
-        } catch (error) {
-            console.error('❌ Error checking existing login:', error);
-            this.clearAuthData();
-        }
-    },
-
-    // Kiểm tra token hợp lệ
-    isTokenValid(token) {
-        if (!token) return false;
-
-        try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            const now = Math.floor(Date.now() / 1000);
-            return payload.exp > now;
-        } catch (error) {
-            console.error('❌ Error validating token:', error);
-            return false;
-        }
-    },
-
-    // Xóa dữ liệu authentication
-    clearAuthData() {
-        const keysToRemove = ['accessToken', 'refreshToken', 'user', 'loginTime'];
-        keysToRemove.forEach(key => localStorage.removeItem(key));
-    },
-
-    // Setup toggle password
+    // Cài đặt toggle mật khẩu
     setupPasswordToggle() {
         const toggleBtn = document.getElementById('togglePassword');
         if (!toggleBtn) return;
@@ -447,548 +456,176 @@ const AuthManager = {
         toggleBtn.addEventListener('click', () => {
             const passwordInput = document.getElementById('password');
             const icon = toggleBtn.querySelector('i');
-
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
+            const type = passwordInput.type === 'password' ? 'text' : 'password';
+            passwordInput.type = type;
+            icon.classList.toggle('fa-eye', type === 'password');
+            icon.classList.toggle('fa-eye-slash', type === 'text');
         });
     },
 
-    // Xử lý tin nhắn từ server
+    // Xử lý thông báo từ server
     handleServerMessages() {
-        if (window.serverData) {
-            if (window.serverData.error) {
-                console.log('📨 Server error:', window.serverData.error);
-            }
-            if (window.serverData.message) {
-                console.log('📨 Server message:', window.serverData.message);
-            }
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        const message = urlParams.get('message');
+
+        if (error) {
+            console.log('📨 Server error:', error);
+            this.showAlert(this.getErrorMessage(error), 'danger');
+        }
+        if (message) {
+            console.log('📨 Server message:', message);
+            this.showAlert(this.getMessage(message), 'success');
         }
     },
 
-    // Xử lý Enter key
+    // Xử lý phím Enter
     handleEnterKey(event) {
         const activeModal = document.querySelector('.modal.show');
-
         if (activeModal) {
-            // Trong modal
             const submitBtn = activeModal.querySelector('.modal-footer .btn-primary');
             if (submitBtn && !submitBtn.disabled) {
                 event.preventDefault();
                 submitBtn.click();
             }
         } else {
-            // Trong form chính
             const loginForm = document.getElementById('loginForm');
             if (loginForm && !this.state.isLoading && !this.state.isLocked) {
-                const submitBtn = loginForm.querySelector('button[type="submit"]');
-                if (submitBtn && !submitBtn.disabled) {
-                    event.preventDefault();
-                    loginForm.dispatchEvent(new Event('submit'));
-                }
+                event.preventDefault();
+                loginForm.dispatchEvent(new Event('submit'));
             }
         }
     },
 
-    // Validation methods
+    // Xác thực trường
     validateField(input) {
         const value = input.value.trim();
-        const fieldName = input.name;
-
-        this.clearFieldError(input);
-
-        if (input.hasAttribute('required') && !value) {
+        if (!value && input.hasAttribute('required')) {
             this.showFieldError(input, 'Trường này là bắt buộc');
             return false;
         }
-
-        if (fieldName === 'username' && value && value.length < 3) {
+        if (input.name === 'username' && value.length < 3) {
             this.showFieldError(input, 'Tên đăng nhập phải có ít nhất 3 ký tự');
             return false;
         }
-
-        if (fieldName === 'password' && value && value.length < 3) {
-            this.showFieldError(input, 'Mật khẩu phải có ít nhất 3 ký tự');
-            return false;
-        }
-
         return true;
     },
 
+    // Hiển thị lỗi trường
     showFieldError(input, message) {
         input.classList.add('is-invalid');
-        const feedback = input.parentNode.querySelector('.invalid-feedback') ||
-            input.nextElementSibling;
-        if (feedback) {
+        const feedback = input.nextElementSibling;
+        if (feedback?.classList.contains('invalid-feedback')) {
             feedback.textContent = message;
         }
     },
 
+    // Xóa lỗi trường
     clearFieldError(input) {
         input.classList.remove('is-invalid');
-        const feedback = input.parentNode.querySelector('.invalid-feedback') ||
-            input.nextElementSibling;
-        if (feedback) {
+        const feedback = input.nextElementSibling;
+        if (feedback?.classList.contains('invalid-feedback')) {
             feedback.textContent = '';
         }
     },
 
-    // UI Helper methods
+    // Đặt trạng thái loading
     setLoadingState(isLoading, buttonId = 'loginBtn') {
         this.state.isLoading = isLoading;
         const button = document.getElementById(buttonId);
-        if (!button) return;
-
-        if (isLoading) {
-            button.classList.add('loading');
-            button.disabled = true;
-        } else {
-            button.classList.remove('loading');
-            button.disabled = this.state.isLocked;
+        if (button) {
+            button.disabled = isLoading;
+            button.classList.toggle('loading', isLoading);
         }
     },
 
+    // Vô hiệu hóa form
     setFormDisabled(disabled) {
         const form = document.getElementById('loginForm');
-        if (!form) return;
-
-        const inputs = form.querySelectorAll('input, button');
-        inputs.forEach(input => {
-            input.disabled = disabled;
-        });
+        if (form) {
+            form.querySelectorAll('input, button').forEach(input => {
+                input.disabled = disabled;
+            });
+        }
     },
 
+    // Hiển thị thông báo
     showAlert(message, type = 'info') {
         const alertDiv = document.getElementById('alertMessage');
         const alertText = document.getElementById('alertText');
-
         if (!alertDiv || !alertText) return;
 
-        // Set classes
         alertDiv.className = `alert alert-${type}`;
         alertText.textContent = message;
         alertDiv.classList.remove('d-none');
 
-        // Auto hide after timeout
-        if (this.alertTimeout) {
-            clearTimeout(this.alertTimeout);
-        }
-
-        this.alertTimeout = setTimeout(() => {
-            this.hideAlert();
-        }, this.config.alertTimeout);
-
-        console.log(`🔔 Alert [${type}]: ${message}`);
+        if (this.alertTimeout) clearTimeout(this.alertTimeout);
+        this.alertTimeout = setTimeout(() => this.hideAlert(), this.config.alertTimeout);
     },
 
+    // Ẩn thông báo
     hideAlert() {
         const alertDiv = document.getElementById('alertMessage');
-        if (alertDiv) {
-            alertDiv.classList.add('d-none');
-        }
-
+        if (alertDiv) alertDiv.classList.add('d-none');
         if (this.alertTimeout) {
             clearTimeout(this.alertTimeout);
             this.alertTimeout = null;
         }
     },
 
+    // Reset form quên mật khẩu
     resetForgotForm() {
         const form = document.getElementById('forgotPasswordForm');
         if (form) {
             form.reset();
-
-            // Clear validation states
-            const inputs = form.querySelectorAll('input');
-            inputs.forEach(input => {
-                this.clearFieldError(input);
-            });
+            form.querySelectorAll('input').forEach(input => this.clearFieldError(input));
         }
-    }
-};
-
-// Utility functions
-const AuthUtils = {
-    /**
-     * Format thời gian còn lại
-     */
-    formatTimeRemaining(milliseconds) {
-        const minutes = Math.floor(milliseconds / 60000);
-        const seconds = Math.floor((milliseconds % 60000) / 1000);
-
-        if (minutes > 0) {
-            return `${minutes} phút ${seconds} giây`;
-        }
-        return `${seconds} giây`;
     },
 
-    /**
-     * Validate email format
-     */
-    isValidEmail(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
+    // Ánh xạ thông báo lỗi
+    getErrorMessage(errorCode) {
+        const messages = {
+            'login_failed': 'Tên đăng nhập hoặc mật khẩu không đúng',
+            'not_authenticated': 'Vui lòng đăng nhập để tiếp tục',
+            'invalid_role': 'Vai trò không hợp lệ',
+            'access_denied': 'Không có quyền truy cập',
+            'session_expired': 'Phiên đăng nhập đã hết hạn'
+        };
+        return messages[errorCode] || 'Đã xảy ra lỗi. Vui lòng thử lại.';
     },
 
-    /**
-     * Generate secure random string
-     */
-    generateRandomString(length = 32) {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let result = '';
-        for (let i = 0; i < length; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return result;
+    // Ánh xạ thông báo thành công
+    getMessage(messageCode) {
+        const messages = {
+            'logout_success': 'Đăng xuất thành công',
+            'password_reset': 'Mật khẩu đã được đặt lại',
+            'account_created': 'Tài khoản đã được tạo'
+        };
+        return messages[messageCode] || messageCode;
     },
-
-    /**
-     * Sanitize input to prevent XSS
-     */
-    sanitizeInput(input) {
-        const div = document.createElement('div');
-        div.textContent = input;
-        return div.innerHTML;
-    },
-
-    /**
-     * Check if browser supports required features
-     */
-    checkBrowserSupport() {
-        const requiredFeatures = [
-            'localStorage' in window,
-            'fetch' in window,
-            'Promise' in window
-        ];
-
-        return requiredFeatures.every(feature => feature);
-    },
-
-    /**
-     * Get browser info for logging
-     */
-    getBrowserInfo() {
-        const ua = navigator.userAgent;
-        let browser = 'Unknown';
-
-        if (ua.includes('Chrome')) browser = 'Chrome';
-        else if (ua.includes('Firefox')) browser = 'Firefox';
-        else if (ua.includes('Safari')) browser = 'Safari';
-        else if (ua.includes('Edge')) browser = 'Edge';
-
-        return {
-            browser,
-            userAgent: ua,
-            language: navigator.language,
-            platform: navigator.platform
+    // Trong AuthManager, thêm hàm để gửi token trong mọi yêu cầu
+    addAuthInterceptor() {
+        const originalFetch = window.fetch;
+        window.fetch = async (url, options = {}) => {
+            const token = localStorage.getItem('accessToken');
+            if (token) {
+                options.headers = {
+                    ...options.headers,
+                    'Authorization': `Bearer ${token}`
+                };
+            }
+            return originalFetch(url, options);
         };
     }
 };
 
-// Security helpers
-const SecurityManager = {
-    /**
-     * Hash password client-side (if needed)
-     */
-    async hashPassword(password, salt = '') {
-        if (!window.crypto || !window.crypto.subtle) {
-            console.warn('⚠️ Web Crypto API not available');
-            return password; // Fallback to plain text
-        }
 
-        try {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(password + salt);
-            const hash = await window.crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hash));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        } catch (error) {
-            console.error('❌ Error hashing password:', error);
-            return password;
-        }
-    },
 
-    /**
-     * Generate CSRF token
-     */
-    generateCSRFToken() {
-        return AuthUtils.generateRandomString(32);
-    },
-
-    /**
-     * Validate token format
-     */
-    isValidTokenFormat(token) {
-        if (!token || typeof token !== 'string') return false;
-
-        // JWT format: header.payload.signature
-        const parts = token.split('.');
-        return parts.length === 3;
-    },
-
-    /**
-     * Check for suspicious activity
-     */
-    detectSuspiciousActivity() {
-        const suspiciousIndicators = {
-            tooManyRequests: this.checkRequestFrequency(),
-            unusualUserAgent: this.checkUserAgent(),
-            suspiciousLocation: this.checkLocation()
-        };
-
-        return Object.values(suspiciousIndicators).some(indicator => indicator);
-    },
-
-    checkRequestFrequency() {
-        const requests = JSON.parse(localStorage.getItem('requestLog') || '[]');
-        const now = Date.now();
-        const fiveMinutesAgo = now - (5 * 60 * 1000);
-
-        // Filter requests in last 5 minutes
-        const recentRequests = requests.filter(time => time > fiveMinutesAgo);
-
-        // Update log
-        recentRequests.push(now);
-        localStorage.setItem('requestLog', JSON.stringify(recentRequests.slice(-10)));
-
-        // Check if too many requests (more than 10 in 5 minutes)
-        return recentRequests.length > 10;
-    },
-
-    checkUserAgent() {
-        const ua = navigator.userAgent;
-        const suspiciousPatterns = [
-            /bot/i,
-            /crawler/i,
-            /spider/i,
-            /scraper/i
-        ];
-
-        return suspiciousPatterns.some(pattern => pattern.test(ua));
-    },
-
-    checkLocation() {
-        // Placeholder for location-based security checks
-        // Could integrate with geolocation API
-        return false;
-    }
-};
-
-// Performance monitoring
-const PerformanceMonitor = {
-    startTime: null,
-    metrics: {},
-
-    start(operation) {
-        this.startTime = performance.now();
-        this.metrics[operation] = { startTime: this.startTime };
-    },
-
-    end(operation) {
-        if (this.metrics[operation]) {
-            const endTime = performance.now();
-            this.metrics[operation].duration = endTime - this.metrics[operation].startTime;
-            this.metrics[operation].endTime = endTime;
-
-            console.log(`⏱️ ${operation}: ${this.metrics[operation].duration.toFixed(2)}ms`);
-        }
-    },
-
-    getMetrics() {
-        return this.metrics;
-    },
-
-    logPageLoad() {
-        window.addEventListener('load', () => {
-            const navigation = performance.getEntriesByType('navigation')[0];
-            if (navigation) {
-                console.log('📊 Page Load Metrics:', {
-                    domContentLoaded: navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
-                    loadComplete: navigation.loadEventEnd - navigation.loadEventStart,
-                    totalTime: navigation.loadEventEnd - navigation.fetchStart
-                });
-            }
-        });
-    }
-};
-
-// Error handling and logging
-const ErrorHandler = {
-    errors: [],
-
-    log(error, context = '') {
-        const errorInfo = {
-            message: error.message || error,
-            stack: error.stack,
-            context,
-            timestamp: new Date().toISOString(),
-            url: window.location.href,
-            userAgent: navigator.userAgent
-        };
-
-        this.errors.push(errorInfo);
-        console.error('🚨 Error logged:', errorInfo);
-
-        // Keep only last 50 errors
-        if (this.errors.length > 50) {
-            this.errors = this.errors.slice(-50);
-        }
-
-        // Send to server if critical
-        if (this.isCriticalError(error)) {
-            this.sendErrorToServer(errorInfo);
-        }
-    },
-
-    isCriticalError(error) {
-        const criticalPatterns = [
-            /network/i,
-            /authentication/i,
-            /security/i,
-            /unauthorized/i
-        ];
-
-        return criticalPatterns.some(pattern =>
-            pattern.test(error.message || error)
-        );
-    },
-
-    async sendErrorToServer(errorInfo) {
-        try {
-            await fetch('/api/errors', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(errorInfo)
-            });
-        } catch (e) {
-            console.warn('⚠️ Failed to send error to server:', e);
-        }
-    },
-
-    getErrors() {
-        return this.errors;
-    }
-};
-
-// Global error handling
-window.addEventListener('error', (event) => {
-    ErrorHandler.log(event.error, 'Global error handler');
+// Khởi tạo khi DOM sẵn sàng
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🌐 DOM loaded, initializing AuthManager...');
+    AuthManager.init();
 });
 
-window.addEventListener('unhandledrejection', (event) => {
-    ErrorHandler.log(event.reason, 'Unhandled promise rejection');
-});
-
-// Accessibility enhancements
-const AccessibilityManager = {
-    init() {
-        this.setupKeyboardNavigation();
-        this.setupScreenReaderSupport();
-        this.setupFocusManagement();
-    },
-
-    setupKeyboardNavigation() {
-        // Tab navigation through form elements
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Tab') {
-                this.handleTabNavigation(event);
-            } else if (event.key === 'Escape') {
-                this.handleEscapeKey(event);
-            }
-        });
-    },
-
-    setupScreenReaderSupport() {
-        // Add aria-labels and descriptions
-        const form = document.getElementById('loginForm');
-        if (form) {
-            form.setAttribute('aria-label', 'Biểu mẫu đăng nhập');
-        }
-
-        // Live region for alerts
-        const alertDiv = document.getElementById('alertMessage');
-        if (alertDiv) {
-            alertDiv.setAttribute('aria-live', 'polite');
-            alertDiv.setAttribute('aria-atomic', 'true');
-        }
-    },
-
-    setupFocusManagement() {
-        // Focus management for modals
-        const modal = document.getElementById('forgotPasswordModal');
-        if (modal) {
-            modal.addEventListener('shown.bs.modal', () => {
-                const firstInput = modal.querySelector('input');
-                if (firstInput) {
-                    firstInput.focus();
-                }
-            });
-        }
-    },
-
-    handleTabNavigation(event) {
-        // Ensure tab navigation stays within modal when open
-        const activeModal = document.querySelector('.modal.show');
-        if (activeModal) {
-            const focusableElements = activeModal.querySelectorAll(
-                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-            );
-
-            const firstElement = focusableElements[0];
-            const lastElement = focusableElements[focusableElements.length - 1];
-
-            if (event.shiftKey && document.activeElement === firstElement) {
-                event.preventDefault();
-                lastElement.focus();
-            } else if (!event.shiftKey && document.activeElement === lastElement) {
-                event.preventDefault();
-                firstElement.focus();
-            }
-        }
-    },
-
-    handleEscapeKey(event) {
-        // Close modal on Escape
-        const activeModal = document.querySelector('.modal.show');
-        if (activeModal) {
-            const modal = bootstrap.Modal.getInstance(activeModal);
-            if (modal) {
-                modal.hide();
-            }
-        }
-    }
-};
-
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    // Check browser support
-    if (!AuthUtils.checkBrowserSupport()) {
-        alert('Trình duyệt của bạn không được hỗ trợ. Vui lòng cập nhật hoặc sử dụng trình duyệt khác.');
-        return;
-    }
-
-    // Initialize all managers
-    PerformanceMonitor.logPageLoad();
-    AccessibilityManager.init();
-
-    // Log browser info
-    console.log('🌐 Browser Info:', AuthUtils.getBrowserInfo());
-
-    // Initialize main auth manager
-    if (typeof AuthManager !== 'undefined') {
-        AuthManager.init();
-    }
-});
-
-// Export for global access
+// Xuất cho toàn cục
 window.AuthManager = AuthManager;
-window.AuthUtils = AuthUtils;
-window.SecurityManager = SecurityManager;

@@ -1,6 +1,8 @@
 package com.tathanhloc.faceattendance.Security;
 
+import com.tathanhloc.faceattendance.Enum.VaiTroEnum;
 import com.tathanhloc.faceattendance.Model.TaiKhoan;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.*;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -16,8 +18,10 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + taiKhoan.getVaiTro()));
+        @NotNull(message = "Vai trò không được để trống") VaiTroEnum role = taiKhoan.getVaiTro(); // Giả sử vai trò được lưu trong taiKhoan
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role));
     }
+
 
     @Override
     public String getPassword() {

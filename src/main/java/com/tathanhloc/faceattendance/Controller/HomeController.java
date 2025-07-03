@@ -1,6 +1,5 @@
 package com.tathanhloc.faceattendance.Controller;
 
-import com.tathanhloc.faceattendance.Security.CustomUserDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -9,113 +8,79 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.Optional;
-
 @Controller
 @Slf4j
 public class HomeController {
 
-    @GetMapping(value = {"/", "/index", "/index.html"})
+    @GetMapping(value = {"/", "/index", "/index.html", "/login"})
     public String index(Authentication authentication,
                         @RequestParam(required = false) String error,
                         @RequestParam(required = false) String message,
                         Model model) {
 
-        log.info("Accessing index page");
+        log.info("=== HOME PAGE ACCESS ===");
+        log.info("Authentication present: {}", authentication != null);
+        log.info("Is authenticated: {}", isAuthenticated(authentication));
 
-        // Add error/message to model if present
-        if (error != null) {
-            model.addAttribute("error", getErrorMessage(error));
-        }
-        if (message != null) {
-            model.addAttribute("message", getMessage(message));
-        }
-
-        // Check if user is authenticated
+        // Nếu đã đăng nhập, chuyển hướng tới dashboard phù hợp
         if (isAuthenticated(authentication)) {
             String role = extractUserRole(authentication);
             String redirectUrl = getRedirectUrlByRole(role);
-
-            log.info("Authenticated user with role: {} redirecting to: {}", role, redirectUrl);
+            log.info("User already authenticated with role: {}, redirecting to: {}", role, redirectUrl);
             return "redirect:" + redirectUrl;
         }
 
-        log.info("Unauthenticated user, showing login page");
-        return "index"; // Return login page
+        // Thêm thông báo lỗi/thành công nếu có
+        if (error != null) {
+            model.addAttribute("error", getErrorMessage(error));
+            log.info("Error message: {}", error);
+        }
+        if (message != null) {
+            model.addAttribute("message", getMessage(message));
+            log.info("Success message: {}", message);
+        }
+
+        log.info("Showing login page");
+        return "index";
     }
 
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication) {
         if (!isAuthenticated(authentication)) {
+            log.warn("Unauthenticated access to /dashboard");
             return "redirect:/?error=not_authenticated";
         }
 
         String role = extractUserRole(authentication);
         String redirectUrl = getRedirectUrlByRole(role);
-
-        log.info("Dashboard access for role: {}, redirecting to: {}", role, redirectUrl);
+        log.info("Dashboard redirect for role: {} -> {}", role, redirectUrl);
         return "redirect:" + redirectUrl;
     }
 
-    @GetMapping("/admin/**")
-    public String adminPages(Authentication authentication) {
-        if (!isAuthenticated(authentication)) {
-            return "redirect:/?error=not_authenticated";
-        }
-
-        if (!hasRole(authentication, "ADMIN")) {
-            return "redirect:/?error=access_denied";
-        }
-
-        // Let the request continue to specific admin controllers
-        return null;
-    }
-
-    @GetMapping("/lecturer/**")
-    public String lecturerPages(Authentication authentication) {
-        if (!isAuthenticated(authentication)) {
-            return "redirect:/?error=not_authenticated";
-        }
-
-        if (!hasRole(authentication, "GIANGVIEN")) {
-            return "redirect:/?error=access_denied";
-        }
-
-        return null;
-    }
-
-    @GetMapping("/student/**")
-    public String studentPages(Authentication authentication) {
-        if (!isAuthenticated(authentication)) {
-            return "redirect:/?error=not_authenticated";
-        }
-
-        if (!hasRole(authentication, "SINHVIEN")) {
-            return "redirect:/?error=access_denied";
-        }
-
-        return null;
+    @GetMapping("/logout")
+    public String logout() {
+        log.info("Logout accessed");
+        return "redirect:/?message=logout_success";
     }
 
     // Helper methods
     private boolean isAuthenticated(Authentication authentication) {
         return authentication != null &&
                 authentication.isAuthenticated() &&
-                !authentication.getPrincipal().equals("anonymousUser");
+                !"anonymousUser".equals(authentication.getPrincipal());
     }
 
     private String extractUserRole(Authentication authentication) {
+        if (authentication == null || authentication.getAuthorities() == null) {
+            return "";
+        }
+
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .filter(authority -> authority.startsWith("ROLE_"))
                 .map(authority -> authority.replace("ROLE_", ""))
                 .findFirst()
                 .orElse("");
-    }
-
-    private boolean hasRole(Authentication authentication, String role) {
-        return authentication.getAuthorities().stream()
-                .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + role));
     }
 
     private String getRedirectUrlByRole(String role) {
@@ -139,11 +104,11 @@ public class HomeController {
             case "not_authenticated":
                 return "Vui lòng đăng nhập để tiếp tục";
             case "access_denied":
-                return "Bạn không có quyền truy cập trang này";
+                return "Bạn không có quyền truy cập";
             case "session_expired":
-                return "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại";
+                return "Phiên đăng nhập đã hết hạn";
             case "login_failed":
-                return "Đăng nhập thất bại, vui lòng kiểm tra lại thông tin";
+                return "Đăng nhập thất bại";
             default:
                 return "Đã xảy ra lỗi, vui lòng thử lại";
         }
