@@ -3,226 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng nhập - Hệ thống Điểm danh</title>
+    <title>Đăng nhập - Hệ thống Điểm danh Khuôn mặt</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .login-card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            padding: 40px;
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .login-header h2 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        .login-header p {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .form-control {
-            border-radius: 10px;
-            padding: 12px 15px;
-            border: 2px solid #e9ecef;
-            margin-bottom: 15px;
-        }
-
-        .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-
-        .btn-login {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 10px;
-            padding: 12px;
-            color: white;
-            font-weight: 600;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .alert {
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .forgot-link {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .forgot-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        .forgot-link a:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <!-- Custom CSS -->
+    <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/auth.css}" rel="stylesheet">
 </head>
-<body>
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-4">
-            <div class="login-card">
-                <div class="login-header">
-                    <i class="fas fa-user-shield fa-3x text-primary mb-3"></i>
-                    <h2>Đăng nhập</h2>
-                    <p>Hệ thống điểm danh khuôn mặt</p>
-                </div>
+<body class="auth-body">
+<div class="auth-container">
+    <div class="login-card">
+        <!-- Header -->
+        <div class="login-header">
+            <div class="logo">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <h2>Hệ thống Điểm danh</h2>
+            <p>Nhận diện khuôn mặt thông minh</p>
+        </div>
 
-                <!-- Thông báo lỗi từ server -->
-                <div th:if="${error}" class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <span th:text="${error}"></span>
-                </div>
+        <!-- Body -->
+        <div class="login-body">
+            <!-- Alert Messages -->
+            <div id="alertMessage" class="alert d-none" role="alert">
+                <i class="fas fa-info-circle"></i>
+                <span id="alertText"></span>
+            </div>
 
-                <!-- Thông báo thành công từ server -->
-                <div th:if="${message}" class="alert alert-success">
-                    <i class="fas fa-check-circle me-2"></i>
-                    <span th:text="${message}"></span>
-                </div>
+            <!-- Server Messages -->
+            <div th:if="${error}" class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span th:text="${error}"></span>
+            </div>
 
-                <!-- Form đăng nhập -->
-                <form id="loginForm">
-                    <div class="mb-3">
+            <div th:if="${message}" class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                <span th:text="${message}"></span>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" novalidate>
+                <!-- Username -->
+                <div class="form-group">
+                    <label for="username">Tên đăng nhập</label>
+                    <div class="input-group">
                         <input type="text"
                                class="form-control"
                                id="username"
                                name="username"
-                               placeholder="Tên đăng nhập"
-                               required>
+                               placeholder="Nhập tên đăng nhập"
+                               th:value="${username}"
+                               required
+                               autocomplete="username">
+                        <i class="input-icon fas fa-user"></i>
                     </div>
+                    <div class="invalid-feedback"></div>
+                </div>
 
-                    <div class="mb-3">
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="password">Mật khẩu</label>
+                    <div class="password-field">
                         <input type="password"
                                class="form-control"
                                id="password"
                                name="password"
-                               placeholder="Mật khẩu"
-                               required>
+                               placeholder="Nhập mật khẩu"
+                               required
+                               autocomplete="current-password">
+                        <button type="button" class="password-toggle" id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </div>
+                    <div class="invalid-feedback"></div>
+                </div>
 
-                    <button type="submit" class="btn btn-login">
-                        <i class="fas fa-sign-in-alt me-2"></i>
-                        Đăng nhập
-                    </button>
-                </form>
+                <!-- Remember Me -->
+                <div class="form-check">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           id="rememberMe"
+                           name="remember-me">
+                    <label class="form-check-label" for="rememberMe">
+                        Ghi nhớ đăng nhập
+                    </label>
+                </div>
 
-                <div class="forgot-link">
-                    <a href="#" onclick="alert('Liên hệ admin để đặt lại mật khẩu')">
-                        <i class="fas fa-key me-1"></i>Quên mật khẩu?
+                <!-- Submit Button -->
+                <button type="submit" class="btn-login" id="loginBtn">
+                        <span class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </span>
+                    <span class="btn-text">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Đăng nhập
+                        </span>
+                </button>
+
+                <!-- Forgot Password -->
+                <div class="forgot-password">
+                    <a href="#" id="forgotPasswordLink" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">
+                        <i class="fas fa-key"></i>
+                        Quên mật khẩu?
                     </a>
                 </div>
+            </form>
+
+            <!-- System Info -->
+            <div class="system-info">
+                <small>
+                    <i class="fas fa-shield-alt"></i>
+                    Hệ thống bảo mật cao - Phiên bản 1.0.0
+                </small>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Bootstrap JS -->
+<!-- Forgot Password Modal -->
+<div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="forgotPasswordModalLabel">
+                    <i class="fas fa-key me-2"></i>
+                    Đặt lại mật khẩu
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">
+                    Nhập tên đăng nhập của bạn để nhận email hướng dẫn đặt lại mật khẩu.
+                </p>
+
+                <form id="forgotPasswordForm" novalidate>
+                    <div class="form-group">
+                        <label for="resetUsername" class="form-label">Tên đăng nhập</label>
+                        <input type="text"
+                               class="form-control"
+                               id="resetUsername"
+                               name="resetUsername"
+                               placeholder="Nhập tên đăng nhập"
+                               required>
+                        <div class="invalid-feedback"></div>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Mật khẩu mới sẽ được gửi đến email đã đăng ký
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>
+                    Hủy
+                </button>
+                <button type="submit" form="forgotPasswordForm" class="btn btn-primary" id="resetPasswordBtn">
+                        <span class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </span>
+                    <span class="btn-text">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            Gửi yêu cầu
+                        </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/auth.js}"></script>
 
-<script>
-    // Xử lý form đăng nhập
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
+<!-- Initialize -->
+<script th:inline="javascript">
+    // Pass server data to JavaScript
+    window.serverData = {
+        error: /*[[${error}]]*/ null,
+        message: /*[[${message}]]*/ null,
+        username: /*[[${username}]]*/ null
+    };
 
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-
-        if (!username || !password) {
-            alert('Vui lòng nhập đầy đủ thông tin!');
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    username: username,
-                    password: password
-                })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                // Lưu token
-                localStorage.setItem('accessToken', data.accessToken);
-                localStorage.setItem('user', JSON.stringify(data.user));
-
-                // Chuyển hướng theo vai trò
-                const role = data.user.vaiTro;
-                if (role === 'ADMIN') {
-                    window.location.href = '/admin/dashboard';
-                } else if (role === 'GIANGVIEN') {
-                    window.location.href = '/lecturer/dashboard';
-                } else if (role === 'SINHVIEN') {
-                    window.location.href = '/student/dashboard';
-                }
-            } else {
-                alert(data.message || 'Đăng nhập thất bại!');
-            }
-
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Lỗi kết nối server!');
-        }
-    });
-
-    // Kiểm tra đã đăng nhập chưa
-    window.addEventListener('load', function() {
-        const token = localStorage.getItem('accessToken');
-        const user = localStorage.getItem('user');
-
-        if (token && user) {
-            const userData = JSON.parse(user);
-            const role = userData.vaiTro;
-
-            // Redirect nếu đã đăng nhập
-            if (role === 'ADMIN') {
-                window.location.href = '/admin/dashboard';
-            } else if (role === 'GIANGVIEN') {
-                window.location.href = '/lecturer/dashboard';
-            } else if (role === 'SINHVIEN') {
-                window.location.href = '/student/dashboard';
-            }
-        }
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        AuthManager.init();
     });
 </script>
 </body>
