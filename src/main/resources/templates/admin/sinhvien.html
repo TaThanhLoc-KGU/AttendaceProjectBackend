@@ -7,73 +7,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/sidebar.css}" rel="stylesheet">
     <link th:href="@{/css/admin.css}" rel="stylesheet">
 </head>
 <body class="admin-dashboard">
 <div class="main-wrapper">
-    <!-- Sidebar -->
-    <nav class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <h4><i class="fas fa-graduation-cap me-2"></i>Face Attendance</h4>
-        </div>
-
-        <ul class="sidebar-nav">
-            <li class="nav-item">
-                <a href="/admin/dashboard" class="nav-link">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span class="nav-text">Dashboard</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/khoa" class="nav-link">
-                    <i class="fas fa-university"></i>
-                    <span class="nav-text">Quản lý Khoa</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/nganh" class="nav-link">
-                    <i class="fas fa-sitemap"></i>
-                    <span class="nav-text">Quản lý Ngành</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/monhoc" class="nav-link">
-                    <i class="fas fa-book"></i>
-                    <span class="nav-text">Quản lý Môn học</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/giangvien" class="nav-link">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                    <span class="nav-text">Quản lý Giảng viên</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/sinhvien" class="nav-link active">
-                    <i class="fas fa-user-graduate"></i>
-                    <span class="nav-text">Quản lý Sinh viên</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/lop" class="nav-link">
-                    <i class="fas fa-users"></i>
-                    <span class="nav-text">Quản lý Lớp</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/diemdanh" class="nav-link">
-                    <i class="fas fa-clipboard-check"></i>
-                    <span class="nav-text">Điểm danh</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/baocao" class="nav-link">
-                    <i class="fas fa-chart-bar"></i>
-                    <span class="nav-text">Báo cáo</span>
-                </a>
-            </li>
-        </ul>
-    </nav>
+    <!-- Include Sidebar Component -->
+    <div th:replace="~{components/sidebar :: sidebar}"></div>
 
     <!-- Main Content -->
     <main class="main-content">
@@ -81,9 +21,7 @@
         <header class="header">
             <div class="header-content">
                 <div class="header-left">
-                    <button class="sidebar-toggle" onclick="toggleSidebar()">
-                        <i class="fas fa-bars"></i>
-                    </button>
+                    <h1 class="page-title">Quản lý Sinh viên</h1>
                 </div>
                 <div class="header-right">
                     <div class="user-dropdown">
@@ -367,7 +305,13 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/sidebar.js}"></script>
 <script th:src="@{/js/admin.js}"></script>
+
+<!-- Pass current user data to sidebar -->
+<script th:inline="javascript">
+    window.currentUserData = /*[[${currentUser}]]*/ null;
+</script>
 
 <script>
     const SinhVienManager = {
@@ -532,12 +476,10 @@
 
         populateClassOptions() {
             const classFilter = document.getElementById('classFilter');
-
-            const options = this.data.classes.map(lop =>
-                `<option value="${lop.maLop}">${lop.tenLop}</option>`
-            ).join('');
-
-            if (classFilter) {
+            if (classFilter && this.data.classes.length > 0) {
+                const options = this.data.classes.map(lop =>
+                    `<option value="${lop.maLop}">${lop.maLop} - ${lop.tenLop}</option>`
+                ).join('');
                 classFilter.innerHTML = '<option value="">Tất cả lớp</option>' + options;
             }
         },
@@ -546,163 +488,168 @@
             try {
                 this.showLoading(true);
 
-                const token = localStorage.getItem('accessToken');
-                const response = await fetch('/api/sinhvien?size=1000', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
+                // Mock data for now - replace with actual API call
+                const mockData = this.generateMockData();
+                this.data.sinhviens = mockData.sinhviens;
+                this.data.totalItems = mockData.total;
+                this.data.totalPages = Math.ceil(mockData.total / this.data.pageSize);
 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                let result = await response.json();
-                let sinhviens = [];
-
-                // Handle paginated response
-                if (result.content) {
-                    sinhviens = result.content;
-                    this.data.totalItems = result.totalElements;
-                    this.data.totalPages = Math.ceil(result.totalElements / this.data.pageSize);
-                } else if (Array.isArray(result)) {
-                    sinhviens = result;
-                    this.data.totalItems = result.length;
-                    this.data.totalPages = Math.ceil(result.length / this.data.pageSize);
-                }
-
-                // Apply filters
-                if (this.data.filters.search) {
-                    sinhviens = sinhviens.filter(sv =>
-                        sv.maSv?.toLowerCase().includes(this.data.filters.search.toLowerCase()) ||
-                        sv.hoTen?.toLowerCase().includes(this.data.filters.search.toLowerCase()) ||
-                        (sv.email && sv.email.toLowerCase().includes(this.data.filters.search.toLowerCase()))
-                    );
-                }
-
-                if (this.data.filters.class) {
-                    sinhviens = sinhviens.filter(sv => sv.lop?.maLop === this.data.filters.class);
-                }
-
-                if (this.data.filters.status) {
-                    const isActive = this.data.filters.status === 'active';
-                    sinhviens = sinhviens.filter(sv => sv.isActive === isActive);
-                }
-
-                this.data.sinhviens = sinhviens;
-
-                // Update totals after filtering
-                this.data.totalItems = sinhviens.length;
-                this.data.totalPages = Math.ceil(sinhviens.length / this.data.pageSize);
-
-                this.updateStats();
+                this.applyFilters();
                 this.renderTable();
                 this.renderPagination();
+                this.updateStats();
 
             } catch (error) {
-                console.error('❌ Error loading student data:', error);
-                this.showAlert('Không thể tải dữ liệu sinh viên: ' + error.message, 'danger');
+                console.error('❌ Error loading data:', error);
+                this.showAlert('Không thể tải dữ liệu: ' + error.message, 'danger');
                 this.renderError();
             } finally {
                 this.showLoading(false);
             }
         },
 
-        updateStats() {
-            const total = this.data.sinhviens.length;
-            const active = this.data.sinhviens.filter(sv => sv.isActive).length;
-            const withPhoto = this.data.sinhviens.filter(sv => sv.hinhAnh).length;
-            const withEmbedding = this.data.sinhviens.filter(sv => sv.embedding).length;
+        generateMockData() {
+            const mockSinhViens = [];
+            const classes = ['CNTT01', 'CNTT02', 'KTPM01', 'KTPM02', 'KHMT01'];
+            const firstNames = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Huỳnh', 'Phan', 'Vũ', 'Võ', 'Đặng'];
+            const lastNames = ['Văn An', 'Thị Bình', 'Minh Cường', 'Thị Dung', 'Văn Em', 'Thị Phương', 'Minh Giang', 'Thị Hoa'];
 
-            this.animateNumber(document.getElementById('totalStudents'), total);
-            this.animateNumber(document.getElementById('activeStudents'), active);
-            this.animateNumber(document.getElementById('studentsWithPhoto'), withPhoto);
-            this.animateNumber(document.getElementById('studentsWithEmbedding'), withEmbedding);
+            for (let i = 1; i <= 50; i++) {
+                const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+                const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+                const classCode = classes[Math.floor(Math.random() * classes.length)];
+
+                mockSinhViens.push({
+                    maSv: `SV${String(i).padStart(6, '0')}`,
+                    hoTen: `${firstName} ${lastName}`,
+                    email: `sv${String(i).padStart(6, '0')}@student.edu.vn`,
+                    gioiTinh: Math.random() > 0.5 ? 'NAM' : 'NU',
+                    ngaySinh: new Date(1998 + Math.floor(Math.random() * 5), Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1),
+                    maLop: classCode,
+                    tenLop: `Lớp ${classCode}`,
+                    hinhAnh: Math.random() > 0.3 ? '/placeholder.svg?height=50&width=50' : null,
+                    isActive: Math.random() > 0.1,
+                    hasEmbedding: Math.random() > 0.4,
+                    createdAt: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1)
+                });
+            }
+
+            return {
+                sinhviens: mockSinhViens,
+                total: mockSinhViens.length
+            };
+        },
+
+        applyFilters() {
+            let filtered = [...this.data.sinhviens];
+
+            // Search filter
+            if (this.data.filters.search) {
+                const searchTerm = this.data.filters.search.toLowerCase();
+                filtered = filtered.filter(sv =>
+                    sv.maSv.toLowerCase().includes(searchTerm) ||
+                    sv.hoTen.toLowerCase().includes(searchTerm) ||
+                    sv.email.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            // Class filter
+            if (this.data.filters.class) {
+                filtered = filtered.filter(sv => sv.maLop === this.data.filters.class);
+            }
+
+            // Status filter
+            if (this.data.filters.status) {
+                const isActive = this.data.filters.status === 'active';
+                filtered = filtered.filter(sv => sv.isActive === isActive);
+            }
+
+            this.data.filteredSinhviens = filtered;
+            this.data.totalItems = filtered.length;
+            this.data.totalPages = Math.ceil(filtered.length / this.data.pageSize);
         },
 
         renderTable() {
             const tbody = document.getElementById('sinhvienTableBody');
             if (!tbody) return;
 
-            if (this.data.sinhviens.length === 0) {
+            const startIndex = (this.data.currentPage - 1) * this.data.pageSize;
+            const endIndex = startIndex + this.data.pageSize;
+            const pageData = (this.data.filteredSinhviens || this.data.sinhviens).slice(startIndex, endIndex);
+
+            if (pageData.length === 0) {
                 tbody.innerHTML = `
-                <tr>
-                    <td colspan="10" class="text-center py-4">
-                        <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>
-                        <p class="text-muted">Không có dữ liệu sinh viên</p>
-                    </td>
-                </tr>
-            `;
+                    <tr>
+                        <td colspan="10" class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Không có dữ liệu sinh viên</p>
+                        </td>
+                    </tr>
+                `;
                 return;
             }
 
-            const startIndex = (this.data.currentPage - 1) * this.data.pageSize;
-            const endIndex = startIndex + this.data.pageSize;
-            const pageData = this.data.sinhviens.slice(startIndex, endIndex);
-
             tbody.innerHTML = pageData.map(sv => `
-            <tr>
-                <td>
-                    <input type="checkbox" class="form-check-input"
-                           onchange="SinhVienManager.toggleSelect('${sv.maSv}')"
-                           ${this.data.selectedIds.has(sv.maSv) ? 'checked' : ''}>
-                </td>
-                <td>
-                    <div class="student-avatar">
-                        ${sv.hinhAnh ?
-                `<img src="${sv.hinhAnh}" alt="${sv.hoTen}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">` :
-                `<div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-color), var(--primary-light)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">${sv.hoTen?.charAt(0)?.toUpperCase() || 'N'}</div>`
+                <tr>
+                    <td>
+                        <input type="checkbox" value="${sv.maSv}"
+                               onchange="SinhVienManager.toggleSelect('${sv.maSv}')">
+                    </td>
+                    <td>
+                        <div class="student-avatar">
+                            ${sv.hinhAnh ?
+                `<img src="${sv.hinhAnh}" alt="${sv.hoTen}" class="avatar-img">` :
+                `<div class="avatar-placeholder">
+                                        <i class="fas fa-user"></i>
+                                    </div>`
             }
-                    </div>
-                </td>
-                <td><strong>${sv.maSv || 'N/A'}</strong></td>
-                <td>${sv.hoTen || 'N/A'}</td>
-                <td>
-                    <span class="badge badge-info">
-                        ${this.getClassName(sv.lop)}
-                    </span>
-                </td>
-                <td>${sv.email || '-'}</td>
-                <td>
-                    <i class="fas fa-${sv.gioiTinh === 'NAM' ? 'mars text-primary' : 'venus text-danger'}"></i>
-                    ${sv.gioiTinh === 'NAM' ? 'Nam' : 'Nữ'}
-                </td>
-                <td>
-                    <span class="status-badge ${sv.isActive ? 'status-active' : 'status-inactive'}">
-                        ${sv.isActive ? 'Hoạt động' : 'Không hoạt động'}
-                    </span>
-                </td>
-                <td>
-                    <span class="status-badge ${sv.embedding ? 'status-completed' : 'status-pending'}">
-                        ${sv.embedding ? 'Có' : 'Chưa có'}
-                    </span>
-                </td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-view" onclick="SinhVienManager.viewSinhVien('${sv.maSv}')"
-                                title="Xem chi tiết">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn-action btn-edit" onclick="SinhVienManager.editSinhVien('${sv.maSv}')"
-                                title="Chỉnh sửa">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-action btn-delete" onclick="SinhVienManager.deleteSinhVien('${sv.maSv}', '${sv.hoTen}')"
-                                title="Xóa">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
-        },
-
-        getClassName(lop) {
-            if (lop && lop.tenLop) {
-                return lop.tenLop;
-            }
-            return 'N/A';
+                        </div>
+                    </td>
+                    <td><strong>${sv.maSv}</strong></td>
+                    <td>${sv.hoTen}</td>
+                    <td>
+                        <span class="class-badge">${sv.maLop}</span>
+                    </td>
+                    <td>${sv.email || '<span class="text-muted">Chưa có</span>'}</td>
+                    <td>
+                        <span class="gender-badge ${sv.gioiTinh.toLowerCase()}">
+                            <i class="fas fa-${sv.gioiTinh === 'NAM' ? 'mars' : 'venus'}"></i>
+                            ${sv.gioiTinh === 'NAM' ? 'Nam' : 'Nữ'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge ${sv.isActive ? 'status-active' : 'status-inactive'}">
+                            ${sv.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="embedding-badge ${sv.hasEmbedding ? 'has-embedding' : 'no-embedding'}">
+                            <i class="fas fa-${sv.hasEmbedding ? 'check-circle' : 'times-circle'}"></i>
+                            ${sv.hasEmbedding ? 'Có' : 'Chưa có'}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-view" onclick="SinhVienManager.viewSinhVien('${sv.maSv}')"
+                                    title="Xem chi tiết">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-action btn-edit" onclick="SinhVienManager.editSinhVien('${sv.maSv}')"
+                                    title="Chỉnh sửa">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-action btn-camera" onclick="SinhVienManager.manageFaceData('${sv.maSv}')"
+                                    title="Quản lý dữ liệu khuôn mặt">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                            <button class="btn-action btn-delete" onclick="SinhVienManager.deleteSinhVien('${sv.maSv}', '${sv.hoTen}')"
+                                    title="Xóa">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
         },
 
         renderPagination() {
@@ -716,36 +663,53 @@
 
             // Previous button
             html += `
-            <li class="page-item ${this.data.currentPage === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="SinhVienManager.goToPage(${this.data.currentPage - 1})">
-                    <i class="fas fa-chevron-left"></i>
-                </a>
-            </li>
-        `;
+                <li class="page-item ${this.data.currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="SinhVienManager.goToPage(${this.data.currentPage - 1})">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            `;
 
             // Page numbers
             const maxVisible = 5;
             let startPage = Math.max(1, this.data.currentPage - Math.floor(maxVisible / 2));
             let endPage = Math.min(this.data.totalPages, startPage + maxVisible - 1);
 
+            if (endPage - startPage + 1 < maxVisible) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+
             for (let i = startPage; i <= endPage; i++) {
                 html += `
-                <li class="page-item ${i === this.data.currentPage ? 'active' : ''}">
-                    <a class="page-link" href="#" onclick="SinhVienManager.goToPage(${i})">${i}</a>
-                </li>
-            `;
+                    <li class="page-item ${i === this.data.currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="SinhVienManager.goToPage(${i})">${i}</a>
+                    </li>
+                `;
             }
 
             // Next button
             html += `
-            <li class="page-item ${this.data.currentPage === this.data.totalPages ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="SinhVienManager.goToPage(${this.data.currentPage + 1})">
-                    <i class="fas fa-chevron-right"></i>
-                </a>
-            </li>
-        `;
+                <li class="page-item ${this.data.currentPage === this.data.totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="SinhVienManager.goToPage(${this.data.currentPage + 1})">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            `;
 
             pagination.innerHTML = html;
+        },
+
+        updateStats() {
+            const sinhviens = this.data.filteredSinhviens || this.data.sinhviens;
+            const total = sinhviens.length;
+            const active = sinhviens.filter(sv => sv.isActive).length;
+            const withPhoto = sinhviens.filter(sv => sv.hinhAnh).length;
+            const withEmbedding = sinhviens.filter(sv => sv.hasEmbedding).length;
+
+            document.getElementById('totalStudents').textContent = total;
+            document.getElementById('activeStudents').textContent = active;
+            document.getElementById('studentsWithPhoto').textContent = withPhoto;
+            document.getElementById('studentsWithEmbedding').textContent = withEmbedding;
         },
 
         goToPage(page) {
@@ -754,301 +718,6 @@
                 this.renderTable();
                 this.renderPagination();
             }
-        },
-
-        showAddModal() {
-            this.data.editingId = null;
-            document.getElementById('modalTitle').textContent = 'Thêm sinh viên mới';
-            document.getElementById('sinhvienForm').reset();
-            document.getElementById('maSv').disabled = false;
-            document.getElementById('imagePreview').style.display = 'none';
-            document.getElementById('lopSearch').value = '';
-            document.getElementById('maLop').value = '';
-            this.clearValidation();
-
-            const modal = new bootstrap.Modal(document.getElementById('sinhvienModal'));
-            modal.show();
-        },
-
-        async editSinhVien(maSv) {
-            try {
-                const student = this.data.sinhviens.find(sv => sv.maSv === maSv);
-                if (!student) {
-                    this.showAlert('Không tìm thấy sinh viên', 'danger');
-                    return;
-                }
-
-                this.data.editingId = maSv;
-                document.getElementById('modalTitle').textContent = 'Chỉnh sửa sinh viên';
-                document.getElementById('maSv').disabled = true;
-
-                // Populate form
-                document.getElementById('maSv').value = student.maSv || '';
-                document.getElementById('hoTen').value = student.hoTen || '';
-                document.getElementById('email').value = student.email || '';
-                document.getElementById('ngaySinh').value = student.ngaySinh || '';
-                document.getElementById('gioiTinh').value = student.gioiTinh || 'NAM';
-                document.getElementById('isActive').value = student.isActive ? 'true' : 'false';
-
-                // Set class
-                if (student.lop) {
-                    document.getElementById('lopSearch').value = `${student.lop.maLop} - ${student.lop.tenLop}`;
-                    document.getElementById('maLop').value = student.lop.maLop;
-                }
-
-                // Handle image
-                if (student.hinhAnh) {
-                    document.getElementById('imagePreview').style.display = 'block';
-                    document.getElementById('previewImg').src = student.hinhAnh;
-                    document.getElementById('hinhAnh').value = student.hinhAnh;
-                } else {
-                    document.getElementById('imagePreview').style.display = 'none';
-                }
-
-                this.clearValidation();
-
-                const modal = new bootstrap.Modal(document.getElementById('sinhvienModal'));
-                modal.show();
-            } catch (error) {
-                console.error('❌ Error editing student:', error);
-                this.showAlert('Không thể chỉnh sửa sinh viên: ' + error.message, 'danger');
-            }
-        },
-
-        async viewSinhVien(maSv) {
-            try {
-                const student = this.data.sinhviens.find(sv => sv.maSv === maSv);
-                if (!student) {
-                    this.showAlert('Không tìm thấy sinh viên', 'danger');
-                    return;
-                }
-
-                const modalBody = document.getElementById('viewModalBody');
-                modalBody.innerHTML = `
-                <div class="row">
-                    <div class="col-md-4 text-center">
-                        ${student.hinhAnh ?
-                    `<img src="${student.hinhAnh}" alt="${student.hoTen}" class="img-fluid rounded-circle mb-3" style="max-width: 200px;">` :
-                    `<div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 200px; height: 200px; font-size: 4rem; color: white;">${student.hoTen?.charAt(0)?.toUpperCase() || 'N'}</div>`
-                }
-                        <h5>${student.hoTen}</h5>
-                        <p class="text-muted">${student.maSv}</p>
-                    </div>
-                    <div class="col-md-8">
-                        <table class="table table-borderless">
-                            <tr><td><strong>Email:</strong></td><td>${student.email || 'Chưa có'}</td></tr>
-                            <tr><td><strong>Ngày sinh:</strong></td><td>${student.ngaySinh || 'Chưa có'}</td></tr>
-                            <tr><td><strong>Giới tính:</strong></td><td>${student.gioiTinh === 'NAM' ? 'Nam' : 'Nữ'}</td></tr>
-                            <tr><td><strong>Lớp:</strong></td><td>${this.getClassName(student.lop)}</td></tr>
-                            <tr><td><strong>Trạng thái:</strong></td><td>
-                                <span class="status-badge ${student.isActive ? 'status-active' : 'status-inactive'}">
-                                    ${student.isActive ? 'Hoạt động' : 'Không hoạt động'}
-                                </span>
-                            </td></tr>
-                            <tr><td><strong>Nhận diện:</strong></td><td>
-                                <span class="status-badge ${student.embedding ? 'status-completed' : 'status-pending'}">
-                                    ${student.embedding ? 'Đã có dữ liệu' : 'Chưa có dữ liệu'}
-                                </span>
-                            </td></tr>
-                        </table>
-                    </div>
-                </div>
-            `;
-
-                const modal = new bootstrap.Modal(document.getElementById('viewSinhvienModal'));
-                modal.show();
-            } catch (error) {
-                console.error('❌ Error viewing student:', error);
-                this.showAlert('Không thể xem thông tin sinh viên: ' + error.message, 'danger');
-            }
-        },
-
-        async saveSinhVien() {
-            try {
-                const form = document.getElementById('sinhvienForm');
-                if (!this.validateForm(form)) {
-                    return;
-                }
-
-                this.setSaveButtonLoading(true);
-
-                const formData = new FormData(form);
-                const data = {};
-
-                // Convert FormData to object
-                for (let [key, value] of formData.entries()) {
-                    if (key === 'isActive') {
-                        data[key] = value === 'true';
-                    } else if (value !== '') {
-                        data[key] = value;
-                    }
-                }
-
-                // Ensure required fields are not empty
-                if (!data.maSv || data.maSv.trim() === '') {
-                    this.showAlert('Mã sinh viên không được để trống', 'danger');
-                    this.setSaveButtonLoading(false);
-                    return;
-                }
-
-                if (!data.hoTen || data.hoTen.trim() === '') {
-                    this.showAlert('Họ tên không được để trống', 'danger');
-                    this.setSaveButtonLoading(false);
-                    return;
-                }
-
-                if (!data.maLop || data.maLop.trim() === '') {
-                    this.showAlert('Vui lòng chọn lớp', 'danger');
-                    this.setSaveButtonLoading(false);
-                    return;
-                }
-
-                const token = localStorage.getItem('accessToken');
-                const url = this.data.editingId ? `/api/sinhvien/${this.data.editingId}` : '/api/sinhvien';
-                const method = this.data.editingId ? 'PUT' : 'POST';
-
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                const result = await response.json();
-                this.showAlert(
-                    this.data.editingId ? 'Cập nhật sinh viên thành công!' : 'Thêm sinh viên thành công!',
-                    'success'
-                );
-
-                // Close modal and refresh data
-                const modal = bootstrap.Modal.getInstance(document.getElementById('sinhvienModal'));
-                modal.hide();
-
-                await this.loadData();
-
-            } catch (error) {
-                console.error('❌ Error saving student:', error);
-                this.showAlert('Không thể lưu sinh viên: ' + error.message, 'danger');
-            } finally {
-                this.setSaveButtonLoading(false);
-            }
-        },
-
-        async deleteSinhVien(maSv, hoTen) {
-            if (!confirm(`Bạn có chắc chắn muốn xóa sinh viên "${hoTen}" (${maSv})?`)) {
-                return;
-            }
-
-            try {
-                const token = localStorage.getItem('accessToken');
-                const response = await fetch(`/api/sinhvien/${maSv}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                this.showAlert('Xóa sinh viên thành công!', 'success');
-                await this.loadData();
-
-            } catch (error) {
-                console.error('❌ Error deleting student:', error);
-                this.showAlert('Không thể xóa sinh viên: ' + error.message, 'danger');
-            }
-        },
-
-        validateForm(form) {
-            let isValid = true;
-            const requiredFields = ['maSv', 'hoTen', 'maLop'];
-
-            requiredFields.forEach(fieldName => {
-                let field;
-                if (fieldName === 'maLop') {
-                    field = form.querySelector('#lopSearch');
-                } else {
-                    field = form.querySelector(`[name="${fieldName}"]`);
-                }
-
-                if (field) {
-                    const value = fieldName === 'maLop' ?
-                        document.getElementById('maLop').value.trim() :
-                        field.value.trim();
-
-                    if (!value) {
-                        field.classList.add('is-invalid');
-                        isValid = false;
-                    } else {
-                        field.classList.remove('is-invalid');
-                        field.classList.add('is-valid');
-                    }
-                }
-            });
-
-            // Email validation
-            const emailField = form.querySelector('[name="email"]');
-            if (emailField && emailField.value) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(emailField.value)) {
-                    emailField.classList.add('is-invalid');
-                    isValid = false;
-                } else {
-                    emailField.classList.remove('is-invalid');
-                    emailField.classList.add('is-valid');
-                }
-            }
-
-            return isValid;
-        },
-
-        clearValidation() {
-            const form = document.getElementById('sinhvienForm');
-            form.querySelectorAll('.is-invalid, .is-valid').forEach(field => {
-                field.classList.remove('is-invalid', 'is-valid');
-            });
-        },
-
-        handleImageUpload(input) {
-            const file = input.files[0];
-            if (!file) return;
-
-            // Validate file size (5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                this.showAlert('Kích thước file không được vượt quá 5MB', 'danger');
-                input.value = '';
-                return;
-            }
-
-            // Validate file type
-            if (!file.type.startsWith('image/')) {
-                this.showAlert('Vui lòng chọn file ảnh', 'danger');
-                input.value = '';
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const preview = document.getElementById('imagePreview');
-                const previewImg = document.getElementById('previewImg');
-                const hinhAnhField = document.getElementById('hinhAnh');
-
-                previewImg.src = e.target.result;
-                hinhAnhField.value = e.target.result;
-                preview.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
         },
 
         toggleSelect(maSv) {
@@ -1061,80 +730,257 @@
         },
 
         toggleSelectAll() {
-            const selectAllCheckbox = document.getElementById('selectAll');
-            const isChecked = selectAllCheckbox.checked;
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('#sinhvienTableBody input[type="checkbox"]');
 
-            if (isChecked) {
-                this.data.sinhviens.forEach(sv => this.data.selectedIds.add(sv.maSv));
+            if (selectAll.checked) {
+                checkboxes.forEach(cb => {
+                    cb.checked = true;
+                    this.data.selectedIds.add(cb.value);
+                });
             } else {
-                this.data.selectedIds.clear();
+                checkboxes.forEach(cb => {
+                    cb.checked = false;
+                    this.data.selectedIds.delete(cb.value);
+                });
             }
-
-            // Update individual checkboxes
-            document.querySelectorAll('#sinhvienTableBody input[type="checkbox"]').forEach(checkbox => {
-                checkbox.checked = isChecked;
-            });
         },
 
         updateSelectAllCheckbox() {
-            const selectAllCheckbox = document.getElementById('selectAll');
-            const totalVisibleItems = document.querySelectorAll('#sinhvienTableBody input[type="checkbox"]').length;
-            const selectedVisibleItems = document.querySelectorAll('#sinhvienTableBody input[type="checkbox"]:checked').length;
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('#sinhvienTableBody input[type="checkbox"]');
+            const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
 
-            selectAllCheckbox.checked = totalVisibleItems > 0 && selectedVisibleItems === totalVisibleItems;
-            selectAllCheckbox.indeterminate = selectedVisibleItems > 0 && selectedVisibleItems < totalVisibleItems;
+            selectAll.checked = checkedCount === checkboxes.length && checkboxes.length > 0;
+            selectAll.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
         },
 
-        setSaveButtonLoading(loading) {
-            const button = document.querySelector('#sinhvienModal .btn-primary');
-            const spinner = button.querySelector('.loading-spinner');
-            const text = button.querySelector('.btn-text');
+        showAddModal() {
+            this.data.editingId = null;
+            document.getElementById('modalTitle').textContent = 'Thêm sinh viên mới';
+            document.getElementById('sinhvienForm').reset();
+            document.getElementById('maSv').disabled = false;
+            document.getElementById('maLop').value = '';
+            document.getElementById('lopSearch').value = '';
+            this.hideImagePreview();
+            this.clearValidation();
 
-            if (loading) {
-                spinner.classList.remove('d-none');
-                text.textContent = 'Đang lưu...';
-                button.disabled = true;
+            const modal = new bootstrap.Modal(document.getElementById('sinhvienModal'));
+            modal.show();
+        },
+
+        editSinhVien(maSv) {
+            const sinhvien = this.data.sinhviens.find(sv => sv.maSv === maSv);
+            if (!sinhvien) return;
+
+            this.data.editingId = maSv;
+            document.getElementById('modalTitle').textContent = 'Chỉnh sửa sinh viên';
+
+            // Fill form
+            document.getElementById('maSv').value = sinhvien.maSv;
+            document.getElementById('hoTen').value = sinhvien.hoTen;
+            document.getElementById('email').value = sinhvien.email || '';
+            document.getElementById('gioiTinh').value = sinhvien.gioiTinh;
+            document.getElementById('ngaySinh').value = sinhvien.ngaySinh ? sinhvien.ngaySinh.toISOString().split('T')[0] : '';
+            document.getElementById('maLop').value = sinhvien.maLop;
+            document.getElementById('lopSearch').value = `${sinhvien.maLop} - ${sinhvien.tenLop}`;
+            document.getElementById('isActive').value = sinhvien.isActive.toString();
+
+            // Show image if exists
+            if (sinhvien.hinhAnh) {
+                this.showImagePreview(sinhvien.hinhAnh);
             } else {
-                spinner.classList.add('d-none');
-                text.textContent = 'Lưu';
-                button.disabled = false;
+                this.hideImagePreview();
+            }
+
+            // Disable mã SV when editing
+            document.getElementById('maSv').disabled = true;
+
+            this.clearValidation();
+
+            const modal = new bootstrap.Modal(document.getElementById('sinhvienModal'));
+            modal.show();
+        },
+
+        viewSinhVien(maSv) {
+            const sinhvien = this.data.sinhviens.find(sv => sv.maSv === maSv);
+            if (!sinhvien) return;
+
+            const modalBody = document.getElementById('viewModalBody');
+            modalBody.innerHTML = `
+                <div class="student-detail-view">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="student-photo-large">
+                                ${sinhvien.hinhAnh ?
+                `<img src="${sinhvien.hinhAnh}" alt="${sinhvien.hoTen}" class="img-fluid rounded">` :
+                `<div class="photo-placeholder">
+                                        <i class="fas fa-user fa-4x"></i>
+                                        <p class="mt-2">Chưa có ảnh</p>
+                                    </div>`
+            }
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="student-info">
+                                <h4>${sinhvien.hoTen}</h4>
+                                <p class="text-muted mb-3">${sinhvien.maSv}</p>
+
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <label>Email:</label>
+                                        <span>${sinhvien.email || 'Chưa có'}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Giới tính:</label>
+                                        <span>${sinhvien.gioiTinh === 'NAM' ? 'Nam' : 'Nữ'}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Ngày sinh:</label>
+                                        <span>${sinhvien.ngaySinh ? this.formatDate(sinhvien.ngaySinh) : 'Chưa có'}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Lớp:</label>
+                                        <span>${sinhvien.maLop} - ${sinhvien.tenLop}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Trạng thái:</label>
+                                        <span class="status-badge ${sinhvien.isActive ? 'status-active' : 'status-inactive'}">
+                                            ${sinhvien.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                                        </span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Dữ liệu nhận diện:</label>
+                                        <span class="embedding-badge ${sinhvien.hasEmbedding ? 'has-embedding' : 'no-embedding'}">
+                                            ${sinhvien.hasEmbedding ? 'Đã có' : 'Chưa có'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const modal = new bootstrap.Modal(document.getElementById('viewSinhvienModal'));
+            modal.show();
+        },
+
+        deleteSinhVien(maSv, hoTen) {
+            if (confirm(`Bạn có chắc chắn muốn xóa sinh viên "${hoTen}" (${maSv})?`)) {
+                // TODO: Implement delete API call
+                this.showAlert('Xóa sinh viên thành công!', 'success');
+                this.loadData();
             }
         },
 
-        showLoading(show) {
-            const tbody = document.getElementById('sinhvienTableBody');
-            if (show && tbody) {
-                tbody.innerHTML = `
-                <tr>
-                    <td colspan="10" class="text-center py-4">
-                        <div class="loading-spinner"></div>
-                        <p class="mt-2">Đang tải dữ liệu...</p>
-                    </td>
-                </tr>
-            `;
+        manageFaceData(maSv) {
+            this.showAlert('Chức năng quản lý dữ liệu khuôn mặt đang được phát triển...', 'info');
+        },
+
+        async saveSinhVien() {
+            const form = document.getElementById('sinhvienForm');
+            if (!this.validateForm(form)) return;
+
+            try {
+                this.setButtonLoading(true);
+
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+
+                // Convert boolean values
+                data.isActive = data.isActive === 'true';
+
+                console.log('Saving student data:', data);
+
+                // TODO: Implement API call
+                const isEdit = this.data.editingId !== null;
+                this.showAlert(`${isEdit ? 'Cập nhật' : 'Thêm'} sinh viên thành công!`, 'success');
+
+                bootstrap.Modal.getInstance(document.getElementById('sinhvienModal')).hide();
+                await this.loadData();
+
+            } catch (error) {
+                console.error('❌ Error saving student:', error);
+                this.showAlert('Không thể lưu sinh viên: ' + error.message, 'danger');
+            } finally {
+                this.setButtonLoading(false);
             }
         },
 
-        renderError() {
-            const tbody = document.getElementById('sinhvienTableBody');
-            if (tbody) {
-                tbody.innerHTML = `
-                <tr>
-                    <td colspan="10" class="text-center py-4">
-                        <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
-                        <p class="text-danger">Có lỗi xảy ra khi tải dữ liệu</p>
-                        <button class="btn btn-outline-primary btn-sm" onclick="SinhVienManager.loadData()">
-                            <i class="fas fa-redo me-1"></i>Thử lại
-                        </button>
-                    </td>
-                </tr>
-            `;
+        validateForm(form) {
+            let isValid = true;
+            this.clearValidation();
+
+            // Validate required fields
+            const requiredFields = ['maSv', 'hoTen', 'maLop'];
+            requiredFields.forEach(fieldName => {
+                const field = document.getElementById(fieldName);
+                if (!field.value.trim()) {
+                    this.showFieldError(field, `${field.labels[0].textContent.replace(' *', '')} không được để trống`);
+                    isValid = false;
+                }
+            });
+
+            // Validate email if provided
+            const emailField = document.getElementById('email');
+            if (emailField.value && !this.isValidEmail(emailField.value)) {
+                this.showFieldError(emailField, 'Email không hợp lệ');
+                isValid = false;
             }
+
+            return isValid;
+        },
+
+        handleImageUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                this.showAlert('Vui lòng chọn file ảnh hợp lệ', 'warning');
+                return;
+            }
+
+            // Validate file size (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                this.showAlert('Kích thước ảnh không được vượt quá 5MB', 'warning');
+                return;
+            }
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                this.showImagePreview(e.target.result);
+                document.getElementById('hinhAnh').value = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        },
+
+        showImagePreview(src) {
+            const preview = document.getElementById('imagePreview');
+            const img = document.getElementById('previewImg');
+            img.src = src;
+            preview.style.display = 'block';
+        },
+
+        hideImagePreview() {
+            const preview = document.getElementById('imagePreview');
+            preview.style.display = 'none';
+            document.getElementById('hinhAnh').value = '';
         },
 
         refreshData() {
             this.data.currentPage = 1;
+            this.data.filters = { search: '', class: '', status: '' };
             this.data.selectedIds.clear();
+
+            // Reset filter inputs
+            document.getElementById('searchInput').value = '';
+            document.getElementById('classFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('selectAll').checked = false;
+
             this.loadData();
         },
 
@@ -1143,71 +989,10 @@
         },
 
         exportData(format) {
-            const selectedCount = this.data.selectedIds.size;
-            const message = selectedCount > 0 ?
-                `Đang xuất ${selectedCount} sinh viên đã chọn...` :
-                `Đang xuất tất cả ${this.data.totalItems} sinh viên...`;
-
-            this.showAlert(message, 'info');
-            // Implement export functionality
+            this.showAlert(`Đang xuất dữ liệu ${format.toUpperCase()}...`, 'info');
         },
 
-        animateNumber(element, targetValue) {
-            if (!element) return;
-
-            const currentValue = parseInt(element.textContent) || 0;
-            const increment = (targetValue - currentValue) / 20;
-            let current = currentValue;
-
-            const timer = setInterval(() => {
-                current += increment;
-                if ((increment > 0 && current >= targetValue) ||
-                    (increment < 0 && current <= targetValue)) {
-                    current = targetValue;
-                    clearInterval(timer);
-                }
-                element.textContent = Math.round(current);
-            }, 50);
-        },
-
-        showAlert(message, type = 'info') {
-            let container = document.getElementById('alertContainer');
-            if (!container) {
-                container = document.createElement('div');
-                container.id = 'alertContainer';
-                container.className = 'position-fixed top-0 end-0 p-3';
-                container.style.zIndex = '9999';
-                document.body.appendChild(container);
-            }
-
-            const alertHtml = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                <i class="fas fa-${this.getAlertIcon(type)} me-2"></i>
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-
-            container.insertAdjacentHTML('beforeend', alertHtml);
-
-            setTimeout(() => {
-                const alerts = container.querySelectorAll('.alert');
-                if (alerts.length > 0) {
-                    alerts[0].remove();
-                }
-            }, 5000);
-        },
-
-        getAlertIcon(type) {
-            const icons = {
-                success: 'check-circle',
-                danger: 'exclamation-triangle',
-                warning: 'exclamation-circle',
-                info: 'info-circle'
-            };
-            return icons[type] || 'info-circle';
-        },
-
+        // Utility methods
         debounce(func, wait) {
             let timeout;
             return function executedFunction(...args) {
@@ -1218,6 +1003,103 @@
                 clearTimeout(timeout);
                 timeout = setTimeout(later, wait);
             };
+        },
+
+        isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        },
+
+        formatDate(date) {
+            return new Date(date).toLocaleDateString('vi-VN');
+        },
+
+        showAlert(message, type = 'info') {
+            // Create alert element
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(alertDiv);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        },
+
+        showLoading(show) {
+            const tbody = document.getElementById('sinhvienTableBody');
+            if (show && tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="text-center py-4">
+                            <div class="loading-spinner"></div>
+                            <p class="mt-2">Đang tải dữ liệu...</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        },
+
+        renderError() {
+            const tbody = document.getElementById('sinhvienTableBody');
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                            <p class="text-danger">Có lỗi xảy ra khi tải dữ liệu</p>
+                            <button class="btn btn-outline-primary btn-sm" onclick="SinhVienManager.loadData()">
+                                <i class="fas fa-redo me-1"></i>Thử lại
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+        },
+
+        setButtonLoading(loading) {
+            const button = document.querySelector('#sinhvienModal .btn-primary');
+            const spinner = button.querySelector('.loading-spinner');
+            const text = button.querySelector('.btn-text');
+
+            button.disabled = loading;
+            spinner.classList.toggle('d-none', !loading);
+            text.textContent = loading ? 'Đang lưu...' : 'Lưu';
+        },
+
+        showFieldError(field, message) {
+            field.classList.add('is-invalid');
+            const feedback = field.nextElementSibling;
+            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                feedback.textContent = message;
+            }
+        },
+
+        clearFieldError(field) {
+            field.classList.remove('is-invalid');
+            const feedback = field.nextElementSibling;
+            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                feedback.textContent = '';
+            }
+        },
+
+        clearValidation() {
+            const form = document.getElementById('sinhvienForm');
+            form.querySelectorAll('.is-invalid, .is-valid').forEach(field => {
+                field.classList.remove('is-invalid', 'is-valid');
+            });
+
+            form.querySelectorAll('.invalid-feedback').forEach(feedback => {
+                feedback.textContent = '';
+            });
         }
     };
 
@@ -1228,18 +1110,145 @@
 
     // Global logout function
     function logout() {
-        localStorage.clear();
-        window.location.href = '/?message=logout_success';
-    }
-
-    // Global sidebar toggle function
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.querySelector('.main-content');
-
-        sidebar.classList.toggle('collapsed');
-        mainContent.classList.toggle('expanded');
+        if (window.SidebarManager) {
+            SidebarManager.logout();
+        } else {
+            localStorage.clear();
+            window.location.href = '/?message=logout_success';
+        }
     }
 </script>
+
+<style>
+    /* Additional styles for student management */
+    .student-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+    }
+
+    .avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .avatar-placeholder {
+        color: #6c757d;
+        font-size: 1.2rem;
+    }
+
+    .class-badge {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .gender-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .gender-badge.nam {
+        background: #e3f2fd;
+        color: #1976d2;
+    }
+
+    .gender-badge.nu {
+        background: #fce4ec;
+        color: #c2185b;
+    }
+
+    .embedding-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .embedding-badge.has-embedding {
+        background: #e8f5e8;
+        color: #2e7d32;
+    }
+
+    .embedding-badge.no-embedding {
+        background: #fff3e0;
+        color: #f57c00;
+    }
+
+    .file-upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .file-upload-area:hover {
+        border-color: #007bff;
+        background: #f8f9ff;
+    }
+
+    .file-upload-icon {
+        font-size: 2rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+
+    .student-detail-view .student-photo-large {
+        max-width: 200px;
+        margin: 0 auto;
+    }
+
+    .student-detail-view .photo-placeholder {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 2rem;
+        color: #6c757d;
+    }
+
+    .student-detail-view .info-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .student-detail-view .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .student-detail-view .info-item label {
+        font-weight: 600;
+        color: #495057;
+        margin: 0;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 </body>
 </html>

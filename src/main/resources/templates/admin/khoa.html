@@ -11,73 +11,13 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/sidebar.css}" rel="stylesheet">
     <link th:href="@{/css/admin.css}" rel="stylesheet">
 </head>
 <body class="admin-dashboard">
 <div class="main-wrapper">
-    <!-- Sidebar -->
-    <nav class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <h4><i class="fas fa-graduation-cap me-2"></i>Face Attendance</h4>
-        </div>
-
-        <ul class="sidebar-nav">
-            <li class="nav-item">
-                <a href="/admin/dashboard" class="nav-link">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span class="nav-text">Dashboard</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/khoa" class="nav-link active">
-                    <i class="fas fa-university"></i>
-                    <span class="nav-text">Quản lý Khoa</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/nganh" class="nav-link">
-                    <i class="fas fa-sitemap"></i>
-                    <span class="nav-text">Quản lý Ngành</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/monhoc" class="nav-link">
-                    <i class="fas fa-book"></i>
-                    <span class="nav-text">Quản lý Môn học</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/giangvien" class="nav-link">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                    <span class="nav-text">Quản lý Giảng viên</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/sinhvien" class="nav-link">
-                    <i class="fas fa-user-graduate"></i>
-                    <span class="nav-text">Quản lý Sinh viên</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/lop" class="nav-link">
-                    <i class="fas fa-users"></i>
-                    <span class="nav-text">Quản lý Lớp</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/camera" class="nav-link">
-                    <i class="fas fa-video"></i>
-                    <span class="nav-text">Quản lý Camera</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/diemdanh" class="nav-link">
-                    <i class="fas fa-clipboard-check"></i>
-                    <span class="nav-text">Báo cáo Điểm danh</span>
-                </a>
-            </li>
-        </ul>
-    </nav>
+    <!-- Include Sidebar Component -->
+    <div th:replace="~{components/sidebar :: sidebar}"></div>
 
     <!-- Main Content -->
     <main class="main-content" id="mainContent">
@@ -85,9 +25,6 @@
         <header class="header">
             <div class="header-content">
                 <div class="header-left">
-                    <button class="sidebar-toggle" id="sidebarToggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
                     <h1 class="page-title">Quản lý Khoa</h1>
                 </div>
 
@@ -206,8 +143,6 @@
             </div>
             <div class="modal-body">
                 <form id="khoaForm" novalidate>
-                    <input type="hidden" id="khoaId" name="maKhoa">
-
                     <div class="form-group">
                         <label for="maKhoa" class="form-label">Mã khoa <span class="text-danger">*</span></label>
                         <input type="text" class="form-control-admin" id="maKhoa" name="maKhoa" required>
@@ -265,6 +200,12 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/sidebar.js}"></script>
+
+<!-- Pass current user data to sidebar -->
+<script th:inline="javascript">
+    window.currentUserData = /*[[${currentUser}]]*/ null;
+</script>
 
 <!-- Khoa Management Script -->
 <script>
@@ -291,66 +232,59 @@
         },
 
         bindEvents() {
-            // Search input
-            document.getElementById('searchInput').addEventListener('input', (e) => {
-                this.data.filters.search = e.target.value;
-                this.debounce(() => this.loadData(), 500)();
-            });
+            // Search input with debounce using Common.utils.debounce
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', Common.utils.debounce((e) => {
+                    this.data.filters.search = e.target.value;
+                    this.loadData();
+                }, 500));
+            }
 
             // Status filter
-            document.getElementById('statusFilter').addEventListener('change', (e) => {
-                this.data.filters.status = e.target.value;
-                this.loadData();
-            });
-
-            // Sidebar toggle
-            document.getElementById('sidebarToggle')?.addEventListener('click', () => {
-                document.getElementById('sidebar').classList.toggle('collapsed');
-                document.getElementById('mainContent').classList.toggle('expanded');
-            });
+            const statusFilter = document.getElementById('statusFilter');
+            if (statusFilter) {
+                statusFilter.addEventListener('change', (e) => {
+                    this.data.filters.status = e.target.value;
+                    this.loadData();
+                });
+            }
         },
 
         async loadData() {
             try {
                 this.showLoading(true);
 
-                const token = localStorage.getItem('accessToken');
-                const response = await fetch('/api/khoa', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                let khoas = await response.json();
+                // Use Common.api for API calls
+                const khoas = await Common.api.get('/khoa');
+                console.log('Loaded khoas:', khoas);
 
                 // Apply filters
+                let filteredKhoas = [...khoas];
+
                 if (this.data.filters.search) {
-                    khoas = khoas.filter(khoa =>
-                        khoa.maKhoa.toLowerCase().includes(this.data.filters.search.toLowerCase()) ||
-                        khoa.tenKhoa.toLowerCase().includes(this.data.filters.search.toLowerCase())
+                    const searchTerm = this.data.filters.search.toLowerCase();
+                    filteredKhoas = filteredKhoas.filter(khoa =>
+                        khoa.maKhoa.toLowerCase().includes(searchTerm) ||
+                        khoa.tenKhoa.toLowerCase().includes(searchTerm)
                     );
                 }
 
                 if (this.data.filters.status) {
                     const isActive = this.data.filters.status === 'active';
-                    khoas = khoas.filter(khoa => khoa.isActive === isActive);
+                    filteredKhoas = filteredKhoas.filter(khoa => khoa.isActive === isActive);
                 }
 
-                this.data.khoas = khoas;
-                this.data.totalItems = khoas.length;
-                this.data.totalPages = Math.ceil(khoas.length / this.data.pageSize);
+                this.data.khoas = filteredKhoas;
+                this.data.totalItems = filteredKhoas.length;
+                this.data.totalPages = Math.ceil(filteredKhoas.length / this.data.pageSize);
 
                 this.renderTable();
                 this.renderPagination();
 
             } catch (error) {
                 console.error('❌ Error loading khoa data:', error);
-                this.showAlert('Không thể tải dữ liệu khoa: ' + error.message, 'danger');
+                Common.ui.showAlert('Không thể tải dữ liệu khoa: ' + error.message, 'danger');
                 this.renderError();
             } finally {
                 this.showLoading(false);
@@ -380,15 +314,15 @@
             tbody.innerHTML = pageData.map(khoa => `
             <tr>
                 <td>
-                    <strong>${khoa.maKhoa}</strong>
+                    <strong>${Common.utils.sanitizeHtml(khoa.maKhoa)}</strong>
                 </td>
-                <td>${khoa.tenKhoa}</td>
+                <td>${Common.utils.sanitizeHtml(khoa.tenKhoa)}</td>
                 <td>
                     <span class="status-badge ${khoa.isActive ? 'status-active' : 'status-inactive'}">
                         ${khoa.isActive ? 'Hoạt động' : 'Không hoạt động'}
                     </span>
                 </td>
-                <td>${this.formatDate(new Date())}</td>
+                <td>${Common.utils.formatDate(new Date())}</td>
                 <td>
                     <div class="action-buttons">
                         <button class="btn-action btn-view" onclick="KhoaManager.viewKhoa('${khoa.maKhoa}')"
@@ -399,7 +333,7 @@
                                 title="Chỉnh sửa">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn-action btn-delete" onclick="KhoaManager.deleteKhoa('${khoa.maKhoa}', '${khoa.tenKhoa}')"
+                        <button class="btn-action btn-delete" onclick="KhoaManager.deleteKhoa('${khoa.maKhoa}', '${Common.utils.sanitizeHtml(khoa.tenKhoa)}')"
                                 title="Xóa">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -500,7 +434,6 @@
             document.getElementById('modalTitle').textContent = 'Chỉnh sửa khoa';
 
             // Fill form
-            document.getElementById('khoaId').value = khoa.maKhoa;
             document.getElementById('maKhoa').value = khoa.maKhoa;
             document.getElementById('tenKhoa').value = khoa.tenKhoa;
             document.getElementById('isActive').value = khoa.isActive.toString();
@@ -518,7 +451,7 @@
             const khoa = this.data.khoas.find(k => k.maKhoa === maKhoa);
             if (!khoa) return;
 
-            this.showAlert(`Thông tin khoa: ${khoa.tenKhoa} (${khoa.maKhoa})`, 'info');
+            Common.ui.showAlert(`Thông tin khoa: ${khoa.tenKhoa} (${khoa.maKhoa})`, 'info');
         },
 
         deleteKhoa(maKhoa, tenKhoa) {
@@ -533,108 +466,104 @@
             if (!this.data.editingId) return;
 
             try {
-                const token = localStorage.getItem('accessToken');
-                const response = await fetch(`/api/khoa/${this.data.editingId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+                await Common.api.delete(`/khoa/${this.data.editingId}`);
 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                this.showAlert('Xóa khoa thành công!', 'success');
+                Common.ui.showAlert('Xóa khoa thành công!', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
                 await this.loadData();
 
             } catch (error) {
                 console.error('❌ Error deleting khoa:', error);
-                this.showAlert('Không thể xóa khoa: ' + error.message, 'danger');
+                Common.ui.showAlert('Không thể xóa khoa: ' + error.message, 'danger');
             }
         },
 
         async saveKhoa() {
-            if (!this.validateForm()) return;
-
             const form = document.getElementById('khoaForm');
-            const formData = new FormData(form);
-            const data = {
-                maKhoa: formData.get('maKhoa'),
-                tenKhoa: formData.get('tenKhoa'),
-                isActive: formData.get('isActive') === 'true'
-            };
+            if (!this.validateForm(form)) return;
 
             try {
                 this.setButtonLoading(true);
 
-                const token = localStorage.getItem('accessToken');
+                // Get form data properly - handle disabled fields
+                const maKhoaValue = document.getElementById('maKhoa').value || '';
+                const tenKhoaValue = document.getElementById('tenKhoa').value || '';
+                const isActiveValue = document.getElementById('isActive').value;
+
+                const data = {
+                    maKhoa: maKhoaValue.trim(),
+                    tenKhoa: tenKhoaValue.trim(),
+                    isActive: isActiveValue === 'true'
+                };
+
+                console.log('Saving khoa data:', data);
+
                 const isEdit = this.data.editingId !== null;
-                const url = isEdit ? `/api/khoa/${this.data.editingId}` : '/api/khoa';
-                const method = isEdit ? 'PUT' : 'POST';
+                let result;
 
-                const response = await fetch(url, {
-                    method,
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                if (isEdit) {
+                    result = await Common.api.put(`/khoa/${this.data.editingId}`, data);
+                } else {
+                    result = await Common.api.post('/khoa', data);
                 }
 
-                this.showAlert(`${isEdit ? 'Cập nhật' : 'Thêm'} khoa thành công!`, 'success');
+                console.log('Save result:', result);
+
+                Common.ui.showAlert(`${isEdit ? 'Cập nhật' : 'Thêm'} khoa thành công!`, 'success');
                 bootstrap.Modal.getInstance(document.getElementById('khoaModal')).hide();
                 await this.loadData();
 
             } catch (error) {
                 console.error('❌ Error saving khoa:', error);
-                this.showAlert('Không thể lưu khoa: ' + error.message, 'danger');
+                Common.ui.showAlert('Không thể lưu khoa: ' + error.message, 'danger');
             } finally {
                 this.setButtonLoading(false);
             }
         },
 
-        validateForm() {
-            const form = document.getElementById('khoaForm');
+        validateForm(form) {
             let isValid = true;
 
-            // Validate mã khoa
+            // Clear previous validation
+            this.clearValidation();
+
+            // Validate mã khoa - get value directly from element
             const maKhoa = document.getElementById('maKhoa');
-            if (!maKhoa.value.trim()) {
+            const maKhoaValue = (maKhoa.value || '').trim();
+            if (!maKhoaValue) {
                 this.showFieldError(maKhoa, 'Mã khoa không được để trống');
                 isValid = false;
-            } else if (!/^[A-Z0-9]+$/.test(maKhoa.value.trim())) {
+            } else if (!/^[A-Z0-9]+$/.test(maKhoaValue)) {
                 this.showFieldError(maKhoa, 'Mã khoa chỉ được chứa chữ hoa và số');
                 isValid = false;
-            } else {
-                this.clearFieldError(maKhoa);
+            } else if (maKhoaValue.length < 2 || maKhoaValue.length > 10) {
+                this.showFieldError(maKhoa, 'Mã khoa phải từ 2-10 ký tự');
+                isValid = false;
             }
 
-            // Validate tên khoa
+            // Validate tên khoa - get value directly from element
             const tenKhoa = document.getElementById('tenKhoa');
-            if (!tenKhoa.value.trim()) {
+            const tenKhoaValue = (tenKhoa.value || '').trim();
+            if (!tenKhoaValue) {
                 this.showFieldError(tenKhoa, 'Tên khoa không được để trống');
                 isValid = false;
-            } else if (tenKhoa.value.trim().length < 3) {
+            } else if (tenKhoaValue.length < 3) {
                 this.showFieldError(tenKhoa, 'Tên khoa phải có ít nhất 3 ký tự');
                 isValid = false;
-            } else {
-                this.clearFieldError(tenKhoa);
+            } else if (tenKhoaValue.length > 100) {
+                this.showFieldError(tenKhoa, 'Tên khoa không được quá 100 ký tự');
+                isValid = false;
             }
 
             return isValid;
         },
 
         setupValidation() {
-            const inputs = document.querySelectorAll('#khoaForm input');
+            const form = document.getElementById('khoaForm');
+            const inputs = form.querySelectorAll('input[required]');
+
             inputs.forEach(input => {
-                input.addEventListener('blur', () => this.validateForm());
+                input.addEventListener('blur', () => this.validateForm(form));
                 input.addEventListener('input', () => this.clearFieldError(input));
             });
         },
@@ -656,11 +585,13 @@
         },
 
         clearValidation() {
-            document.querySelectorAll('#khoaForm .is-invalid').forEach(el => {
-                el.classList.remove('is-invalid');
+            const form = document.getElementById('khoaForm');
+            form.querySelectorAll('.is-invalid, .is-valid').forEach(field => {
+                field.classList.remove('is-invalid', 'is-valid');
             });
-            document.querySelectorAll('#khoaForm .invalid-feedback').forEach(el => {
-                el.textContent = '';
+
+            form.querySelectorAll('.invalid-feedback').forEach(feedback => {
+                feedback.textContent = '';
             });
         },
 
@@ -676,7 +607,7 @@
 
         showLoading(show) {
             const tbody = document.getElementById('khoaTableBody');
-            if (show) {
+            if (show && tbody) {
                 tbody.innerHTML = `
                 <tr>
                     <td colspan="5" class="text-center py-4">
@@ -690,80 +621,43 @@
 
         refreshData() {
             this.data.currentPage = 1;
+            this.data.filters.search = '';
+            this.data.filters.status = '';
+
+            // Reset filter inputs
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = '';
+
             this.loadData();
         },
 
         exportData(format) {
-            this.showAlert(`Đang xuất dữ liệu ${format.toUpperCase()}...`, 'info');
-            // Implement export functionality
-        },
-
-        formatDate(date) {
-            return date.toLocaleDateString('vi-VN');
-        },
-
-        showAlert(message, type = 'info') {
-            // Create alert container if not exists
-            let container = document.getElementById('alertContainer');
-            if (!container) {
-                container = document.createElement('div');
-                container.id = 'alertContainer';
-                container.className = 'position-fixed top-0 end-0 p-3';
-                container.style.zIndex = '9999';
-                document.body.appendChild(container);
-            }
-
-            const alertHtml = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                <i class="fas fa-${this.getAlertIcon(type)} me-2"></i>
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-
-            container.insertAdjacentHTML('beforeend', alertHtml);
-
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                const alerts = container.querySelectorAll('.alert');
-                if (alerts.length > 0) {
-                    alerts[0].remove();
-                }
-            }, 5000);
-        },
-
-        getAlertIcon(type) {
-            const icons = {
-                success: 'check-circle',
-                danger: 'exclamation-triangle',
-                warning: 'exclamation-circle',
-                info: 'info-circle'
-            };
-            return icons[type] || 'info-circle';
-        },
-
-        debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
+            Common.ui.showAlert(`Đang xuất dữ liệu ${format.toUpperCase()}...`, 'info');
+            // TODO: Implement export functionality
         }
     };
 
     // Initialize when DOM is ready
     document.addEventListener('DOMContentLoaded', () => {
-        KhoaManager.init();
+        // Wait for Common to be loaded
+        if (window.Common) {
+            KhoaManager.init();
+        } else {
+            // Wait for common.js to load
+            setTimeout(() => {
+                KhoaManager.init();
+            }, 100);
+        }
     });
 
     // Global logout function
     function logout() {
-        localStorage.clear();
-        window.location.href = '/?message=logout_success';
+        if (window.SidebarManager) {
+            SidebarManager.logout();
+        } else {
+            localStorage.clear();
+            window.location.href = '/?message=logout_success';
+        }
     }
 </script>
 </body>

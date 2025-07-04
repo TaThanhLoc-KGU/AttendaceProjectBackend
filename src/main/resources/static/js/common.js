@@ -5,7 +5,7 @@
  * ========================================
  */
 
-const Common = {
+let Common = {
     // Cấu hình chung
     config: {
         apiBaseUrl: '/api',

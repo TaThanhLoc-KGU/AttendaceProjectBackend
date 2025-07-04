@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+
+<!-- Dynamic Sidebar Component -->
+<nav class="sidebar" id="sidebar" th:fragment="sidebar">
+    <!-- Sidebar Header -->
+    <div class="sidebar-header">
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="brand-text">
+                <h4>Face Attendance</h4>
+                <span class="brand-subtitle">Hệ thống điểm danh</span>
+            </div>
+        </div>
+        <button class="sidebar-close" id="sidebarClose">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- User Info Section -->
+    <div class="sidebar-user" id="sidebarUser">
+        <div class="user-avatar" id="userAvatar">
+            <span id="userInitial">U</span>
+        </div>
+        <div class="user-info">
+            <h6 id="userName">Loading...</h6>
+            <p id="userRole">...</p>
+        </div>
+        <div class="user-status">
+            <span class="status-indicator online"></span>
+        </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <div class="sidebar-content">
+        <ul class="sidebar-nav" id="sidebarNav">
+            <!-- Menu items will be populated by JavaScript -->
+            <li class="nav-item loading">
+                <div class="nav-link">
+                    <div class="loading-skeleton">
+                        <div class="skeleton-icon"></div>
+                        <div class="skeleton-text"></div>
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item loading">
+                <div class="nav-link">
+                    <div class="loading-skeleton">
+                        <div class="skeleton-icon"></div>
+                        <div class="skeleton-text"></div>
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item loading">
+                <div class="nav-link">
+                    <div class="loading-skeleton">
+                        <div class="skeleton-icon"></div>
+                        <div class="skeleton-text"></div>
+                    </div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+        <div class="footer-actions">
+            <button class="footer-btn" onclick="SidebarManager.toggleTheme()" title="Chuyển đổi theme">
+                <i class="fas fa-moon" id="themeIcon"></i>
+            </button>
+            <button class="footer-btn" onclick="SidebarManager.showSettings()" title="Cài đặt">
+                <i class="fas fa-cog"></i>
+            </button>
+            <button class="footer-btn logout-btn" onclick="SidebarManager.logout()" title="Đăng xuất">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+        <div class="footer-info">
+            <small>&copy; 2024 Face Attendance</small>
+        </div>
+    </div>
+</nav>
+
+<!-- Sidebar Overlay for Mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Sidebar Toggle Button -->
+<button class="sidebar-toggle" id="sidebarToggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+</button>
+
+</body>
+</html>

@@ -11,84 +11,16 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Custom CSS -->
+    <!-- Custom CSS - Sử dụng thứ tự đúng -->
     <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/sidebar.css}" rel="stylesheet">
     <link th:href="@{/css/admin.css}" rel="stylesheet">
 </head>
 <body class="admin-dashboard">
 <!-- Main Wrapper -->
 <div class="main-wrapper">
-    <!-- Sidebar -->
-    <nav class="sidebar" id="sidebar">
-        <!-- Brand -->
-        <div class="sidebar-brand">
-            <h4><i class="fas fa-graduation-cap me-2"></i>Face Attendance</h4>
-        </div>
-
-        <!-- Navigation -->
-        <ul class="sidebar-nav">
-            <li class="nav-item">
-                <a href="/admin/dashboard" class="nav-link active">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span class="nav-text">Dashboard</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/khoa" class="nav-link">
-                    <i class="fas fa-university"></i>
-                    <span class="nav-text">Quản lý Khoa</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/nganh" class="nav-link">
-                    <i class="fas fa-sitemap"></i>
-                    <span class="nav-text">Quản lý Ngành</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/monhoc" class="nav-link">
-                    <i class="fas fa-book"></i>
-                    <span class="nav-text">Quản lý Môn học</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/giangvien" class="nav-link">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                    <span class="nav-text">Quản lý Giảng viên</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/sinhvien" class="nav-link">
-                    <i class="fas fa-user-graduate"></i>
-                    <span class="nav-text">Quản lý Sinh viên</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/lop" class="nav-link">
-                    <i class="fas fa-users"></i>
-                    <span class="nav-text">Quản lý Lớp</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/camera" class="nav-link">
-                    <i class="fas fa-video"></i>
-                    <span class="nav-text">Quản lý Camera</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/diemdanh" class="nav-link">
-                    <i class="fas fa-clipboard-check"></i>
-                    <span class="nav-text">Báo cáo Điểm danh</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/system" class="nav-link">
-                    <i class="fas fa-cogs"></i>
-                    <span class="nav-text">Cài đặt Hệ thống</span>
-                </a>
-            </li>
-        </ul>
-    </nav>
+    <!-- Include Sidebar Component -->
+    <div th:replace="~{components/sidebar :: sidebar}"></div>
 
     <!-- Main Content -->
     <main class="main-content" id="mainContent">
@@ -96,9 +28,6 @@
         <header class="header">
             <div class="header-content">
                 <div class="header-left">
-                    <button class="sidebar-toggle" id="sidebarToggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
                     <h1 class="page-title">Dashboard</h1>
                 </div>
 
@@ -136,13 +65,11 @@
                     <div class="dropdown user-dropdown">
                         <div class="user-info" data-bs-toggle="dropdown">
                             <div class="user-avatar">
-                                <!-- FIX: Sử dụng currentUser thay vì session.user và thêm conditional check -->
                                 <span th:if="${currentUser != null and currentUser.username != null}"
                                       th:text="${#strings.substring(currentUser.username, 0, 1)}">A</span>
                                 <span th:unless="${currentUser != null and currentUser.username != null}">A</span>
                             </div>
                             <div class="user-details">
-                                <!-- FIX: Sử dụng currentUser thay vì session.user và thêm fallback -->
                                 <h6 th:text="${currentUser != null ? currentUser.username : 'Admin User'}">Admin User</h6>
                                 <p>Quản trị viên</p>
                             </div>
@@ -156,7 +83,7 @@
                                 <i class="fas fa-cog me-2"></i>Cài đặt
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/logout" onclick="logout()">
+                            <li><a class="dropdown-item" href="#" onclick="logout()">
                                 <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
                             </a></li>
                         </ul>
@@ -240,199 +167,208 @@
                         +8% so với hôm qua
                     </div>
                 </div>
+            </div>
 
-                <!-- Active Cameras -->
-                <div class="stats-card danger">
-                    <div class="stats-header">
-                        <div class="stats-icon">
-                            <i class="fas fa-video"></i>
+            <!-- Charts Section -->
+            <div class="row mt-4">
+                <!-- Attendance Chart -->
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Thống kê điểm danh 7 ngày qua
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="attendanceChart" height="100"></canvas>
                         </div>
                     </div>
-                    <div class="stats-number" id="activeCameras">12</div>
-                    <div class="stats-label">Camera hoạt động</div>
-                    <div class="stats-change negative">
-                        <i class="fas fa-arrow-down"></i>
-                        1 camera offline
+                </div>
+
+                <!-- Department Distribution -->
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <i class="fas fa-chart-pie me-2"></i>
+                                Phân bố theo khoa
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="departmentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="row mt-4">
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <i class="fas fa-clock me-2"></i>
+                                Hoạt động gần đây
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="activity-list">
+                                <div class="activity-item">
+                                    <div class="activity-icon success">
+                                        <i class="fas fa-user-plus"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <p class="activity-text">Sinh viên <strong>Nguyễn Văn A</strong> đã đăng ký thành công</p>
+                                        <small class="activity-time">5 phút trước</small>
+                                    </div>
+                                </div>
+
+                                <div class="activity-item">
+                                    <div class="activity-icon warning">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <p class="activity-text">Camera phòng 101 mất kết nối</p>
+                                        <small class="activity-time">15 phút trước</small>
+                                    </div>
+                                </div>
+
+                                <div class="activity-item">
+                                    <div class="activity-icon info">
+                                        <i class="fas fa-clipboard-check"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <p class="activity-text">Lớp <strong>CNTT-K15</strong> đã hoàn thành điểm danh</p>
+                                        <small class="activity-time">30 phút trước</small>
+                                    </div>
+                                </div>
+
+                                <div class="activity-item">
+                                    <div class="activity-icon primary">
+                                        <i class="fas fa-book"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <p class="activity-text">Môn học <strong>Lập trình Java</strong> đã được thêm</p>
+                                        <small class="activity-time">1 giờ trước</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Status -->
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <i class="fas fa-server me-2"></i>
+                                Trạng thái hệ thống
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="system-status">
+                                <div class="status-item">
+                                    <div class="status-label">
+                                        <i class="fas fa-database me-2"></i>
+                                        Cơ sở dữ liệu
+                                    </div>
+                                    <div class="status-value online">
+                                        <i class="fas fa-circle"></i>
+                                        Hoạt động
+                                    </div>
+                                </div>
+
+                                <div class="status-item">
+                                    <div class="status-label">
+                                        <i class="fas fa-video me-2"></i>
+                                        Camera System
+                                    </div>
+                                    <div class="status-value warning">
+                                        <i class="fas fa-circle"></i>
+                                        1 camera offline
+                                    </div>
+                                </div>
+
+                                <div class="status-item">
+                                    <div class="status-label">
+                                        <i class="fas fa-brain me-2"></i>
+                                        AI Recognition
+                                    </div>
+                                    <div class="status-value online">
+                                        <i class="fas fa-circle"></i>
+                                        Hoạt động
+                                    </div>
+                                </div>
+
+                                <div class="status-item">
+                                    <div class="status-label">
+                                        <i class="fas fa-cloud me-2"></i>
+                                        Cloud Storage
+                                    </div>
+                                    <div class="status-value online">
+                                        <i class="fas fa-circle"></i>
+                                        Hoạt động
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Quick Actions -->
-            <div class="quick-actions">
-                <div class="quick-action-card" onclick="location.href='/admin/sinhvien'">
-                    <div class="quick-action-icon">
-                        <i class="fas fa-user-plus"></i>
-                    </div>
-                    <div class="quick-action-title">Thêm sinh viên</div>
-                    <div class="quick-action-desc">Đăng ký sinh viên mới vào hệ thống</div>
-                </div>
-
-                <div class="quick-action-card" onclick="location.href='/admin/giangvien'">
-                    <div class="quick-action-icon">
-                        <i class="fas fa-user-tie"></i>
-                    </div>
-                    <div class="quick-action-title">Thêm giảng viên</div>
-                    <div class="quick-action-desc">Đăng ký giảng viên mới</div>
-                </div>
-
-                <div class="quick-action-card" onclick="location.href='/admin/lop'">
-                    <div class="quick-action-icon">
-                        <i class="fas fa-plus-circle"></i>
-                    </div>
-                    <div class="quick-action-title">Tạo lớp học</div>
-                    <div class="quick-action-desc">Tạo lớp học mới cho năm học</div>
-                </div>
-
-                <div class="quick-action-card" onclick="location.href='/admin/camera'">
-                    <div class="quick-action-icon">
-                        <i class="fas fa-camera"></i>
-                    </div>
-                    <div class="quick-action-title">Quản lý camera</div>
-                    <div class="quick-action-desc">Cấu hình và giám sát camera</div>
-                </div>
-
-                <div class="quick-action-card" onclick="location.href='/admin/reports'">
-                    <div class="quick-action-icon">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <div class="quick-action-title">Báo cáo</div>
-                    <div class="quick-action-desc">Xem báo cáo và thống kê</div>
-                </div>
-
-                <div class="quick-action-card" onclick="performBackup()">
-                    <div class="quick-action-icon">
-                        <i class="fas fa-database"></i>
-                    </div>
-                    <div class="quick-action-title">Sao lưu dữ liệu</div>
-                    <div class="quick-action-desc">Backup và restore hệ thống</div>
-                </div>
-            </div>
-
-            <!-- Charts Row -->
-            <div class="row">
-                <!-- Attendance Chart -->
-                <div class="col-xl-8 col-lg-7">
-                    <div class="chart-container">
-                        <div class="chart-header">
-                            <h3 class="chart-title">Thống kê điểm danh</h3>
-                            <div class="chart-filters">
-                                <select class="form-select form-select-sm" id="attendanceFilter">
-                                    <option value="7">7 ngày qua</option>
-                                    <option value="30" selected>30 ngày qua</option>
-                                    <option value="90">3 tháng qua</option>
-                                </select>
-                            </div>
-                        </div>
-                        <canvas id="attendanceChart" height="300"></canvas>
-                    </div>
-                </div>
-
-                <!-- Faculty Distribution -->
-                <div class="col-xl-4 col-lg-5">
-                    <div class="chart-container">
-                        <div class="chart-header">
-                            <h3 class="chart-title">Phân bố theo khoa</h3>
-                        </div>
-                        <canvas id="facultyChart" height="300"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Activity & System Status -->
-            <div class="row">
-                <!-- Recent Activity -->
-                <div class="col-xl-8">
-                    <div class="admin-table-wrapper">
-                        <div class="admin-table-header">
-                            <h3 class="admin-table-title">Hoạt động gần đây</h3>
-                            <div class="table-actions">
-                                <button class="btn btn-sm btn-outline-primary" onclick="loadDashboardData()">
-                                    <i class="fas fa-sync-alt me-1"></i>Làm mới
-                                </button>
-                                <button class="btn btn-sm btn-outline-secondary">
-                                    <i class="fas fa-download me-1"></i>Xuất file
-                                </button>
-                            </div>
-                        </div>
-                        <table class="admin-table">
-                            <thead>
-                            <tr>
-                                <th>Thời gian</th>
-                                <th>Người dùng</th>
-                                <th>Hoạt động</th>
-                                <th>Trạng thái</th>
-                            </tr>
-                            </thead>
-                            <tbody id="activityTableBody">
-                            <tr>
-                                <td colspan="4" class="text-center">
-                                    <div class="loading-spinner"></div>
-                                    <p class="mt-2">Đang tải dữ liệu...</p>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- System Status -->
-                <div class="col-xl-4">
+            <div class="row mt-4">
+                <div class="col-12">
                     <div class="card">
                         <div class="card-header">
-                            <h5 class="card-title">Trạng thái hệ thống</h5>
+                            <h5 class="card-title">
+                                <i class="fas fa-bolt me-2"></i>
+                                Thao tác nhanh
+                            </h5>
                         </div>
                         <div class="card-body">
-                            <div class="system-status-item" data-status="database">
-                                <div class="status-info">
-                                    <span class="status-label">Database</span>
-                                    <span class="status-badge status-active">Hoạt động</span>
-                                </div>
-                                <div class="status-details">
-                                    <small class="text-muted">Kết nối ổn định - 99.9% uptime</small>
-                                </div>
-                            </div>
-
-                            <div class="system-status-item" data-status="apiServer">
-                                <div class="status-info">
-                                    <span class="status-label">API Server</span>
-                                    <span class="status-badge status-active">Hoạt động</span>
-                                </div>
-                                <div class="status-details">
-                                    <small class="text-muted">Phản hồi trung bình: 120ms</small>
-                                </div>
-                            </div>
-
-                            <div class="system-status-item" data-status="faceRecognition">
-                                <div class="status-info">
-                                    <span class="status-label">Face Recognition</span>
-                                    <span class="status-badge status-active">Hoạt động</span>
-                                </div>
-                                <div class="status-details">
-                                    <small class="text-muted">Độ chính xác: 98.5%</small>
-                                </div>
-                            </div>
-
-                            <div class="system-status-item" data-status="storage">
-                                <div class="status-info">
-                                    <span class="status-label">Storage</span>
-                                    <span class="status-badge status-warning">Cảnh báo</span>
-                                </div>
-                                <div class="status-details">
-                                    <small class="text-muted">Đã sử dụng 78% dung lượng</small>
-                                    <div class="progress mt-1" style="height: 4px;">
-                                        <div class="progress-bar bg-warning" style="width: 78%"></div>
+                            <div class="quick-actions">
+                                <a href="/admin/sinhvien" class="quick-action-btn">
+                                    <div class="action-icon">
+                                        <i class="fas fa-user-plus"></i>
                                     </div>
-                                </div>
-                            </div>
+                                    <div class="action-text">
+                                        <h6>Thêm sinh viên</h6>
+                                        <p>Đăng ký sinh viên mới</p>
+                                    </div>
+                                </a>
 
-                            <div class="system-status-item" data-status="backup">
-                                <div class="status-info">
-                                    <span class="status-label">Backup</span>
-                                    <span class="status-badge status-active">Hoàn thành</span>
-                                </div>
-                                <div class="status-details">
-                                    <small class="text-muted">Lần cuối: 2 giờ trước</small>
-                                </div>
+                                <a href="/admin/giangvien" class="quick-action-btn">
+                                    <div class="action-icon">
+                                        <i class="fas fa-chalkboard-teacher"></i>
+                                    </div>
+                                    <div class="action-text">
+                                        <h6>Thêm giảng viên</h6>
+                                        <p>Đăng ký giảng viên mới</p>
+                                    </div>
+                                </a>
+
+                                <a href="/admin/monhoc" class="quick-action-btn">
+                                    <div class="action-icon">
+                                        <i class="fas fa-book"></i>
+                                    </div>
+                                    <div class="action-text">
+                                        <h6>Thêm môn học</h6>
+                                        <p>Tạo môn học mới</p>
+                                    </div>
+                                </a>
+
+                                <a href="/admin/camera" class="quick-action-btn">
+                                    <div class="action-icon">
+                                        <i class="fas fa-video"></i>
+                                    </div>
+                                    <div class="action-text">
+                                        <h6>Quản lý camera</h6>
+                                        <p>Cấu hình camera</p>
+                                    </div>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -442,73 +378,78 @@
     </main>
 </div>
 
-<!-- Loading Overlay -->
-<div id="loadingOverlay" class="loading-overlay d-none">
-    <div class="loading-spinner"></div>
-</div>
-
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/sidebar.js}"></script>
 <script th:src="@{/js/admin.js}"></script>
 
-<!-- Dashboard specific script -->
+<!-- Pass user data to JavaScript -->
 <script th:inline="javascript">
-    // Server data
-    const serverData = {
-        totalStudents: /*[[${totalStudents}]]*/ 0,
-        totalLecturers: /*[[${totalLecturers}]]*/ 0,
-        totalClasses: /*[[${totalClasses}]]*/ 0,
-        attendanceToday: /*[[${attendanceToday}]]*/ 0,
-        currentUser: /*[[${currentUser}]]*/ null
-    };
+    // Pass user data to JavaScript for sidebar
+    window.currentUserData = /*[[${currentUser}]]*/ null;
 
-    // Dashboard functions
-    function logout() {
-        localStorage.clear();
-        window.location.href = '/?message=logout_success';
-    }
-
-    function performBackup() {
-        alert('Chức năng sao lưu đang được phát triển...');
-    }
-
-    function loadDashboardData() {
-        // Reload page or call API to refresh data
-        window.location.reload();
-    }
-
-    // Initialize Dashboard
+    // Initialize charts
     document.addEventListener('DOMContentLoaded', function() {
-        // Update stats from server data
-        if (serverData.totalStudents) {
-            document.getElementById('totalStudents').textContent = serverData.totalStudents;
-        }
-        if (serverData.totalLecturers) {
-            document.getElementById('totalLecturers').textContent = serverData.totalLecturers;
-        }
-        if (serverData.totalClasses) {
-            document.getElementById('totalClasses').textContent = serverData.totalClasses;
-        }
-        if (serverData.attendanceToday) {
-            document.getElementById('attendanceToday').textContent = serverData.attendanceToday;
-        }
-
-        // Initialize charts if AdminDashboard is available
-        if (typeof AdminDashboard !== 'undefined') {
-            AdminDashboard.init({
-                stats: {
-                    students: serverData.totalStudents || 0,
-                    lecturers: serverData.totalLecturers || 0,
-                    classes: serverData.totalClasses || 0,
-                    attendanceToday: serverData.attendanceToday || 0,
-                    activeCameras: 12
+        // Attendance Chart
+        const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+        new Chart(attendanceCtx, {
+            type: 'line',
+            data: {
+                labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
+                datasets: [{
+                    label: 'Số lượt điểm danh',
+                    data: [120, 150, 180, 200, 160, 90, 30],
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
                 }
-            });
-        }
+            }
+        });
 
-        console.log('Dashboard initialized with data:', serverData);
+        // Department Chart
+        const departmentCtx = document.getElementById('departmentChart').getContext('2d');
+        new Chart(departmentCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['CNTT', 'Kinh tế', 'Ngoại ngữ', 'Khác'],
+                datasets: [{
+                    data: [45, 25, 20, 10],
+                    backgroundColor: [
+                        '#3498db',
+                        '#2ecc71',
+                        '#f39c12',
+                        '#e74c3c'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
     });
 </script>
+
 </body>
 </html>
