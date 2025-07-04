@@ -116,4 +116,13 @@ public class SinhVienController {
         }
         return ResponseEntity.ok(sinhVienService.saveEmbedding(maSv, embedding));
     }
+
+    // Thêm endpoint này vào SinhVienController.java
+
+    @GetMapping("/all")
+    public ResponseEntity<List<SinhVienDTO>> getAll() {
+        log.info("Lấy tất cả sinh viên (không phân trang)");
+        return ResponseEntity.ok(sinhVienService.getAll());
+    }
 }
+

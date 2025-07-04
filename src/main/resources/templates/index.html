@@ -5,10 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng nhập - Hệ thống Điểm danh Khuôn mặt</title>
 
+    <!-- Preload fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link th:href="@{/css/common.css}" rel="stylesheet">
     <link th:href="@{/css/auth.css}" rel="stylesheet">
@@ -19,10 +24,9 @@
         <!-- Header -->
         <div class="login-header">
             <div class="logo">
-                <i class="fas fa-user-shield"></i>
+                <i class="fas fa-building"></i>
             </div>
             <h2>Hệ thống Điểm danh</h2>
-            <p>Nhận diện khuôn mặt thông minh</p>
         </div>
 
         <!-- Body -->
@@ -38,7 +42,7 @@
                 <span th:text="${message}"></span>
             </div>
 
-            <!-- Login Form - CHANGED: Form action and method -->
+            <!-- Login Form -->
             <form th:action="@{/login}" method="post" id="loginForm">
                 <!-- Username -->
                 <div class="form-group">
@@ -87,6 +91,7 @@
 
                 <!-- Submit Button -->
                 <button type="submit" class="btn-login" id="loginBtn">
+                    <span class="loading-spinner"></span>
                     <span class="btn-text">
                         <i class="fas fa-sign-in-alt"></i>
                         Đăng nhập
@@ -101,14 +106,6 @@
                     </a>
                 </div>
             </form>
-
-            <!-- System Info -->
-            <div class="system-info">
-                <small>
-                    <i class="fas fa-shield-alt"></i>
-                    Hệ thống bảo mật cao - Phiên bản 1.0.0
-                </small>
-            </div>
         </div>
     </div>
 </div>
@@ -119,7 +116,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="forgotPasswordModalLabel">
-                    <i class="fas fa-key me-2"></i>
+                    <i class="fas fa-key"></i>
                     Đặt lại mật khẩu
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -140,7 +137,7 @@
                                required>
                         <div class="invalid-feedback"></div>
                         <div class="form-text">
-                            <i class="fas fa-info-circle me-1"></i>
+                            <i class="fas fa-info-circle"></i>
                             Mật khẩu mới sẽ được gửi đến email đã đăng ký
                         </div>
                     </div>
@@ -148,12 +145,12 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>
+                    <i class="fas fa-times"></i>
                     Hủy
                 </button>
                 <button type="submit" form="forgotPasswordForm" class="btn btn-primary" id="resetPasswordBtn">
                     <span class="btn-text">
-                        <i class="fas fa-paper-plane me-2"></i>
+                        <i class="fas fa-paper-plane"></i>
                         Gửi yêu cầu
                     </span>
                 </button>
@@ -165,7 +162,7 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Basic Form Enhancement Script -->
+<!-- Enhanced Form Script -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Password toggle functionality
@@ -182,8 +179,10 @@
             });
         }
 
-        // Form validation
+        // Enhanced form validation
         const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+
         if (loginForm) {
             loginForm.addEventListener('submit', function(e) {
                 const username = document.getElementById('username').value.trim();
@@ -197,12 +196,18 @@
                     if (!password) {
                         showFieldError(document.getElementById('password'), 'Vui lòng nhập mật khẩu');
                     }
+                    return;
                 }
+
+                // Show loading state
+                setButtonLoading(loginBtn, true);
             });
         }
 
         // Forgot password form
         const forgotForm = document.getElementById('forgotPasswordForm');
+        const resetBtn = document.getElementById('resetPasswordBtn');
+
         if (forgotForm) {
             forgotForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -213,64 +218,158 @@
                     return;
                 }
 
+                setButtonLoading(resetBtn, true);
+
                 try {
                     const response = await fetch(`/api/auth/forgot-password?username=${encodeURIComponent(username)}`, {
-                        method: 'POST'
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
                     });
 
                     const modal = bootstrap.Modal.getInstance(document.getElementById('forgotPasswordModal'));
                     modal.hide();
 
                     if (response.ok) {
-                        showAlert('Yêu cầu đặt lại mật khẩu đã được gửi. Kiểm tra email của bạn.', 'success');
+                        showAlert('Yêu cầu đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra email của bạn.', 'success');
+                        forgotForm.reset();
                     } else {
-                        showAlert('Lỗi khi gửi yêu cầu đặt lại mật khẩu.', 'danger');
+                        const errorData = await response.json().catch(() => ({}));
+                        showAlert(errorData.message || 'Lỗi khi gửi yêu cầu đặt lại mật khẩu.', 'danger');
                     }
                 } catch (error) {
-                    showAlert('Không thể kết nối đến server.', 'danger');
+                    console.error('Reset password error:', error);
+                    showAlert('Không thể kết nối đến server. Vui lòng thử lại sau.', 'danger');
+                } finally {
+                    setButtonLoading(resetBtn, false);
                 }
             });
         }
 
-        // Input validation
+        // Input validation on type
         document.querySelectorAll('input').forEach(input => {
             input.addEventListener('input', function() {
                 clearFieldError(this);
             });
+
+            input.addEventListener('blur', function() {
+                validateField(this);
+            });
         });
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(alert => {
+                if (alert.classList.contains('alert-success') || alert.classList.contains('alert-info')) {
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 300);
+                }
+            });
+        }, 5000);
     });
+
+    function validateField(input) {
+        const value = input.value.trim();
+
+        if (input.hasAttribute('required') && !value) {
+            showFieldError(input, `Vui lòng nhập ${input.previousElementSibling.textContent.toLowerCase()}`);
+            return false;
+        }
+
+        if (input.type === 'email' && value && !isValidEmail(value)) {
+            showFieldError(input, 'Email không hợp lệ');
+            return false;
+        }
+
+        clearFieldError(input);
+        return true;
+    }
 
     function showFieldError(input, message) {
         input.classList.add('is-invalid');
-        const feedback = input.parentElement.nextElementSibling;
-        if (feedback && feedback.classList.contains('invalid-feedback')) {
+        input.classList.remove('is-valid');
+
+        const feedback = input.closest('.form-group').querySelector('.invalid-feedback');
+        if (feedback) {
             feedback.textContent = message;
         }
     }
 
     function clearFieldError(input) {
         input.classList.remove('is-invalid');
-        const feedback = input.parentElement.nextElementSibling;
-        if (feedback && feedback.classList.contains('invalid-feedback')) {
+
+        const feedback = input.closest('.form-group').querySelector('.invalid-feedback');
+        if (feedback) {
             feedback.textContent = '';
+        }
+
+        if (input.value.trim()) {
+            input.classList.add('is-valid');
+        } else {
+            input.classList.remove('is-valid');
+        }
+    }
+
+    function setButtonLoading(button, loading) {
+        const spinner = button.querySelector('.loading-spinner');
+        const text = button.querySelector('.btn-text');
+
+        if (loading) {
+            button.classList.add('loading');
+            button.disabled = true;
+            if (spinner) spinner.style.display = 'inline-block';
+            if (text) text.style.opacity = '0.7';
+        } else {
+            button.classList.remove('loading');
+            button.disabled = false;
+            if (spinner) spinner.style.display = 'none';
+            if (text) text.style.opacity = '1';
         }
     }
 
     function showAlert(message, type = 'info') {
+        // Remove existing alerts
+        document.querySelectorAll('.alert').forEach(alert => alert.remove());
+
         const alertDiv = document.createElement('div');
         alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
         alertDiv.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
+            <i class="fas fa-${getAlertIcon(type)}"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
 
         const container = document.querySelector('.login-body');
         container.insertBefore(alertDiv, container.firstChild);
 
+        // Auto-hide after 5 seconds
         setTimeout(() => {
-            alertDiv.remove();
+            if (alertDiv.parentNode) {
+                alertDiv.style.opacity = '0';
+                setTimeout(() => alertDiv.remove(), 300);
+            }
         }, 5000);
+    }
+
+    function getAlertIcon(type) {
+        const icons = {
+            success: 'check-circle',
+            danger: 'exclamation-triangle',
+            warning: 'exclamation-circle',
+            info: 'info-circle'
+        };
+        return icons[type] || 'info-circle';
+    }
+
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    // Prevent form resubmission on page refresh
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
     }
 </script>
 </body>
