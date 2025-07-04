@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Sinh viên - Admin</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/admin.css}" rel="stylesheet">
+</head>
+<body class="admin-dashboard">
+<div class="main-wrapper">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <h4><i class="fas fa-graduation-cap me-2"></i>Face Attendance</h4>
+        </div>
+
+        <ul class="sidebar-nav">
+            <li class="nav-item">
+                <a href="/admin/dashboard" class="nav-link">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/khoa" class="nav-link">
+                    <i class="fas fa-university"></i>
+                    <span class="nav-text">Quản lý Khoa</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/nganh" class="nav-link">
+                    <i class="fas fa-sitemap"></i>
+                    <span class="nav-text">Quản lý Ngành</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/monhoc" class="nav-link">
+                    <i class="fas fa-book"></i>
+                    <span class="nav-text">Quản lý Môn học</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/giangvien" class="nav-link">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    <span class="nav-text">Quản lý Giảng viên</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/sinhvien" class="nav-link active">
+                    <i class="fas fa-user-graduate"></i>
+                    <span class="nav-text">Quản lý Sinh viên</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/lop" class="nav-link">
+                    <i class="fas fa-users"></i>
+                    <span class="nav-text">Quản lý Lớp</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/camera" class="nav-link">
+                    <i class="fas fa-video"></i>
+                    <span class="nav-text">Quản lý Camera</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/diemdanh" class="nav-link">
+                    <i class="fas fa-clipboard-check"></i>
+                    <span class="nav-text">Báo cáo Điểm danh</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Quản lý Sinh viên</h1>
+                </div>
+
+                <div class="header-right">
+                    <div class="dropdown user-dropdown">
+                        <div class="user-info" data-bs-toggle="dropdown">
+                            <div class="user-avatar">
+                                <span>A</span>
+                            </div>
+                            <div class="user-details">
+                                <h6>Admin User</h6>
+                                <p>Quản trị viên</p>
+                            </div>
+                            <i class="fas fa-chevron-down ms-2"></i>
+                        </div>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user me-2"></i>Hồ sơ cá nhân
+                            </a></li>
+                            <li><a class="dropdown-item" href="/settings">
+                                <i class="fas fa-cog me-2"></i>Cài đặt
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="logout()">
+                                <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h2 class="page-title">Quản lý Sinh viên</h2>
+                <p class="page-subtitle">Quản lý thông tin sinh viên và điểm danh</p>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="stats-grid">
+                <div class="stats-card primary">
+                    <div class="stats-header">
+                        <div class="stats-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                    </div>
+                    <div class="stats-number" id="totalStudents">0</div>
+                    <div class="stats-label">Tổng sinh viên</div>
+                </div>
+
+                <div class="stats-card success">
+                    <div class="stats-header">
+                        <div class="stats-icon">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                    </div>
+                    <div class="stats-number" id="activeStudents">0</div>
+                    <div class="stats-label">Đang hoạt động</div>
+                </div>
+
+                <div class="stats-card warning">
+                    <div class="stats-header">
+                        <div class="stats-icon">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                    </div>
+                    <div class="stats-number" id="studentsWithPhoto">0</div>
+                    <div class="stats-label">Có ảnh đại diện</div>
+                </div>
+
+                <div class="stats-card info">
+                    <div class="stats-header">
+                        <div class="stats-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                    </div>
+                    <div class="stats-number" id="studentsWithEmbedding">0</div>
+                    <div class="stats-label">Có dữ liệu nhận diện</div>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <div class="filter-row">
+                    <div class="search-group">
+                        <i class="search-icon fas fa-search"></i>
+                        <input type="text" class="form-control search-input"
+                               placeholder="Tìm kiếm sinh viên..." id="searchInput">
+                    </div>
+                    <select class="form-select" id="classFilter" style="width: auto;">
+                        <option value="">Tất cả lớp</option>
+                    </select>
+                    <select class="form-select" id="statusFilter" style="width: auto;">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="active">Đang hoạt động</option>
+                        <option value="inactive">Không hoạt động</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="SinhVienManager.showAddModal()">
+                        <i class="fas fa-plus me-2"></i>Thêm sinh viên
+                    </button>
+                </div>
+            </div>
+
+            <!-- Students Table -->
+            <div class="admin-table-wrapper">
+                <div class="admin-table-header">
+                    <h3 class="admin-table-title">Danh sách Sinh viên</h3>
+                    <div class="table-actions">
+                        <button class="btn btn-sm btn-outline-primary" onclick="SinhVienManager.refreshData()">
+                            <i class="fas fa-sync-alt me-1"></i>Làm mới
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="SinhVienManager.bulkImport()">
+                            <i class="fas fa-file-import me-1"></i>Import Excel
+                        </button>
+                        <div class="export-controls">
+                            <button class="btn-export" onclick="SinhVienManager.exportData('excel')">
+                                <i class="fas fa-file-excel me-1"></i>Excel
+                            </button>
+                            <button class="btn-export" onclick="SinhVienManager.exportData('pdf')">
+                                <i class="fas fa-file-pdf me-1"></i>PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                    <tr>
+                        <th>
+                            <input type="checkbox" id="selectAll" onclick="SinhVienManager.toggleSelectAll()">
+                        </th>
+                        <th>Ảnh</th>
+                        <th>Mã SV</th>
+                        <th>Họ tên</th>
+                        <th>Lớp</th>
+                        <th>Email</th>
+                        <th>Giới tính</th>
+                        <th>Trạng thái</th>
+                        <th>Nhận diện</th>
+                        <th>Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody id="sinhvienTableBody">
+                    <tr>
+                        <td colspan="10" class="text-center">
+                            <div class="loading-spinner"></div>
+                            <p class="mt-2">Đang tải dữ liệu...</p>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <nav class="admin-pagination">
+                <ul class="pagination" id="paginationControls">
+                    <!-- Pagination sẽ được render bởi JavaScript -->
+                </ul>
+            </nav>
+        </div>
+    </main>
+</div>
+
+<!-- Add/Edit Student Modal -->
+<div class="modal fade admin-modal" id="sinhvienModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Thêm sinh viên mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="sinhvienForm" novalidate>
+                    <input type="hidden" id="sinhvienId" name="maSv">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="maSv" class="form-label">Mã sinh viên <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control-admin" id="maSv" name="maSv" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="hoTen" class="form-label">Họ tên <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control-admin" id="hoTen" name="hoTen" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control-admin" id="email" name="email">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="gioiTinh" class="form-label">Giới tính</label>
+                                <select class="form-control-admin" id="gioiTinh" name="gioiTinh">
+                                    <option value="NAM">Nam</option>
+                                    <option value="NU">Nữ</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ngaySinh" class="form-label">Ngày sinh</label>
+                                <input type="date" class="form-control-admin" id="ngaySinh" name="ngaySinh">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="maLop" class="form-label">Lớp <span class="text-danger">*</span></label>
+                                <select class="form-control-admin" id="maLop" name="maLop" required>
+                                    <option value="">Chọn lớp...</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hinhAnh" class="form-label">Ảnh đại diện</label>
+                        <div class="file-upload-area" onclick="document.getElementById('hinhAnhFile').click()">
+                            <div class="file-upload-icon">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                            <div class="file-upload-text">
+                                <strong>Nhấp để chọn ảnh</strong> hoặc kéo thả ảnh vào đây
+                                <br><small>Định dạng: JPG, PNG. Tối đa: 5MB</small>
+                            </div>
+                        </div>
+                        <input type="file" id="hinhAnhFile" name="hinhAnhFile" accept="image/*" style="display: none;" onchange="SinhVienManager.handleImageUpload(this)">
+                        <input type="hidden" id="hinhAnh" name="hinhAnh">
+                        <div class="mt-2" id="imagePreview" style="display: none;">
+                            <img id="previewImg" src="" alt="Preview" style="max-width: 200px; height: auto; border-radius: 8px;">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="isActive" class="form-label">Trạng thái</label>
+                        <select class="form-control-admin" id="isActive" name="isActive">
+                            <option value="true">Hoạt động</option>
+                            <option value="false">Không hoạt động</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="SinhVienManager.saveSinhVien()">
+                    <span class="loading-spinner d-none">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </span>
+                    <span class="btn-text">Lưu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Student Modal -->
+<div class="modal fade admin-modal" id="viewSinhvienModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thông tin sinh viên</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="viewModalBody">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="SinhVienManager.editFromView()">
+                    <i class="fas fa-edit me-2"></i>Chỉnh sửa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa sinh viên "<span id="deleteSinhVienName"></span>"?</p>
+                <p class="text-muted">Hành động này không thể hoàn tác.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" onclick="SinhVienManager.confirmDelete()">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Import Modal -->
+<div class="modal fade admin-modal" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Import sinh viên từ Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <a href="/templates/student-template.xlsx" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-download me-2"></i>Tải file mẫu
+                    </a>
+                </div>
+                <div class="file-upload-area" onclick="document.getElementById('importFile').click()">
+                    <div class="file-upload-icon">
+                        <i class="fas fa-file-excel"></i>
+                    </div>
+                    <div class="file-upload-text">
+                        <strong>Chọn file Excel</strong> để import dữ liệu sinh viên
+                        <br><small>Định dạng: .xlsx, .xls</small>
+                    </div>
+                </div>
+                <input type="file" id="importFile" accept=".xlsx,.xls" style="display: none;" onchange="SinhVienManager.handleFileImport(this)">
+                <div id="importPreview" class="mt-3" style="display: none;">
+                    <h6>Preview dữ liệu:</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm" id="importPreviewTable">
+                            <!-- Preview content -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-success" id="confirmImportBtn" onclick="SinhVienManager.confirmImport()" style="display: none;">
+                    <i class="fas fa-upload me-2"></i>Import
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/common.js}"></script>
+
+<!-- Student Management Script -->
+<script>
+    const SinhVienManager = {
+        data: {
+            sinhviens: [],
+            classes: [],
+            currentPage: 1,
+            pageSize: 15,
+            totalPages: 0,
+            totalItems: 0,
+            filters: {
+                search: '',
+                class: '',
+                status: ''
+            },
+            editingId: null,
+            selectedIds: new Set(),
+            importData: null
+        },
+
+        async init() {
+            console.log('👨‍🎓 Student Manager initializing...');
+            this.bindEvents();
+            await this.loadClasses();
+            await this.loadData();
+            this.setupValidation();
+            this.setupDragDrop();
+            console.log('✅ Student Manager initialized');
+        },
+
+        bindEvents() {
+            // Search input
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                this.data.filters.search = e.target.value;
+                this.debounce(() => this.loadData(), 500)();
+            });
+
+            // Filters
+            document.getElementById('classFilter').addEventListener('change', (e) => {
+                this.data.filters.class = e.target.value;
+                this.loadData();
+            });
+
+            document.getElementById('statusFilter').addEventListener('change', (e) => {
+                this.data.filters.status = e.target.value;
+                this.loadData();
+            });
+
+            // Sidebar toggle
+            document.getElementById('sidebarToggle')?.addEventListener('click', () => {
+                document.getElementById('sidebar').classList.toggle('collapsed');
+                document.getElementById('mainContent').classList.toggle('expanded');
+            });
+        },
+
+        async loadClasses() {
+            try {
+                const token = localStorage.getItem('accessToken');
+                const response = await fetch('/api/lop', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    this.data.classes = await response.json();
+                    this.populateClassFilters();
+                }
+            } catch (error) {
+                console.error('Error loading classes:', error);
+            }
+        },
+
+        populateClassFilters() {
+            const classFilter = document.getElementById('classFilter');
+            const modalClassSelect = document.getElementById('maLop');
+
+            const options = this.data.classes.map(cls =>
+                `<option value="${cls.maLop}">${cls.tenLop}</option>`
+            ).join('');
+
+            classFilter.innerHTML = '<option value="">Tất cả lớp</option>' + options;
+            modalClassSelect.innerHTML = '<option value="">Chọn lớp...</option>' + options;
+        },
+
+        async loadData() {
+            try {
+                this.showLoading(true);
+
+                const token = localStorage.getItem('accessToken');
+                const response = await fetch('/api/sinhvien', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                let sinhviens = await response.json();
+
+                // Handle paginated response
+                if (sinhviens.content) {
+                    this.data.sinhviens = sinhviens.content;
+                    this.data.totalItems = sinhviens.totalElements;
+                    this.data.totalPages = sinhviens.totalPages;
+                } else {
+                    // Apply filters to array response
+                    if (this.data.filters.search) {
+                        sinhviens = sinhviens.filter(sv =>
+                            sv.maSv.toLowerCase().includes(this.data.filters.search.toLowerCase()) ||
+                            sv.hoTen.toLowerCase().includes(this.data.filters.search.toLowerCase()) ||
+                            (sv.email && sv.email.toLowerCase().includes(this.data.filters.search.toLowerCase()))
+                        );
+                    }
+
+                    if (this.data.filters.class) {
+                        sinhviens = sinhviens.filter(sv => sv.maLop === this.data.filters.class);
+                    }
+
+                    if (this.data.filters.status) {
+                        const isActive = this.data.filters.status === 'active';
+                        sinhviens = sinhviens.filter(sv => sv.isActive === isActive);
+                    }
+
+                    this.data.sinhviens = sinhviens;
+                    this.data.totalItems = sinhviens.length;
+                    this.data.totalPages = Math.ceil(sinhviens.length / this.data.pageSize);
+                }
+
+                this.updateStats();
+                this.renderTable();
+                this.renderPagination();
+
+            } catch (error) {
+                console.error('❌ Error loading student data:', error);
+                this.showAlert('Không thể tải dữ liệu sinh viên: ' + error.message, 'danger');
+                this.renderError();
+            } finally {
+                this.showLoading(false);
+            }
+        },
+
+        updateStats() {
+            const total = this.data.sinhviens.length;
+            const active = this.data.sinhviens.filter(sv => sv.isActive).length;
+            const withPhoto = this.data.sinhviens.filter(sv => sv.hinhAnh).length;
+            const withEmbedding = this.data.sinhviens.filter(sv => sv.embedding).length;
+
+            this.animateNumber(document.getElementById('totalStudents'), total);
+            this.animateNumber(document.getElementById('activeStudents'), active);
+            this.animateNumber(document.getElementById('studentsWithPhoto'), withPhoto);
+            this.animateNumber(document.getElementById('studentsWithEmbedding'), withEmbedding);
+        },
+
+        renderTable() {
+            const tbody = document.getElementById('sinhvienTableBody');
+            if (!tbody) return;
+
+            if (this.data.sinhviens.length === 0) {
+                tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="text-center py-4">
+                        <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Không có dữ liệu sinh viên</p>
+                    </td>
+                </tr>
+            `;
+                return;
+            }
+
+            const startIndex = (this.data.currentPage - 1) * this.data.pageSize;
+            const endIndex = startIndex + this.data.pageSize;
+            const pageData = this.data.sinhviens.slice(startIndex, endIndex);
+
+            tbody.innerHTML = pageData.map(sv => `
+            <tr>
+                <td>
+                    <input type="checkbox" class="form-check-input"
+                           onchange="SinhVienManager.toggleSelect('${sv.maSv}')"
+                           ${this.data.selectedIds.has(sv.maSv) ? 'checked' : ''}>
+                </td>
+                <td>
+                    <div class="student-avatar">
+                        ${sv.hinhAnh ?
+                `<img src="${sv.hinhAnh}" alt="${sv.hoTen}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">` :
+                `<div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">${sv.hoTen.charAt(0).toUpperCase()}</div>`
+            }
+                    </div>
+                </td>
+                <td><strong>${sv.maSv}</strong></td>
+                <td>${sv.hoTen}</td>
+                <td>
+                    <span class="badge badge-info">
+                        ${this.getClassName(sv.maLop)}
+                    </span>
+                </td>
+                <td>${sv.email || '-'}</td>
+                <td>
+                    <i class="fas fa-${sv.gioiTinh === 'NAM' ? 'mars text-primary' : 'venus text-danger'}"></i>
+                    ${sv.gioiTinh === 'NAM' ? 'Nam' : 'Nữ'}
+                </td>
+                <td>
+                    <span class="status-badge ${sv.isActive ? 'status-active' : 'status-inactive'}">
+                        ${sv.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                    </span>
+                </td>
+                <td>
+                    <span class="status-badge ${sv.embedding ? 'status-completed' : 'status-pending'}">
+                        ${sv.embedding ? 'Có' : 'Chưa có'}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-action btn-view" onclick="SinhVienManager.viewSinhVien('${sv.maSv}')"
+                                title="Xem chi tiết">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn-action btn-edit" onclick="SinhVienManager.editSinhVien('${sv.maSv}')"
+                                title="Chỉnh sửa">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-action btn-delete" onclick="SinhVienManager.deleteSinhVien('${sv.maSv}', '${sv.hoTen}')"
+                                title="Xóa">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+        },
+
+        getClassName(maLop) {
+            const lop = this.data.classes.find(c => c.maLop === maLop);
+            return lop ? lop.tenLop : maLop;
+        },
+
+        renderPagination() {
+            const pagination = document.getElementById('paginationControls');
+            if (!pagination || this.data.totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+
+            // Previous button
+            html += `
+            <li class="page-item ${this.data.currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="SinhVienManager.goToPage(${this.data.currentPage - 1})">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+        `;
+
+            // Page numbers
+            const maxVisible = 5;
+            let startPage = Math.max(1, this.data.currentPage - Math.floor(maxVisible / 2));
+            let endPage = Math.min(this.data.totalPages, startPage + maxVisible - 1);
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `
+                <li class="page-item ${i === this.data.currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="SinhVienManager.goToPage(${i})">${i}</a>
+                </li>
+            `;
+            }
+
+            // Next button
+            html += `
+            <li class="page-item ${this.data.currentPage === this.data.totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="SinhVienManager.goToPage(${this.data.currentPage + 1})">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        `;
+
+            pagination.innerHTML = html;
+        },
+
+        goToPage(page) {
+            if (page >= 1 && page <= this.data.totalPages && page !== this.data.currentPage) {
+                this.data.currentPage = page;
+                this.renderTable();
+                this.renderPagination();
+            }
+        },
+
+        showAddModal() {
+            this.data.editingId = null;
+            document.getElementById('modalTitle').textContent = 'Thêm sinh viên mới';
+            document.getElementById('sinhvienForm').reset();
+            document.getElementById('maSv').disabled = false;
+            document.getElementById('imagePreview').style.display = 'none';
+            this.clearValidation();
+
+            const modal = new bootstrap.Modal(document.getElementById('sinhvienModal'));
+            modal.show();
+        },
+
+        editSinhVien(maSv) {
+            const sv = this.data.sinhviens.find(s => s.maSv === maSv);
+            if (!sv) return;
+
+            this.data.editingId = maSv;
+            document.getElementById('modalTitle').textContent = 'Chỉnh sửa sinh viên';
+
+            // Fill form
+            document.getElementById('sinhvienId').value = sv.maSv;
+            document.getElementById('maSv').value = sv.maSv;
+            document.getElementById('hoTen').value = sv.hoTen;
+            document.getElementById('email').value = sv.email || '';
+            document.getElementById('gioiTinh').value = sv.gioiTinh || 'NAM';
+            document.getElementById('ngaySinh').value = sv.ngaySinh || '';
+            document.getElementById('maLop').value = sv.maLop || '';
+            document.getElementById('isActive').value = sv.isActive.toString();
+
+            // Handle image
+            if (sv.hinhAnh) {
+                document.getElementById('hinhAnh').value = sv.hinhAnh;
+                document.getElementById('previewImg').src = sv.hinhAnh;
+                document.getElementById('imagePreview').style.display = 'block';
+            } else {
+                document.getElementById('imagePreview').style.display = 'none';
+            }
+
+            // Disable mã sinh viên khi edit
+            document.getElementById('maSv').disabled = true;
+
+            this.clearValidation();
+
+            const modal = new bootstrap.Modal(document.getElementById('sinhvienModal'));
+            modal.show();
+        },
+
+        viewSinhVien(maSv) {
+            const sv = this.data.sinhviens.find(s => s.maSv === maSv);
+            if (!sv) return;
+
+            const className = this.getClassName(sv.maLop);
+            const modalBody = document.getElementById('viewModalBody');
+
+            modalBody.innerHTML = `
+            <div class="row">
+                <div class="col-md-4 text-center">
+                    <div class="mb-3">
+                        ${sv.hinhAnh ?
+                `<img src="${sv.hinhAnh}" alt="${sv.hoTen}" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">` :
+                `<div class="rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 150px; height: 150px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-size: 3rem; font-weight: 600;">${sv.hoTen.charAt(0).toUpperCase()}</div>`
+            }
+                    </div>
+                    <h5>${sv.hoTen}</h5>
+                    <p class="text-muted">${sv.maSv}</p>
+                </div>
+                <div class="col-md-8">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Mã sinh viên:</strong></td>
+                            <td>${sv.maSv}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Họ tên:</strong></td>
+                            <td>${sv.hoTen}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email:</strong></td>
+                            <td>${sv.email || 'Chưa có'}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Giới tính:</strong></td>
+                            <td>
+                                <i class="fas fa-${sv.gioiTinh === 'NAM' ? 'mars text-primary' : 'venus text-danger'}"></i>
+                                ${sv.gioiTinh === 'NAM' ? 'Nam' : 'Nữ'}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ngày sinh:</strong></td>
+                            <td>${sv.ngaySinh ? new Date(sv.ngaySinh).toLocaleDateString('vi-VN') : 'Chưa có'}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Lớp:</strong></td>
+                            <td><span class="badge badge-info">${className}</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Trạng thái:</strong></td>
+                            <td>
+                                <span class="status-badge ${sv.isActive ? 'status-active' : 'status-inactive'}">
+                                    ${sv.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dữ liệu nhận diện:</strong></td>
+                            <td>
+                                <span class="status-badge ${sv.embedding ? 'status-completed' : 'status-pending'}">
+                                    ${sv.embedding ? 'Đã có' : 'Chưa có'}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        `;
+
+            this.data.editingId = maSv;
+            const modal = new bootstrap.Modal(document.getElementById('viewSinhvienModal'));
+            modal.show();
+        },
+
+        editFromView() {
+            bootstrap.Modal.getInstance(document.getElementById('viewSinhvienModal')).hide();
+            setTimeout(() => this.editSinhVien(this.data.editingId), 300);
+        },
+
+        deleteSinhVien(maSv, hoTen) {
+            document.getElementById('deleteSinhVienName').textContent = hoTen;
+            this.data.editingId = maSv;
+
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        },
+
+        async confirmDelete() {
+            if (!this.data.editingId) return;
+
+            try {
+                const token = localStorage.getItem('accessToken');
+                const response = await fetch(`/api/sinhvien/${this.data.editingId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                this.showAlert('Xóa sinh viên thành công!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+                await this.loadData();
+
+            } catch (error) {
+                console.error('❌ Error deleting student:', error);
+                this.showAlert('Không thể xóa sinh viên: ' + error.message, 'danger');
+            }
+        },
+
+        async saveSinhVien() {
+            if (!this.validateForm()) return;
+
+            const form = document.getElementById('sinhvienForm');
+            const formData = new FormData(form);
+            const data = {
+                maSv: formData.get('maSv'),
+                hoTen: formData.get('hoTen'),
+                email: formData.get('email') || null,
+                gioiTinh: formData.get('gioiTinh'),
+                ngaySinh: formData.get('ngaySinh') || null,
+                maLop: formData.get('maLop'),
+                hinhAnh: formData.get('hinhAnh') || null,
+                isActive: formData.get('isActive') === 'true'
+            };
+
+            try {
+                this.setButtonLoading(true);
+
+                const token = localStorage.getItem('accessToken');
+                const isEdit = this.data.editingId !== null;
+                const url = isEdit ? `/api/sinhvien/${this.data.editingId}` : '/api/sinhvien';
+                const method = isEdit ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                this.showAlert(`${isEdit ? 'Cập nhật' : 'Thêm'} sinh viên thành công!`, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('sinhvienModal')).hide();
+                await this.loadData();
+
+            } catch (error) {
+                console.error('❌ Error saving student:', error);
+                this.showAlert('Không thể lưu sinh viên: ' + error.message, 'danger');
+            } finally {
+                this.setButtonLoading(false);
+            }
+        },
+
+        handleImageUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                this.showAlert('Kích thước ảnh không được vượt quá 5MB', 'warning');
+                return;
+            }
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                this.showAlert('Chỉ chấp nhận file ảnh (JPG, PNG)', 'warning');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64 = e.target.result;
+                document.getElementById('hinhAnh').value = base64;
+                document.getElementById('previewImg').src = base64;
+                document.getElementById('imagePreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        },
+
+        setupDragDrop() {
+            const uploadArea = document.querySelector('.file-upload-area');
+            if (!uploadArea) return;
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, this.preventDefaults, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => uploadArea.classList.add('dragover'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => uploadArea.classList.remove('dragover'), false);
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    document.getElementById('hinhAnhFile').files = files;
+                    this.handleImageUpload(document.getElementById('hinhAnhFile'));
+                }
+            });
+        },
+
+        preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        },
+
+        toggleSelect(maSv) {
+            if (this.data.selectedIds.has(maSv)) {
+                this.data.selectedIds.delete(maSv);
+            } else {
+                this.data.selectedIds.add(maSv);
+            }
+            this.updateSelectAll();
+        },
+
+        toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+
+            if (selectAll.checked) {
+                checkboxes.forEach(cb => {
+                    cb.checked = true;
+                    const maSv = cb.onchange.toString().match(/'([^']+)'/)[1];
+                    this.data.selectedIds.add(maSv);
+                });
+            } else {
+                checkboxes.forEach(cb => cb.checked = false);
+                this.data.selectedIds.clear();
+            }
+        },
+
+        updateSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+            const checkedCount = this.data.selectedIds.size;
+
+            selectAll.checked = checkedCount === checkboxes.length && checkedCount > 0;
+            selectAll.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+        },
+
+        bulkImport() {
+            const modal = new bootstrap.Modal(document.getElementById('importModal'));
+            modal.show();
+        },
+
+        handleFileImport(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    // Simple CSV parsing for demo
+                    const text = e.target.result;
+                    const lines = text.split('\n');
+                    const headers = lines[0].split(',');
+                    const data = lines.slice(1, 6).map(line => line.split(','));
+
+                    // Show preview
+                    const previewTable = document.getElementById('importPreviewTable');
+                    previewTable.innerHTML = `
+                    <thead>
+                        <tr>${headers.map(h => `<th>${h.trim()}</th>`).join('')}</tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(row => `<tr>${row.map(cell => `<td>${cell.trim()}</td>`).join('')}</tr>`).join('')}
+                    </tbody>
+                `;
+
+                    document.getElementById('importPreview').style.display = 'block';
+                    document.getElementById('confirmImportBtn').style.display = 'block';
+                    this.data.importData = { headers, data: lines.slice(1) };
+
+                } catch (error) {
+                    this.showAlert('Không thể đọc file: ' + error.message, 'danger');
+                }
+            };
+            reader.readAsText(file);
+        },
+
+        async confirmImport() {
+            if (!this.data.importData) return;
+
+            try {
+                // Simulate import process
+                this.showAlert('Đang import dữ liệu...', 'info');
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                this.showAlert('Import thành công!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('importModal')).hide();
+                await this.loadData();
+
+            } catch (error) {
+                this.showAlert('Lỗi khi import: ' + error.message, 'danger');
+            }
+        },
+
+        validateForm() {
+            const form = document.getElementById('sinhvienForm');
+            let isValid = true;
+
+            // Validate required fields
+            ['maSv', 'hoTen', 'maLop'].forEach(fieldName => {
+                const field = document.getElementById(fieldName);
+                if (!field.value.trim()) {
+                    this.showFieldError(field, 'Trường này không được để trống');
+                    isValid = false;
+                } else {
+                    this.clearFieldError(field);
+                }
+            });
+
+            // Validate email
+            const email = document.getElementById('email');
+            if (email.value && !this.isValidEmail(email.value)) {
+                this.showFieldError(email, 'Email không hợp lệ');
+                isValid = false;
+            } else {
+                this.clearFieldError(email);
+            }
+
+            return isValid;
+        },
+
+        isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        },
+
+        setupValidation() {
+            const inputs = document.querySelectorAll('#sinhvienForm input, #sinhvienForm select');
+            inputs.forEach(input => {
+                input.addEventListener('blur', () => this.validateForm());
+                input.addEventListener('input', () => this.clearFieldError(input));
+            });
+        },
+
+        showFieldError(field, message) {
+            field.classList.add('is-invalid');
+            const feedback = field.nextElementSibling;
+            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                feedback.textContent = message;
+            }
+        },
+
+        clearFieldError(field) {
+            field.classList.remove('is-invalid');
+            const feedback = field.nextElementSibling;
+            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                feedback.textContent = '';
+            }
+        },
+
+        clearValidation() {
+            document.querySelectorAll('#sinhvienForm .is-invalid').forEach(el => {
+                el.classList.remove('is-invalid');
+            });
+            document.querySelectorAll('#sinhvienForm .invalid-feedback').forEach(el => {
+                el.textContent = '';
+            });
+        },
+
+        setButtonLoading(loading) {
+            const button = document.querySelector('#sinhvienModal .btn-primary');
+            const spinner = button.querySelector('.loading-spinner');
+            const text = button.querySelector('.btn-text');
+
+            button.disabled = loading;
+            spinner.classList.toggle('d-none', !loading);
+            text.textContent = loading ? 'Đang lưu...' : 'Lưu';
+        },
+
+        showLoading(show) {
+            const tbody = document.getElementById('sinhvienTableBody');
+            if (show && tbody) {
+                tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="text-center py-4">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-2">Đang tải dữ liệu...</p>
+                    </td>
+                </tr>
+            `;
+            }
+        },
+
+        renderError() {
+            const tbody = document.getElementById('sinhvienTableBody');
+            if (tbody) {
+                tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="text-center py-4">
+                        <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                        <p class="text-danger">Có lỗi xảy ra khi tải dữ liệu</p>
+                        <button class="btn btn-outline-primary btn-sm" onclick="SinhVienManager.loadData()">
+                            <i class="fas fa-redo me-1"></i>Thử lại
+                        </button>
+                    </td>
+                </tr>
+            `;
+            }
+        },
+
+        refreshData() {
+            this.data.currentPage = 1;
+            this.data.selectedIds.clear();
+            this.loadData();
+        },
+
+        exportData(format) {
+            const selectedCount = this.data.selectedIds.size;
+            const message = selectedCount > 0 ?
+                `Đang xuất ${selectedCount} sinh viên đã chọn...` :
+                `Đang xuất tất cả ${this.data.totalItems} sinh viên...`;
+
+            this.showAlert(message, 'info');
+            // Implement export functionality
+        },
+
+        animateNumber(element, targetValue) {
+            if (!element) return;
+
+            const currentValue = parseInt(element.textContent) || 0;
+            const increment = (targetValue - currentValue) / 20;
+            let current = currentValue;
+
+            const timer = setInterval(() => {
+                current += increment;
+                if ((increment > 0 && current >= targetValue) ||
+                    (increment < 0 && current <= targetValue)) {
+                    current = targetValue;
+                    clearInterval(timer);
+                }
+                element.textContent = Math.round(current);
+            }, 50);
+        },
+
+        showAlert(message, type = 'info') {
+            let container = document.getElementById('alertContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'alertContainer';
+                container.className = 'position-fixed top-0 end-0 p-3';
+                container.style.zIndex = '9999';
+                document.body.appendChild(container);
+            }
+
+            const alertHtml = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                <i class="fas fa-${this.getAlertIcon(type)} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+
+            container.insertAdjacentHTML('beforeend', alertHtml);
+
+            setTimeout(() => {
+                const alerts = container.querySelectorAll('.alert');
+                if (alerts.length > 0) {
+                    alerts[0].remove();
+                }
+            }, 5000);
+        },
+
+        getAlertIcon(type) {
+            const icons = {
+                success: 'check-circle',
+                danger: 'exclamation-triangle',
+                warning: 'exclamation-circle',
+                info: 'info-circle'
+            };
+            return icons[type] || 'info-circle';
+        },
+
+        debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    };
+
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+        SinhVienManager.init();
+    });
+
+    // Global logout function
+    function logout() {
+        localStorage.clear();
+        window.location.href = '/?message=logout_success';
+    }
+</script>
+</body>
+</html>

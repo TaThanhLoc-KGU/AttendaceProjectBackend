@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Khoa - Admin</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/admin.css}" rel="stylesheet">
+</head>
+<body class="admin-dashboard">
+<div class="main-wrapper">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <h4><i class="fas fa-graduation-cap me-2"></i>Face Attendance</h4>
+        </div>
+
+        <ul class="sidebar-nav">
+            <li class="nav-item">
+                <a href="/admin/dashboard" class="nav-link">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/khoa" class="nav-link active">
+                    <i class="fas fa-university"></i>
+                    <span class="nav-text">Quản lý Khoa</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/nganh" class="nav-link">
+                    <i class="fas fa-sitemap"></i>
+                    <span class="nav-text">Quản lý Ngành</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/monhoc" class="nav-link">
+                    <i class="fas fa-book"></i>
+                    <span class="nav-text">Quản lý Môn học</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/giangvien" class="nav-link">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    <span class="nav-text">Quản lý Giảng viên</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/sinhvien" class="nav-link">
+                    <i class="fas fa-user-graduate"></i>
+                    <span class="nav-text">Quản lý Sinh viên</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/lop" class="nav-link">
+                    <i class="fas fa-users"></i>
+                    <span class="nav-text">Quản lý Lớp</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/camera" class="nav-link">
+                    <i class="fas fa-video"></i>
+                    <span class="nav-text">Quản lý Camera</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/diemdanh" class="nav-link">
+                    <i class="fas fa-clipboard-check"></i>
+                    <span class="nav-text">Báo cáo Điểm danh</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Quản lý Khoa</h1>
+                </div>
+
+                <div class="header-right">
+                    <div class="dropdown user-dropdown">
+                        <div class="user-info" data-bs-toggle="dropdown">
+                            <div class="user-avatar">
+                                <span>A</span>
+                            </div>
+                            <div class="user-details">
+                                <h6>Admin User</h6>
+                                <p>Quản trị viên</p>
+                            </div>
+                            <i class="fas fa-chevron-down ms-2"></i>
+                        </div>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user me-2"></i>Hồ sơ cá nhân
+                            </a></li>
+                            <li><a class="dropdown-item" href="/settings">
+                                <i class="fas fa-cog me-2"></i>Cài đặt
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="logout()">
+                                <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h2 class="page-title">Quản lý Khoa</h2>
+                <p class="page-subtitle">Quản lý thông tin các khoa trong trường</p>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <div class="filter-row">
+                    <div class="search-group">
+                        <i class="search-icon fas fa-search"></i>
+                        <input type="text" class="form-control search-input"
+                               placeholder="Tìm kiếm khoa..." id="searchInput">
+                    </div>
+                    <select class="form-select" id="statusFilter" style="width: auto;">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="active">Đang hoạt động</option>
+                        <option value="inactive">Không hoạt động</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="KhoaManager.showAddModal()">
+                        <i class="fas fa-plus me-2"></i>Thêm khoa
+                    </button>
+                </div>
+            </div>
+
+            <!-- Khoa Table -->
+            <div class="admin-table-wrapper">
+                <div class="admin-table-header">
+                    <h3 class="admin-table-title">Danh sách Khoa</h3>
+                    <div class="table-actions">
+                        <button class="btn btn-sm btn-outline-primary" onclick="KhoaManager.refreshData()">
+                            <i class="fas fa-sync-alt me-1"></i>Làm mới
+                        </button>
+                        <div class="export-controls">
+                            <button class="btn-export" onclick="KhoaManager.exportData('excel')">
+                                <i class="fas fa-file-excel me-1"></i>Excel
+                            </button>
+                            <button class="btn-export" onclick="KhoaManager.exportData('pdf')">
+                                <i class="fas fa-file-pdf me-1"></i>PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                    <tr>
+                        <th>Mã khoa</th>
+                        <th>Tên khoa</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày tạo</th>
+                        <th>Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody id="khoaTableBody">
+                    <tr>
+                        <td colspan="5" class="text-center">
+                            <div class="loading-spinner"></div>
+                            <p class="mt-2">Đang tải dữ liệu...</p>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <nav class="admin-pagination">
+                <ul class="pagination" id="paginationControls">
+                    <!-- Pagination sẽ được render bởi JavaScript -->
+                </ul>
+            </nav>
+        </div>
+    </main>
+</div>
+
+<!-- Add/Edit Khoa Modal -->
+<div class="modal fade admin-modal" id="khoaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Thêm khoa mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="khoaForm" novalidate>
+                    <input type="hidden" id="khoaId" name="maKhoa">
+
+                    <div class="form-group">
+                        <label for="maKhoa" class="form-label">Mã khoa <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control-admin" id="maKhoa" name="maKhoa" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tenKhoa" class="form-label">Tên khoa <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control-admin" id="tenKhoa" name="tenKhoa" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="isActive" class="form-label">Trạng thái</label>
+                        <select class="form-control-admin" id="isActive" name="isActive">
+                            <option value="true">Hoạt động</option>
+                            <option value="false">Không hoạt động</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="KhoaManager.saveKhoa()">
+                    <span class="loading-spinner d-none">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </span>
+                    <span class="btn-text">Lưu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa khoa "<span id="deleteKhoaName"></span>"?</p>
+                <p class="text-muted">Hành động này không thể hoàn tác.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" onclick="KhoaManager.confirmDelete()">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/common.js}"></script>
+
+<!-- Khoa Management Script -->
+<script>
+    const KhoaManager = {
+        data: {
+            khoas: [],
+            currentPage: 1,
+            pageSize: 10,
+            totalPages: 0,
+            totalItems: 0,
+            filters: {
+                search: '',
+                status: ''
+            },
+            editingId: null
+        },
+
+        async init() {
+            console.log('🏛️ Khoa Manager initializing...');
+            this.bindEvents();
+            await this.loadData();
+            this.setupValidation();
+            console.log('✅ Khoa Manager initialized');
+        },
+
+        bindEvents() {
+            // Search input
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                this.data.filters.search = e.target.value;
+                this.debounce(() => this.loadData(), 500)();
+            });
+
+            // Status filter
+            document.getElementById('statusFilter').addEventListener('change', (e) => {
+                this.data.filters.status = e.target.value;
+                this.loadData();
+            });
+
+            // Sidebar toggle
+            document.getElementById('sidebarToggle')?.addEventListener('click', () => {
+                document.getElementById('sidebar').classList.toggle('collapsed');
+                document.getElementById('mainContent').classList.toggle('expanded');
+            });
+        },
+
+        async loadData() {
+            try {
+                this.showLoading(true);
+
+                const token = localStorage.getItem('accessToken');
+                const response = await fetch('/api/khoa', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                let khoas = await response.json();
+
+                // Apply filters
+                if (this.data.filters.search) {
+                    khoas = khoas.filter(khoa =>
+                        khoa.maKhoa.toLowerCase().includes(this.data.filters.search.toLowerCase()) ||
+                        khoa.tenKhoa.toLowerCase().includes(this.data.filters.search.toLowerCase())
+                    );
+                }
+
+                if (this.data.filters.status) {
+                    const isActive = this.data.filters.status === 'active';
+                    khoas = khoas.filter(khoa => khoa.isActive === isActive);
+                }
+
+                this.data.khoas = khoas;
+                this.data.totalItems = khoas.length;
+                this.data.totalPages = Math.ceil(khoas.length / this.data.pageSize);
+
+                this.renderTable();
+                this.renderPagination();
+
+            } catch (error) {
+                console.error('❌ Error loading khoa data:', error);
+                this.showAlert('Không thể tải dữ liệu khoa: ' + error.message, 'danger');
+                this.renderError();
+            } finally {
+                this.showLoading(false);
+            }
+        },
+
+        renderTable() {
+            const tbody = document.getElementById('khoaTableBody');
+            if (!tbody) return;
+
+            if (this.data.khoas.length === 0) {
+                tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Không có dữ liệu khoa</p>
+                    </td>
+                </tr>
+            `;
+                return;
+            }
+
+            const startIndex = (this.data.currentPage - 1) * this.data.pageSize;
+            const endIndex = startIndex + this.data.pageSize;
+            const pageData = this.data.khoas.slice(startIndex, endIndex);
+
+            tbody.innerHTML = pageData.map(khoa => `
+            <tr>
+                <td>
+                    <strong>${khoa.maKhoa}</strong>
+                </td>
+                <td>${khoa.tenKhoa}</td>
+                <td>
+                    <span class="status-badge ${khoa.isActive ? 'status-active' : 'status-inactive'}">
+                        ${khoa.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                    </span>
+                </td>
+                <td>${this.formatDate(new Date())}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-action btn-view" onclick="KhoaManager.viewKhoa('${khoa.maKhoa}')"
+                                title="Xem chi tiết">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn-action btn-edit" onclick="KhoaManager.editKhoa('${khoa.maKhoa}')"
+                                title="Chỉnh sửa">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-action btn-delete" onclick="KhoaManager.deleteKhoa('${khoa.maKhoa}', '${khoa.tenKhoa}')"
+                                title="Xóa">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+        },
+
+        renderPagination() {
+            const pagination = document.getElementById('paginationControls');
+            if (!pagination || this.data.totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+
+            // Previous button
+            html += `
+            <li class="page-item ${this.data.currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="KhoaManager.goToPage(${this.data.currentPage - 1})">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+        `;
+
+            // Page numbers
+            const maxVisible = 5;
+            let startPage = Math.max(1, this.data.currentPage - Math.floor(maxVisible / 2));
+            let endPage = Math.min(this.data.totalPages, startPage + maxVisible - 1);
+
+            if (endPage - startPage + 1 < maxVisible) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `
+                <li class="page-item ${i === this.data.currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="KhoaManager.goToPage(${i})">${i}</a>
+                </li>
+            `;
+            }
+
+            // Next button
+            html += `
+            <li class="page-item ${this.data.currentPage === this.data.totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="KhoaManager.goToPage(${this.data.currentPage + 1})">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        `;
+
+            pagination.innerHTML = html;
+        },
+
+        renderError() {
+            const tbody = document.getElementById('khoaTableBody');
+            if (tbody) {
+                tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-4">
+                        <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                        <p class="text-danger">Có lỗi xảy ra khi tải dữ liệu</p>
+                        <button class="btn btn-outline-primary btn-sm" onclick="KhoaManager.loadData()">
+                            <i class="fas fa-redo me-1"></i>Thử lại
+                        </button>
+                    </td>
+                </tr>
+            `;
+            }
+        },
+
+        goToPage(page) {
+            if (page >= 1 && page <= this.data.totalPages && page !== this.data.currentPage) {
+                this.data.currentPage = page;
+                this.renderTable();
+                this.renderPagination();
+            }
+        },
+
+        showAddModal() {
+            this.data.editingId = null;
+            document.getElementById('modalTitle').textContent = 'Thêm khoa mới';
+            document.getElementById('khoaForm').reset();
+            document.getElementById('maKhoa').disabled = false;
+            this.clearValidation();
+
+            const modal = new bootstrap.Modal(document.getElementById('khoaModal'));
+            modal.show();
+        },
+
+        editKhoa(maKhoa) {
+            const khoa = this.data.khoas.find(k => k.maKhoa === maKhoa);
+            if (!khoa) return;
+
+            this.data.editingId = maKhoa;
+            document.getElementById('modalTitle').textContent = 'Chỉnh sửa khoa';
+
+            // Fill form
+            document.getElementById('khoaId').value = khoa.maKhoa;
+            document.getElementById('maKhoa').value = khoa.maKhoa;
+            document.getElementById('tenKhoa').value = khoa.tenKhoa;
+            document.getElementById('isActive').value = khoa.isActive.toString();
+
+            // Disable mã khoa khi edit
+            document.getElementById('maKhoa').disabled = true;
+
+            this.clearValidation();
+
+            const modal = new bootstrap.Modal(document.getElementById('khoaModal'));
+            modal.show();
+        },
+
+        viewKhoa(maKhoa) {
+            const khoa = this.data.khoas.find(k => k.maKhoa === maKhoa);
+            if (!khoa) return;
+
+            this.showAlert(`Thông tin khoa: ${khoa.tenKhoa} (${khoa.maKhoa})`, 'info');
+        },
+
+        deleteKhoa(maKhoa, tenKhoa) {
+            document.getElementById('deleteKhoaName').textContent = tenKhoa;
+            this.data.editingId = maKhoa;
+
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        },
+
+        async confirmDelete() {
+            if (!this.data.editingId) return;
+
+            try {
+                const token = localStorage.getItem('accessToken');
+                const response = await fetch(`/api/khoa/${this.data.editingId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                this.showAlert('Xóa khoa thành công!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+                await this.loadData();
+
+            } catch (error) {
+                console.error('❌ Error deleting khoa:', error);
+                this.showAlert('Không thể xóa khoa: ' + error.message, 'danger');
+            }
+        },
+
+        async saveKhoa() {
+            if (!this.validateForm()) return;
+
+            const form = document.getElementById('khoaForm');
+            const formData = new FormData(form);
+            const data = {
+                maKhoa: formData.get('maKhoa'),
+                tenKhoa: formData.get('tenKhoa'),
+                isActive: formData.get('isActive') === 'true'
+            };
+
+            try {
+                this.setButtonLoading(true);
+
+                const token = localStorage.getItem('accessToken');
+                const isEdit = this.data.editingId !== null;
+                const url = isEdit ? `/api/khoa/${this.data.editingId}` : '/api/khoa';
+                const method = isEdit ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                this.showAlert(`${isEdit ? 'Cập nhật' : 'Thêm'} khoa thành công!`, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('khoaModal')).hide();
+                await this.loadData();
+
+            } catch (error) {
+                console.error('❌ Error saving khoa:', error);
+                this.showAlert('Không thể lưu khoa: ' + error.message, 'danger');
+            } finally {
+                this.setButtonLoading(false);
+            }
+        },
+
+        validateForm() {
+            const form = document.getElementById('khoaForm');
+            let isValid = true;
+
+            // Validate mã khoa
+            const maKhoa = document.getElementById('maKhoa');
+            if (!maKhoa.value.trim()) {
+                this.showFieldError(maKhoa, 'Mã khoa không được để trống');
+                isValid = false;
+            } else if (!/^[A-Z0-9]+$/.test(maKhoa.value.trim())) {
+                this.showFieldError(maKhoa, 'Mã khoa chỉ được chứa chữ hoa và số');
+                isValid = false;
+            } else {
+                this.clearFieldError(maKhoa);
+            }
+
+            // Validate tên khoa
+            const tenKhoa = document.getElementById('tenKhoa');
+            if (!tenKhoa.value.trim()) {
+                this.showFieldError(tenKhoa, 'Tên khoa không được để trống');
+                isValid = false;
+            } else if (tenKhoa.value.trim().length < 3) {
+                this.showFieldError(tenKhoa, 'Tên khoa phải có ít nhất 3 ký tự');
+                isValid = false;
+            } else {
+                this.clearFieldError(tenKhoa);
+            }
+
+            return isValid;
+        },
+
+        setupValidation() {
+            const inputs = document.querySelectorAll('#khoaForm input');
+            inputs.forEach(input => {
+                input.addEventListener('blur', () => this.validateForm());
+                input.addEventListener('input', () => this.clearFieldError(input));
+            });
+        },
+
+        showFieldError(field, message) {
+            field.classList.add('is-invalid');
+            const feedback = field.nextElementSibling;
+            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                feedback.textContent = message;
+            }
+        },
+
+        clearFieldError(field) {
+            field.classList.remove('is-invalid');
+            const feedback = field.nextElementSibling;
+            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                feedback.textContent = '';
+            }
+        },
+
+        clearValidation() {
+            document.querySelectorAll('#khoaForm .is-invalid').forEach(el => {
+                el.classList.remove('is-invalid');
+            });
+            document.querySelectorAll('#khoaForm .invalid-feedback').forEach(el => {
+                el.textContent = '';
+            });
+        },
+
+        setButtonLoading(loading) {
+            const button = document.querySelector('#khoaModal .btn-primary');
+            const spinner = button.querySelector('.loading-spinner');
+            const text = button.querySelector('.btn-text');
+
+            button.disabled = loading;
+            spinner.classList.toggle('d-none', !loading);
+            text.textContent = loading ? 'Đang lưu...' : 'Lưu';
+        },
+
+        showLoading(show) {
+            const tbody = document.getElementById('khoaTableBody');
+            if (show) {
+                tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-4">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-2">Đang tải dữ liệu...</p>
+                    </td>
+                </tr>
+            `;
+            }
+        },
+
+        refreshData() {
+            this.data.currentPage = 1;
+            this.loadData();
+        },
+
+        exportData(format) {
+            this.showAlert(`Đang xuất dữ liệu ${format.toUpperCase()}...`, 'info');
+            // Implement export functionality
+        },
+
+        formatDate(date) {
+            return date.toLocaleDateString('vi-VN');
+        },
+
+        showAlert(message, type = 'info') {
+            // Create alert container if not exists
+            let container = document.getElementById('alertContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'alertContainer';
+                container.className = 'position-fixed top-0 end-0 p-3';
+                container.style.zIndex = '9999';
+                document.body.appendChild(container);
+            }
+
+            const alertHtml = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                <i class="fas fa-${this.getAlertIcon(type)} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+
+            container.insertAdjacentHTML('beforeend', alertHtml);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const alerts = container.querySelectorAll('.alert');
+                if (alerts.length > 0) {
+                    alerts[0].remove();
+                }
+            }, 5000);
+        },
+
+        getAlertIcon(type) {
+            const icons = {
+                success: 'check-circle',
+                danger: 'exclamation-triangle',
+                warning: 'exclamation-circle',
+                info: 'info-circle'
+            };
+            return icons[type] || 'info-circle';
+        },
+
+        debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    };
+
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+        KhoaManager.init();
+    });
+
+    // Global logout function
+    function logout() {
+        localStorage.clear();
+        window.location.href = '/?message=logout_success';
+    }
+</script>
+</body>
+</html>
