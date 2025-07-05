@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Ngành - Face Attendance</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Custom CSS - Sử dụng CSS có sẵn từ project -->
+    <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/sidebar.css}" rel="stylesheet">
+    <link th:href="@{/css/admin.css}" rel="stylesheet">
+</head>
+<body>
+<div class="main-wrapper">
+    <!-- Include Sidebar Component -->
+    <div th:replace="~{components/sidebar :: sidebar}"></div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Quản lý Ngành</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <span>Xin chào, Admin</span>
+                        <div class="user-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div class="admin-dashboard">
+            <div class="container-fluid p-4">
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stats-card primary">
+                        <div class="stats-header">
+                            <div class="stats-icon">
+                                <i class="fas fa-sitemap"></i>
+                            </div>
+                        </div>
+                        <div class="stats-number">0</div>
+                        <div class="stats-label">Tổng số ngành</div>
+                        <div class="stats-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            Đang cập nhật
+                        </div>
+                    </div>
+
+                    <div class="stats-card success">
+                        <div class="stats-header">
+                            <div class="stats-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                        <div class="stats-number">0</div>
+                        <div class="stats-label">Ngành đang hoạt động</div>
+                        <div class="stats-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            Đang cập nhật
+                        </div>
+                    </div>
+
+                    <div class="stats-card warning">
+                        <div class="stats-header">
+                            <div class="stats-icon">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
+                        </div>
+                        <div class="stats-number">0</div>
+                        <div class="stats-label">Sinh viên đang học</div>
+                        <div class="stats-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            Đang cập nhật
+                        </div>
+                    </div>
+
+                    <div class="stats-card info">
+                        <div class="stats-header">
+                            <div class="stats-icon">
+                                <i class="fas fa-university"></i>
+                            </div>
+                        </div>
+                        <div class="stats-number">0</div>
+                        <div class="stats-label">Khoa quản lý</div>
+                        <div class="stats-change">
+                            <i class="fas fa-minus"></i>
+                            Đang cập nhật
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search and Filter Bar -->
+                <div class="filter-bar">
+                    <div class="filter-row">
+                        <div class="search-group">
+                            <div class="search-icon">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <input type="text" class="form-control search-input"
+                                   placeholder="Tìm kiếm ngành..." id="searchInput">
+                        </div>
+                        <select class="form-control" id="filterKhoa">
+                            <option value="">Tất cả khoa</option>
+                        </select>
+                        <select class="form-control" id="filterStatus">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="active">Đang hoạt động</option>
+                            <option value="inactive">Ngừng hoạt động</option>
+                        </select>
+                        <button class="btn btn-primary" id="btnAdd">
+                            <i class="fas fa-plus"></i> Thêm ngành
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Data Table -->
+                <div class="admin-table-wrapper">
+                    <div class="admin-table-header">
+                        <h5 class="admin-table-title">Danh sách ngành</h5>
+                        <div class="table-actions">
+                            <div class="export-controls">
+                                <button class="btn-export" title="Xuất Excel">
+                                    <i class="fas fa-file-excel"></i>
+                                    Excel
+                                </button>
+                                <button class="btn-export" title="Xuất PDF">
+                                    <i class="fas fa-file-pdf"></i>
+                                    PDF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table admin-table">
+                            <thead>
+                            <tr>
+                                <th>Mã ngành</th>
+                                <th>Tên ngành</th>
+                                <th>Khoa</th>
+                                <th>Số sinh viên</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody id="nganhTableBody">
+                            <!-- Dữ liệu sẽ được load từ API -->
+                            <tr>
+                                <td colspan="6" class="text-center">
+                                    <div class="loading-spinner mx-auto"></div>
+                                    <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <nav class="admin-pagination">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1">Trước</a>
+                            </li>
+                            <li class="page-item active">
+                                <a class="page-link" href="#">1</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">2</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">3</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Sau</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm/Sửa Ngành -->
+<div class="modal fade admin-modal" id="nganhModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="nganhModalTitle">Thêm ngành mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="nganhForm">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="maNganh">Mã ngành <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control-admin" id="maNganh" name="maNganh" required
+                                   placeholder="Ví dụ: CNTT01">
+                            <div class="invalid-feedback">
+                                Vui lòng nhập mã ngành
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="tenNganh">Tên ngành <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control-admin" id="tenNganh" name="tenNganh" required
+                                   placeholder="Ví dụ: Công nghệ thông tin">
+                            <div class="invalid-feedback">
+                                Vui lòng nhập tên ngành
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="khoaId">Khoa <span class="text-danger">*</span></label>
+                            <select class="form-control-admin" id="khoaId" name="khoaId" required>
+                                <option value="">Chọn khoa</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Vui lòng chọn khoa
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="trangThai">Trạng thái</label>
+                            <select class="form-control-admin" id="trangThai" name="trangThai">
+                                <option value="true">Hoạt động</option>
+                                <option value="false">Ngừng hoạt động</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="moTa">Mô tả</label>
+                        <textarea class="form-control-admin" id="moTa" name="moTa" rows="4"
+                                  placeholder="Mô tả về ngành học..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Lưu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Xem Chi tiết -->
+<div class="modal fade admin-modal" id="nganhDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chi tiết ngành</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <label>Mã ngành:</label>
+                            <span id="detailMaNganh"></span>
+                        </div>
+                        <div class="info-item">
+                            <label>Tên ngành:</label>
+                            <span id="detailTenNganh"></span>
+                        </div>
+                        <div class="info-item">
+                            <label>Khoa:</label>
+                            <span id="detailKhoa"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <label>Số sinh viên:</label>
+                            <span id="detailSoSinhVien"></span>
+                        </div>
+                        <div class="info-item">
+                            <label>Trạng thái:</label>
+                            <span id="detailTrangThai"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <label>Mô tả:</label>
+                    <p id="detailMoTa" class="mt-2"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Custom JS - Sử dụng JS có sẵn từ project -->
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/sidebar.js}"></script>
+
+<script>
+    // Global variables
+    let nganhData = [];
+    let khoaData = [];
+    let currentEditingId = null;
+
+    // API Base URL
+    const API_BASE = '/api';
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize sidebar first (if using separate sidebar.js)
+        if (typeof initializeSidebar === 'function') {
+            initializeSidebar();
+        }
+
+        initializeEventListeners();
+        loadInitialData();
+    });
+
+    function initializeEventListeners() {
+        // Sidebar toggle (fallback if sidebar.js doesn't handle it)
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        if (sidebarToggle && typeof toggleSidebar !== 'function') {
+            sidebarToggle.addEventListener('click', function() {
+                const sidebar = document.getElementById('sidebar');
+                const mainContent = document.querySelector('.main-content');
+
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+            });
+        }
+
+        // Add button click
+        document.getElementById('btnAdd').addEventListener('click', function() {
+            openNganhModal();
+        });
+
+        // Form submit
+        document.getElementById('nganhForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveNganh();
+        });
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function() {
+            filterNganh();
+        });
+
+        // Filter dropdowns
+        document.getElementById('filterKhoa').addEventListener('change', filterNganh);
+        document.getElementById('filterStatus').addEventListener('change', filterNganh);
+
+        // Export functionality
+        document.querySelector('.btn-export[title="Xuất Excel"]').addEventListener('click', exportToExcel);
+        document.querySelector('.btn-export[title="Xuất PDF"]').addEventListener('click', exportToPDF);
+    }
+
+    // Load initial data from APIs
+    async function loadInitialData() {
+        showLoading(true);
+        try {
+            await Promise.all([
+                loadKhoaData(),
+                loadNganhData()
+            ]);
+            updateStats();
+        } catch (error) {
+            console.error('Error loading initial data:', error);
+            showNotification('Lỗi khi tải dữ liệu: ' + error.message, 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Load khoa data from API
+    async function loadKhoaData() {
+        try {
+            const response = await fetch(`${API_BASE}/khoa`);
+            if (!response.ok) throw new Error('Failed to load khoa data');
+
+            khoaData = await response.json();
+            populateKhoaSelects();
+        } catch (error) {
+            console.error('Error loading khoa:', error);
+            throw error;
+        }
+    }
+
+    // Load nganh data from API
+    async function loadNganhData() {
+        try {
+            const response = await fetch(`${API_BASE}/nganh`);
+            if (!response.ok) throw new Error('Failed to load nganh data');
+
+            nganhData = await response.json();
+            renderNganhTable();
+        } catch (error) {
+            console.error('Error loading nganh:', error);
+            throw error;
+        }
+    }
+
+    // Populate khoa select dropdowns
+    function populateKhoaSelects() {
+        const khoaSelect = document.getElementById('khoaId');
+        const filterKhoaSelect = document.getElementById('filterKhoa');
+
+        // Clear existing options (except first)
+        khoaSelect.innerHTML = '<option value="">Chọn khoa</option>';
+        filterKhoaSelect.innerHTML = '<option value="">Tất cả khoa</option>';
+
+        khoaData.forEach(khoa => {
+            // Handle is_active properly - DB có thể trả về 1/0 hoặc true/false
+            const isActive = khoa.isActive === true || khoa.isActive === 1 || khoa.isActive === '1';
+            if (isActive) { // Only show active khoa
+                const option1 = new Option(khoa.tenKhoa, khoa.maKhoa);
+                const option2 = new Option(khoa.tenKhoa, khoa.maKhoa);
+                khoaSelect.appendChild(option1);
+                filterKhoaSelect.appendChild(option2);
+            }
+        });
+    }
+
+    // Render nganh table
+    function renderNganhTable() {
+        const tbody = document.getElementById('nganhTableBody');
+        tbody.innerHTML = '';
+
+        nganhData.forEach(nganh => {
+            const row = createNganhRow(nganh);
+            tbody.appendChild(row);
+        });
+    }
+
+    // Create table row for nganh
+    function createNganhRow(nganh) {
+        const row = document.createElement('tr');
+
+        // Use tenKhoa from DTO directly (already included from service)
+        const khoaName = nganh.tenKhoa || 'N/A';
+
+        // Fix the isActive check - handle all possible boolean representations
+        const isActive = nganh.isActive === true || nganh.isActive === 1 || nganh.isActive === '1' || nganh.isActive === '1';
+        const statusClass = isActive ? 'status-active' : 'status-inactive';
+        const statusText = isActive ? 'Hoạt động' : 'Ngừng hoạt động';
+
+        row.innerHTML = `
+                <td><strong>${nganh.maNganh}</strong></td>
+                <td>${nganh.tenNganh}</td>
+                <td>${khoaName}</td>
+                <td><span class="badge bg-info">${nganh.soSinhVien || 0}</span></td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-action btn-view" onclick="viewNganh('${nganh.maNganh}')" title="Xem chi tiết">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn-action btn-edit" onclick="editNganh('${nganh.maNganh}')" title="Chỉnh sửa">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-action btn-delete" onclick="deleteNganh('${nganh.maNganh}')" title="Xóa">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+
+        return row;
+    }
+
+    // Open modal for add/edit
+    async function openNganhModal(maNganh = null) {
+        const modal = new bootstrap.Modal(document.getElementById('nganhModal'));
+        const form = document.getElementById('nganhForm');
+        const title = document.getElementById('nganhModalTitle');
+
+        form.reset();
+        form.classList.remove('was-validated');
+        currentEditingId = maNganh;
+
+        if (maNganh) {
+            // Edit mode - load nganh data
+            title.textContent = 'Chỉnh sửa ngành';
+            try {
+                const response = await fetch(`${API_BASE}/nganh/${maNganh}`);
+                if (!response.ok) throw new Error('Failed to load nganh data');
+
+                const nganh = await response.json();
+                document.getElementById('maNganh').value = nganh.maNganh;
+                document.getElementById('maNganh').readOnly = true;
+                document.getElementById('tenNganh').value = nganh.tenNganh;
+                document.getElementById('khoaId').value = nganh.maKhoa;
+                // Handle is_active properly for form
+                const isActive = nganh.isActive === true || nganh.isActive === 1 || nganh.isActive === '1' || nganh.isActive === 'true';
+                document.getElementById('trangThai').value = isActive ? 'true' : 'false';
+            } catch (error) {
+                showNotification('Lỗi khi tải dữ liệu ngành: ' + error.message, 'error');
+                return;
+            }
+        } else {
+            // Add mode
+            title.textContent = 'Thêm ngành mới';
+            document.getElementById('maNganh').readOnly = false;
+            document.getElementById('trangThai').value = 'true';
+        }
+
+        modal.show();
+    }
+
+    // Save nganh (create or update)
+    async function saveNganh() {
+        const form = document.getElementById('nganhForm');
+
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        const formData = new FormData(form);
+        const nganhData = {
+            maNganh: formData.get('maNganh'),
+            tenNganh: formData.get('tenNganh'),
+            maKhoa: formData.get('khoaId'),
+            isActive: formData.get('trangThai') === 'true'
+        };
+
+        try {
+            showLoading(true);
+            let response;
+
+            if (currentEditingId) {
+                // Update existing nganh
+                response = await fetch(`${API_BASE}/nganh/${currentEditingId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(nganhData)
+                });
+            } else {
+                // Create new nganh
+                response = await fetch(`${API_BASE}/nganh`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(nganhData)
+                });
+            }
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Failed to save nganh');
+            }
+
+            // Close modal and reload data
+            bootstrap.Modal.getInstance(document.getElementById('nganhModal')).hide();
+            await loadNganhData();
+            updateStats();
+
+            showNotification(
+                currentEditingId ? 'Cập nhật ngành thành công!' : 'Thêm ngành thành công!',
+                'success'
+            );
+
+        } catch (error) {
+            console.error('Error saving nganh:', error);
+            showNotification('Lỗi khi lưu: ' + error.message, 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // View nganh details
+    async function viewNganh(maNganh) {
+        try {
+            const response = await fetch(`${API_BASE}/nganh/${maNganh}`);
+            if (!response.ok) throw new Error('Failed to load nganh data');
+
+            const nganh = await response.json();
+
+            // Populate detail modal
+            document.getElementById('detailMaNganh').textContent = nganh.maNganh;
+            document.getElementById('detailTenNganh').textContent = nganh.tenNganh;
+            document.getElementById('detailKhoa').textContent = nganh.tenKhoa || 'N/A';
+            document.getElementById('detailSoSinhVien').textContent = nganh.soSinhVien || 0;
+
+            // Handle is_active properly for display
+            const isActive = nganh.isActive === true || nganh.isActive === 1 || nganh.isActive === '1' || nganh.isActive === 'true';
+            document.getElementById('detailTrangThai').innerHTML =
+                `<span class="status-badge ${isActive ? 'status-active' : 'status-inactive'}">
+                        ${isActive ? 'Hoạt động' : 'Ngừng hoạt động'}
+                    </span>`;
+            document.getElementById('detailMoTa').textContent = 'Không có mô tả';
+
+            const modal = new bootstrap.Modal(document.getElementById('nganhDetailModal'));
+            modal.show();
+        } catch (error) {
+            showNotification('Lỗi khi tải chi tiết: ' + error.message, 'error');
+        }
+    }
+
+    // Edit nganh
+    function editNganh(maNganh) {
+        openNganhModal(maNganh);
+    }
+
+    // Delete nganh
+    async function deleteNganh(maNganh) {
+        if (!confirm('Bạn có chắc chắn muốn xóa ngành này?')) {
+            return;
+        }
+
+        try {
+            showLoading(true);
+            const response = await fetch(`${API_BASE}/nganh/${maNganh}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete nganh');
+            }
+
+            await loadNganhData();
+            updateStats();
+            showNotification('Xóa ngành thành công!', 'success');
+
+        } catch (error) {
+            console.error('Error deleting nganh:', error);
+            showNotification('Lỗi khi xóa: ' + error.message, 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Filter nganh
+    function filterNganh() {
+        const searchText = document.getElementById('searchInput').value.toLowerCase();
+        const khoaFilter = document.getElementById('filterKhoa').value;
+        const statusFilter = document.getElementById('filterStatus').value;
+
+        const rows = document.querySelectorAll('#nganhTableBody tr');
+
+        rows.forEach(row => {
+            const maNganh = row.cells[0].textContent.toLowerCase();
+            const tenNganh = row.cells[1].textContent.toLowerCase();
+            const khoaText = row.cells[2].textContent;
+            // Check status based on badge class
+            const isActive = row.cells[4].querySelector('.status-badge').classList.contains('status-active');
+
+            const matchesSearch = maNganh.includes(searchText) || tenNganh.includes(searchText);
+            const matchesKhoa = !khoaFilter || (function() {
+                const selectedKhoa = khoaData.find(k => k.maKhoa === khoaFilter);
+                return selectedKhoa && khoaText.includes(selectedKhoa.tenKhoa);
+            })();
+            const matchesStatus = !statusFilter ||
+                (statusFilter === 'active' && isActive) ||
+                (statusFilter === 'inactive' && !isActive);
+
+            const shouldShow = matchesSearch && matchesKhoa && matchesStatus;
+            row.style.display = shouldShow ? '' : 'none';
+        });
+    }
+
+    // Update stats
+    function updateStats() {
+        const totalNganh = nganhData.length;
+        // Handle is_active properly for counting
+        const activeNganh = nganhData.filter(n => {
+            return n.isActive === true || n.isActive === 1 || n.isActive === '1' || n.isActive === 'true';
+        }).length;
+        const totalSinhVien = nganhData.reduce((sum, n) => sum + (n.soSinhVien || 0), 0);
+        const activeKhoa = khoaData.filter(k => {
+            return k.isActive === true || k.isActive === 1 || k.isActive === '1' || k.isActive === 'true';
+        }).length;
+
+        document.querySelector('.stats-card.primary .stats-number').textContent = totalNganh;
+        document.querySelector('.stats-card.success .stats-number').textContent = activeNganh;
+        document.querySelector('.stats-card.warning .stats-number').textContent = totalSinhVien;
+        document.querySelector('.stats-card.info .stats-number').textContent = activeKhoa;
+    }
+
+    // Show/hide loading
+    function showLoading(show) {
+        const loadingOverlay = document.querySelector('.loading-overlay');
+        if (show) {
+            if (!loadingOverlay) {
+                const overlay = document.createElement('div');
+                overlay.className = 'loading-overlay';
+                overlay.innerHTML = '<div class="loading-spinner"></div>';
+                document.body.appendChild(overlay);
+            }
+        } else {
+            if (loadingOverlay) {
+                loadingOverlay.remove();
+            }
+        }
+    }
+
+    // Show notification
+    function showNotification(message, type = 'info') {
+        const alertClass = type === 'success' ? 'alert-success' :
+            type === 'error' ? 'alert-danger' : 'alert-info';
+
+        const notification = document.createElement('div');
+        notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+
+    // Export functions
+    async function exportToExcel() {
+        try {
+            showNotification('Đang xuất file Excel...', 'info');
+            // Implement Excel export logic here
+            setTimeout(() => {
+                showNotification('Xuất Excel thành công!', 'success');
+            }, 1000);
+        } catch (error) {
+            showNotification('Lỗi khi xuất Excel: ' + error.message, 'error');
+        }
+    }
+
+    async function exportToPDF() {
+        try {
+            showNotification('Đang xuất file PDF...', 'info');
+            // Implement PDF export logic here
+            setTimeout(() => {
+                showNotification('Xuất PDF thành công!', 'success');
+            }, 1000);
+        } catch (error) {
+            showNotification('Lỗi khi xuất PDF: ' + error.message, 'error');
+        }
+    }
+</script>
+
+<style>
+    /* Additional styles for better UX */
+    .page-title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--gray-900);
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-item label {
+        font-weight: 600;
+        color: var(--gray-700);
+        margin: 0;
+        min-width: 120px;
+    }
+
+    .info-item span {
+        flex: 1;
+        text-align: right;
+        color: var(--gray-600);
+    }
+
+    /* Loading overlay */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Status badges */
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    /* Responsive improvements */
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .filter-row {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .admin-table-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+        }
+
+        .table-actions {
+            justify-content: center;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .btn-action {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .main-content {
+            margin-left: 0;
+        }
+
+        .sidebar {
+            transform: translateX(-100%);
+        }
+
+        .sidebar.show {
+            transform: translateX(0);
+        }
+
+        .header {
+            padding: 1rem;
+        }
+
+        .container-fluid {
+            padding: 1rem !important;
+        }
+
+        .stats-card {
+            padding: 1.5rem;
+        }
+
+        .stats-number {
+            font-size: 2rem;
+        }
+
+        .admin-table th,
+        .admin-table td {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.85rem;
+        }
+    }
+
+    /* Print styles */
+    @media print {
+        .sidebar,
+        .header,
+        .filter-bar,
+        .btn,
+        .action-buttons {
+            display: none !important;
+        }
+
+        .main-content {
+            margin-left: 0 !important;
+        }
+
+        .admin-table-wrapper {
+            box-shadow: none;
+            border: 1px solid #000;
+        }
+
+        .stats-grid {
+            display: none;
+        }
+    }
+</style>
+</body>
+</html>

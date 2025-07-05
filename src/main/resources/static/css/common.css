@@ -243,7 +243,6 @@ p {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
     font-weight: 600;
     font-size: 0.9rem;
 }
@@ -253,6 +252,7 @@ p {
     font-size: 0.9rem;
     color: var(--gray-800);
     font-weight: 600;
+
 }
 
 .user-details p {
