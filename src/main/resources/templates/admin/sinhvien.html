@@ -3,180 +3,293 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý Sinh viên - Face Attendance</title>
+    <title>Quản lý Sinh viên</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link th:href="@{/css/common.css}" rel="stylesheet">
-    <link th:href="@{/css/sidebar.css}" rel="stylesheet">
-    <link th:href="@{/css/admin.css}" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <style>
+        .student-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e9ecef;
+        }
+        .avatar-placeholder {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        .status-active { color: #28a745; }
+        .status-inactive { color: #dc3545; }
+        .embedding-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .has-embedding {
+            background: #d1f2eb;
+            color: #00875a;
+        }
+        .no-embedding {
+            background: #fdebf7;
+            color: #e74c3c;
+        }
+        .file-upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .file-upload-area:hover, .file-upload-area.dragover {
+            border-color: #007bff;
+            background: #f8f9ff;
+        }
+        .face-images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .face-image-slot {
+            position: relative;
+            aspect-ratio: 1;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .face-image-slot:hover {
+            border-color: #007bff;
+            background: #f8f9ff;
+        }
+        .face-image-slot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+        .face-image-slot .remove-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .excel-import-area {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .progress-bar-custom {
+            height: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+        .face-management-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+        .extraction-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-top: 1rem;
+        }
+        .extraction-status {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-processing {
+            background: #cce7ff;
+            color: #0066cc;
+        }
+        .status-completed {
+            background: #d1f2eb;
+            color: #00875a;
+        }
+        .status-error {
+            background: #fdebf7;
+            color: #e74c3c;
+        }
+    </style>
 </head>
-<body class="admin-dashboard">
-<div class="main-wrapper">
-    <!-- Include Sidebar Component -->
-    <div th:replace="~{components/sidebar :: sidebar}"></div>
+<body>
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+    <!-- Sidebar content will be loaded by sidebar.js -->
+</nav>
 
-    <!-- Main Content -->
-    <main class="main-content">
+<!-- Main Content -->
+<div class="main-content">
+    <main class="admin-content">
         <!-- Header -->
-        <header class="header">
-            <div class="header-content">
-                <div class="header-left">
-                    <h1 class="page-title">Quản lý Sinh viên</h1>
-                </div>
-                <div class="header-right">
-                    <div class="user-dropdown">
-                        <div class="user-info" data-bs-toggle="dropdown" aria-expanded="false">
-                            <div class="user-avatar">
-                                <span th:text="${currentUser?.username?.substring(0,1)?.toUpperCase() ?: 'A'}">A</span>
-                            </div>
-                            <div class="user-details">
-                                <h6 th:text="${currentUser?.username ?: 'Admin'}">Admin</h6>
-                                <p>Quản trị viên</p>
-                            </div>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="/profile"><i class="fas fa-user"></i>Hồ sơ</a></li>
-                            <li><a class="dropdown-item" href="/settings"><i class="fas fa-cog"></i>Cài đặt</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i>Đăng xuất</a></li>
-                        </ul>
-                    </div>
-                </div>
+        <div class="admin-header">
+            <div class="admin-title">
+                <h1><i class="fas fa-user-graduate me-3"></i>Quản lý Sinh viên</h1>
+                <p class="admin-subtitle">Quản lý thông tin sinh viên và dữ liệu nhận diện khuôn mặt</p>
             </div>
-        </header>
-
-        <!-- Content -->
-        <div class="content-wrapper">
-            <!-- Page Header -->
-            <div class="page-header">
-                <h2 class="page-title">Quản lý Sinh viên</h2>
-                <p class="page-subtitle">Quản lý thông tin sinh viên và điểm danh</p>
-            </div>
-
-            <!-- Stats Overview -->
-            <div class="stats-grid">
-                <div class="stats-card primary">
-                    <div class="stats-header">
-                        <div class="stats-icon">
-                            <i class="fas fa-user-graduate"></i>
-                        </div>
-                    </div>
-                    <div class="stats-number" id="totalStudents">0</div>
-                    <div class="stats-label">Tổng sinh viên</div>
-                </div>
-
-                <div class="stats-card success">
-                    <div class="stats-header">
-                        <div class="stats-icon">
-                            <i class="fas fa-user-check"></i>
-                        </div>
-                    </div>
-                    <div class="stats-number" id="activeStudents">0</div>
-                    <div class="stats-label">Đang hoạt động</div>
-                </div>
-
-                <div class="stats-card warning">
-                    <div class="stats-header">
-                        <div class="stats-icon">
-                            <i class="fas fa-camera"></i>
-                        </div>
-                    </div>
-                    <div class="stats-number" id="studentsWithPhoto">0</div>
-                    <div class="stats-label">Có ảnh đại diện</div>
-                </div>
-
-                <div class="stats-card info">
-                    <div class="stats-header">
-                        <div class="stats-icon">
-                            <i class="fas fa-brain"></i>
-                        </div>
-                    </div>
-                    <div class="stats-number" id="studentsWithEmbedding">0</div>
-                    <div class="stats-label">Có dữ liệu nhận diện</div>
-                </div>
-            </div>
-
-            <!-- Filter Bar -->
-            <div class="filter-bar">
-                <div class="filter-row">
-                    <div class="search-group">
-                        <i class="search-icon fas fa-search"></i>
-                        <input type="text" class="form-control search-input"
-                               placeholder="Tìm kiếm sinh viên..." id="searchInput">
-                    </div>
-                    <select class="form-select" id="classFilter" style="width: auto;">
-                        <option value="">Tất cả lớp</option>
-                    </select>
-                    <select class="form-select" id="statusFilter" style="width: auto;">
-                        <option value="">Tất cả trạng thái</option>
-                        <option value="active">Đang hoạt động</option>
-                        <option value="inactive">Không hoạt động</option>
-                    </select>
-                    <button class="btn btn-primary" onclick="SinhVienManager.showAddModal()">
-                        <i class="fas fa-plus me-2"></i>Thêm sinh viên
-                    </button>
-                </div>
-            </div>
-
-            <!-- Students Table -->
-            <div class="admin-table-wrapper">
-                <div class="admin-table-header">
-                    <h3 class="admin-table-title">Danh sách Sinh viên</h3>
-                    <div class="table-actions">
-                        <button class="btn btn-sm btn-outline-primary" onclick="SinhVienManager.refreshData()">
-                            <i class="fas fa-sync-alt me-1"></i>Làm mới
-                        </button>
-                        <button class="btn btn-sm btn-outline-success" onclick="SinhVienManager.bulkImport()">
-                            <i class="fas fa-file-import me-1"></i>Import Excel
-                        </button>
-                        <div class="export-controls">
-                            <button class="btn-export" onclick="SinhVienManager.exportData('excel')">
-                                <i class="fas fa-file-excel me-1"></i>Excel
-                            </button>
-                            <button class="btn-export" onclick="SinhVienManager.exportData('pdf')">
-                                <i class="fas fa-file-pdf me-1"></i>PDF
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <table class="admin-table">
-                    <thead>
-                    <tr>
-                        <th>
-                            <input type="checkbox" id="selectAll" onclick="SinhVienManager.toggleSelectAll()">
-                        </th>
-                        <th>Ảnh</th>
-                        <th>Mã SV</th>
-                        <th>Họ tên</th>
-                        <th>Lớp</th>
-                        <th>Email</th>
-                        <th>Giới tính</th>
-                        <th>Trạng thái</th>
-                        <th>Nhận diện</th>
-                        <th>Thao tác</th>
-                    </tr>
-                    </thead>
-                    <tbody id="sinhvienTableBody">
-                    <tr>
-                        <td colspan="10" class="text-center">
-                            <div class="loading-spinner"></div>
-                            <p class="mt-2">Đang tải dữ liệu...</p>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <nav class="admin-pagination">
-                <ul class="pagination" id="paginationControls">
-                    <!-- Pagination will be generated by JavaScript -->
-                </ul>
-            </nav>
         </div>
-    </main>
+
+        <!-- Statistics Cards -->
+        <div class="admin-stats">
+            <div class="stats-card primary">
+                <div class="stats-header">
+                    <div class="stats-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="stats-number" id="totalStudents">0</div>
+                <div class="stats-label">Tổng sinh viên</div>
+            </div>
+
+            <div class="stats-card success">
+                <div class="stats-header">
+                    <div class="stats-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                </div>
+                <div class="stats-number" id="activeStudents">0</div>
+                <div class="stats-label">Đang hoạt động</div>
+            </div>
+
+            <div class="stats-card warning">
+                <div class="stats-header">
+                    <div class="stats-icon">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                </div>
+                <div class="stats-number" id="studentsWithPhoto">0</div>
+                <div class="stats-label">Có ảnh đại diện</div>
+            </div>
+
+            <div class="stats-card info">
+                <div class="stats-header">
+                    <div class="stats-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                </div>
+                <div class="stats-number" id="studentsWithEmbedding">0</div>
+                <div class="stats-label">Có dữ liệu nhận diện</div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-row">
+                <div class="search-group">
+                    <i class="search-icon fas fa-search"></i>
+                    <input type="text" class="form-control search-input"
+                           placeholder="Tìm kiếm theo mã SV, tên, email..." id="searchInput">
+                </div>
+                <select class="form-select" id="classFilter" style="width: auto;">
+                    <option value="">Tất cả lớp</option>
+                </select>
+                <select class="form-select" id="statusFilter" style="width: auto;">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="active">Đang hoạt động</option>
+                    <option value="inactive">Không hoạt động</option>
+                </select>
+                <button class="btn btn-primary" onclick="SinhVienManager.showAddModal()">
+                    <i class="fas fa-plus me-2"></i>Thêm sinh viên
+                </button>
+            </div>
+        </div>
+
+        <!-- Students Table -->
+        <div class="admin-table-wrapper">
+            <div class="admin-table-header">
+                <h3 class="admin-table-title">Danh sách Sinh viên</h3>
+                <div class="table-actions">
+                    <button class="btn btn-sm btn-outline-primary" onclick="SinhVienManager.refreshData()">
+                        <i class="fas fa-sync-alt me-1"></i>Làm mới
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="SinhVienManager.showImportModal()">
+                        <i class="fas fa-file-import me-1"></i>Import Excel
+                    </button>
+                    <div class="export-controls">
+                        <button class="btn-export" onclick="SinhVienManager.exportData('excel')">
+                            <i class="fas fa-file-excel me-1"></i>Excel
+                        </button>
+                        <button class="btn-export" onclick="SinhVienManager.exportData('pdf')">
+                            <i class="fas fa-file-pdf me-1"></i>PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>
+                        <input type="checkbox" id="selectAll" onclick="SinhVienManager.toggleSelectAll()">
+                    </th>
+                    <th>Ảnh</th>
+                    <th>Mã SV</th>
+                    <th>Họ tên</th>
+                    <th>Lớp</th>
+                    <th>Email</th>
+                    <th>Giới tính</th>
+                    <th>Trạng thái</th>
+                    <th>Nhận diện</th>
+                    <th>Thao tác</th>
+                </tr>
+                </thead>
+                <tbody id="sinhvienTableBody">
+                <tr>
+                    <td colspan="10" class="text-center">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-2">Đang tải dữ liệu...</p>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <nav class="admin-pagination">
+            <ul class="pagination" id="paginationControls">
+                <!-- Pagination will be generated by JavaScript -->
+            </ul>
+        </nav>
 </div>
+</main>
 
 <!-- Add/Edit Student Modal -->
 <div class="modal fade admin-modal" id="sinhvienModal" tabindex="-1">
@@ -186,21 +299,19 @@
                 <h5 class="modal-title" id="modalTitle">Thêm sinh viên mới</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body admin-form-body">
-                <form id="sinhvienForm" class="admin-form" novalidate>
+            <div class="modal-body">
+                <form id="sinhvienForm" novalidate>
                     <!-- Row 1: Mã SV và Họ tên -->
                     <div class="form-row">
                         <div class="form-group">
                             <label for="maSv" class="form-label">Mã sinh viên <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control-admin" id="maSv" name="maSv"
-                                   placeholder="Nhập mã sinh viên" maxlength="20" required>
-                            <div class="invalid-feedback">Vui lòng nhập mã sinh viên (tối đa 20 ký tự)</div>
+                            <input type="text" class="form-control-admin" id="maSv" name="maSv" required maxlength="20">
+                            <div class="invalid-feedback">Vui lòng nhập mã sinh viên</div>
                         </div>
                         <div class="form-group">
                             <label for="hoTen" class="form-label">Họ và tên <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control-admin" id="hoTen" name="hoTen"
-                                   placeholder="Nhập họ và tên đầy đủ" maxlength="100" required>
-                            <div class="invalid-feedback">Vui lòng nhập họ và tên (tối đa 100 ký tự)</div>
+                            <input type="text" class="form-control-admin" id="hoTen" name="hoTen" required maxlength="100">
+                            <div class="invalid-feedback">Vui lòng nhập họ và tên</div>
                         </div>
                     </div>
 
@@ -208,13 +319,13 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control-admin" id="email" name="email"
-                                   placeholder="example@email.com">
-                            <div class="invalid-feedback">Vui lòng nhập email hợp lệ</div>
+                            <input type="email" class="form-control-admin" id="email" name="email">
+                            <div class="invalid-feedback">Email không hợp lệ</div>
                         </div>
                         <div class="form-group">
                             <label for="gioiTinh" class="form-label">Giới tính</label>
                             <select class="form-control-admin" id="gioiTinh" name="gioiTinh">
+                                <option value="">Chọn giới tính</option>
                                 <option value="NAM">Nam</option>
                                 <option value="NU">Nữ</option>
                             </select>
@@ -238,14 +349,16 @@
                                 </div>
                             </div>
                             <div class="invalid-feedback">Vui lòng chọn lớp</div>
-                            <small class="form-text text-muted">Nhập tên lớp để tìm kiếm</small>
                         </div>
                     </div>
 
                     <!-- Row 4: Ảnh đại diện -->
                     <div class="form-group">
                         <label for="hinhAnhUpload" class="form-label">Ảnh đại diện</label>
-                        <div class="file-upload-area" onclick="document.getElementById('hinhAnhFile').click()">
+                        <div class="file-upload-area" onclick="document.getElementById('hinhAnhFile').click()"
+                             ondrop="SinhVienManager.handleDrop(event)"
+                             ondragover="SinhVienManager.handleDragOver(event)"
+                             ondragleave="SinhVienManager.handleDragLeave(event)">
                             <div class="file-upload-icon">
                                 <i class="fas fa-cloud-upload-alt"></i>
                             </div>
@@ -258,7 +371,7 @@
                                style="display: none;" onchange="SinhVienManager.handleImageUpload(this)">
                         <input type="hidden" id="hinhAnh" name="hinhAnh">
                         <div class="mt-2" id="imagePreview" style="display: none;">
-                            <img id="previewImg" src="/placeholder.svg" alt="Preview"
+                            <img id="previewImg" src="" alt="Preview"
                                  style="max-width: 200px; height: auto; border-radius: 8px;">
                         </div>
                     </div>
@@ -276,10 +389,162 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                 <button type="button" class="btn btn-primary" onclick="SinhVienManager.saveSinhVien()">
-                    <span class="loading-spinner d-none">
-                        <i class="fas fa-spinner fa-spin"></i>
-                    </span>
+                        <span class="loading-spinner d-none">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </span>
                     <span class="btn-text">Lưu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Face Management Modal -->
+<div class="modal fade admin-modal" id="faceManagementModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quản lý dữ liệu khuôn mặt</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="faceManagementContent">
+                    <div class="student-info mb-4">
+                        <h6>Thông tin sinh viên</h6>
+                        <div class="d-flex align-items-center">
+                            <div class="student-avatar me-3" id="faceStudentAvatar">
+                                <div class="avatar-placeholder">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1" id="faceStudentName">Tên sinh viên</h6>
+                                <p class="text-muted mb-0" id="faceStudentId">Mã sinh viên</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="face-management-section">
+                        <h6 class="mb-3">
+                            <i class="fas fa-images me-2"></i>Ảnh khuôn mặt (Cần 5 ảnh để trích xuất đặc trưng)
+                        </h6>
+
+                        <div class="face-images-grid" id="faceImagesGrid">
+                            <!-- Face image slots will be generated by JavaScript -->
+                        </div>
+
+                        <input type="file" id="faceImageInput" accept="image/*" style="display: none;"
+                               onchange="SinhVienManager.handleFaceImageUpload(this)" multiple>
+
+                        <div class="text-center mt-3">
+                            <button class="btn btn-outline-primary" onclick="document.getElementById('faceImageInput').click()">
+                                <i class="fas fa-plus me-2"></i>Thêm ảnh khuôn mặt
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="face-management-section">
+                        <h6 class="mb-3">
+                            <i class="fas fa-brain me-2"></i>Trích xuất đặc trưng
+                        </h6>
+
+                        <div class="extraction-controls">
+                            <button class="btn btn-success" id="extractFeaturesBtn"
+                                    onclick="SinhVienManager.extractFeatures()" disabled>
+                                <i class="fas fa-cogs me-2"></i>Trích xuất đặc trưng
+                            </button>
+
+                            <div class="extraction-status status-pending" id="extractionStatus">
+                                <i class="fas fa-clock me-2"></i>Chưa trích xuất
+                            </div>
+                        </div>
+
+                        <div class="progress-bar-custom" id="extractionProgress" style="display: none;">
+                            <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+                        </div>
+
+                        <div class="mt-3" id="extractionResults" style="display: none;">
+                            <h6>Kết quả trích xuất:</h6>
+                            <div class="alert alert-info">
+                                <strong>Thành công!</strong> Đã trích xuất đặc trưng từ <span id="extractedCount">0</span> ảnh.
+                                <br>Dữ liệu đã được lưu vào cơ sở dữ liệu.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import Excel Modal -->
+<div class="modal fade admin-modal" id="importModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Import sinh viên từ Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="excel-import-area">
+                    <div class="mb-3">
+                        <i class="fas fa-file-excel text-success" style="font-size: 3rem;"></i>
+                        <h6 class="mt-2">Tải lên file Excel</h6>
+                        <p class="text-muted mb-3">
+                            File Excel cần có các cột sau:<br>
+                            <strong>maSv, hoTen, email, gioiTinh, ngaySinh, maLop</strong>
+                        </p>
+                    </div>
+
+                    <input type="file" id="excelFile" accept=".xlsx,.xls" style="display: none;"
+                           onchange="SinhVienManager.handleExcelUpload(this)">
+
+                    <button class="btn btn-primary" onclick="document.getElementById('excelFile').click()">
+                        <i class="fas fa-upload me-2"></i>Chọn file Excel
+                    </button>
+
+                    <div class="mt-3">
+                        <a href="/templates/student-import-template.xlsx" class="btn btn-outline-info">
+                            <i class="fas fa-download me-2"></i>Tải mẫu Excel
+                        </a>
+                    </div>
+                </div>
+
+                <div id="importPreview" style="display: none;">
+                    <h6>Xem trước dữ liệu:</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead id="importPreviewHeader"></thead>
+                            <tbody id="importPreviewBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="createAccountsCheck" checked>
+                            <label class="form-check-label" for="createAccountsCheck">
+                                Tự động tạo tài khoản đăng nhập (mật khẩu mặc định: mã sinh viên)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="importProgress" style="display: none;">
+                    <h6>Đang import dữ liệu...</h6>
+                    <div class="progress-bar-custom">
+                        <div class="progress-fill" id="importProgressFill" style="width: 0%;"></div>
+                    </div>
+                    <p class="mt-2" id="importStatus">Đang xử lý...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="confirmImportBtn"
+                        onclick="SinhVienManager.confirmImport()" style="display: none;">
+                    <i class="fas fa-check me-2"></i>Xác nhận Import
                 </button>
             </div>
         </div>
@@ -305,6 +570,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script th:src="@{/js/sidebar.js}"></script>
 <script th:src="@{/js/admin.js}"></script>
 
@@ -324,6 +590,9 @@
             totalPages: 0,
             selectedIds: new Set(),
             editingId: null,
+            currentStudentId: null,
+            faceImages: [],
+            importData: null,
             filters: {
                 search: '',
                 class: '',
@@ -331,19 +600,14 @@
             }
         },
 
+        API_BASE: '/api/admin',
+
         async init() {
             try {
                 console.log('🚀 Initializing SinhVienManager...');
-
-                // Load classes first
                 await this.loadClasses();
-
-                // Then load student data
                 await this.loadData();
-
-                // Setup event listeners
                 this.setupEventListeners();
-
                 console.log('✅ SinhVienManager initialized successfully');
             } catch (error) {
                 console.error('❌ Failed to initialize SinhVienManager:', error);
@@ -352,7 +616,7 @@
         },
 
         setupEventListeners() {
-            // Search input
+            // Search input with debounce
             const searchInput = document.getElementById('searchInput');
             if (searchInput) {
                 searchInput.addEventListener('input', this.debounce((e) => {
@@ -382,274 +646,256 @@
                 });
             }
 
-            // Class search functionality
-            this.setupClassSearch();
-        },
-
-        setupClassSearch() {
+            // Class search dropdown
             const lopSearch = document.getElementById('lopSearch');
-            const lopDropdown = document.getElementById('lopDropdown');
-            const maLopHidden = document.getElementById('maLop');
+            if (lopSearch) {
+                lopSearch.addEventListener('input', this.debounce((e) => {
+                    this.filterClasses(e.target.value);
+                }, 200));
 
-            if (!lopSearch || !lopDropdown) return;
+                lopSearch.addEventListener('focus', () => {
+                    this.showClassDropdown();
+                });
 
-            // Show dropdown on focus
-            lopSearch.addEventListener('focus', () => {
-                this.showClassDropdown();
-            });
-
-            // Filter classes on input
-            lopSearch.addEventListener('input', (e) => {
-                const searchTerm = e.target.value.toLowerCase();
-                this.filterClassDropdown(searchTerm);
-                this.showClassDropdown();
-            });
-
-            // Hide dropdown when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!lopSearch.contains(e.target) && !lopDropdown.contains(e.target)) {
-                    this.hideClassDropdown();
-                }
-            });
-        },
-
-        showClassDropdown() {
-            const lopDropdown = document.getElementById('lopDropdown');
-            lopDropdown.classList.add('show');
-        },
-
-        hideClassDropdown() {
-            const lopDropdown = document.getElementById('lopDropdown');
-            lopDropdown.classList.remove('show');
-        },
-
-        filterClassDropdown(searchTerm) {
-            const lopDropdown = document.getElementById('lopDropdown');
-            const filteredClasses = this.data.classes.filter(lop =>
-                lop.tenLop.toLowerCase().includes(searchTerm) ||
-                lop.maLop.toLowerCase().includes(searchTerm)
-            );
-
-            lopDropdown.innerHTML = filteredClasses.map(lop => `
-                <a class="dropdown-item" href="#" onclick="SinhVienManager.selectClass('${lop.maLop}', '${lop.tenLop}')">
-                    <strong>${lop.maLop}</strong> - ${lop.tenLop}
-                </a>
-            `).join('');
-
-            if (filteredClasses.length === 0) {
-                lopDropdown.innerHTML = '<div class="dropdown-item-text text-muted">Không tìm thấy lớp nào</div>';
+                lopSearch.addEventListener('blur', () => {
+                    setTimeout(() => this.hideClassDropdown(), 200);
+                });
             }
         },
 
-        selectClass(maLop, tenLop) {
-            document.getElementById('lopSearch').value = `${maLop} - ${tenLop}`;
-            document.getElementById('maLop').value = maLop;
-            this.hideClassDropdown();
-
-            // Clear validation
-            const lopSearch = document.getElementById('lopSearch');
-            lopSearch.classList.remove('is-invalid');
-            lopSearch.classList.add('is-valid');
+        debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
         },
 
         async loadClasses() {
             try {
-                const token = localStorage.getItem('accessToken');
-                const response = await fetch('/api/lop', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
+                const response = await fetch(`${this.API_BASE}/lop`);
+                if (!response.ok) throw new Error('Failed to load classes');
 
-                if (response.ok) {
-                    this.data.classes = await response.json();
-                    this.populateClassOptions();
-                    this.filterClassDropdown(''); // Initialize dropdown
-                } else {
-                    console.warn('⚠️ Could not load classes');
-                }
+                this.data.classes = await response.json();
+                this.populateClassFilter();
+                this.populateClassDropdown();
             } catch (error) {
-                console.error('❌ Error loading classes:', error);
+                console.error('Error loading classes:', error);
+                this.showAlert('Không thể tải danh sách lớp', 'warning');
             }
         },
 
-        populateClassOptions() {
+        populateClassFilter() {
             const classFilter = document.getElementById('classFilter');
-            if (classFilter && this.data.classes.length > 0) {
-                const options = this.data.classes.map(lop =>
-                    `<option value="${lop.maLop}">${lop.maLop} - ${lop.tenLop}</option>`
-                ).join('');
-                classFilter.innerHTML = '<option value="">Tất cả lớp</option>' + options;
+            if (!classFilter) return;
+
+            classFilter.innerHTML = '<option value="">Tất cả lớp</option>';
+            this.data.classes.forEach(lop => {
+                const option = document.createElement('option');
+                option.value = lop.maLop;
+                option.textContent = `${lop.tenLop} (${lop.maLop})`;
+                classFilter.appendChild(option);
+            });
+        },
+
+        populateClassDropdown() {
+            const dropdown = document.getElementById('lopDropdown');
+            if (!dropdown) return;
+
+            dropdown.innerHTML = '';
+            this.data.classes.forEach(lop => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.style.cursor = 'pointer';
+                item.innerHTML = `
+                        <strong>${lop.tenLop}</strong><br>
+                        <small class="text-muted">${lop.maLop} - ${lop.tenNganh}</small>
+                    `;
+                item.onclick = () => this.selectClass(lop);
+                dropdown.appendChild(item);
+            });
+        },
+
+        filterClasses(searchTerm) {
+            const dropdown = document.getElementById('lopDropdown');
+            if (!dropdown) return;
+
+            const filteredClasses = this.data.classes.filter(lop =>
+                lop.tenLop.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                lop.maLop.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            dropdown.innerHTML = '';
+            filteredClasses.forEach(lop => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.style.cursor = 'pointer';
+                item.innerHTML = `
+                        <strong>${lop.tenLop}</strong><br>
+                        <small class="text-muted">${lop.maLop} - ${lop.tenNganh}</small>
+                    `;
+                item.onclick = () => this.selectClass(lop);
+                dropdown.appendChild(item);
+            });
+
+            if (filteredClasses.length === 0) {
+                dropdown.innerHTML = '<div class="dropdown-item-text text-muted">Không tìm thấy lớp nào</div>';
+            }
+        },
+
+        selectClass(lop) {
+            document.getElementById('lopSearch').value = lop.tenLop;
+            document.getElementById('maLop').value = lop.maLop;
+            this.hideClassDropdown();
+        },
+
+        showClassDropdown() {
+            const dropdown = document.getElementById('lopDropdown');
+            if (dropdown) {
+                dropdown.classList.add('show');
+            }
+        },
+
+        hideClassDropdown() {
+            const dropdown = document.getElementById('lopDropdown');
+            if (dropdown) {
+                dropdown.classList.remove('show');
             }
         },
 
         async loadData() {
             try {
-                this.showLoading(true);
+                this.showTableLoading(true);
 
-                // Mock data for now - replace with actual API call
-                const mockData = this.generateMockData();
-                this.data.sinhviens = mockData.sinhviens;
-                this.data.totalItems = mockData.total;
-                this.data.totalPages = Math.ceil(mockData.total / this.data.pageSize);
+                const params = new URLSearchParams({
+                    page: this.data.currentPage - 1,
+                    size: this.data.pageSize
+                });
 
-                this.applyFilters();
+                if (this.data.filters.search) {
+                    params.append('search', this.data.filters.search);
+                }
+                if (this.data.filters.class) {
+                    params.append('class', this.data.filters.class);
+                }
+                if (this.data.filters.status) {
+                    params.append('status', this.data.filters.status);
+                }
+
+                const response = await fetch(`${this.API_BASE}/sinhvien?${params}`);
+                if (!response.ok) throw new Error('Failed to load student data');
+
+                const result = await response.json();
+
+                if (result.content) {
+                    this.data.sinhviens = result.content;
+                    this.data.totalItems = result.totalElements;
+                    this.data.totalPages = result.totalPages;
+                    this.data.currentPage = result.number + 1;
+                } else {
+                    this.data.sinhviens = result;
+                    this.data.totalItems = result.length;
+                    this.data.totalPages = Math.ceil(result.length / this.data.pageSize);
+                }
+
                 this.renderTable();
                 this.renderPagination();
                 this.updateStats();
 
             } catch (error) {
-                console.error('❌ Error loading data:', error);
-                this.showAlert('Không thể tải dữ liệu: ' + error.message, 'danger');
-                this.renderError();
+                console.error('Error loading data:', error);
+                this.showAlert('Không thể tải dữ liệu sinh viên', 'danger');
             } finally {
-                this.showLoading(false);
+                this.showTableLoading(false);
             }
-        },
-
-        generateMockData() {
-            const mockSinhViens = [];
-            const classes = ['CNTT01', 'CNTT02', 'KTPM01', 'KTPM02', 'KHMT01'];
-            const firstNames = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Huỳnh', 'Phan', 'Vũ', 'Võ', 'Đặng'];
-            const lastNames = ['Văn An', 'Thị Bình', 'Minh Cường', 'Thị Dung', 'Văn Em', 'Thị Phương', 'Minh Giang', 'Thị Hoa'];
-
-            for (let i = 1; i <= 50; i++) {
-                const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-                const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-                const classCode = classes[Math.floor(Math.random() * classes.length)];
-
-                mockSinhViens.push({
-                    maSv: `SV${String(i).padStart(6, '0')}`,
-                    hoTen: `${firstName} ${lastName}`,
-                    email: `sv${String(i).padStart(6, '0')}@student.edu.vn`,
-                    gioiTinh: Math.random() > 0.5 ? 'NAM' : 'NU',
-                    ngaySinh: new Date(1998 + Math.floor(Math.random() * 5), Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1),
-                    maLop: classCode,
-                    tenLop: `Lớp ${classCode}`,
-                    hinhAnh: Math.random() > 0.3 ? '/placeholder.svg?height=50&width=50' : null,
-                    isActive: Math.random() > 0.1,
-                    hasEmbedding: Math.random() > 0.4,
-                    createdAt: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1)
-                });
-            }
-
-            return {
-                sinhviens: mockSinhViens,
-                total: mockSinhViens.length
-            };
-        },
-
-        applyFilters() {
-            let filtered = [...this.data.sinhviens];
-
-            // Search filter
-            if (this.data.filters.search) {
-                const searchTerm = this.data.filters.search.toLowerCase();
-                filtered = filtered.filter(sv =>
-                    sv.maSv.toLowerCase().includes(searchTerm) ||
-                    sv.hoTen.toLowerCase().includes(searchTerm) ||
-                    sv.email.toLowerCase().includes(searchTerm)
-                );
-            }
-
-            // Class filter
-            if (this.data.filters.class) {
-                filtered = filtered.filter(sv => sv.maLop === this.data.filters.class);
-            }
-
-            // Status filter
-            if (this.data.filters.status) {
-                const isActive = this.data.filters.status === 'active';
-                filtered = filtered.filter(sv => sv.isActive === isActive);
-            }
-
-            this.data.filteredSinhviens = filtered;
-            this.data.totalItems = filtered.length;
-            this.data.totalPages = Math.ceil(filtered.length / this.data.pageSize);
         },
 
         renderTable() {
             const tbody = document.getElementById('sinhvienTableBody');
             if (!tbody) return;
 
-            const startIndex = (this.data.currentPage - 1) * this.data.pageSize;
-            const endIndex = startIndex + this.data.pageSize;
-            const pageData = (this.data.filteredSinhviens || this.data.sinhviens).slice(startIndex, endIndex);
-
-            if (pageData.length === 0) {
+            if (this.data.sinhviens.length === 0) {
                 tbody.innerHTML = `
-                    <tr>
-                        <td colspan="10" class="text-center py-4">
-                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">Không có dữ liệu sinh viên</p>
-                        </td>
-                    </tr>
-                `;
+                        <tr>
+                            <td colspan="10" class="text-center py-4">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">Không có dữ liệu sinh viên</p>
+                            </td>
+                        </tr>
+                    `;
                 return;
             }
 
-            tbody.innerHTML = pageData.map(sv => `
-                <tr>
-                    <td>
-                        <input type="checkbox" value="${sv.maSv}"
-                               onchange="SinhVienManager.toggleSelect('${sv.maSv}')">
-                    </td>
-                    <td>
-                        <div class="student-avatar">
-                            ${sv.hinhAnh ?
-                `<img src="${sv.hinhAnh}" alt="${sv.hoTen}" class="avatar-img">` :
-                `<div class="avatar-placeholder">
-                                        <i class="fas fa-user"></i>
+            tbody.innerHTML = this.data.sinhviens.map(sv => `
+                    <tr>
+                        <td>
+                            <input type="checkbox" value="${sv.maSv}"
+                                   onchange="SinhVienManager.toggleSelect('${sv.maSv}')">
+                        </td>
+                        <td>
+                            <div class="student-avatar">
+                                ${sv.hinhAnh ?
+                `<img src="${sv.hinhAnh}" alt="${sv.hoTen}" class="student-avatar">` :
+                `<div class="student-avatar avatar-placeholder">
+                                        ${sv.hoTen.charAt(0).toUpperCase()}
                                     </div>`
             }
-                        </div>
-                    </td>
-                    <td><strong>${sv.maSv}</strong></td>
-                    <td>${sv.hoTen}</td>
-                    <td>
-                        <span class="class-badge">${sv.maLop}</span>
-                    </td>
-                    <td>${sv.email || '<span class="text-muted">Chưa có</span>'}</td>
-                    <td>
-                        <span class="gender-badge ${sv.gioiTinh.toLowerCase()}">
-                            <i class="fas fa-${sv.gioiTinh === 'NAM' ? 'mars' : 'venus'}"></i>
-                            ${sv.gioiTinh === 'NAM' ? 'Nam' : 'Nữ'}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="status-badge ${sv.isActive ? 'status-active' : 'status-inactive'}">
-                            ${sv.isActive ? 'Hoạt động' : 'Không hoạt động'}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="embedding-badge ${sv.hasEmbedding ? 'has-embedding' : 'no-embedding'}">
-                            <i class="fas fa-${sv.hasEmbedding ? 'check-circle' : 'times-circle'}"></i>
-                            ${sv.hasEmbedding ? 'Có' : 'Chưa có'}
-                        </span>
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="btn-action btn-view" onclick="SinhVienManager.viewSinhVien('${sv.maSv}')"
-                                    title="Xem chi tiết">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn-action btn-edit" onclick="SinhVienManager.editSinhVien('${sv.maSv}')"
-                                    title="Chỉnh sửa">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn-action btn-camera" onclick="SinhVienManager.manageFaceData('${sv.maSv}')"
-                                    title="Quản lý dữ liệu khuôn mặt">
-                                <i class="fas fa-camera"></i>
-                            </button>
-                            <button class="btn-action btn-delete" onclick="SinhVienManager.deleteSinhVien('${sv.maSv}', '${sv.hoTen}')"
-                                    title="Xóa">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
+                            </div>
+                        </td>
+                        <td><strong>${sv.maSv}</strong></td>
+                        <td>${sv.hoTen}</td>
+                        <td>
+                            <div>
+                                <strong>${sv.tenLop}</strong><br>
+                                <small class="text-muted">${sv.maLop}</small>
+                            </div>
+                        </td>
+                        <td>${sv.email || '<span class="text-muted">Chưa có</span>'}</td>
+                        <td>
+                            ${sv.gioiTinh === 'NAM' ?
+                '<i class="fas fa-mars text-primary"></i> Nam' :
+                sv.gioiTinh === 'NU' ?
+                    '<i class="fas fa-venus text-danger"></i> Nữ' :
+                    '<span class="text-muted">Chưa xác định</span>'
+            }
+                        </td>
+                        <td>
+                            <span class="badge ${sv.isActive ? 'bg-success' : 'bg-secondary'}">
+                                ${sv.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="embedding-badge ${sv.hasEmbedding ? 'has-embedding' : 'no-embedding'}">
+                                <i class="fas fa-${sv.hasEmbedding ? 'check-circle' : 'times-circle'}"></i>
+                                ${sv.hasEmbedding ? 'Có' : 'Chưa có'}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-sm btn-outline-info" onclick="SinhVienManager.viewSinhVien('${sv.maSv}')"
+                                        title="Xem chi tiết">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" onclick="SinhVienManager.editSinhVien('${sv.maSv}')"
+                                        title="Chỉnh sửa">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning" onclick="SinhVienManager.manageFaceData('${sv.maSv}')"
+                                        title="Quản lý dữ liệu khuôn mặt">
+                                    <i class="fas fa-camera"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="SinhVienManager.deleteSinhVien('${sv.maSv}', '${sv.hoTen}')"
+                                        title="Xóa">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
         },
 
         renderPagination() {
@@ -663,12 +909,12 @@
 
             // Previous button
             html += `
-                <li class="page-item ${this.data.currentPage === 1 ? 'disabled' : ''}">
-                    <a class="page-link" href="#" onclick="SinhVienManager.goToPage(${this.data.currentPage - 1})">
-                        <i class="fas fa-chevron-left"></i>
-                    </a>
-                </li>
-            `;
+                    <li class="page-item ${this.data.currentPage === 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="SinhVienManager.goToPage(${this.data.currentPage - 1})">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                `;
 
             // Page numbers
             const maxVisible = 5;
@@ -681,30 +927,29 @@
 
             for (let i = startPage; i <= endPage; i++) {
                 html += `
-                    <li class="page-item ${i === this.data.currentPage ? 'active' : ''}">
-                        <a class="page-link" href="#" onclick="SinhVienManager.goToPage(${i})">${i}</a>
-                    </li>
-                `;
+                        <li class="page-item ${i === this.data.currentPage ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="SinhVienManager.goToPage(${i})">${i}</a>
+                        </li>
+                    `;
             }
 
             // Next button
             html += `
-                <li class="page-item ${this.data.currentPage === this.data.totalPages ? 'disabled' : ''}">
-                    <a class="page-link" href="#" onclick="SinhVienManager.goToPage(${this.data.currentPage + 1})">
-                        <i class="fas fa-chevron-right"></i>
-                    </a>
-                </li>
-            `;
+                    <li class="page-item ${this.data.currentPage === this.data.totalPages ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="SinhVienManager.goToPage(${this.data.currentPage + 1})">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                `;
 
             pagination.innerHTML = html;
         },
 
         updateStats() {
-            const sinhviens = this.data.filteredSinhviens || this.data.sinhviens;
-            const total = sinhviens.length;
-            const active = sinhviens.filter(sv => sv.isActive).length;
-            const withPhoto = sinhviens.filter(sv => sv.hinhAnh).length;
-            const withEmbedding = sinhviens.filter(sv => sv.hasEmbedding).length;
+            const total = this.data.totalItems;
+            const active = this.data.sinhviens.filter(sv => sv.isActive).length;
+            const withPhoto = this.data.sinhviens.filter(sv => sv.hinhAnh).length;
+            const withEmbedding = this.data.sinhviens.filter(sv => sv.hasEmbedding).length;
 
             document.getElementById('totalStudents').textContent = total;
             document.getElementById('activeStudents').textContent = active;
@@ -715,8 +960,7 @@
         goToPage(page) {
             if (page >= 1 && page <= this.data.totalPages && page !== this.data.currentPage) {
                 this.data.currentPage = page;
-                this.renderTable();
-                this.renderPagination();
+                this.loadData();
             }
         },
 
@@ -730,152 +974,426 @@
         },
 
         toggleSelectAll() {
-            const selectAll = document.getElementById('selectAll');
-            const checkboxes = document.querySelectorAll('#sinhvienTableBody input[type="checkbox"]');
+            const checkbox = document.getElementById('selectAll');
+            const isChecked = checkbox.checked;
 
-            if (selectAll.checked) {
-                checkboxes.forEach(cb => {
-                    cb.checked = true;
-                    this.data.selectedIds.add(cb.value);
-                });
+            if (isChecked) {
+                this.data.sinhviens.forEach(sv => this.data.selectedIds.add(sv.maSv));
             } else {
-                checkboxes.forEach(cb => {
-                    cb.checked = false;
-                    this.data.selectedIds.delete(cb.value);
-                });
+                this.data.selectedIds.clear();
             }
+
+            // Update individual checkboxes
+            document.querySelectorAll('tbody input[type="checkbox"]').forEach(cb => {
+                cb.checked = isChecked;
+            });
         },
 
         updateSelectAllCheckbox() {
-            const selectAll = document.getElementById('selectAll');
-            const checkboxes = document.querySelectorAll('#sinhvienTableBody input[type="checkbox"]');
-            const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const visibleIds = this.data.sinhviens.map(sv => sv.maSv);
+            const selectedVisibleIds = visibleIds.filter(id => this.data.selectedIds.has(id));
 
-            selectAll.checked = checkedCount === checkboxes.length && checkboxes.length > 0;
-            selectAll.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+            selectAllCheckbox.checked = selectedVisibleIds.length === visibleIds.length && visibleIds.length > 0;
+            selectAllCheckbox.indeterminate = selectedVisibleIds.length > 0 && selectedVisibleIds.length < visibleIds.length;
         },
 
         showAddModal() {
             this.data.editingId = null;
+            this.resetForm();
             document.getElementById('modalTitle').textContent = 'Thêm sinh viên mới';
-            document.getElementById('sinhvienForm').reset();
-            document.getElementById('maSv').disabled = false;
-            document.getElementById('maLop').value = '';
-            document.getElementById('lopSearch').value = '';
-            this.hideImagePreview();
-            this.clearValidation();
-
             const modal = new bootstrap.Modal(document.getElementById('sinhvienModal'));
             modal.show();
         },
 
-        editSinhVien(maSv) {
-            const sinhvien = this.data.sinhviens.find(sv => sv.maSv === maSv);
-            if (!sinhvien) return;
+        async editSinhVien(maSv) {
+            try {
+                this.data.editingId = maSv;
+                const response = await fetch(`${this.API_BASE}/sinhvien/${maSv}`);
+                if (!response.ok) throw new Error('Failed to load student data');
 
-            this.data.editingId = maSv;
-            document.getElementById('modalTitle').textContent = 'Chỉnh sửa sinh viên';
+                const sinhvien = await response.json();
+                this.populateForm(sinhvien);
 
-            // Fill form
-            document.getElementById('maSv').value = sinhvien.maSv;
-            document.getElementById('hoTen').value = sinhvien.hoTen;
-            document.getElementById('email').value = sinhvien.email || '';
-            document.getElementById('gioiTinh').value = sinhvien.gioiTinh;
-            document.getElementById('ngaySinh').value = sinhvien.ngaySinh ? sinhvien.ngaySinh.toISOString().split('T')[0] : '';
-            document.getElementById('maLop').value = sinhvien.maLop;
-            document.getElementById('lopSearch').value = `${sinhvien.maLop} - ${sinhvien.tenLop}`;
-            document.getElementById('isActive').value = sinhvien.isActive.toString();
+                document.getElementById('modalTitle').textContent = 'Chỉnh sửa sinh viên';
+                const modal = new bootstrap.Modal(document.getElementById('sinhvienModal'));
+                modal.show();
 
-            // Show image if exists
-            if (sinhvien.hinhAnh) {
-                this.showImagePreview(sinhvien.hinhAnh);
-            } else {
-                this.hideImagePreview();
+            } catch (error) {
+                console.error('Error loading student for edit:', error);
+                this.showAlert('Không thể tải thông tin sinh viên', 'danger');
             }
-
-            // Disable mã SV when editing
-            document.getElementById('maSv').disabled = true;
-
-            this.clearValidation();
-
-            const modal = new bootstrap.Modal(document.getElementById('sinhvienModal'));
-            modal.show();
         },
 
-        viewSinhVien(maSv) {
-            const sinhvien = this.data.sinhviens.find(sv => sv.maSv === maSv);
-            if (!sinhvien) return;
+        async viewSinhVien(maSv) {
+            try {
+                const response = await fetch(`${this.API_BASE}/sinhvien/${maSv}`);
+                if (!response.ok) throw new Error('Failed to load student data');
 
+                const sinhvien = await response.json();
+                this.showViewModal(sinhvien);
+
+            } catch (error) {
+                console.error('Error loading student for view:', error);
+                this.showAlert('Không thể tải thông tin sinh viên', 'danger');
+            }
+        },
+
+        showViewModal(sinhvien) {
             const modalBody = document.getElementById('viewModalBody');
             modalBody.innerHTML = `
-                <div class="student-detail-view">
                     <div class="row">
                         <div class="col-md-4 text-center">
-                            <div class="student-photo-large">
+                            <div class="student-photo-large mb-3">
                                 ${sinhvien.hinhAnh ?
                 `<img src="${sinhvien.hinhAnh}" alt="${sinhvien.hoTen}" class="img-fluid rounded">` :
                 `<div class="photo-placeholder">
-                                        <i class="fas fa-user fa-4x"></i>
+                                        <i class="fas fa-user fa-5x"></i>
                                         <p class="mt-2">Chưa có ảnh</p>
                                     </div>`
             }
                             </div>
                         </div>
                         <div class="col-md-8">
-                            <div class="student-info">
-                                <h4>${sinhvien.hoTen}</h4>
-                                <p class="text-muted mb-3">${sinhvien.maSv}</p>
-
-                                <div class="info-grid">
-                                    <div class="info-item">
-                                        <label>Email:</label>
-                                        <span>${sinhvien.email || 'Chưa có'}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <label>Giới tính:</label>
-                                        <span>${sinhvien.gioiTinh === 'NAM' ? 'Nam' : 'Nữ'}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <label>Ngày sinh:</label>
-                                        <span>${sinhvien.ngaySinh ? this.formatDate(sinhvien.ngaySinh) : 'Chưa có'}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <label>Lớp:</label>
-                                        <span>${sinhvien.maLop} - ${sinhvien.tenLop}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <label>Trạng thái:</label>
-                                        <span class="status-badge ${sinhvien.isActive ? 'status-active' : 'status-inactive'}">
-                                            ${sinhvien.isActive ? 'Hoạt động' : 'Không hoạt động'}
-                                        </span>
-                                    </div>
-                                    <div class="info-item">
-                                        <label>Dữ liệu nhận diện:</label>
-                                        <span class="embedding-badge ${sinhvien.hasEmbedding ? 'has-embedding' : 'no-embedding'}">
-                                            ${sinhvien.hasEmbedding ? 'Đã có' : 'Chưa có'}
-                                        </span>
-                                    </div>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <label>Mã sinh viên:</label>
+                                    <span><strong>${sinhvien.maSv}</strong></span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Họ và tên:</label>
+                                    <span>${sinhvien.hoTen}</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Email:</label>
+                                    <span>${sinhvien.email || 'Chưa có'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Giới tính:</label>
+                                    <span>${sinhvien.gioiTinh === 'NAM' ? 'Nam' : sinhvien.gioiTinh === 'NU' ? 'Nữ' : 'Chưa xác định'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Ngày sinh:</label>
+                                    <span>${sinhvien.ngaySinh ? new Date(sinhvien.ngaySinh).toLocaleDateString('vi-VN') : 'Chưa có'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Lớp:</label>
+                                    <span>${sinhvien.tenLop} (${sinhvien.maLop})</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Trạng thái:</label>
+                                    <span class="badge ${sinhvien.isActive ? 'bg-success' : 'bg-secondary'}">
+                                        ${sinhvien.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                                    </span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Dữ liệu nhận diện:</label>
+                                    <span class="embedding-badge ${sinhvien.hasEmbedding ? 'has-embedding' : 'no-embedding'}">
+                                        <i class="fas fa-${sinhvien.hasEmbedding ? 'check-circle' : 'times-circle'}"></i>
+                                        ${sinhvien.hasEmbedding ? 'Đã có' : 'Chưa có'}
+                                    </span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            `;
+                `;
 
             const modal = new bootstrap.Modal(document.getElementById('viewSinhvienModal'));
             modal.show();
         },
 
-        deleteSinhVien(maSv, hoTen) {
-            if (confirm(`Bạn có chắc chắn muốn xóa sinh viên "${hoTen}" (${maSv})?`)) {
-                // TODO: Implement delete API call
+        async deleteSinhVien(maSv, hoTen) {
+            if (!confirm(`Bạn có chắc chắn muốn xóa sinh viên "${hoTen}" (${maSv})?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${this.API_BASE}/sinhvien/${maSv}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('Failed to delete student');
+
                 this.showAlert('Xóa sinh viên thành công!', 'success');
-                this.loadData();
+                await this.loadData();
+
+            } catch (error) {
+                console.error('Error deleting student:', error);
+                this.showAlert('Không thể xóa sinh viên: ' + error.message, 'danger');
             }
         },
 
-        manageFaceData(maSv) {
-            this.showAlert('Chức năng quản lý dữ liệu khuôn mặt đang được phát triển...', 'info');
+        async manageFaceData(maSv) {
+            try {
+                this.data.currentStudentId = maSv;
+
+                // Load student info
+                const response = await fetch(`${this.API_BASE}/sinhvien/${maSv}`);
+                if (!response.ok) throw new Error('Failed to load student data');
+
+                const sinhvien = await response.json();
+
+                // Update modal with student info
+                document.getElementById('faceStudentName').textContent = sinhvien.hoTen;
+                document.getElementById('faceStudentId').textContent = sinhvien.maSv;
+
+                const avatar = document.getElementById('faceStudentAvatar');
+                if (sinhvien.hinhAnh) {
+                    avatar.innerHTML = `<img src="${sinhvien.hinhAnh}" alt="${sinhvien.hoTen}" class="student-avatar">`;
+                } else {
+                    avatar.innerHTML = `<div class="avatar-placeholder">${sinhvien.hoTen.charAt(0).toUpperCase()}</div>`;
+                }
+
+                // Load face images
+                await this.loadFaceImages(maSv);
+
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('faceManagementModal'));
+                modal.show();
+
+            } catch (error) {
+                console.error('Error opening face management:', error);
+                this.showAlert('Không thể mở quản lý dữ liệu khuôn mặt', 'danger');
+            }
+        },
+
+        async loadFaceImages(maSv) {
+            try {
+                const response = await fetch(`${this.API_BASE}/sinhvien/${maSv}/face-images`);
+                if (response.ok) {
+                    this.data.faceImages = await response.json();
+                } else {
+                    this.data.faceImages = [];
+                }
+
+                this.renderFaceImages();
+                this.updateExtractionButton();
+
+            } catch (error) {
+                console.error('Error loading face images:', error);
+                this.data.faceImages = [];
+                this.renderFaceImages();
+            }
+        },
+
+        renderFaceImages() {
+            const grid = document.getElementById('faceImagesGrid');
+            grid.innerHTML = '';
+
+            // Create 5 slots for face images
+            for (let i = 0; i < 5; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'face-image-slot';
+
+                if (i < this.data.faceImages.length) {
+                    const image = this.data.faceImages[i];
+                    slot.innerHTML = `
+                            <img src="${image.url}" alt="Face ${i + 1}">
+                            <button class="remove-btn" onclick="SinhVienManager.removeFaceImage(${i})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        `;
+                } else {
+                    slot.innerHTML = `
+                            <div class="text-center">
+                                <i class="fas fa-plus fa-2x text-muted"></i>
+                                <p class="mt-2 text-muted">Ảnh ${i + 1}</p>
+                            </div>
+                        `;
+                    slot.onclick = () => document.getElementById('faceImageInput').click();
+                }
+
+                grid.appendChild(slot);
+            }
+        },
+
+        handleFaceImageUpload(input) {
+            const files = Array.from(input.files);
+            if (files.length === 0) return;
+
+            files.forEach(file => {
+                if (this.data.faceImages.length >= 5) {
+                    this.showAlert('Chỉ được phép tải lên tối đa 5 ảnh khuôn mặt', 'warning');
+                    return;
+                }
+
+                if (!file.type.startsWith('image/')) {
+                    this.showAlert('Vui lòng chọn file ảnh hợp lệ', 'warning');
+                    return;
+                }
+
+                if (file.size > 5 * 1024 * 1024) {
+                    this.showAlert('Kích thước ảnh không được vượt quá 5MB', 'warning');
+                    return;
+                }
+
+                this.uploadFaceImage(file);
+            });
+
+            input.value = '';
+        },
+
+        async uploadFaceImage(file) {
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('maSv', this.data.currentStudentId);
+
+                const response = await fetch(`${this.API_BASE}/sinhvien/upload-face-image`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Failed to upload face image');
+
+                const result = await response.json();
+                this.data.faceImages.push(result);
+                this.renderFaceImages();
+                this.updateExtractionButton();
+
+            } catch (error) {
+                console.error('Error uploading face image:', error);
+                this.showAlert('Không thể tải lên ảnh khuôn mặt', 'danger');
+            }
+        },
+
+        async removeFaceImage(index) {
+            if (!confirm('Bạn có chắc chắn muốn xóa ảnh này?')) return;
+
+            try {
+                const image = this.data.faceImages[index];
+                const response = await fetch(`${this.API_BASE}/sinhvien/face-image/${image.id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('Failed to remove face image');
+
+                this.data.faceImages.splice(index, 1);
+                this.renderFaceImages();
+                this.updateExtractionButton();
+
+            } catch (error) {
+                console.error('Error removing face image:', error);
+                this.showAlert('Không thể xóa ảnh khuôn mặt', 'danger');
+            }
+        },
+
+        updateExtractionButton() {
+            const btn = document.getElementById('extractFeaturesBtn');
+            const hasFiveImages = this.data.faceImages.length === 5;
+
+            btn.disabled = !hasFiveImages;
+
+            if (hasFiveImages) {
+                btn.innerHTML = '<i class="fas fa-cogs me-2"></i>Trích xuất đặc trưng';
+                btn.className = 'btn btn-success';
+            } else {
+                btn.innerHTML = `<i class="fas fa-cogs me-2"></i>Cần ${5 - this.data.faceImages.length} ảnh nữa`;
+                btn.className = 'btn btn-secondary';
+            }
+        },
+
+        async extractFeatures() {
+            if (this.data.faceImages.length !== 5) {
+                this.showAlert('Cần đủ 5 ảnh khuôn mặt để trích xuất đặc trưng', 'warning');
+                return;
+            }
+
+            try {
+                // Update UI to show processing
+                const statusEl = document.getElementById('extractionStatus');
+                const progressEl = document.getElementById('extractionProgress');
+                const resultsEl = document.getElementById('extractionResults');
+
+                statusEl.className = 'extraction-status status-processing';
+                statusEl.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+                progressEl.style.display = 'block';
+                resultsEl.style.display = 'none';
+
+                // Simulate progress
+                this.simulateProgress();
+
+                const response = await fetch(`${this.API_BASE}/sinhvien/${this.data.currentStudentId}/extract-features`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) throw new Error('Failed to extract features');
+
+                const result = await response.json();
+
+                // Show success
+                statusEl.className = 'extraction-status status-completed';
+                statusEl.innerHTML = '<i class="fas fa-check-circle me-2"></i>Hoàn thành';
+                progressEl.style.display = 'none';
+                resultsEl.style.display = 'block';
+                document.getElementById('extractedCount').textContent = this.data.faceImages.length;
+
+                // Update main table
+                this.loadData();
+
+            } catch (error) {
+                console.error('Error extracting features:', error);
+
+                const statusEl = document.getElementById('extractionStatus');
+                statusEl.className = 'extraction-status status-error';
+                statusEl.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Lỗi xử lý';
+
+                document.getElementById('extractionProgress').style.display = 'none';
+                this.showAlert('Không thể trích xuất đặc trưng: ' + error.message, 'danger');
+            }
+        },
+
+        simulateProgress() {
+            const progressFill = document.getElementById('progressFill');
+            let progress = 0;
+
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 95) {
+                    progress = 95;
+                    clearInterval(interval);
+                }
+                progressFill.style.width = progress + '%';
+            }, 200);
+
+            return interval;
+        },
+
+        resetForm() {
+            const form = document.getElementById('sinhvienForm');
+            form.reset();
+
+            document.getElementById('maLop').value = '';
+            document.getElementById('lopSearch').value = '';
+            document.getElementById('hinhAnh').value = '';
+
+            this.hideImagePreview();
+            this.clearValidation();
+        },
+
+        populateForm(sinhvien) {
+            document.getElementById('maSv').value = sinhvien.maSv;
+            document.getElementById('hoTen').value = sinhvien.hoTen;
+            document.getElementById('email').value = sinhvien.email || '';
+            document.getElementById('gioiTinh').value = sinhvien.gioiTinh || '';
+            document.getElementById('ngaySinh').value = sinhvien.ngaySinh || '';
+            document.getElementById('maLop').value = sinhvien.maLop;
+            document.getElementById('isActive').value = sinhvien.isActive.toString();
+
+            // Set class search field
+            const selectedClass = this.data.classes.find(lop => lop.maLop === sinhvien.maLop);
+            if (selectedClass) {
+                document.getElementById('lopSearch').value = selectedClass.tenLop;
+            }
+
+            // Set image preview
+            if (sinhvien.hinhAnh) {
+                this.showImagePreview(sinhvien.hinhAnh);
+                document.getElementById('hinhAnh').value = sinhvien.hinhAnh;
+            }
+
+            // Disable maSv field for editing
+            document.getElementById('maSv').readOnly = !!this.data.editingId;
         },
 
         async saveSinhVien() {
@@ -891,17 +1409,39 @@
                 // Convert boolean values
                 data.isActive = data.isActive === 'true';
 
-                console.log('Saving student data:', data);
+                let response;
+                if (this.data.editingId) {
+                    response = await fetch(`${this.API_BASE}/sinhvien/${this.data.editingId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch(`${this.API_BASE}/sinhvien`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+                }
 
-                // TODO: Implement API call
-                const isEdit = this.data.editingId !== null;
-                this.showAlert(`${isEdit ? 'Cập nhật' : 'Thêm'} sinh viên thành công!`, 'success');
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Failed to save student');
+                }
 
-                bootstrap.Modal.getInstance(document.getElementById('sinhvienModal')).hide();
+                this.showAlert(`${this.data.editingId ? 'Cập nhật' : 'Thêm'} sinh viên thành công!`, 'success');
+
+                const modal = bootstrap.Modal.getInstance(document.getElementById('sinhvienModal'));
+                modal.hide();
+
                 await this.loadData();
 
             } catch (error) {
-                console.error('❌ Error saving student:', error);
+                console.error('Error saving student:', error);
                 this.showAlert('Không thể lưu sinh viên: ' + error.message, 'danger');
             } finally {
                 this.setButtonLoading(false);
@@ -917,7 +1457,7 @@
             requiredFields.forEach(fieldName => {
                 const field = document.getElementById(fieldName);
                 if (!field.value.trim()) {
-                    this.showFieldError(field, `${field.labels[0].textContent.replace(' *', '')} không được để trống`);
+                    this.showFieldError(field, `${field.previousElementSibling.textContent.replace(' *', '')} không được để trống`);
                     isValid = false;
                 }
             });
@@ -930,6 +1470,41 @@
             }
 
             return isValid;
+        },
+
+        isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        },
+
+        showFieldError(field, message) {
+            field.classList.add('is-invalid');
+            const feedback = field.nextElementSibling;
+            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                feedback.textContent = message;
+            }
+        },
+
+        clearValidation() {
+            document.querySelectorAll('.is-invalid').forEach(field => {
+                field.classList.remove('is-invalid');
+            });
+        },
+
+        setButtonLoading(loading) {
+            const btn = document.querySelector('#sinhvienModal .btn-primary');
+            const spinner = btn.querySelector('.loading-spinner');
+            const text = btn.querySelector('.btn-text');
+
+            if (loading) {
+                spinner.classList.remove('d-none');
+                text.textContent = 'Đang lưu...';
+                btn.disabled = true;
+            } else {
+                spinner.classList.add('d-none');
+                text.textContent = 'Lưu';
+                btn.disabled = false;
+            }
         },
 
         handleImageUpload(input) {
@@ -948,13 +1523,31 @@
                 return;
             }
 
-            // Show preview
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                this.showImagePreview(e.target.result);
-                document.getElementById('hinhAnh').value = e.target.result;
-            };
-            reader.readAsDataURL(file);
+            // Upload image
+            this.uploadImage(file);
+        },
+
+        async uploadImage(file) {
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('type', 'profile');
+
+                const response = await fetch(`${this.API_BASE}/upload/image`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Failed to upload image');
+
+                const result = await response.json();
+                this.showImagePreview(result.url);
+                document.getElementById('hinhAnh').value = result.url;
+
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                this.showAlert('Không thể tải lên ảnh', 'danger');
+            }
         },
 
         showImagePreview(src) {
@@ -967,51 +1560,221 @@
         hideImagePreview() {
             const preview = document.getElementById('imagePreview');
             preview.style.display = 'none';
-            document.getElementById('hinhAnh').value = '';
         },
 
-        refreshData() {
-            this.data.currentPage = 1;
-            this.data.filters = { search: '', class: '', status: '' };
-            this.data.selectedIds.clear();
+        handleDrop(event) {
+            event.preventDefault();
+            event.stopPropagation();
 
-            // Reset filter inputs
-            document.getElementById('searchInput').value = '';
-            document.getElementById('classFilter').value = '';
-            document.getElementById('statusFilter').value = '';
-            document.getElementById('selectAll').checked = false;
+            const uploadArea = event.currentTarget;
+            uploadArea.classList.remove('dragover');
 
-            this.loadData();
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/')) {
+                    this.uploadImage(file);
+                } else {
+                    this.showAlert('Vui lòng kéo thả file ảnh', 'warning');
+                }
+            }
         },
 
-        bulkImport() {
-            this.showAlert('Chức năng import Excel đang được phát triển...', 'info');
+        handleDragOver(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.currentTarget.classList.add('dragover');
         },
 
-        exportData(format) {
-            this.showAlert(`Đang xuất dữ liệu ${format.toUpperCase()}...`, 'info');
+        handleDragLeave(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.currentTarget.classList.remove('dragover');
         },
 
-        // Utility methods
-        debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
+        // Import/Export Functions
+        showImportModal() {
+            const modal = new bootstrap.Modal(document.getElementById('importModal'));
+            modal.show();
+        },
+
+        handleExcelUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            if (!file.name.match(/\.(xlsx|xls)$/)) {
+                this.showAlert('Vui lòng chọn file Excel (.xlsx hoặc .xls)', 'warning');
+                return;
+            }
+
+            this.parseExcelFile(file);
+        },
+
+        parseExcelFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                    if (jsonData.length === 0) {
+                        this.showAlert('File Excel không có dữ liệu', 'warning');
+                        return;
+                    }
+
+                    this.data.importData = jsonData;
+                    this.showImportPreview(jsonData);
+
+                } catch (error) {
+                    console.error('Error parsing Excel file:', error);
+                    this.showAlert('Không thể đọc file Excel', 'danger');
+                }
             };
+            reader.readAsArrayBuffer(file);
         },
 
-        isValidEmail(email) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return emailRegex.test(email);
+        showImportPreview(data) {
+            const previewDiv = document.getElementById('importPreview');
+            const headerEl = document.getElementById('importPreviewHeader');
+            const bodyEl = document.getElementById('importPreviewBody');
+            const confirmBtn = document.getElementById('confirmImportBtn');
+
+            if (data.length === 0) return;
+
+            // Get headers
+            const headers = Object.keys(data[0]);
+            headerEl.innerHTML = headers.map(h => `<th>${h}</th>`).join('');
+
+            // Show first 5 rows
+            const previewData = data.slice(0, 5);
+            bodyEl.innerHTML = previewData.map(row =>
+                `<tr>${headers.map(h => `<td>${row[h] || ''}</td>`).join('')}</tr>`
+            ).join('');
+
+            previewDiv.style.display = 'block';
+            confirmBtn.style.display = 'inline-block';
         },
 
-        formatDate(date) {
-            return new Date(date).toLocaleDateString('vi-VN');
+        async confirmImport() {
+            if (!this.data.importData) return;
+
+            try {
+                this.showImportProgress();
+
+                const createAccounts = document.getElementById('createAccountsCheck').checked;
+
+                const response = await fetch(`${this.API_BASE}/sinhvien/import`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        data: this.data.importData,
+                        createAccounts: createAccounts
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Import failed');
+                }
+
+                const result = await response.json();
+
+                this.showAlert(`Import thành công ${result.successCount} sinh viên!`, 'success');
+
+                const modal = bootstrap.Modal.getInstance(document.getElementById('importModal'));
+                modal.hide();
+
+                this.resetImportModal();
+                await this.loadData();
+
+            } catch (error) {
+                console.error('Error importing data:', error);
+                this.showAlert('Không thể import dữ liệu: ' + error.message, 'danger');
+            } finally {
+                this.hideImportProgress();
+            }
+        },
+
+        showImportProgress() {
+            document.getElementById('importProgress').style.display = 'block';
+            document.getElementById('confirmImportBtn').disabled = true;
+
+            // Simulate progress
+            const progressFill = document.getElementById('importProgressFill');
+            const statusEl = document.getElementById('importStatus');
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress > 90) {
+                    progress = 90;
+                    clearInterval(interval);
+                }
+                progressFill.style.width = progress + '%';
+                statusEl.textContent = `Đang xử lý... ${Math.round(progress)}%`;
+            }, 300);
+        },
+
+        hideImportProgress() {
+            document.getElementById('importProgress').style.display = 'none';
+            document.getElementById('confirmImportBtn').disabled = false;
+        },
+
+        resetImportModal() {
+            document.getElementById('importPreview').style.display = 'none';
+            document.getElementById('confirmImportBtn').style.display = 'none';
+            document.getElementById('excelFile').value = '';
+            this.data.importData = null;
+        },
+
+        async exportData(format) {
+            try {
+                const params = new URLSearchParams();
+                if (this.data.filters.search) params.append('search', this.data.filters.search);
+                if (this.data.filters.class) params.append('class', this.data.filters.class);
+                if (this.data.filters.status) params.append('status', this.data.filters.status);
+
+                const response = await fetch(`${this.API_BASE}/sinhvien/export/${format}?${params}`);
+                if (!response.ok) throw new Error('Export failed');
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `danh-sach-sinh-vien.${format === 'excel' ? 'xlsx' : 'pdf'}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                this.showAlert('Không thể xuất dữ liệu', 'danger');
+            }
+        },
+
+        async refreshData() {
+            await this.loadData();
+            this.showAlert('Dữ liệu đã được làm mới', 'info');
+        },
+
+        showTableLoading(show) {
+            const tbody = document.getElementById('sinhvienTableBody');
+            if (show) {
+                tbody.innerHTML = `
+                        <tr>
+                            <td colspan="10" class="text-center py-4">
+                                <div class="loading-spinner"></div>
+                                <p class="mt-2">Đang tải dữ liệu...</p>
+                            </td>
+                        </tr>
+                    `;
+            }
         },
 
         showAlert(message, type = 'info') {
@@ -1020,235 +1783,25 @@
             alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
             alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
             alertDiv.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
 
             document.body.appendChild(alertDiv);
 
-            // Auto remove after 5 seconds
+            // Auto dismiss after 5 seconds
             setTimeout(() => {
                 if (alertDiv.parentNode) {
                     alertDiv.remove();
                 }
             }, 5000);
-        },
-
-        showLoading(show) {
-            const tbody = document.getElementById('sinhvienTableBody');
-            if (show && tbody) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="10" class="text-center py-4">
-                            <div class="loading-spinner"></div>
-                            <p class="mt-2">Đang tải dữ liệu...</p>
-                        </td>
-                    </tr>
-                `;
-            }
-        },
-
-        renderError() {
-            const tbody = document.getElementById('sinhvienTableBody');
-            if (tbody) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="10" class="text-center py-4">
-                            <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
-                            <p class="text-danger">Có lỗi xảy ra khi tải dữ liệu</p>
-                            <button class="btn btn-outline-primary btn-sm" onclick="SinhVienManager.loadData()">
-                                <i class="fas fa-redo me-1"></i>Thử lại
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }
-        },
-
-        setButtonLoading(loading) {
-            const button = document.querySelector('#sinhvienModal .btn-primary');
-            const spinner = button.querySelector('.loading-spinner');
-            const text = button.querySelector('.btn-text');
-
-            button.disabled = loading;
-            spinner.classList.toggle('d-none', !loading);
-            text.textContent = loading ? 'Đang lưu...' : 'Lưu';
-        },
-
-        showFieldError(field, message) {
-            field.classList.add('is-invalid');
-            const feedback = field.nextElementSibling;
-            if (feedback && feedback.classList.contains('invalid-feedback')) {
-                feedback.textContent = message;
-            }
-        },
-
-        clearFieldError(field) {
-            field.classList.remove('is-invalid');
-            const feedback = field.nextElementSibling;
-            if (feedback && feedback.classList.contains('invalid-feedback')) {
-                feedback.textContent = '';
-            }
-        },
-
-        clearValidation() {
-            const form = document.getElementById('sinhvienForm');
-            form.querySelectorAll('.is-invalid, .is-valid').forEach(field => {
-                field.classList.remove('is-invalid', 'is-valid');
-            });
-
-            form.querySelectorAll('.invalid-feedback').forEach(feedback => {
-                feedback.textContent = '';
-            });
         }
     };
 
     // Initialize when DOM is ready
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function() {
         SinhVienManager.init();
     });
-
-    // Global logout function
-    function logout() {
-        if (window.SidebarManager) {
-            SidebarManager.logout();
-        } else {
-            localStorage.clear();
-            window.location.href = '/?message=logout_success';
-        }
-    }
 </script>
-
-<style>
-    /* Additional styles for student management */
-    .student-avatar {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f8f9fa;
-    }
-
-    .avatar-img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .avatar-placeholder {
-        color: #6c757d;
-        font-size: 1.2rem;
-    }
-
-    .class-badge {
-        background: #e3f2fd;
-        color: #1976d2;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 0.85rem;
-        font-weight: 500;
-    }
-
-    .gender-badge {
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 0.85rem;
-        font-weight: 500;
-    }
-
-    .gender-badge.nam {
-        background: #e3f2fd;
-        color: #1976d2;
-    }
-
-    .gender-badge.nu {
-        background: #fce4ec;
-        color: #c2185b;
-    }
-
-    .embedding-badge {
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 0.85rem;
-        font-weight: 500;
-    }
-
-    .embedding-badge.has-embedding {
-        background: #e8f5e8;
-        color: #2e7d32;
-    }
-
-    .embedding-badge.no-embedding {
-        background: #fff3e0;
-        color: #f57c00;
-    }
-
-    .file-upload-area {
-        border: 2px dashed #dee2e6;
-        border-radius: 8px;
-        padding: 2rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .file-upload-area:hover {
-        border-color: #007bff;
-        background: #f8f9ff;
-    }
-
-    .file-upload-icon {
-        font-size: 2rem;
-        color: #6c757d;
-        margin-bottom: 1rem;
-    }
-
-    .student-detail-view .student-photo-large {
-        max-width: 200px;
-        margin: 0 auto;
-    }
-
-    .student-detail-view .photo-placeholder {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 2rem;
-        color: #6c757d;
-    }
-
-    .student-detail-view .info-grid {
-        display: grid;
-        gap: 1rem;
-    }
-
-    .student-detail-view .info-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.5rem 0;
-        border-bottom: 1px solid #eee;
-    }
-
-    .student-detail-view .info-item label {
-        font-weight: 600;
-        color: #495057;
-        margin: 0;
-    }
-
-    .form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-
-    @media (max-width: 768px) {
-        .form-row {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
 </body>
 </html>
