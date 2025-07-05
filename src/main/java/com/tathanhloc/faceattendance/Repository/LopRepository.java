@@ -9,7 +9,12 @@ import java.util.List;
 public interface LopRepository extends JpaRepository<Lop, String> {
     List<Lop> findByNganhMaNganh(String maNganh);
     List<Lop> findByKhoaHocMaKhoahoc(String maKhoahoc);
-
     Collection<Object> findByMaLop(String maLop);
+
+    // Thêm các method cho soft delete
+    List<Lop> findByIsActiveTrue();
+    List<Lop> findByIsActiveFalse();
+    long countByIsActiveTrue();
+    long countByIsActiveFalse();
 
 }

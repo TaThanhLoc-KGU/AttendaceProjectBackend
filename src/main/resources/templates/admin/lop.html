@@ -614,6 +614,8 @@
             // Load all data
             await loadAllData();
 
+            loadStats();
+
             console.log('✅ Page initialized successfully');
         } catch (error) {
             console.error('❌ Error initializing page:', error);
@@ -788,7 +790,17 @@
             console.log('📡 Loading class data...');
             showTableLoading(true);
 
-            const response = await fetch(`${API_BASE}/lop`);
+            // Sử dụng endpoint phù hợp theo view hiện tại
+            let endpoint = `${API_BASE}/lop/all`; // Mặc định lấy tất cả
+
+            // Có thể thêm view toggle như nganh.html
+            // if (currentView === 'active') {
+            //     endpoint = `${API_BASE}/lop`;
+            // } else if (currentView === 'inactive') {
+            //     endpoint = `${API_BASE}/lop/deleted`;
+            // }
+
+            const response = await fetch(endpoint);
 
             if (response.ok) {
                 const rawData = await response.json();
@@ -1017,41 +1029,62 @@
         data.forEach((classItem, index) => {
             const row = document.createElement('tr');
 
-            // Debug log for status
-            console.log(`🔍 Class ${classItem.maLop} - isActive:`, classItem.isActive, typeof classItem.isActive);
-
             // Determine status display
             const isActive = Boolean(classItem.isActive);
             const statusBadge = isActive ?
                 '<span class="badge bg-success">Hoạt động</span>' :
                 '<span class="badge bg-danger">Tạm dừng</span>';
 
-            row.innerHTML = `
-                <td>${index + 1}</td>
-                <td><strong>${classItem.maLop}</strong></td>
-                <td>${classItem.tenLop}</td>
-                <td>${classItem.tenKhoa || 'N/A'}</td>
-                <td>${classItem.tenNganh || 'N/A'}</td>
-                <td>${classItem.tenKhoahoc || 'N/A'}</td>
-                <td>${statusBadge}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary me-1"
-                            onclick="viewClassDetails('${classItem.maLop}')"
-                            title="Xem chi tiết">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-warning me-1"
-                            onclick="editClass('${classItem.maLop}')"
-                            title="Chỉnh sửa">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger"
-                            onclick="confirmDeleteClass('${classItem.maLop}', '${classItem.tenLop}')"
-                            title="Xóa">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
+            // Different action buttons based on status
+            let actionButtons = '';
+            if (isActive) {
+                actionButtons = `
+                <button class="btn btn-sm btn-outline-primary me-1"
+                        onclick="viewClassDetails('${classItem.maLop}')"
+                        title="Xem chi tiết">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-warning me-1"
+                        onclick="editClass('${classItem.maLop}')"
+                        title="Chỉnh sửa">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger"
+                        onclick="confirmDeleteClass('${classItem.maLop}', '${classItem.tenLop}', false)"
+                        title="Xóa mềm">
+                    <i class="fas fa-trash"></i>
+                </button>
             `;
+            } else {
+                actionButtons = `
+                <button class="btn btn-sm btn-outline-primary me-1"
+                        onclick="viewClassDetails('${classItem.maLop}')"
+                        title="Xem chi tiết">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-success me-1"
+                        onclick="confirmRestoreClass('${classItem.maLop}', '${classItem.tenLop}')"
+                        title="Khôi phục">
+                    <i class="fas fa-undo"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-secondary"
+                        onclick="confirmDeleteClass('${classItem.maLop}', '${classItem.tenLop}', true)"
+                        title="Xóa vĩnh viễn">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            `;
+            }
+
+            row.innerHTML = `
+            <td>${index + 1}</td>
+            <td><strong>${classItem.maLop}</strong></td>
+            <td>${classItem.tenLop}</td>
+            <td>${classItem.tenKhoa || 'N/A'}</td>
+            <td>${classItem.tenNganh || 'N/A'}</td>
+            <td>${classItem.tenKhoahoc || 'N/A'}</td>
+            <td>${statusBadge}</td>
+            <td>${actionButtons}</td>
+        `;
 
             tbody.appendChild(row);
         });
@@ -1179,22 +1212,50 @@
         }
     }
 
-    function confirmDeleteClass(maLop, tenLop) {
+    function confirmDeleteClass(maLop, tenLop, isHardDelete = false) {
         setElementText('deleteClassName', `${maLop} - ${tenLop}`);
+
+        // Cập nhật title modal
+        const modalTitle = document.querySelector('#deleteModal .modal-title');
+        if (modalTitle) {
+            modalTitle.innerHTML = isHardDelete ?
+                '<i class="fas fa-exclamation-triangle me-2"></i>Xác nhận xóa vĩnh viễn' :
+                '<i class="fas fa-exclamation-triangle me-2"></i>Xác nhận xóa';
+        }
+
+        // Cập nhật nội dung modal
+        const modalBody = document.querySelector('#deleteModal .modal-body h6');
+        if (modalBody) {
+            modalBody.textContent = isHardDelete ?
+                'Bạn có chắc chắn muốn xóa vĩnh viễn lớp này?' :
+                'Bạn có chắc chắn muốn xóa lớp này?';
+        }
+
         showModal('deleteModal');
 
         // Set up delete confirmation
         const confirmBtn = document.getElementById('confirmDeleteBtn');
         if (confirmBtn) {
-            confirmBtn.onclick = () => performDelete(maLop);
+            confirmBtn.onclick = () => performDelete(maLop, isHardDelete);
         }
     }
 
-    async function performDelete(maLop) {
+    // Thêm hàm confirmRestoreClass
+    function confirmRestoreClass(maLop, tenLop) {
+        if (confirm(`Bạn có chắc chắn muốn khôi phục lớp "${maLop} - ${tenLop}" không?`)) {
+            performRestore(maLop);
+        }
+    }
+
+    async function performDelete(maLop, isHardDelete = false) {
         try {
             showButtonLoading('confirmDeleteBtn', true);
 
-            const response = await fetch(`${API_BASE}/lop/${maLop}`, {
+            const endpoint = isHardDelete ?
+                `${API_BASE}/lop/${maLop}/hard` :
+                `${API_BASE}/lop/${maLop}`;
+
+            const response = await fetch(endpoint, {
                 method: 'DELETE'
             });
 
@@ -1205,7 +1266,10 @@
                 closeModal('deleteModal');
                 await refreshData();
 
-                showNotification('Xóa lớp thành công!', 'success');
+                const message = isHardDelete ?
+                    'Xóa vĩnh viễn lớp thành công!' :
+                    'Xóa lớp thành công!';
+                showNotification(message, 'success');
             } else {
                 throw new Error('Failed to delete class');
             }
@@ -1215,6 +1279,26 @@
             showNotification('Không thể xóa lớp. Vui lòng thử lại!', 'error');
         } finally {
             showButtonLoading('confirmDeleteBtn', false);
+        }
+    }
+
+    async function performRestore(maLop) {
+        try {
+            const response = await fetch(`${API_BASE}/lop/${maLop}/restore`, {
+                method: 'PUT'
+            });
+
+            if (response.ok) {
+                console.log('✅ Class restored:', maLop);
+                await refreshData();
+                showNotification('Khôi phục lớp thành công!', 'success');
+            } else {
+                throw new Error('Failed to restore class');
+            }
+
+        } catch (error) {
+            console.error('❌ Error restoring class:', error);
+            showNotification('Không thể khôi phục lớp. Vui lòng thử lại!', 'error');
         }
     }
 
@@ -1411,6 +1495,7 @@
     window.viewClassDetails = viewClassDetails;
     window.performDelete = performDelete;
     window.refreshData = refreshData;
+    
 </script>
 </body>
 </html>

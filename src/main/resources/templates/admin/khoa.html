@@ -57,14 +57,6 @@
             </div>
         </header>
 
-        <!-- Content Wrapper -->
-        <div class="content-wrapper">
-            <!-- Page Header -->
-            <div class="page-header">
-                <h2 class="page-title">Quản lý Khoa</h2>
-                <p class="page-subtitle">Quản lý thông tin các khoa trong trường</p>
-            </div>
-
             <!-- Filter Bar -->
             <div class="filter-bar">
                 <div class="filter-row">
@@ -129,7 +121,6 @@
                     <!-- Pagination sẽ được render bởi JavaScript -->
                 </ul>
             </nav>
-        </div>
     </main>
 </div>
 
@@ -657,6 +648,43 @@
         } else {
             localStorage.clear();
             window.location.href = '/?message=logout_success';
+        }
+    }
+    async function loadKhoaStats() {
+        try {
+            console.log('📊 Loading khoa statistics...');
+
+            // Tính toán từ dữ liệu đã có
+            const totalKhoa = khoaData.length;
+            const activeKhoa = khoaData.filter(k => k.isActive !== false).length;
+            const inactiveKhoa = totalKhoa - activeKhoa;
+
+            // Tính tổng số ngành (nếu có dữ liệu)
+            let totalNganh = 0;
+            if (typeof nganhData !== 'undefined' && Array.isArray(nganhData)) {
+                totalNganh = nganhData.length;
+            }
+
+            // Cập nhật hiển thị
+            updateElement('totalKhoa', totalKhoa);
+            updateElement('activeKhoa', activeKhoa);
+            updateElement('inactiveKhoa', inactiveKhoa);
+            updateElement('totalNganh', totalNganh);
+
+            console.log('✅ Khoa stats loaded:', {
+                total: totalKhoa,
+                active: activeKhoa,
+                inactive: inactiveKhoa,
+                nganh: totalNganh
+            });
+
+        } catch (error) {
+            console.error('❌ Error loading khoa stats:', error);
+            // Set mặc định nếu lỗi
+            updateElement('totalKhoa', 0);
+            updateElement('activeKhoa', 0);
+            updateElement('inactiveKhoa', 0);
+            updateElement('totalNganh', 0);
         }
     }
 </script>

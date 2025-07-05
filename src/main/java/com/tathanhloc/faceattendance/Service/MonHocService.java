@@ -110,7 +110,7 @@ public class MonHocService {
             // Update relations
             Set<String> successfulNganhs = new HashSet<>();
             if (dto.getMaNganhs() != null) {
-                deleteAllRelations(id);
+                softDeleteAllRelations(id);
                 successfulNganhs = createNganhRelations(id, dto.getMaNganhs());
             }
 
@@ -128,23 +128,92 @@ public class MonHocService {
         }
     }
 
+    /**
+     * Xóa mềm MonHoc (soft delete)
+     * Set isActive = false thay vì xóa khỏi database
+     */
     @Transactional
-    public void delete(String id) {
-        log.debug("Deleting MonHoc: {}", id);
+    public void softDelete(String id) {
+        log.debug("Soft deleting MonHoc: {}", id);
+
+        try {
+            MonHoc monHoc = monHocRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("MonHoc", "maMh", id));
+
+            // Set isActive = false thay vì xóa
+            monHoc.setIsActive(false);
+            monHocRepository.save(monHoc);
+
+            // Soft delete tất cả relations
+            softDeleteAllRelations(id);
+
+            log.debug("✅ MonHoc soft deleted: {}", id);
+
+        } catch (Exception e) {
+            log.error("❌ Error soft deleting MonHoc: {}", id, e);
+            throw e;
+        }
+    }
+
+    /**
+     * Khôi phục MonHoc đã xóa mềm
+     */
+    @Transactional
+    public void restore(String id) {
+        log.debug("Restoring MonHoc: {}", id);
+
+        try {
+            MonHoc monHoc = monHocRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("MonHoc", "maMh", id));
+
+            // Set isActive = true để khôi phục
+            monHoc.setIsActive(true);
+            monHocRepository.save(monHoc);
+
+            // Khôi phục tất cả relations
+            restoreAllRelations(id);
+
+            log.debug("✅ MonHoc restored: {}", id);
+
+        } catch (Exception e) {
+            log.error("❌ Error restoring MonHoc: {}", id, e);
+            throw e;
+        }
+    }
+
+    /**
+     * Xóa vĩnh viễn MonHoc (hard delete)
+     * Xóa hoàn toàn khỏi database
+     */
+    @Transactional
+    public void hardDelete(String id) {
+        log.debug("Hard deleting MonHoc: {}", id);
 
         try {
             if (!monHocRepository.existsById(id)) {
                 throw new ResourceNotFoundException("MonHoc", "maMh", id);
             }
 
-            deleteAllRelations(id);
+            // Xóa vĩnh viễn tất cả relations trước
+            hardDeleteAllRelations(id);
+
+            // Xóa vĩnh viễn MonHoc
             monHocRepository.deleteById(id);
-            log.debug("✅ MonHoc deleted: {}", id);
+
+            log.debug("✅ MonHoc hard deleted: {}", id);
 
         } catch (Exception e) {
-            log.error("❌ Error deleting MonHoc: {}", id, e);
+            log.error("❌ Error hard deleting MonHoc: {}", id, e);
             throw e;
         }
+    }
+
+    /**
+     * Compatibility method - sử dụng soft delete as default
+     */
+    @Transactional
+    public void delete(String id) {
+        softDelete(id);
     }
 
     public MonHocDTO getByMaMh(String maMh) {
@@ -217,18 +286,57 @@ public class MonHocService {
         return successful;
     }
 
-    private void deleteAllRelations(String maMh) {
+    /**
+     * Soft delete tất cả relations của MonHoc
+     */
+    private void softDeleteAllRelations(String maMh) {
         try {
             List<NganhMonHocDTO> relations = nganhMonHocService.findByMaMh(maMh);
             for (NganhMonHocDTO relation : relations) {
                 try {
-                    nganhMonHocService.delete(relation.getMaNganh(), relation.getMaMh());
+                    nganhMonHocService.softDelete(relation.getMaNganh(), relation.getMaMh());
                 } catch (Exception e) {
-                    log.warn("Failed to delete relation: {} - {}", relation.getMaNganh(), relation.getMaMh(), e);
+                    log.warn("Failed to soft delete relation: {} - {}", relation.getMaNganh(), relation.getMaMh(), e);
                 }
             }
         } catch (Exception e) {
-            log.warn("Error deleting relations for MonHoc: {}", maMh, e);
+            log.warn("Error soft deleting relations for MonHoc: {}", maMh, e);
+        }
+    }
+
+    /**
+     * Khôi phục tất cả relations của MonHoc
+     */
+    private void restoreAllRelations(String maMh) {
+        try {
+            List<NganhMonHocDTO> relations = nganhMonHocService.findByMaMhIncludeInactive(maMh);
+            for (NganhMonHocDTO relation : relations) {
+                try {
+                    nganhMonHocService.restore(relation.getMaNganh(), relation.getMaMh());
+                } catch (Exception e) {
+                    log.warn("Failed to restore relation: {} - {}", relation.getMaNganh(), relation.getMaMh(), e);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error restoring relations for MonHoc: {}", maMh, e);
+        }
+    }
+
+    /**
+     * Hard delete tất cả relations của MonHoc
+     */
+    private void hardDeleteAllRelations(String maMh) {
+        try {
+            List<NganhMonHocDTO> relations = nganhMonHocService.findByMaMhIncludeInactive(maMh);
+            for (NganhMonHocDTO relation : relations) {
+                try {
+                    nganhMonHocService.hardDelete(relation.getMaNganh(), relation.getMaMh());
+                } catch (Exception e) {
+                    log.warn("Failed to hard delete relation: {} - {}", relation.getMaNganh(), relation.getMaMh(), e);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error hard deleting relations for MonHoc: {}", maMh, e);
         }
     }
 

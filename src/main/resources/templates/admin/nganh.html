@@ -26,9 +26,6 @@
         <div class="header">
             <div class="header-content">
                 <div class="header-left">
-                    <button class="sidebar-toggle" id="sidebarToggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
                     <h1 class="page-title">Quản lý Ngành</h1>
                 </div>
                 <div class="header-right">
@@ -771,24 +768,36 @@
         }
     }
 
-    // Load statistics
+    // Load statistics - Phiên bản đã sửa (không gọi endpoint stats)
     async function loadStats() {
         console.log('📈 Loading statistics...');
         try {
-            // Try to get stats from dedicated endpoint first
-            try {
-                const response = await fetch(`${API_BASE}/nganh/stats`);
-                if (response.ok) {
-                    const stats = await response.json();
-                    updateStatsDisplay(stats);
-                    console.log('✅ Stats loaded from dedicated endpoint');
-                    return;
+            // Đảm bảo nganhData đã được load trước
+            if (!Array.isArray(nganhData) || nganhData.length === 0) {
+                console.log('⚠️ No nganh data available, trying to load first...');
+                // Nếu chưa có dữ liệu, tải từ API
+                try {
+                    const response = await fetch(`${API_BASE}/nganh/all`);
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.content) {
+                            nganhData = result.content;
+                        } else if (Array.isArray(result)) {
+                            nganhData = result;
+                        }
+                    } else {
+                        // Thử endpoint khác nếu /all không có
+                        const fallbackResponse = await fetch(`${API_BASE}/nganh`);
+                        if (fallbackResponse.ok) {
+                            nganhData = await fallbackResponse.json();
+                        }
+                    }
+                } catch (error) {
+                    console.log('⚠️ Could not load nganh data for stats');
                 }
-            } catch (error) {
-                console.log('⚠️ Dedicated stats endpoint not available, calculating from data');
             }
 
-            // Fallback: calculate stats from current data
+            // Tính toán stats từ dữ liệu có sẵn
             const stats = calculateStats(nganhData);
             updateStatsDisplay(stats);
             console.log('✅ Stats calculated from data');
@@ -798,6 +807,76 @@
             // Set default stats
             updateStatsDisplay({ total: 0, active: 0, inactive: 0, totalSinhVien: 0 });
         }
+    }
+
+    // Calculate stats from data - Hàm hỗ trợ
+    function calculateStats(data) {
+        if (!Array.isArray(data)) {
+            console.log('⚠️ Invalid data for stats calculation:', data);
+            return { total: 0, active: 0, inactive: 0, totalSinhVien: 0 };
+        }
+
+        const total = data.length;
+        const active = data.filter(n => isActive(n)).length;
+        const inactive = total - active;
+        const totalSinhVien = data.reduce((sum, n) => sum + (parseInt(n.soSinhVien) || 0), 0);
+
+        console.log('📊 Calculated stats:', { total, active, inactive, totalSinhVien });
+        return { total, active, inactive, totalSinhVien };
+    }
+
+    // Update stats display - Hàm hỗ trợ
+    function updateStatsDisplay(stats) {
+        console.log('📊 Updating stats display:', stats);
+
+        const totalElement = document.getElementById('totalNganh');
+        if (totalElement) {
+            totalElement.textContent = stats.total || 0;
+        } else {
+            console.warn('⚠️ Element "totalNganh" not found');
+        }
+
+        const activeElement = document.getElementById('activeNganh');
+        if (activeElement) {
+            activeElement.textContent = stats.active || 0;
+        } else {
+            console.warn('⚠️ Element "activeNganh" not found');
+        }
+
+        const inactiveElement = document.getElementById('inactiveNganh');
+        if (inactiveElement) {
+            inactiveElement.textContent = stats.inactive || 0;
+        } else {
+            console.warn('⚠️ Element "inactiveNganh" not found');
+        }
+
+        const totalSinhVienElement = document.getElementById('totalSinhVien');
+        if (totalSinhVienElement) {
+            totalSinhVienElement.textContent = stats.totalSinhVien || 0;
+        } else {
+            console.warn('⚠️ Element "totalSinhVien" not found');
+        }
+
+        console.log('✅ Stats display updated successfully');
+    }
+
+    // Đảm bảo hàm isActive được định nghĩa (nếu chưa có)
+    function isActive(item) {
+        if (!item) return false;
+
+        // Xử lý nhiều format khác nhau của isActive
+        const active = item.isActive;
+
+        if (typeof active === 'boolean') {
+            return active;
+        } else if (typeof active === 'string') {
+            return active.toLowerCase() === 'true' || active === '1';
+        } else if (typeof active === 'number') {
+            return active === 1;
+        }
+
+        // Mặc định là true nếu không có thông tin
+        return true;
     }
 
     // ===== DATA PROCESSING FUNCTIONS =====
@@ -1815,7 +1894,7 @@
     }
 
     .btn-export:hover {
-        background: var(--gray-50, #f8f9fa);
+        background: var(--gray-500, #f8f9fa);
         border-color: var(--gray-400, #ced4da);
     }
 

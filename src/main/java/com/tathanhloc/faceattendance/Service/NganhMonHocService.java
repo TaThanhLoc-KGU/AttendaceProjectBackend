@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -39,10 +40,26 @@ public class NganhMonHocService {
                     .maMh(dto.getMaMh())
                     .build();
 
-            // Check if already exists
-            if (nganhMonHocRepository.existsById(id)) {
-                log.warn("Relation already exists: {} - {}", dto.getMaNganh(), dto.getMaMh());
-                throw new RuntimeException("Mối quan hệ đã tồn tại");
+            // Check if already exists (including inactive)
+            Optional<NganhMonHoc> existing = nganhMonHocRepository.findById(id);
+            if (existing.isPresent()) {
+                NganhMonHoc existingRelation = existing.get();
+                // Nếu đã tồn tại và đang active thì báo lỗi
+                if (Boolean.TRUE.equals(existingRelation.getIsActive())) {
+                    log.warn("Active relation already exists: {} - {}", dto.getMaNganh(), dto.getMaMh());
+                    throw new RuntimeException("Mối quan hệ đã tồn tại");
+                } else {
+                    // Nếu tồn tại nhưng inactive, khôi phục nó
+                    existingRelation.setIsActive(true);
+                    NganhMonHoc saved = nganhMonHocRepository.save(existingRelation);
+                    log.debug("✅ NganhMonHoc relation restored: {} - {}", dto.getMaNganh(), dto.getMaMh());
+
+                    return NganhMonHocDTO.builder()
+                            .maNganh(saved.getId().getMaNganh())
+                            .maMh(saved.getId().getMaMh())
+                            .isActive(saved.getIsActive())
+                            .build();
+                }
             }
 
             // Verify entities exist
@@ -53,11 +70,10 @@ public class NganhMonHocService {
                 throw new RuntimeException("MonHoc not found: " + dto.getMaMh());
             }
 
-            // Create entity - DON'T set nganh and monHoc to avoid circular issues
+            // Create new entity
             NganhMonHoc entity = NganhMonHoc.builder()
                     .id(id)
                     .isActive(dto.getIsActive() != null ? dto.getIsActive() : true)
-                    // Do NOT set nganh and monHoc - they are read-only joins
                     .build();
 
             NganhMonHoc saved = nganhMonHocRepository.save(entity);
@@ -75,9 +91,76 @@ public class NganhMonHocService {
         }
     }
 
+    /**
+     * Xóa mềm NganhMonHoc relation (soft delete)
+     * Set isActive = false thay vì xóa khỏi database
+     */
     @Transactional
-    public void delete(String maNganh, String maMh) {
-        log.debug("Deleting NganhMonHoc relation: {} - {}", maNganh, maMh);
+    public void softDelete(String maNganh, String maMh) {
+        log.debug("Soft deleting NganhMonHoc relation: {} - {}", maNganh, maMh);
+
+        try {
+            NganhMonHocId id = NganhMonHocId.builder()
+                    .maNganh(maNganh)
+                    .maMh(maMh)
+                    .build();
+
+            Optional<NganhMonHoc> existing = nganhMonHocRepository.findById(id);
+            if (existing.isEmpty()) {
+                log.warn("Relation not found for soft deletion: {} - {}", maNganh, maMh);
+                return;
+            }
+
+            NganhMonHoc relation = existing.get();
+            relation.setIsActive(false);
+            nganhMonHocRepository.save(relation);
+
+            log.debug("✅ NganhMonHoc relation soft deleted: {} - {}", maNganh, maMh);
+
+        } catch (Exception e) {
+            log.error("❌ Error soft deleting NganhMonHoc relation: {} - {}", maNganh, maMh, e);
+            throw e;
+        }
+    }
+
+    /**
+     * Khôi phục NganhMonHoc relation đã xóa mềm
+     */
+    @Transactional
+    public void restore(String maNganh, String maMh) {
+        log.debug("Restoring NganhMonHoc relation: {} - {}", maNganh, maMh);
+
+        try {
+            NganhMonHocId id = NganhMonHocId.builder()
+                    .maNganh(maNganh)
+                    .maMh(maMh)
+                    .build();
+
+            Optional<NganhMonHoc> existing = nganhMonHocRepository.findById(id);
+            if (existing.isEmpty()) {
+                log.warn("Relation not found for restoration: {} - {}", maNganh, maMh);
+                return;
+            }
+
+            NganhMonHoc relation = existing.get();
+            relation.setIsActive(true);
+            nganhMonHocRepository.save(relation);
+
+            log.debug("✅ NganhMonHoc relation restored: {} - {}", maNganh, maMh);
+
+        } catch (Exception e) {
+            log.error("❌ Error restoring NganhMonHoc relation: {} - {}", maNganh, maMh, e);
+            throw e;
+        }
+    }
+
+    /**
+     * Xóa vĩnh viễn NganhMonHoc relation (hard delete)
+     * Xóa hoàn toàn khỏi database
+     */
+    @Transactional
+    public void hardDelete(String maNganh, String maMh) {
+        log.debug("Hard deleting NganhMonHoc relation: {} - {}", maNganh, maMh);
 
         try {
             NganhMonHocId id = NganhMonHocId.builder()
@@ -86,23 +169,35 @@ public class NganhMonHocService {
                     .build();
 
             if (!nganhMonHocRepository.existsById(id)) {
-                log.warn("Relation not found for deletion: {} - {}", maNganh, maMh);
+                log.warn("Relation not found for hard deletion: {} - {}", maNganh, maMh);
                 return;
             }
 
             nganhMonHocRepository.deleteById(id);
-            log.debug("✅ NganhMonHoc relation deleted: {} - {}", maNganh, maMh);
+            log.debug("✅ NganhMonHoc relation hard deleted: {} - {}", maNganh, maMh);
 
         } catch (Exception e) {
-            log.error("❌ Error deleting NganhMonHoc relation: {} - {}", maNganh, maMh, e);
+            log.error("❌ Error hard deleting NganhMonHoc relation: {} - {}", maNganh, maMh, e);
             throw e;
         }
     }
 
+    /**
+     * Compatibility method - sử dụng soft delete as default
+     */
+    @Transactional
+    public void delete(String maNganh, String maMh) {
+        softDelete(maNganh, maMh);
+    }
+
+    /**
+     * Tìm relations theo mã ngành (chỉ active)
+     */
     public List<NganhMonHocDTO> findByMaNganh(String maNganh) {
         try {
             return nganhMonHocRepository.findByNganhMaNganh(maNganh)
                     .stream()
+                    .filter(e -> Boolean.TRUE.equals(e.getIsActive())) // Chỉ lấy active
                     .map(e -> NganhMonHocDTO.builder()
                             .maNganh(e.getId().getMaNganh())
                             .maMh(e.getId().getMaMh())
@@ -115,7 +210,49 @@ public class NganhMonHocService {
         }
     }
 
+    /**
+     * Tìm relations theo mã môn học (chỉ active)
+     */
     public List<NganhMonHocDTO> findByMaMh(String maMh) {
+        try {
+            return nganhMonHocRepository.findByMonHocMaMh(maMh)
+                    .stream()
+                    .filter(e -> Boolean.TRUE.equals(e.getIsActive())) // Chỉ lấy active
+                    .map(e -> NganhMonHocDTO.builder()
+                            .maNganh(e.getId().getMaNganh())
+                            .maMh(e.getId().getMaMh())
+                            .isActive(e.getIsActive())
+                            .build())
+                    .toList();
+        } catch (Exception e) {
+            log.error("Error finding NganhMonHoc by MonHoc: {}", maMh, e);
+            return List.of();
+        }
+    }
+
+    /**
+     * Tìm relations theo mã ngành (bao gồm cả inactive) - dùng cho restore/hard delete
+     */
+    public List<NganhMonHocDTO> findByMaNganhIncludeInactive(String maNganh) {
+        try {
+            return nganhMonHocRepository.findByNganhMaNganh(maNganh)
+                    .stream()
+                    .map(e -> NganhMonHocDTO.builder()
+                            .maNganh(e.getId().getMaNganh())
+                            .maMh(e.getId().getMaMh())
+                            .isActive(e.getIsActive())
+                            .build())
+                    .toList();
+        } catch (Exception e) {
+            log.error("Error finding NganhMonHoc by Nganh (include inactive): {}", maNganh, e);
+            return List.of();
+        }
+    }
+
+    /**
+     * Tìm relations theo mã môn học (bao gồm cả inactive) - dùng cho restore/hard delete
+     */
+    public List<NganhMonHocDTO> findByMaMhIncludeInactive(String maMh) {
         try {
             return nganhMonHocRepository.findByMonHocMaMh(maMh)
                     .stream()
@@ -126,7 +263,7 @@ public class NganhMonHocService {
                             .build())
                     .toList();
         } catch (Exception e) {
-            log.error("Error finding NganhMonHoc by MonHoc: {}", maMh, e);
+            log.error("Error finding NganhMonHoc by MonHoc (include inactive): {}", maMh, e);
             return List.of();
         }
     }

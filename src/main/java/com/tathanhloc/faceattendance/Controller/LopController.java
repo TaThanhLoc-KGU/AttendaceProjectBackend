@@ -14,9 +14,22 @@ public class LopController {
 
     private final LopService lopService;
 
-    @GetMapping
+    // Lấy tất cả lớp (bao gồm cả đã xóa)
+    @GetMapping("/all")
     public List<LopDTO> getAll() {
         return lopService.getAll();
+    }
+
+    // Lấy chỉ lớp đang hoạt động
+    @GetMapping
+    public List<LopDTO> getAllActive() {
+        return lopService.getAllActive();
+    }
+
+    // Lấy chỉ lớp đã bị xóa mềm
+    @GetMapping("/deleted")
+    public List<LopDTO> getAllDeleted() {
+        return lopService.getAllDeleted();
     }
 
     @GetMapping("/{id}")
@@ -34,9 +47,24 @@ public class LopController {
         return lopService.update(id, dto);
     }
 
+    // Xóa mềm
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
-        lopService.delete(id);
+    public ResponseEntity<Void> softDelete(@PathVariable String id) {
+        lopService.softDelete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Khôi phục lớp đã xóa mềm
+    @PutMapping("/{id}/restore")
+    public ResponseEntity<LopDTO> restore(@PathVariable String id) {
+        LopDTO restored = lopService.restore(id);
+        return ResponseEntity.ok(restored);
+    }
+
+    // Xóa vĩnh viễn
+    @DeleteMapping("/{id}/hard")
+    public ResponseEntity<Void> hardDelete(@PathVariable String id) {
+        lopService.hardDelete(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -51,4 +79,15 @@ public class LopController {
         return ResponseEntity.ok(count);
     }
 
+    @GetMapping("/count/active")
+    public ResponseEntity<Long> countActive() {
+        long count = lopService.countActive();
+        return ResponseEntity.ok(count);
+    }
+
+    @GetMapping("/count/inactive")
+    public ResponseEntity<Long> countInactive() {
+        long count = lopService.countInactive();
+        return ResponseEntity.ok(count);
+    }
 }

@@ -1012,6 +1012,49 @@ Ngành: ${subject.nganhNamesStr}
         };
     }
 
+    async function loadMonHocStats() {
+        try {
+            console.log('📊 Loading môn học statistics...');
+
+            // Tính toán từ dữ liệu đã có
+            const totalMonHoc = monHocData.length;
+            const activeMonHoc = monHocData.filter(mh => mh.isActive !== false).length;
+            const inactiveMonHoc = totalMonHoc - activeMonHoc;
+
+            // Tính theo loại môn học
+            const loaiMonHoc = {};
+            monHocData.forEach(mh => {
+                if (mh.loaiMonHoc) {
+                    loaiMonHoc[mh.loaiMonHoc] = (loaiMonHoc[mh.loaiMonHoc] || 0) + 1;
+                }
+            });
+
+            // Tính tổng số tín chỉ
+            const totalTinChi = monHocData.reduce((sum, mh) => sum + (parseInt(mh.soTinChi) || 0), 0);
+
+            // Cập nhật hiển thị
+            updateElement('totalMonHoc', totalMonHoc);
+            updateElement('activeMonHoc', activeMonHoc);
+            updateElement('inactiveMonHoc', inactiveMonHoc);
+            updateElement('totalTinChi', totalTinChi);
+
+            console.log('✅ Môn học stats loaded:', {
+                total: totalMonHoc,
+                active: activeMonHoc,
+                inactive: inactiveMonHoc,
+                tinChi: totalTinChi
+            });
+
+        } catch (error) {
+            console.error('❌ Error loading môn học stats:', error);
+            // Set mặc định nếu lỗi
+            updateElement('totalMonHoc', 0);
+            updateElement('activeMonHoc', 0);
+            updateElement('inactiveMonHoc', 0);
+            updateElement('totalTinChi', 0);
+        }
+    }
+
     // ===== STYLES =====
     const additionalStyles = `
 <style>
