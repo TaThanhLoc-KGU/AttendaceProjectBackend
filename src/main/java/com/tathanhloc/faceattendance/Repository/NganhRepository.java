@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface NganhRepository extends JpaRepository<Nganh, String> {
@@ -88,4 +89,8 @@ public interface NganhRepository extends JpaRepository<Nganh, String> {
             "JOIN sv.lop l " +
             "WHERE l.nganh.maNganh = :maNganh")
     long countAllSinhVienByNganh(@Param("maNganh") String maNganh);
+
+
+    @Query("SELECT n.maNganh FROM Nganh n WHERE n.maNganh IN :nganhIds AND n.isActive = true")
+    List<String> findExistingIds(@Param("nganhIds") Set<String> nganhIds);
 }

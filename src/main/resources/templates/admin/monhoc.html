@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Môn học - Face Attendance</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/sidebar.css}" rel="stylesheet">
+    <link th:href="@{/css/admin.css}" rel="stylesheet">
+</head>
+<body>
+<div class="main-wrapper">
+    <!-- Include Sidebar Component -->
+    <div th:replace="~{components/sidebar :: sidebar}"></div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Quản lý Môn học</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <span th:text="'Xin chào, ' + ${session.user?.hoTen ?: 'Admin'}">Xin chào, Admin</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Stats Cards -->
+            <div class="row mb-4" id="statsCards">
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-icon stats-primary">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="stats-number" id="totalSubjects">0</div>
+                        <div class="stats-label">Tổng môn học</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-icon stats-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stats-number" id="activeSubjects">0</div>
+                        <div class="stats-label">Đang giảng dạy</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-icon stats-warning">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="stats-number" id="totalCredits">0</div>
+                        <div class="stats-label">Tổng tín chỉ</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-icon stats-info">
+                            <i class="fas fa-sitemap"></i>
+                        </div>
+                        <div class="stats-number" id="departmentCount">0</div>
+                        <div class="stats-label">Ngành liên quan</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="search-filter-section card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label class="form-label">Tìm kiếm</label>
+                            <input type="text" class="form-control" placeholder="Mã, tên môn học..." id="searchInput">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Khoa</label>
+                            <select class="form-control" id="khoaFilter">
+                                <option value="">Tất cả khoa</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Ngành</label>
+                            <select class="form-control" id="nganhFilter">
+                                <option value="">Tất cả ngành</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Trạng thái</label>
+                            <select class="form-control" id="statusFilter">
+                                <option value="">Tất cả</option>
+                                <option value="true">Hoạt động</option>
+                                <option value="false">Tạm dừng</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label">&nbsp;</label>
+                            <button class="btn btn-primary d-block w-100" id="searchBtn">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subject Management Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Danh sách môn học</h5>
+                        <div>
+                            <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addSubjectModal">
+                                <i class="fas fa-plus"></i> Thêm môn học
+                            </button>
+                            <button class="btn btn-outline-primary" id="refreshBtn">
+                                <i class="fas fa-sync-alt"></i> Làm mới
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Mã môn học</th>
+                                <th>Tên môn học</th>
+                                <th>Tín chỉ</th>
+                                <th>Ngành</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody id="subjectTableBody">
+                            <tr id="loadingRow">
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
+                                    <p class="text-muted">Đang tải dữ liệu...</p>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Subject Modal -->
+<div class="modal fade" id="addSubjectModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Thêm môn học mới
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addSubjectForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Mã môn học <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="maMh" name="maMh" required>
+                                <div class="invalid-feedback">Vui lòng nhập mã môn học</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Tên môn học <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="tenMh" name="tenMh" required>
+                                <div class="invalid-feedback">Vui lòng nhập tên môn học</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Số tín chỉ <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="soTinChi" name="soTinChi" min="1" max="10" required>
+                                <div class="invalid-feedback">Vui lòng nhập số tín chỉ</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Trạng thái</label>
+                                <select class="form-control" id="isActive" name="isActive">
+                                    <option value="true">Hoạt động</option>
+                                    <option value="false">Tạm dừng</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ngành liên quan <span class="text-danger">*</span></label>
+                        <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                            <div id="nganhCheckboxList">
+                                <!-- Checkboxes will be populated here -->
+                            </div>
+                        </div>
+                        <div class="invalid-feedback" id="nganhError">Vui lòng chọn ít nhất một ngành</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Hủy
+                </button>
+                <button type="button" class="btn btn-primary" id="saveSubjectBtn">
+                    <i class="fas fa-save me-2"></i>Lưu môn học
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Subject Modal -->
+<div class="modal fade" id="editSubjectModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Chỉnh sửa môn học
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editSubjectForm">
+                    <input type="hidden" id="editMaMh" name="maMh">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Mã môn học</label>
+                                <input type="text" class="form-control" id="editMaMhDisplay" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Tên môn học <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editTenMh" name="tenMh" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Số tín chỉ <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="editSoTinChi" name="soTinChi" min="1" max="10" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Trạng thái</label>
+                                <select class="form-control" id="editIsActive" name="isActive">
+                                    <option value="true">Hoạt động</option>
+                                    <option value="false">Tạm dừng</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ngành liên quan <span class="text-danger">*</span></label>
+                        <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                            <div id="editNganhCheckboxList">
+                                <!-- Checkboxes will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Hủy
+                </button>
+                <button type="button" class="btn btn-primary" id="updateSubjectBtn">
+                    <i class="fas fa-save me-2"></i>Cập nhật
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Xác nhận xóa
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <i class="fas fa-exclamation-triangle text-danger mb-3" style="font-size: 3rem;"></i>
+                    <h6>Bạn có chắc chắn muốn xóa môn học này?</h6>
+                    <p class="text-muted">Hành động này không thể hoàn tác!</p>
+                    <p><strong id="deleteSubjectName"></strong></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Hủy
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-2"></i>Xóa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom JS -->
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/sidebar.js}"></script>
+<script>
+    // ===== GLOBAL VARIABLES =====
+    let subjectData = [];
+    let nganhData = [];
+    let khoaData = [];
+    let currentEditingSubject = null;
+    const API_BASE = '/api';
+
+    // ===== INITIALIZATION =====
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Initializing Subject Management...');
+        initializePage();
+    });
+
+    async function initializePage() {
+        try {
+            setupEventListeners();
+            setupSidebar();
+            await loadInitialData();
+        } catch (error) {
+            console.error('❌ Initialization failed:', error);
+            showNotification('Không thể khởi tạo trang. Vui lòng thử lại!', 'error');
+        }
+    }
+
+    // ===== SIDEBAR SETUP =====
+    function setupSidebar() {
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function() {
+                const sidebar = document.querySelector('.sidebar');
+                const mainContent = document.querySelector('.main-content');
+
+                if (sidebar) sidebar.classList.toggle('collapsed');
+                if (mainContent) mainContent.classList.toggle('expanded');
+            });
+        }
+    }
+
+    // ===== EVENT LISTENERS =====
+    function setupEventListeners() {
+        // Search and filter
+        document.getElementById('searchInput')?.addEventListener('keyup', debounce(performSearch, 300));
+        document.getElementById('searchBtn')?.addEventListener('click', performSearch);
+        document.getElementById('refreshBtn')?.addEventListener('click', refreshData);
+
+        ['khoaFilter', 'nganhFilter', 'statusFilter'].forEach(id => {
+            document.getElementById(id)?.addEventListener('change', performSearch);
+        });
+
+        // Modal actions
+        document.getElementById('saveSubjectBtn')?.addEventListener('click', saveNewSubject);
+        document.getElementById('updateSubjectBtn')?.addEventListener('click', updateExistingSubject);
+
+        // Khoa filter change
+        document.getElementById('khoaFilter')?.addEventListener('change', function() {
+            updateNganhFilter(this.value);
+        });
+    }
+
+    // ===== DATA LOADING =====
+    async function loadInitialData() {
+        try {
+            showLoading(true);
+
+            // Load reference data
+            await Promise.all([
+                loadKhoaData(),
+                loadNganhData()
+            ]);
+
+            // Then load subjects
+            await loadSubjectData();
+            await loadStats();
+
+            console.log('✅ All data loaded successfully');
+        } catch (error) {
+            console.error('❌ Error loading data:', error);
+            showNotification('Không thể tải dữ liệu!', 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    async function loadKhoaData() {
+        try {
+            const response = await fetch(`${API_BASE}/khoa`);
+            if (!response.ok) throw new Error('Failed to load khoa');
+
+            khoaData = await response.json();
+            populateKhoaFilter();
+            console.log('✅ Khoa data loaded:', khoaData.length);
+        } catch (error) {
+            console.error('❌ Error loading khoa:', error);
+            khoaData = [];
+        }
+    }
+
+    async function loadNganhData() {
+        try {
+            const response = await fetch(`${API_BASE}/nganh`);
+            if (!response.ok) throw new Error('Failed to load nganh');
+
+            nganhData = await response.json();
+            populateNganhFilter();
+            populateNganhCheckboxes();
+            console.log('✅ Nganh data loaded:', nganhData.length);
+        } catch (error) {
+            console.error('❌ Error loading nganh:', error);
+            nganhData = [];
+        }
+    }
+
+    async function loadSubjectData() {
+        try {
+            showTableLoading(true);
+
+            const response = await fetch(`${API_BASE}/monhoc`);
+            if (!response.ok) throw new Error('Failed to load subjects');
+
+            subjectData = await response.json();
+
+            // Enrich with nganh names
+            await enrichSubjectData();
+
+            renderSubjectTable();
+            console.log('✅ Subject data loaded:', subjectData.length);
+        } catch (error) {
+            console.error('❌ Error loading subjects:', error);
+            showTableError();
+        } finally {
+            showTableLoading(false);
+        }
+    }
+
+    async function loadStats() {
+        try {
+            const totalSubjects = subjectData.length;
+            const activeSubjects = subjectData.filter(s => s.isActive).length;
+            const totalCredits = subjectData.reduce((sum, s) => sum + (s.soTinChi || 0), 0);
+            const departmentCount = [...new Set(subjectData.flatMap(s => s.maNganhs || []))].length;
+
+            document.getElementById('totalSubjects').textContent = totalSubjects;
+            document.getElementById('activeSubjects').textContent = activeSubjects;
+            document.getElementById('totalCredits').textContent = totalCredits;
+            document.getElementById('departmentCount').textContent = departmentCount;
+
+            console.log('✅ Stats updated');
+        } catch (error) {
+            console.error('❌ Error loading stats:', error);
+        }
+    }
+
+    // ===== DATA ENRICHMENT =====
+    async function enrichSubjectData() {
+        for (let subject of subjectData) {
+            if (subject.maNganhs && subject.maNganhs.length > 0) {
+                subject.nganhNames = subject.maNganhs.map(maNganh => {
+                    const nganh = nganhData.find(n => n.maNganh === maNganh);
+                    return nganh ? nganh.tenNganh : maNganh;
+                });
+                subject.nganhNamesStr = subject.nganhNames.join(', ');
+            } else {
+                subject.nganhNames = [];
+                subject.nganhNamesStr = 'Chưa phân ngành';
+            }
+        }
+    }
+
+    // ===== UI POPULATION =====
+    function populateKhoaFilter() {
+        const select = document.getElementById('khoaFilter');
+        if (!select) return;
+
+        // Clear existing options except first
+        while (select.children.length > 1) {
+            select.removeChild(select.lastChild);
+        }
+
+        khoaData.forEach(khoa => {
+            const option = document.createElement('option');
+            option.value = khoa.maKhoa;
+            option.textContent = khoa.tenKhoa;
+            select.appendChild(option);
+        });
+    }
+
+    function populateNganhFilter() {
+        const select = document.getElementById('nganhFilter');
+        if (!select) return;
+
+        // Clear existing options except first
+        while (select.children.length > 1) {
+            select.removeChild(select.lastChild);
+        }
+
+        nganhData.forEach(nganh => {
+            const option = document.createElement('option');
+            option.value = nganh.maNganh;
+            option.textContent = nganh.tenNganh;
+            select.appendChild(option);
+        });
+    }
+
+    function populateNganhCheckboxes() {
+        populateNganhCheckboxList('nganhCheckboxList');
+        populateNganhCheckboxList('editNganhCheckboxList');
+    }
+
+    function populateNganhCheckboxList(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        // Group by khoa
+        const khoaGroups = {};
+        nganhData.forEach(nganh => {
+            const khoaName = khoaData.find(k => k.maKhoa === nganh.maKhoa)?.tenKhoa || 'Khác';
+            if (!khoaGroups[khoaName]) khoaGroups[khoaName] = [];
+            khoaGroups[khoaName].push(nganh);
+        });
+
+        Object.keys(khoaGroups).forEach(khoaName => {
+            const khoaHeader = document.createElement('div');
+            khoaHeader.className = 'fw-bold text-primary mb-2 mt-2';
+            khoaHeader.textContent = khoaName;
+            container.appendChild(khoaHeader);
+
+            khoaGroups[khoaName].forEach(nganh => {
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.className = 'form-check ms-3';
+                checkboxDiv.innerHTML = `
+                <input class="form-check-input nganh-checkbox" type="checkbox"
+                       value="${nganh.maNganh}" id="${containerId}_${nganh.maNganh}">
+                <label class="form-check-label" for="${containerId}_${nganh.maNganh}">
+                    ${nganh.tenNganh}
+                </label>
+            `;
+                container.appendChild(checkboxDiv);
+            });
+        });
+    }
+
+    // ===== SEARCH AND FILTER =====
+    function updateNganhFilter(selectedKhoa) {
+        const select = document.getElementById('nganhFilter');
+        if (!select) return;
+
+        // Clear existing options except first
+        while (select.children.length > 1) {
+            select.removeChild(select.lastChild);
+        }
+
+        const filteredNganh = selectedKhoa ?
+            nganhData.filter(n => n.maKhoa === selectedKhoa) :
+            nganhData;
+
+        filteredNganh.forEach(nganh => {
+            const option = document.createElement('option');
+            option.value = nganh.maNganh;
+            option.textContent = nganh.tenNganh;
+            select.appendChild(option);
+        });
+    }
+
+    function performSearch() {
+        const searchText = document.getElementById('searchInput').value.toLowerCase().trim();
+        const khoaFilter = document.getElementById('khoaFilter').value;
+        const nganhFilter = document.getElementById('nganhFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+
+        let filteredData = [...subjectData];
+
+        // Search filter
+        if (searchText) {
+            filteredData = filteredData.filter(item =>
+                item.maMh.toLowerCase().includes(searchText) ||
+                item.tenMh.toLowerCase().includes(searchText)
+            );
+        }
+
+        // Khoa filter (through nganh)
+        if (khoaFilter) {
+            const khoaNganhIds = nganhData.filter(n => n.maKhoa === khoaFilter).map(n => n.maNganh);
+            filteredData = filteredData.filter(item =>
+                item.maNganhs && item.maNganhs.some(id => khoaNganhIds.includes(id))
+            );
+        }
+
+        // Nganh filter
+        if (nganhFilter) {
+            filteredData = filteredData.filter(item =>
+                item.maNganhs && item.maNganhs.includes(nganhFilter)
+            );
+        }
+
+        // Status filter
+        if (statusFilter) {
+            const isActive = statusFilter === 'true';
+            filteredData = filteredData.filter(item => item.isActive === isActive);
+        }
+
+        renderSubjectTable(filteredData);
+    }
+
+    // ===== TABLE RENDERING =====
+    function renderSubjectTable(data = subjectData) {
+        const tbody = document.getElementById('subjectTableBody');
+        const loadingRow = document.getElementById('loadingRow');
+
+        if (!tbody) return;
+
+        // Hide loading
+        if (loadingRow) loadingRow.style.display = 'none';
+
+        // Clear existing rows
+        const existingRows = tbody.querySelectorAll('tr:not(#loadingRow)');
+        existingRows.forEach(row => row.remove());
+
+        if (data.length === 0) {
+            const noDataRow = document.createElement('tr');
+            noDataRow.innerHTML = `
+            <td colspan="7" class="text-center py-4">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Không có dữ liệu để hiển thị</p>
+            </td>
+        `;
+            tbody.appendChild(noDataRow);
+            return;
+        }
+
+        data.forEach((subject, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+            <td>${index + 1}</td>
+            <td><strong>${subject.maMh}</strong></td>
+            <td>${subject.tenMh}</td>
+            <td><span class="badge bg-info">${subject.soTinChi || 0} TC</span></td>
+            <td>
+                <small class="text-muted">${subject.nganhNamesStr}</small>
+            </td>
+            <td>
+                <span class="badge ${subject.isActive ? 'bg-success' : 'bg-danger'}">
+                    ${subject.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-warning me-1"
+                        onclick="editSubject('${subject.maMh}')" title="Chỉnh sửa">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-info me-1"
+                        onclick="viewSubjectDetails('${subject.maMh}')" title="Xem chi tiết">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger"
+                        onclick="deleteSubject('${subject.maMh}', '${subject.tenMh}')" title="Xóa">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // ===== CRUD OPERATIONS =====
+    async function saveNewSubject() {
+        const form = document.getElementById('addSubjectForm');
+        if (!validateSubjectForm(form)) return;
+
+        const formData = new FormData(form);
+        const selectedNganhs = getSelectedNganhs('nganhCheckboxList');
+
+        if (selectedNganhs.length === 0) {
+            showNganhError();
+            return;
+        }
+
+        const subjectData = {
+            maMh: formData.get('maMh'),
+            tenMh: formData.get('tenMh'),
+            soTinChi: parseInt(formData.get('soTinChi')),
+            isActive: formData.get('isActive') === 'true',
+            maNganhs: selectedNganhs
+        };
+
+        try {
+            showButtonLoading('saveSubjectBtn', true);
+
+            const response = await fetch(`${API_BASE}/monhoc`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(subjectData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to create subject');
+            }
+
+            const result = await response.json();
+            console.log('✅ Subject created:', result);
+
+            // Close modal and refresh
+            bootstrap.Modal.getInstance(document.getElementById('addSubjectModal')).hide();
+            form.reset();
+            clearNganhSelections('nganhCheckboxList');
+
+            await refreshData();
+            showNotification('Thêm môn học thành công!', 'success');
+
+        } catch (error) {
+            console.error('❌ Error creating subject:', error);
+            showNotification(error.message || 'Không thể tạo môn học!', 'error');
+        } finally {
+            showButtonLoading('saveSubjectBtn', false);
+        }
+    }
+
+    function editSubject(maMh) {
+        const subject = subjectData.find(s => s.maMh === maMh);
+        if (!subject) {
+            showNotification('Không tìm thấy môn học!', 'error');
+            return;
+        }
+
+        currentEditingSubject = subject;
+
+        // Populate form
+        document.getElementById('editMaMh').value = subject.maMh;
+        document.getElementById('editMaMhDisplay').value = subject.maMh;
+        document.getElementById('editTenMh').value = subject.tenMh;
+        document.getElementById('editSoTinChi').value = subject.soTinChi;
+        document.getElementById('editIsActive').value = subject.isActive.toString();
+
+        // Select nganhs
+        clearNganhSelections('editNganhCheckboxList');
+        if (subject.maNganhs) {
+            subject.maNganhs.forEach(maNganh => {
+                const checkbox = document.querySelector(`#editNganhCheckboxList_${maNganh}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('editSubjectModal'));
+        modal.show();
+    }
+
+    async function updateExistingSubject() {
+        const form = document.getElementById('editSubjectForm');
+        if (!validateSubjectForm(form)) return;
+
+        const formData = new FormData(form);
+        const selectedNganhs = getSelectedNganhs('editNganhCheckboxList');
+
+        if (selectedNganhs.length === 0) {
+            showNotification('Vui lòng chọn ít nhất một ngành!', 'error');
+            return;
+        }
+
+        const subjectData = {
+            maMh: formData.get('maMh'),
+            tenMh: formData.get('tenMh'),
+            soTinChi: parseInt(formData.get('soTinChi')),
+            isActive: formData.get('isActive') === 'true',
+            maNganhs: selectedNganhs
+        };
+
+        try {
+            showButtonLoading('updateSubjectBtn', true);
+
+            const response = await fetch(`${API_BASE}/monhoc/${currentEditingSubject.maMh}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(subjectData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to update subject');
+            }
+
+            const result = await response.json();
+            console.log('✅ Subject updated:', result);
+
+            // Close modal and refresh
+            bootstrap.Modal.getInstance(document.getElementById('editSubjectModal')).hide();
+            await refreshData();
+            showNotification('Cập nhật môn học thành công!', 'success');
+
+        } catch (error) {
+            console.error('❌ Error updating subject:', error);
+            showNotification(error.message || 'Không thể cập nhật môn học!', 'error');
+        } finally {
+            showButtonLoading('updateSubjectBtn', false);
+            currentEditingSubject = null;
+        }
+    }
+
+    function deleteSubject(maMh, tenMh) {
+        document.getElementById('deleteSubjectName').textContent = `${maMh} - ${tenMh}`;
+
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+
+        document.getElementById('confirmDeleteBtn').onclick = async function() {
+            try {
+                showButtonLoading('confirmDeleteBtn', true);
+
+                const response = await fetch(`${API_BASE}/monhoc/${maMh}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete subject');
+                }
+
+                console.log('✅ Subject deleted:', maMh);
+
+                modal.hide();
+                await refreshData();
+                showNotification('Xóa môn học thành công!', 'success');
+
+            } catch (error) {
+                console.error('❌ Error deleting subject:', error);
+                showNotification('Không thể xóa môn học!', 'error');
+            } finally {
+                showButtonLoading('confirmDeleteBtn', false);
+            }
+        };
+    }
+
+    function viewSubjectDetails(maMh) {
+        const subject = subjectData.find(s => s.maMh === maMh);
+        if (!subject) {
+            showNotification('Không tìm thấy môn học!', 'error');
+            return;
+        }
+
+        // Simple alert for now - can be expanded to a detailed modal
+        const details = `
+Môn học: ${subject.tenMh}
+Mã môn: ${subject.maMh}
+Tín chỉ: ${subject.soTinChi}
+Trạng thái: ${subject.isActive ? 'Hoạt động' : 'Tạm dừng'}
+Ngành: ${subject.nganhNamesStr}
+    `;
+
+        alert(details);
+        console.log('View details for:', subject);
+    }
+
+    // ===== UTILITY FUNCTIONS =====
+    function getSelectedNganhs(containerId) {
+        const checkboxes = document.querySelectorAll(`#${containerId} .nganh-checkbox:checked`);
+        return Array.from(checkboxes).map(cb => cb.value);
+    }
+
+    function clearNganhSelections(containerId) {
+        const checkboxes = document.querySelectorAll(`#${containerId} .nganh-checkbox`);
+        checkboxes.forEach(cb => cb.checked = false);
+    }
+
+    function showNganhError() {
+        const errorDiv = document.getElementById('nganhError');
+        if (errorDiv) {
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 3000);
+        }
+        showNotification('Vui lòng chọn ít nhất một ngành!', 'error');
+    }
+
+    function validateSubjectForm(form) {
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+
+        return isValid;
+    }
+
+    async function refreshData() {
+        try {
+            await loadSubjectData();
+            await loadStats();
+            console.log('✅ Data refreshed');
+        } catch (error) {
+            console.error('❌ Error refreshing data:', error);
+            showNotification('Không thể làm mới dữ liệu!', 'error');
+        }
+    }
+
+    // ===== UI HELPERS =====
+    function showLoading(show) {
+        // Can implement a loading overlay if needed
+        console.log(show ? '⏳ Loading...' : '✅ Loading complete');
+    }
+
+    function showTableLoading(show) {
+        const loadingRow = document.getElementById('loadingRow');
+        if (loadingRow) {
+            loadingRow.style.display = show ? '' : 'none';
+        }
+    }
+
+    function showTableError() {
+        const tbody = document.getElementById('subjectTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = `
+        <tr>
+            <td colspan="7" class="text-center py-4">
+                <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                <p class="text-danger">Có lỗi xảy ra khi tải dữ liệu</p>
+                <button class="btn btn-outline-primary btn-sm" onclick="loadSubjectData()">
+                    <i class="fas fa-sync-alt me-2"></i>Thử lại
+                </button>
+            </td>
+        </tr>
+    `;
+    }
+
+    function showButtonLoading(buttonId, show) {
+        const button = document.getElementById(buttonId);
+        if (!button) return;
+
+        if (show) {
+            button.disabled = true;
+            const icon = button.querySelector('i');
+            if (icon) icon.className = 'fas fa-spinner fa-spin me-2';
+        } else {
+            button.disabled = false;
+            const icon = button.querySelector('i');
+            if (icon) {
+                if (buttonId.includes('save') || buttonId.includes('update')) {
+                    icon.className = 'fas fa-save me-2';
+                } else if (buttonId.includes('delete')) {
+                    icon.className = 'fas fa-trash me-2';
+                }
+            }
+        }
+    }
+
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // ===== STYLES =====
+    const additionalStyles = `
+<style>
+.stats-card {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    transition: transform 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.stats-card:hover {
+    transform: translateY(-3px);
+}
+
+.stats-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.stats-label {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.stats-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.stats-success { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
+.stats-warning { background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); }
+.stats-info { background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); }
+
+.search-filter-section {
+    margin-bottom: 20px;
+}
+
+.content-area {
+    padding: 30px;
+}
+
+.table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    border: none;
+    padding: 15px;
+}
+
+.table td {
+    padding: 15px;
+    vertical-align: middle;
+    border-top: 1px solid #e9ecef;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-1px);
+}
+
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #d1d3e2;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header, .modal-footer {
+    border: none;
+    padding: 20px;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.is-invalid {
+    border-color: #dc3545;
+}
+
+.invalid-feedback {
+    display: block;
+}
+
+#nganhError {
+    display: none;
+    color: #dc3545;
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+}
+
+.form-check {
+    margin-bottom: 8px;
+}
+
+.form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+@media (max-width: 768px) {
+    .content-area {
+        padding: 15px;
+    }
+
+    .stats-card {
+        margin-bottom: 15px;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
+</style>
+`;
+
+    // Append styles to head
+    document.head.insertAdjacentHTML('beforeend', additionalStyles);
+</script>
+</body>
+</html>
