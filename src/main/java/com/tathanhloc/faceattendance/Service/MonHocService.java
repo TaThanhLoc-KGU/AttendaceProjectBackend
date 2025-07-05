@@ -21,44 +21,21 @@ public class MonHocService {
 
     private final MonHocRepository monHocRepository;
     private final NganhRepository nganhRepository;
-    private final NganhMonHocService nganhMonHocService; // Sử dụng service có sẵn
+    private final NganhMonHocService nganhMonHocService;
 
     @Transactional(readOnly = true)
     public List<MonHocDTO> getAll() {
-        log.debug("Getting all MonHoc - FIXED VERSION");
+        log.debug("Getting all MonHoc");
 
         try {
             List<MonHoc> monHocs = monHocRepository.findAll();
 
-            if (monHocs.isEmpty()) {
-                return Collections.emptyList();
-            }
-
-            // Convert to DTO safely - get nganh relations separately
-            List<MonHocDTO> result = new ArrayList<>();
-
-            for (MonHoc monHoc : monHocs) {
-                try {
-                    MonHocDTO dto = convertToDTOSafely(monHoc);
-                    result.add(dto);
-                } catch (Exception e) {
-                    log.warn("Error converting MonHoc to DTO: {}", monHoc.getMaMh(), e);
-                    // Add minimal DTO to avoid breaking the whole list
-                    MonHocDTO minimalDto = MonHocDTO.builder()
-                            .maMh(monHoc.getMaMh())
-                            .tenMh(monHoc.getTenMh() != null ? monHoc.getTenMh() : "Unknown")
-                            .soTinChi(monHoc.getSoTinChi() != null ? monHoc.getSoTinChi() : 0)
-                            .isActive(monHoc.getIsActive() != null ? monHoc.getIsActive() : false)
-                            .maNganhs(Collections.emptySet())
-                            .build();
-                    result.add(minimalDto);
-                }
-            }
-
-            return result;
+            return monHocs.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
 
         } catch (Exception e) {
-            log.error("Error in getAll MonHoc", e);
+            log.error("Error getting all MonHoc", e);
             return Collections.emptyList();
         }
     }
@@ -70,7 +47,7 @@ public class MonHocService {
         MonHoc monHoc = monHocRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("MonHoc", "maMh", id));
 
-        return convertToDTOSafely(monHoc);
+        return convertToDTO(monHoc);
     }
 
     @Transactional
@@ -78,15 +55,14 @@ public class MonHocService {
         log.debug("Creating new MonHoc: {}", dto.getMaMh());
 
         try {
-            // Validate input
+            // Validate
             validateMonHocDTO(dto);
 
-            // Check if already exists
             if (monHocRepository.existsById(dto.getMaMh())) {
                 throw new IllegalArgumentException("Mã môn học đã tồn tại: " + dto.getMaMh());
             }
 
-            // Create MonHoc entity WITHOUT nganhs to avoid circular reference
+            // Create MonHoc first
             MonHoc monHoc = MonHoc.builder()
                     .maMh(dto.getMaMh())
                     .tenMh(dto.getTenMh())
@@ -94,17 +70,15 @@ public class MonHocService {
                     .isActive(dto.getIsActive() != null ? dto.getIsActive() : true)
                     .build();
 
-            // Save MonHoc first
             MonHoc savedMonHoc = monHocRepository.save(monHoc);
             log.debug("✅ MonHoc saved: {}", savedMonHoc.getMaMh());
 
-            // Handle nganh relations using NganhMonHocService
+            // Create relations
             Set<String> successfulNganhs = new HashSet<>();
             if (dto.getMaNganhs() != null && !dto.getMaNganhs().isEmpty()) {
-                successfulNganhs = createNganhMonHocRelations(savedMonHoc.getMaMh(), dto.getMaNganhs());
+                successfulNganhs = createNganhRelations(savedMonHoc.getMaMh(), dto.getMaNganhs());
             }
 
-            // Return DTO with successful relations
             return MonHocDTO.builder()
                     .maMh(savedMonHoc.getMaMh())
                     .tenMh(savedMonHoc.getTenMh())
@@ -127,22 +101,17 @@ public class MonHocService {
             MonHoc existing = monHocRepository.findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("MonHoc", "maMh", id));
 
-            // Update basic fields
             existing.setTenMh(dto.getTenMh());
             existing.setSoTinChi(dto.getSoTinChi());
             existing.setIsActive(dto.getIsActive());
 
             MonHoc updated = monHocRepository.save(existing);
-            log.debug("✅ MonHoc updated: {}", updated.getMaMh());
 
-            // Update nganh relations
+            // Update relations
             Set<String> successfulNganhs = new HashSet<>();
             if (dto.getMaNganhs() != null) {
-                // First delete existing relations
-                deleteNganhMonHocRelations(id);
-
-                // Then create new relations
-                successfulNganhs = createNganhMonHocRelations(id, dto.getMaNganhs());
+                deleteAllRelations(id);
+                successfulNganhs = createNganhRelations(id, dto.getMaNganhs());
             }
 
             return MonHocDTO.builder()
@@ -168,10 +137,7 @@ public class MonHocService {
                 throw new ResourceNotFoundException("MonHoc", "maMh", id);
             }
 
-            // Delete nganh relations first
-            deleteNganhMonHocRelations(id);
-
-            // Then delete MonHoc
+            deleteAllRelations(id);
             monHocRepository.deleteById(id);
             log.debug("✅ MonHoc deleted: {}", id);
 
@@ -185,15 +151,10 @@ public class MonHocService {
         return getById(maMh);
     }
 
-    // ===== HELPER METHODS =====
-
-    /**
-     * Convert MonHoc to DTO safely - get nganh relations separately
-     */
-    private MonHocDTO convertToDTOSafely(MonHoc monHoc) {
+    // Helper methods
+    private MonHocDTO convertToDTO(MonHoc monHoc) {
         try {
-            // Get nganh relations using NganhMonHocService
-            Set<String> nganhIds = getNganhIdsByMonHoc(monHoc.getMaMh());
+            Set<String> nganhIds = getNganhIds(monHoc.getMaMh());
 
             return MonHocDTO.builder()
                     .maMh(monHoc.getMaMh())
@@ -204,7 +165,7 @@ public class MonHocService {
                     .build();
 
         } catch (Exception e) {
-            log.warn("Error converting MonHoc to DTO, returning minimal version: {}", monHoc.getMaMh(), e);
+            log.warn("Error converting MonHoc to DTO: {}", monHoc.getMaMh(), e);
             return MonHocDTO.builder()
                     .maMh(monHoc.getMaMh())
                     .tenMh(monHoc.getTenMh())
@@ -215,14 +176,11 @@ public class MonHocService {
         }
     }
 
-    /**
-     * Get nganh IDs for a MonHoc using NganhMonHocService
-     */
-    private Set<String> getNganhIdsByMonHoc(String maMh) {
+    private Set<String> getNganhIds(String maMh) {
         try {
             List<NganhMonHocDTO> relations = nganhMonHocService.findByMaMh(maMh);
             return relations.stream()
-                    .filter(r -> r.getIsActive() != null && r.getIsActive())
+                    .filter(r -> Boolean.TRUE.equals(r.getIsActive()))
                     .map(NganhMonHocDTO::getMaNganh)
                     .collect(Collectors.toSet());
         } catch (Exception e) {
@@ -231,21 +189,16 @@ public class MonHocService {
         }
     }
 
-    /**
-     * Create nganh-monhoc relations using NganhMonHocService
-     */
-    private Set<String> createNganhMonHocRelations(String maMh, Set<String> nganhIds) {
+    private Set<String> createNganhRelations(String maMh, Set<String> nganhIds) {
         Set<String> successful = new HashSet<>();
 
         for (String nganhId : nganhIds) {
             try {
-                // Validate nganh exists
                 if (!nganhRepository.existsById(nganhId)) {
-                    log.warn("⚠️ Nganh not found: {}", nganhId);
+                    log.warn("Nganh not found: {}", nganhId);
                     continue;
                 }
 
-                // Create relation using NganhMonHocService
                 NganhMonHocDTO relationDTO = NganhMonHocDTO.builder()
                         .maNganh(nganhId)
                         .maMh(maMh)
@@ -257,112 +210,40 @@ public class MonHocService {
                 log.debug("✅ Created relation: MonHoc {} - Nganh {}", maMh, nganhId);
 
             } catch (Exception e) {
-                log.warn("⚠️ Failed to create relation MonHoc: {} - Nganh: {}", maMh, nganhId, e);
-                // Continue with other nganhs instead of failing completely
+                log.warn("Failed to create relation MonHoc: {} - Nganh: {}", maMh, nganhId, e);
             }
         }
-
-        log.debug("Created {}/{} nganh relations for MonHoc: {}",
-                successful.size(), nganhIds.size(), maMh);
 
         return successful;
     }
 
-    /**
-     * Delete all nganh-monhoc relations for a MonHoc
-     */
-    private void deleteNganhMonHocRelations(String maMh) {
+    private void deleteAllRelations(String maMh) {
         try {
-            List<NganhMonHocDTO> existingRelations = nganhMonHocService.findByMaMh(maMh);
-
-            for (NganhMonHocDTO relation : existingRelations) {
+            List<NganhMonHocDTO> relations = nganhMonHocService.findByMaMh(maMh);
+            for (NganhMonHocDTO relation : relations) {
                 try {
                     nganhMonHocService.delete(relation.getMaNganh(), relation.getMaMh());
-                    log.debug("✅ Deleted relation: MonHoc {} - Nganh {}",
-                            relation.getMaMh(), relation.getMaNganh());
                 } catch (Exception e) {
-                    log.warn("⚠️ Failed to delete relation: MonHoc {} - Nganh {}",
-                            relation.getMaMh(), relation.getMaNganh(), e);
+                    log.warn("Failed to delete relation: {} - {}", relation.getMaNganh(), relation.getMaMh(), e);
                 }
             }
-
         } catch (Exception e) {
-            log.warn("⚠️ Error deleting nganh relations for MonHoc: {}", maMh, e);
+            log.warn("Error deleting relations for MonHoc: {}", maMh, e);
         }
     }
 
-    /**
-     * Validate MonHocDTO
-     */
     private void validateMonHocDTO(MonHocDTO dto) {
         if (dto == null) {
             throw new IllegalArgumentException("MonHoc data cannot be null");
         }
-
         if (dto.getMaMh() == null || dto.getMaMh().trim().isEmpty()) {
             throw new IllegalArgumentException("Mã môn học không được để trống");
         }
-
         if (dto.getTenMh() == null || dto.getTenMh().trim().isEmpty()) {
             throw new IllegalArgumentException("Tên môn học không được để trống");
         }
-
         if (dto.getSoTinChi() == null || dto.getSoTinChi() <= 0) {
             throw new IllegalArgumentException("Số tín chỉ phải lớn hơn 0");
         }
-
-        if (dto.getSoTinChi() > 10) {
-            throw new IllegalArgumentException("Số tín chỉ không được vượt quá 10");
-        }
     }
 }
-
-// ===== ALTERNATIVE SIMPLE APPROACH =====
-// Nếu vẫn có vấn đề, sử dụng approach này (không dùng Many-to-Many)
-
-/*
-@Service
-@RequiredArgsConstructor
-@Slf4j
-public class SimpleMonHocService {
-
-    private final MonHocRepository monHocRepository;
-    private final NganhRepository nganhRepository;
-
-    @Transactional(readOnly = true)
-    public List<MonHocDTO> getAll() {
-        try {
-            return monHocRepository.findAll().stream()
-                    .map(this::convertToSimpleDTO)
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            log.error("Error getting all MonHoc", e);
-            return Collections.emptyList();
-        }
-    }
-
-    @Transactional
-    public MonHocDTO create(MonHocDTO dto) {
-        // Just create MonHoc without relations first
-        MonHoc monHoc = MonHoc.builder()
-                .maMh(dto.getMaMh())
-                .tenMh(dto.getTenMh())
-                .soTinChi(dto.getSoTinChi())
-                .isActive(true)
-                .build();
-
-        MonHoc saved = monHocRepository.save(monHoc);
-        return convertToSimpleDTO(saved);
-    }
-
-    private MonHocDTO convertToSimpleDTO(MonHoc monHoc) {
-        return MonHocDTO.builder()
-                .maMh(monHoc.getMaMh())
-                .tenMh(monHoc.getTenMh())
-                .soTinChi(monHoc.getSoTinChi())
-                .isActive(monHoc.getIsActive())
-                .maNganhs(Collections.emptySet()) // Empty for now
-                .build();
-    }
-}
-*/
