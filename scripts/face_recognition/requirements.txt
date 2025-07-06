@@ -1,0 +1,27 @@
+# Face Recognition Dependencies
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+pydantic-settings
+
+# Computer Vision & Face Recognition
+insightface
+opencv-python
+numpy
+Pillow
+scikit-learn
+
+# Database & API
+requests
+aiohttp
+mysql-connector-python
+sqlalchemy
+# Utilities
+python-dotenv
+loguru
+python-jose[cryptography]
+passlib[bcrypt]
+
+# Optional: GPU support (uncomment if using GPU)
+onnxruntime-gpu

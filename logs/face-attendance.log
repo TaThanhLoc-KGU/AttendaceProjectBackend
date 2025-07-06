@@ -26098,3 +26098,574 @@ java.lang.ClassCastException: class java.io.ObjectStreamClass cannot be cast to 
         count(sv1_0.ma_sv) 
     from
         sinhvien sv1_0
+2025-07-06 11:20:44 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Securing GET /admin/sinhvien
+2025-07-06 11:20:44 [http-nio-8080-exec-5] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-07-06 11:20:44 [http-nio-8080-exec-5] DEBUG o.s.s.w.s.SessionManagementFilter - Request requested invalid session id E672C64A50597B7288FDAAC32E602DCF
+2025-07-06 11:20:44 [http-nio-8080-exec-5] DEBUG o.s.s.w.s.HttpSessionRequestCache - Saved request http://localhost:8080/admin/sinhvien?continue to session
+2025-07-06 11:20:44 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Securing GET /?error=not_authenticated
+2025-07-06 11:20:44 [http-nio-8080-exec-10] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-07-06 11:20:44 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Secured GET /?error=not_authenticated
+2025-07-06 11:20:44 [http-nio-8080-exec-10] INFO  c.t.f.Controller.HomeController - === HOME PAGE ACCESS ===
+2025-07-06 11:20:44 [http-nio-8080-exec-10] INFO  c.t.f.Controller.HomeController - Authentication present: false
+2025-07-06 11:20:44 [http-nio-8080-exec-10] INFO  c.t.f.Controller.HomeController - Is authenticated: false
+2025-07-06 11:20:44 [http-nio-8080-exec-10] INFO  c.t.f.Controller.HomeController - Error message: not_authenticated
+2025-07-06 11:20:44 [http-nio-8080-exec-10] INFO  c.t.f.Controller.HomeController - Showing login page
+2025-07-06 11:20:44 [http-nio-8080-exec-6] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/common.css
+2025-07-06 11:20:44 [http-nio-8080-exec-6] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-07-06 11:20:44 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/auth.css
+2025-07-06 11:20:44 [http-nio-8080-exec-6] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/common.css
+2025-07-06 11:20:44 [http-nio-8080-exec-4] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-07-06 11:20:44 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/auth.css
+2025-07-06 11:20:44 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Securing GET /favicon.ico
+2025-07-06 11:20:44 [http-nio-8080-exec-9] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-07-06 11:20:44 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Secured GET /favicon.ico
+2025-07-06 11:20:44 [http-nio-8080-exec-9] WARN  o.s.w.s.m.m.a.ExceptionHandlerExceptionResolver - Resolved [org.springframework.web.servlet.resource.NoResourceFoundException: No static resource favicon.ico.]
+2025-07-06 11:22:51 [http-nio-8080-exec-7] DEBUG o.s.security.web.FilterChainProxy - Securing POST /login
+2025-07-06 11:22:51 [http-nio-8080-exec-7] INFO  c.t.f.S.CustomUserDetailsService - Loading user by username: admin
+2025-07-06 11:22:51 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        tk1_0.id,
+        tk1_0.created_at,
+        tk1_0.ma_gv,
+        tk1_0.is_active,
+        tk1_0.password_hash,
+        tk1_0.ma_sv,
+        tk1_0.username,
+        tk1_0.vai_tro 
+    from
+        taikhoan tk1_0 
+    where
+        tk1_0.username=?
+2025-07-06 11:22:51 [http-nio-8080-exec-7] INFO  c.t.f.S.CustomUserDetailsService - User found: admin with role: ADMIN and active status: true
+2025-07-06 11:22:52 [http-nio-8080-exec-7] DEBUG o.s.s.a.d.DaoAuthenticationProvider - Authenticated user
+2025-07-06 11:22:52 [http-nio-8080-exec-7] DEBUG o.s.s.w.a.s.SessionFixationProtectionStrategy - Invalidating session with Id 'AD62EBA24B94C19CD56EB6A1EEC35FA4' and migrating attributes.
+2025-07-06 11:22:52 [http-nio-8080-exec-7] DEBUG o.s.s.w.a.s.SessionFixationProtectionStrategy - Started new session: CCE91D635E71B5CEA53298E4EF02EBE4
+2025-07-06 11:22:52 [http-nio-8080-exec-7] DEBUG o.s.s.w.a.s.SessionFixationProtectionStrategy - Changed session id from AD62EBA24B94C19CD56EB6A1EEC35FA4
+2025-07-06 11:22:52 [http-nio-8080-exec-7] DEBUG o.s.s.c.session.SessionRegistryImpl - Registering session CCE91D635E71B5CEA53298E4EF02EBE4, for principal com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0
+2025-07-06 11:22:52 [http-nio-8080-exec-7] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Stored SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]] to HttpSession [org.apache.catalina.session.StandardSessionFacade@48624526]
+2025-07-06 11:22:52 [http-nio-8080-exec-7] DEBUG o.s.s.w.a.UsernamePasswordAuthenticationFilter - Set SecurityContextHolder to UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]
+2025-07-06 11:22:52 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Securing GET /admin/dashboard
+2025-07-06 11:22:52 [http-nio-8080-exec-2] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:52 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Secured GET /admin/dashboard
+2025-07-06 11:22:52 [http-nio-8080-exec-2] INFO  c.t.f.C.AdminDashboardController - === ADMIN DASHBOARD ACCESS ===
+2025-07-06 11:22:52 [http-nio-8080-exec-2] INFO  c.t.f.C.AdminDashboardController - Authentication: UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]
+2025-07-06 11:22:52 [http-nio-8080-exec-2] INFO  c.t.f.C.AdminDashboardController - Is Authenticated: true
+2025-07-06 11:22:52 [http-nio-8080-exec-2] INFO  c.t.f.C.AdminDashboardController - ✅ Admin dashboard access granted for user: admin
+2025-07-06 11:22:52 [http-nio-8080-exec-2] INFO  c.t.f.C.AdminDashboardController - User role: ADMIN
+2025-07-06 11:22:52 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        sv1_0.ma_sv,
+        sv1_0.email,
+        sv1_0.embedding,
+        sv1_0.gioi_tinh,
+        sv1_0.hinh_anh,
+        sv1_0.ho_ten,
+        sv1_0.is_active,
+        sv1_0.ma_lop,
+        sv1_0.ngay_sinh 
+    from
+        sinhvien sv1_0
+2025-07-06 11:22:52 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        l1_0.ma_lop,
+        l1_0.is_active,
+        kh1_0.ma_khoahoc,
+        kh1_0.nam_bat_dau,
+        kh1_0.nam_ket_thuc,
+        kh1_0.ten_khoahoc,
+        mk1_0.ma_khoa,
+        mk1_0.is_active,
+        mk1_0.ten_khoa,
+        n1_0.ma_nganh,
+        n1_0.is_active,
+        n1_0.ma_khoa,
+        n1_0.ten_nganh,
+        l1_0.ten_lop 
+    from
+        lop l1_0 
+    left join
+        khoahoc kh1_0 
+            on kh1_0.ma_khoahoc=l1_0.ma_khoahoc 
+    left join
+        khoa mk1_0 
+            on mk1_0.ma_khoa=l1_0.ma_khoa 
+    left join
+        nganh n1_0 
+            on n1_0.ma_nganh=l1_0.ma_nganh 
+    where
+        l1_0.ma_lop=?
+2025-07-06 11:22:52 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        l1_0.ma_lop,
+        l1_0.is_active,
+        kh1_0.ma_khoahoc,
+        kh1_0.nam_bat_dau,
+        kh1_0.nam_ket_thuc,
+        kh1_0.ten_khoahoc,
+        mk1_0.ma_khoa,
+        mk1_0.is_active,
+        mk1_0.ten_khoa,
+        n1_0.ma_nganh,
+        n1_0.is_active,
+        n1_0.ma_khoa,
+        n1_0.ten_nganh,
+        l1_0.ten_lop 
+    from
+        lop l1_0 
+    left join
+        khoahoc kh1_0 
+            on kh1_0.ma_khoahoc=l1_0.ma_khoahoc 
+    left join
+        khoa mk1_0 
+            on mk1_0.ma_khoa=l1_0.ma_khoa 
+    left join
+        nganh n1_0 
+            on n1_0.ma_nganh=l1_0.ma_nganh 
+    where
+        l1_0.ma_lop=?
+2025-07-06 11:22:52 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        l1_0.ma_lop,
+        l1_0.is_active,
+        kh1_0.ma_khoahoc,
+        kh1_0.nam_bat_dau,
+        kh1_0.nam_ket_thuc,
+        kh1_0.ten_khoahoc,
+        mk1_0.ma_khoa,
+        mk1_0.is_active,
+        mk1_0.ten_khoa,
+        n1_0.ma_nganh,
+        n1_0.is_active,
+        n1_0.ma_khoa,
+        n1_0.ten_nganh,
+        l1_0.ten_lop 
+    from
+        lop l1_0 
+    left join
+        khoahoc kh1_0 
+            on kh1_0.ma_khoahoc=l1_0.ma_khoahoc 
+    left join
+        khoa mk1_0 
+            on mk1_0.ma_khoa=l1_0.ma_khoa 
+    left join
+        nganh n1_0 
+            on n1_0.ma_nganh=l1_0.ma_nganh 
+    where
+        l1_0.ma_lop=?
+2025-07-06 11:22:52 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        l1_0.ma_lop,
+        l1_0.is_active,
+        kh1_0.ma_khoahoc,
+        kh1_0.nam_bat_dau,
+        kh1_0.nam_ket_thuc,
+        kh1_0.ten_khoahoc,
+        mk1_0.ma_khoa,
+        mk1_0.is_active,
+        mk1_0.ten_khoa,
+        n1_0.ma_nganh,
+        n1_0.is_active,
+        n1_0.ma_khoa,
+        n1_0.ten_nganh,
+        l1_0.ten_lop 
+    from
+        lop l1_0 
+    left join
+        khoahoc kh1_0 
+            on kh1_0.ma_khoahoc=l1_0.ma_khoahoc 
+    left join
+        khoa mk1_0 
+            on mk1_0.ma_khoa=l1_0.ma_khoa 
+    left join
+        nganh n1_0 
+            on n1_0.ma_nganh=l1_0.ma_nganh 
+    where
+        l1_0.ma_lop=?
+2025-07-06 11:22:52 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        gv1_0.ma_gv,
+        gv1_0.email,
+        gv1_0.ho_ten,
+        gv1_0.is_active,
+        gv1_0.ma_khoa 
+    from
+        giangvien gv1_0
+2025-07-06 11:22:52 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        k1_0.ma_khoa,
+        k1_0.is_active,
+        k1_0.ten_khoa 
+    from
+        khoa k1_0 
+    where
+        k1_0.ma_khoa=?
+2025-07-06 11:22:52 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        k1_0.ma_khoa,
+        k1_0.is_active,
+        k1_0.ten_khoa 
+    from
+        khoa k1_0 
+    where
+        k1_0.ma_khoa=?
+2025-07-06 11:22:52 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        k1_0.ma_khoa,
+        k1_0.is_active,
+        k1_0.ten_khoa 
+    from
+        khoa k1_0 
+    where
+        k1_0.ma_khoa=?
+2025-07-06 11:22:52 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        count(*) 
+    from
+        lop l1_0
+2025-07-06 11:22:52 [http-nio-8080-exec-2] INFO  c.t.f.Service.DiemDanhService - Đếm số lượng điểm danh trong ngày
+2025-07-06 11:22:52 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        count(dd1_0.id) 
+    from
+        diemdanh dd1_0 
+    where
+        dd1_0.ngay_diem_danh=?
+2025-07-06 11:22:52 [http-nio-8080-exec-2] INFO  c.t.f.C.AdminDashboardController - Dashboard stats loaded - Students: 59, Lecturers: 5, Classes: 4, Attendance: 0
+2025-07-06 11:22:52 [http-nio-8080-exec-2] INFO  c.t.f.C.AdminDashboardController - ✅ Admin dashboard loaded successfully
+2025-07-06 11:22:52 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/common.css
+2025-07-06 11:22:52 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/common.css
+2025-07-06 11:22:52 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/admin.css
+2025-07-06 11:22:52 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Securing GET /js/common.js
+2025-07-06 11:22:52 [http-nio-8080-exec-6] DEBUG o.s.security.web.FilterChainProxy - Securing GET /js/sidebar.js
+2025-07-06 11:22:52 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/sidebar.css
+2025-07-06 11:22:52 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Secured GET /js/common.js
+2025-07-06 11:22:52 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/sidebar.css
+2025-07-06 11:22:52 [http-nio-8080-exec-6] DEBUG o.s.security.web.FilterChainProxy - Secured GET /js/sidebar.js
+2025-07-06 11:22:52 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/admin.css
+2025-07-06 11:22:52 [http-nio-8080-exec-10] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:52 [http-nio-8080-exec-6] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:52 [http-nio-8080-exec-5] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:52 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Securing GET /js/admin.js
+2025-07-06 11:22:52 [http-nio-8080-exec-8] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:52 [http-nio-8080-exec-4] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:52 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Secured GET /js/admin.js
+2025-07-06 11:22:52 [http-nio-8080-exec-9] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:52 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/auth/me
+2025-07-06 11:22:52 [http-nio-8080-exec-1] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:52 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/auth/me
+2025-07-06 11:22:52 [http-nio-8080-exec-1] INFO  c.t.f.Controller.AuthController - Current user info requested: admin
+2025-07-06 11:22:54 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Securing GET /admin/sinhvien
+2025-07-06 11:22:54 [http-nio-8080-exec-3] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:54 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Secured GET /admin/sinhvien
+2025-07-06 11:22:54 [http-nio-8080-exec-7] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/common.css
+2025-07-06 11:22:54 [http-nio-8080-exec-7] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/common.css
+2025-07-06 11:22:54 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/sidebar.css
+2025-07-06 11:22:54 [http-nio-8080-exec-6] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/admin.css
+2025-07-06 11:22:54 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Securing GET /placeholder.svg
+2025-07-06 11:22:54 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/sidebar.css
+2025-07-06 11:22:54 [http-nio-8080-exec-6] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/admin.css
+2025-07-06 11:22:54 [http-nio-8080-exec-10] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:54 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Secured GET /placeholder.svg
+2025-07-06 11:22:54 [http-nio-8080-exec-6] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:54 [http-nio-8080-exec-7] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:54 [http-nio-8080-exec-2] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:54 [http-nio-8080-exec-10] WARN  o.s.w.s.m.m.a.ExceptionHandlerExceptionResolver - Resolved [org.springframework.web.servlet.resource.NoResourceFoundException: No static resource placeholder.svg.]
+2025-07-06 11:22:54 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Securing GET /js/admin.js
+2025-07-06 11:22:54 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Securing GET /js/sidebar.js
+2025-07-06 11:22:54 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Secured GET /js/admin.js
+2025-07-06 11:22:54 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Secured GET /js/sidebar.js
+2025-07-06 11:22:54 [http-nio-8080-exec-8] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:54 [http-nio-8080-exec-5] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:54 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/lop
+2025-07-06 11:22:54 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/auth/me
+2025-07-06 11:22:54 [http-nio-8080-exec-4] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:54 [http-nio-8080-exec-9] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:54 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/lop
+2025-07-06 11:22:54 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/auth/me
+2025-07-06 11:22:54 [http-nio-8080-exec-4] INFO  c.t.f.Controller.AuthController - Current user info requested: admin
+2025-07-06 11:22:54 [http-nio-8080-exec-9] DEBUG org.hibernate.SQL - 
+    select
+        l1_0.ma_lop,
+        l1_0.is_active,
+        l1_0.ma_khoahoc,
+        l1_0.ma_khoa,
+        l1_0.ma_nganh,
+        l1_0.ten_lop 
+    from
+        lop l1_0 
+    where
+        l1_0.is_active
+2025-07-06 11:22:54 [http-nio-8080-exec-9] DEBUG org.hibernate.SQL - 
+    select
+        kh1_0.ma_khoahoc,
+        kh1_0.nam_bat_dau,
+        kh1_0.nam_ket_thuc,
+        kh1_0.ten_khoahoc 
+    from
+        khoahoc kh1_0 
+    where
+        kh1_0.ma_khoahoc=?
+2025-07-06 11:22:54 [http-nio-8080-exec-9] DEBUG org.hibernate.SQL - 
+    select
+        k1_0.ma_khoa,
+        k1_0.is_active,
+        k1_0.ten_khoa 
+    from
+        khoa k1_0 
+    where
+        k1_0.ma_khoa=?
+2025-07-06 11:22:54 [http-nio-8080-exec-9] DEBUG org.hibernate.SQL - 
+    select
+        n1_0.ma_nganh,
+        n1_0.is_active,
+        n1_0.ma_khoa,
+        n1_0.ten_nganh 
+    from
+        nganh n1_0 
+    where
+        n1_0.ma_nganh=?
+2025-07-06 11:22:54 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/sinhvien?page=0&size=10
+2025-07-06 11:22:54 [http-nio-8080-exec-1] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:54 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/sinhvien?page=0&size=10
+2025-07-06 11:22:54 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        sv1_0.ma_sv,
+        sv1_0.email,
+        sv1_0.embedding,
+        sv1_0.gioi_tinh,
+        sv1_0.hinh_anh,
+        sv1_0.ho_ten,
+        sv1_0.is_active,
+        sv1_0.ma_lop,
+        sv1_0.ngay_sinh 
+    from
+        sinhvien sv1_0 
+    order by
+        sv1_0.ma_sv 
+    limit
+        ?, ?
+2025-07-06 11:22:54 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        l1_0.ma_lop,
+        l1_0.is_active,
+        kh1_0.ma_khoahoc,
+        kh1_0.nam_bat_dau,
+        kh1_0.nam_ket_thuc,
+        kh1_0.ten_khoahoc,
+        mk1_0.ma_khoa,
+        mk1_0.is_active,
+        mk1_0.ten_khoa,
+        n1_0.ma_nganh,
+        n1_0.is_active,
+        n1_0.ma_khoa,
+        n1_0.ten_nganh,
+        l1_0.ten_lop 
+    from
+        lop l1_0 
+    left join
+        khoahoc kh1_0 
+            on kh1_0.ma_khoahoc=l1_0.ma_khoahoc 
+    left join
+        khoa mk1_0 
+            on mk1_0.ma_khoa=l1_0.ma_khoa 
+    left join
+        nganh n1_0 
+            on n1_0.ma_nganh=l1_0.ma_nganh 
+    where
+        l1_0.ma_lop=?
+2025-07-06 11:22:54 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        l1_0.ma_lop,
+        l1_0.is_active,
+        kh1_0.ma_khoahoc,
+        kh1_0.nam_bat_dau,
+        kh1_0.nam_ket_thuc,
+        kh1_0.ten_khoahoc,
+        mk1_0.ma_khoa,
+        mk1_0.is_active,
+        mk1_0.ten_khoa,
+        n1_0.ma_nganh,
+        n1_0.is_active,
+        n1_0.ma_khoa,
+        n1_0.ten_nganh,
+        l1_0.ten_lop 
+    from
+        lop l1_0 
+    left join
+        khoahoc kh1_0 
+            on kh1_0.ma_khoahoc=l1_0.ma_khoahoc 
+    left join
+        khoa mk1_0 
+            on mk1_0.ma_khoa=l1_0.ma_khoa 
+    left join
+        nganh n1_0 
+            on n1_0.ma_nganh=l1_0.ma_nganh 
+    where
+        l1_0.ma_lop=?
+2025-07-06 11:22:54 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        l1_0.ma_lop,
+        l1_0.is_active,
+        kh1_0.ma_khoahoc,
+        kh1_0.nam_bat_dau,
+        kh1_0.nam_ket_thuc,
+        kh1_0.ten_khoahoc,
+        mk1_0.ma_khoa,
+        mk1_0.is_active,
+        mk1_0.ten_khoa,
+        n1_0.ma_nganh,
+        n1_0.is_active,
+        n1_0.ma_khoa,
+        n1_0.ten_nganh,
+        l1_0.ten_lop 
+    from
+        lop l1_0 
+    left join
+        khoahoc kh1_0 
+            on kh1_0.ma_khoahoc=l1_0.ma_khoahoc 
+    left join
+        khoa mk1_0 
+            on mk1_0.ma_khoa=l1_0.ma_khoa 
+    left join
+        nganh n1_0 
+            on n1_0.ma_nganh=l1_0.ma_nganh 
+    where
+        l1_0.ma_lop=?
+2025-07-06 11:22:54 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        count(sv1_0.ma_sv) 
+    from
+        sinhvien sv1_0
+2025-07-06 11:22:54 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/sinhvien/statistics
+2025-07-06 11:22:54 [http-nio-8080-exec-3] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@66e000c0, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=AD62EBA24B94C19CD56EB6A1EEC35FA4], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-06 11:22:54 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/sinhvien/statistics
+2025-07-06 11:22:54 [http-nio-8080-exec-3] INFO  c.t.f.Controller.SinhVienController - Getting student statistics
+2025-07-06 11:22:54 [http-nio-8080-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        sv1_0.ma_sv,
+        sv1_0.email,
+        sv1_0.embedding,
+        sv1_0.gioi_tinh,
+        sv1_0.hinh_anh,
+        sv1_0.ho_ten,
+        sv1_0.is_active,
+        sv1_0.ma_lop,
+        sv1_0.ngay_sinh 
+    from
+        sinhvien sv1_0
+2025-07-06 11:22:54 [http-nio-8080-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        l1_0.ma_lop,
+        l1_0.is_active,
+        kh1_0.ma_khoahoc,
+        kh1_0.nam_bat_dau,
+        kh1_0.nam_ket_thuc,
+        kh1_0.ten_khoahoc,
+        mk1_0.ma_khoa,
+        mk1_0.is_active,
+        mk1_0.ten_khoa,
+        n1_0.ma_nganh,
+        n1_0.is_active,
+        n1_0.ma_khoa,
+        n1_0.ten_nganh,
+        l1_0.ten_lop 
+    from
+        lop l1_0 
+    left join
+        khoahoc kh1_0 
+            on kh1_0.ma_khoahoc=l1_0.ma_khoahoc 
+    left join
+        khoa mk1_0 
+            on mk1_0.ma_khoa=l1_0.ma_khoa 
+    left join
+        nganh n1_0 
+            on n1_0.ma_nganh=l1_0.ma_nganh 
+    where
+        l1_0.ma_lop=?
+2025-07-06 11:22:54 [http-nio-8080-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        l1_0.ma_lop,
+        l1_0.is_active,
+        kh1_0.ma_khoahoc,
+        kh1_0.nam_bat_dau,
+        kh1_0.nam_ket_thuc,
+        kh1_0.ten_khoahoc,
+        mk1_0.ma_khoa,
+        mk1_0.is_active,
+        mk1_0.ten_khoa,
+        n1_0.ma_nganh,
+        n1_0.is_active,
+        n1_0.ma_khoa,
+        n1_0.ten_nganh,
+        l1_0.ten_lop 
+    from
+        lop l1_0 
+    left join
+        khoahoc kh1_0 
+            on kh1_0.ma_khoahoc=l1_0.ma_khoahoc 
+    left join
+        khoa mk1_0 
+            on mk1_0.ma_khoa=l1_0.ma_khoa 
+    left join
+        nganh n1_0 
+            on n1_0.ma_nganh=l1_0.ma_nganh 
+    where
+        l1_0.ma_lop=?
+2025-07-06 11:22:54 [http-nio-8080-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        l1_0.ma_lop,
+        l1_0.is_active,
+        kh1_0.ma_khoahoc,
+        kh1_0.nam_bat_dau,
+        kh1_0.nam_ket_thuc,
+        kh1_0.ten_khoahoc,
+        mk1_0.ma_khoa,
+        mk1_0.is_active,
+        mk1_0.ten_khoa,
+        n1_0.ma_nganh,
+        n1_0.is_active,
+        n1_0.ma_khoa,
+        n1_0.ten_nganh,
+        l1_0.ten_lop 
+    from
+        lop l1_0 
+    left join
+        khoahoc kh1_0 
+            on kh1_0.ma_khoahoc=l1_0.ma_khoahoc 
+    left join
+        khoa mk1_0 
+            on mk1_0.ma_khoa=l1_0.ma_khoa 
+    left join
+        nganh n1_0 
+            on n1_0.ma_nganh=l1_0.ma_nganh 
+    where
+        l1_0.ma_lop=?
+2025-07-06 11:22:54 [http-nio-8080-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        l1_0.ma_lop,
+        l1_0.is_active,
+        kh1_0.ma_khoahoc,
+        kh1_0.nam_bat_dau,
+        kh1_0.nam_ket_thuc,
+        kh1_0.ten_khoahoc,
+        mk1_0.ma_khoa,
+        mk1_0.is_active,
+        mk1_0.ten_khoa,
+        n1_0.ma_nganh,
+        n1_0.is_active,
+        n1_0.ma_khoa,
+        n1_0.ten_nganh,
+        l1_0.ten_lop 
+    from
+        lop l1_0 
+    left join
+        khoahoc kh1_0 
+            on kh1_0.ma_khoahoc=l1_0.ma_khoahoc 
+    left join
+        khoa mk1_0 
+            on mk1_0.ma_khoa=l1_0.ma_khoa 
+    left join
+        nganh n1_0 
+            on n1_0.ma_nganh=l1_0.ma_nganh 
+    where
+        l1_0.ma_lop=?
