@@ -18,7 +18,7 @@
     <link th:href="@{/css/admin.css}" rel="stylesheet">
 
     <style>
-        /* Tùy chỉnh CSS cho trang sinh viên */
+        /* Student specific styles */
         .student-avatar img {
             width: 40px;
             height: 40px;
@@ -91,10 +91,6 @@
             border-color: var(--primary-dark);
         }
 
-        .progress-container {
-            margin-top: 1rem;
-        }
-
         .feature-extraction-section {
             background: var(--gray-100);
             border-radius: 8px;
@@ -121,11 +117,6 @@
         .status-indicator.empty { background: var(--gray-400); }
         .status-indicator.error { background: var(--danger-color); }
 
-        .import-preview-table {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
         .bulk-actions {
             background: var(--light-bg);
             padding: 1rem;
@@ -136,6 +127,114 @@
 
         .bulk-actions.show {
             display: block;
+        }
+
+        .btn-group .btn {
+            border-radius: 4px !important;
+            margin: 0 1px;
+        }
+
+        .fa-spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Fix pagination alignment */
+        .pagination-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding: 1rem 0;
+        }
+
+        .pagination {
+            margin: 0;
+        }
+
+        .pagination-info {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        /* Search input improvements */
+        .search-group {
+            position: relative;
+            flex: 1;
+            max-width: 300px;
+        }
+
+        .search-input {
+            padding-left: 2.5rem;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            z-index: 5;
+        }
+
+        /* Filter improvements */
+        .filter-row {
+            display: flex;
+            gap: 1rem;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            min-width: 150px;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+
+        /* Status badges */
+        .status-deleted {
+            background-color: #dc3545 !important;
+        }
+
+        @media (max-width: 768px) {
+            .btn-group {
+                display: flex;
+                flex-wrap: wrap;
+            }
+
+            .btn-group .btn {
+                margin: 1px;
+                padding: 0.25rem 0.5rem;
+                font-size: 0.8rem;
+            }
+
+            .table-actions {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-group {
+                max-width: none;
+            }
+
+            .pagination-wrapper {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -217,13 +316,10 @@
         <!-- Filter Bar -->
         <div class="filter-bar">
             <div class="filter-row">
-                <div class="form-group">
-                    <label for="searchInput">Tìm kiếm</label>
-                    <div class="search-input-wrapper">
-                        <input type="text" id="searchInput" class="form-control"
-                               placeholder="Tìm theo mã SV, họ tên, email...">
-                        <i class="fas fa-search search-icon"></i>
-                    </div>
+                <div class="search-group">
+                    <i class="search-icon fas fa-search"></i>
+                    <input type="text" class="form-control search-input"
+                           placeholder="Tìm kiếm theo mã SV, tên..." id="searchInput">
                 </div>
 
                 <div class="form-group">
@@ -239,12 +335,13 @@
                         <option value="">Tất cả trạng thái</option>
                         <option value="active">Đang hoạt động</option>
                         <option value="inactive">Không hoạt động</option>
+                        <option value="deleted">Đã xóa</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label>&nbsp;</label>
-                    <button class="btn btn-primary" onclick="SinhVienManager.showAddModal()">
+                    <button class="btn btn-primary" onclick="sinhVienManager.showAddModal()">
                         <i class="fas fa-plus me-2"></i>Thêm sinh viên
                     </button>
                 </div>
@@ -253,7 +350,7 @@
 
         <!-- Bulk Actions -->
         <div class="bulk-actions" id="bulkActions">
-            <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
                 <span id="selectedCount">0 sinh viên đã chọn</span>
                 <button class="btn btn-sm btn-outline-danger" onclick="sinhVienManager.bulkDelete()">
                     <i class="fas fa-trash me-1"></i>Xóa
@@ -263,6 +360,9 @@
                 </button>
                 <button class="btn btn-sm btn-outline-warning" onclick="sinhVienManager.bulkDeactivate()">
                     <i class="fas fa-times me-1"></i>Vô hiệu hóa
+                </button>
+                <button class="btn btn-sm btn-outline-info" onclick="sinhVienManager.bulkRestore()">
+                    <i class="fas fa-undo me-1"></i>Khôi phục
                 </button>
                 <button class="btn btn-sm btn-outline-secondary" onclick="sinhVienManager.clearSelection()">
                     <i class="fas fa-times me-1"></i>Bỏ chọn
@@ -277,6 +377,10 @@
                 <div class="table-actions">
                     <button class="btn btn-sm btn-outline-primary" onclick="sinhVienManager.refreshData()">
                         <i class="fas fa-sync-alt me-1"></i>Làm mới
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="sinhVienManager.extractFeaturesForAll()"
+                            title="Trích xuất đặc trưng cho tất cả sinh viên có ảnh">
+                        <i class="fas fa-magic me-1"></i>Trích xuất tất cả
                     </button>
                     <button class="btn btn-sm btn-outline-success" onclick="sinhVienManager.showImportModal()">
                         <i class="fas fa-file-import me-1"></i>Import Excel
@@ -303,28 +407,28 @@
             </div>
 
             <div class="table-responsive">
-                <table class="admin-table">
+                <table class="table table-hover admin-table">
                     <thead>
                     <tr>
-                        <th width="40">
-                            <input type="checkbox" id="selectAll" onclick="sinhVienManager.toggleSelectAll()">
+                        <th style="width: 40px;">
+                            <input type="checkbox" class="form-check-input" id="selectAll">
                         </th>
-                        <th width="60">Ảnh</th>
-                        <th width="100">Mã SV</th>
+                        <th style="width: 60px;">Ảnh</th>
+                        <th>Mã SV</th>
                         <th>Họ tên</th>
-                        <th width="100">Lớp</th>
+                        <th>Lớp</th>
                         <th>Email</th>
-                        <th width="80">Giới tính</th>
-                        <th width="100">Trạng thái</th>
-                        <th width="120">Nhận diện</th>
-                        <th width="150">Thao tác</th>
+                        <th>Giới tính</th>
+                        <th>Trạng thái</th>
+                        <th>Nhận dạng</th>
+                        <th style="width: 200px;">Thao tác</th>
                     </tr>
                     </thead>
                     <tbody id="sinhvienTableBody">
-                    <tr>
-                        <td colspan="10" class="text-center">
-                            <div class="loading-spinner"></div>
-                            <p class="mt-2">Đang tải dữ liệu...</p>
+                    <tr id="loadingRow">
+                        <td colspan="10" class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
+                            <p class="text-muted">Đang tải dữ liệu...</p>
                         </td>
                     </tr>
                     </tbody>
@@ -332,13 +436,13 @@
             </div>
 
             <!-- Pagination -->
-            <div class="admin-pagination-wrapper">
+            <div class="pagination-wrapper">
                 <div class="pagination-info">
                     <span id="paginationInfo">Hiển thị 0 - 0 của 0 sinh viên</span>
                 </div>
                 <nav>
-                    <ul class="pagination admin-pagination" id="pagination">
-                        <!-- Pagination will be generated by JS -->
+                    <ul class="pagination" id="pagination">
+                        <!-- Pagination will be generated by JavaScript -->
                     </ul>
                 </nav>
             </div>
@@ -361,24 +465,24 @@
                         <div class="col-md-6">
                             <h6 class="fw-bold mb-3">Thông tin cơ bản</h6>
 
-                            <div class="form-row">
-                                <div class="form-group col-md-6">
-                                    <label for="maSv">Mã sinh viên <span class="text-danger">*</span></label>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="maSv" class="form-label">Mã sinh viên <span class="text-danger">*</span></label>
                                     <input type="text" id="maSv" name="maSv" class="form-control" required>
                                 </div>
-                                <div class="form-group col-md-6">
-                                    <label for="hoTen">Họ và tên <span class="text-danger">*</span></label>
+                                <div class="col-md-6 mb-3">
+                                    <label for="hoTen" class="form-label">Họ và tên <span class="text-danger">*</span></label>
                                     <input type="text" id="hoTen" name="hoTen" class="form-control" required>
                                 </div>
                             </div>
 
-                            <div class="form-row">
-                                <div class="form-group col-md-6">
-                                    <label for="email">Email</label>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">Email</label>
                                     <input type="email" id="email" name="email" class="form-control">
                                 </div>
-                                <div class="form-group col-md-6">
-                                    <label for="gioiTinh">Giới tính</label>
+                                <div class="col-md-6 mb-3">
+                                    <label for="gioiTinh" class="form-label">Giới tính</label>
                                     <select id="gioiTinh" name="gioiTinh" class="form-select">
                                         <option value="">Chọn giới tính</option>
                                         <option value="NAM">Nam</option>
@@ -387,13 +491,13 @@
                                 </div>
                             </div>
 
-                            <div class="form-row">
-                                <div class="form-group col-md-6">
-                                    <label for="ngaySinh">Ngày sinh</label>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="ngaySinh" class="form-label">Ngày sinh</label>
                                     <input type="date" id="ngaySinh" name="ngaySinh" class="form-control">
                                 </div>
-                                <div class="form-group col-md-6">
-                                    <label for="maLop">Lớp <span class="text-danger">*</span></label>
+                                <div class="col-md-6 mb-3">
+                                    <label for="maLop" class="form-label">Lớp <span class="text-danger">*</span></label>
                                     <select id="maLop" name="maLop" class="form-select" required>
                                         <option value="">Chọn lớp</option>
                                     </select>
@@ -401,12 +505,12 @@
                             </div>
 
                             <!-- Profile Image Upload -->
-                            <div class="form-group">
-                                <label>Ảnh đại diện</label>
+                            <div class="mb-3">
+                                <label class="form-label">Ảnh đại diện</label>
                                 <div class="upload-drop-zone" id="profileUploadZone">
                                     <div id="profilePreview" class="d-none">
-                                        <img id="profileImg" src="" alt="Profile" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
-                                        <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="SinhVienManager.removeProfileImage()">
+                                        <img id="profileImg" src="/placeholder.svg" alt="Profile" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
+                                        <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="sinhVienManager.removeProfileImage()">
                                             <i class="fas fa-trash"></i> Xóa ảnh
                                         </button>
                                     </div>
@@ -425,8 +529,8 @@
                             <h6 class="fw-bold mb-3">Nhận diện khuôn mặt</h6>
 
                             <!-- Face Images Upload -->
-                            <div class="form-group">
-                                <label>Ảnh khuôn mặt (tối đa 5 ảnh)</label>
+                            <div class="mb-3">
+                                <label class="form-label">Ảnh khuôn mặt (tối đa 5 ảnh)</label>
                                 <div class="upload-drop-zone mb-3" id="faceUploadZone">
                                     <i class="fas fa-user-plus fa-3x text-muted mb-2"></i>
                                     <p class="mb-0">Tải lên ảnh khuôn mặt</p>
@@ -455,7 +559,7 @@
                                 </div>
 
                                 <button type="button" class="btn btn-info btn-sm" id="extractFeaturesBtn"
-                                        onclick="SinhVienManager.extractFeatures()" disabled>
+                                        onclick="sinhVienManager.extractFeatures()" disabled>
                                     <i class="fas fa-magic me-2"></i>Trích xuất đặc trưng
                                 </button>
 
@@ -515,7 +619,7 @@
                 <!-- Import Preview -->
                 <div id="importStep2" style="display: none;">
                     <h6>Xem trước dữ liệu (<span id="previewCount">0</span> sinh viên):</h6>
-                    <div class="import-preview-table">
+                    <div class="table-responsive" style="max-height: 300px;">
                         <table class="table table-sm table-bordered">
                             <thead id="importPreviewHeader"></thead>
                             <tbody id="importPreviewBody"></tbody>
@@ -647,16 +751,29 @@
         }
 
         setupEventListeners() {
-            // Search input
+            // Search input with Enter key support
             const searchInput = document.getElementById('searchInput');
             let searchTimeout;
+
+            // Handle input event
             searchInput.addEventListener('input', (e) => {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
-                    this.data.filters.search = e.target.value;
+                    this.data.filters.search = e.target.value.trim();
                     this.data.currentPage = 1;
                     this.loadData();
                 }, 500);
+            });
+
+            // Handle Enter key
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    clearTimeout(searchTimeout);
+                    this.data.filters.search = e.target.value.trim();
+                    this.data.currentPage = 1;
+                    this.loadData();
+                }
             });
 
             // Filter selects
@@ -670,6 +787,11 @@
                 this.data.filters.status = e.target.value;
                 this.data.currentPage = 1;
                 this.loadData();
+            });
+
+            // Select all checkbox
+            document.getElementById('selectAll').addEventListener('change', (e) => {
+                this.toggleSelectAll(e.target.checked);
             });
 
             // Modal events
@@ -747,7 +869,6 @@
                 const classSelects = document.querySelectorAll('#classFilter, #maLop');
 
                 classSelects.forEach(select => {
-                    // Keep current option for filter
                     if (select.id === 'classFilter') {
                         const currentValue = select.value;
                         select.innerHTML = '<option value="">Tất cả lớp</option>';
@@ -777,17 +898,26 @@
                     size: this.data.pageSize
                 });
 
+                // Add search parameter
                 if (this.data.filters.search) {
                     params.append('search', this.data.filters.search);
                 }
+
+                // Add class filter
                 if (this.data.filters.class) {
-                    params.append('class', this.data.filters.class);
+                    params.append('classFilter', this.data.filters.class);
                 }
+
+                // Add status filter
                 if (this.data.filters.status) {
                     params.append('status', this.data.filters.status);
                 }
 
-                const response = await fetch(`${this.API_BASE}/sinhvien?${params}`);
+                // Use search endpoint if we have filters
+                const hasFilters = this.data.filters.search || this.data.filters.class || this.data.filters.status;
+                const endpoint = hasFilters ? '/sinhvien/search' : '/sinhvien';
+
+                const response = await fetch(`${this.API_BASE}${endpoint}?${params}`);
                 if (!response.ok) throw new Error('Failed to load student data');
 
                 const result = await response.json();
@@ -833,8 +963,7 @@
             tbody.innerHTML = this.data.sinhviens.map(sv => `
             <tr>
                 <td>
-                    <input type="checkbox" value="${sv.maSv}"
-                           onchange="sinhVienManager.toggleSelect('${sv.maSv}')"
+                    <input type="checkbox" class="form-check-input student-checkbox" value="${sv.maSv}"
                            ${this.data.selectedStudents.has(sv.maSv) ? 'checked' : ''}>
                 </td>
                 <td>
@@ -862,14 +991,27 @@
                                 title="Chỉnh sửa">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn btn-outline-danger" onclick="sinhVienManager.deleteStudent('${sv.maSv}')"
-                                title="Xóa">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        ${sv.isActive === false ?
+                `<button class="btn btn-outline-success" onclick="sinhVienManager.restoreStudent('${sv.maSv}')"
+                                     title="Khôi phục">
+                                <i class="fas fa-undo"></i>
+                             </button>` :
+                `<button class="btn btn-outline-danger" onclick="sinhVienManager.deleteStudent('${sv.maSv}')"
+                                     title="Xóa">
+                                <i class="fas fa-trash"></i>
+                             </button>`
+            }
                     </div>
                 </td>
             </tr>
         `).join('');
+
+            // Add event listeners to checkboxes
+            document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    this.toggleSelect(e.target.value, e.target.checked);
+                });
+            });
 
             this.updateSelectionUI();
         }
@@ -881,9 +1023,14 @@
             if (!pagination || !paginationInfo) return;
 
             // Update info
-            const start = (this.data.currentPage - 1) * this.data.pageSize + 1;
+            const start = this.data.totalItems === 0 ? 0 : (this.data.currentPage - 1) * this.data.pageSize + 1;
             const end = Math.min(this.data.currentPage * this.data.pageSize, this.data.totalItems);
             paginationInfo.textContent = `Hiển thị ${start} - ${end} của ${this.data.totalItems} sinh viên`;
+
+            if (this.data.totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
 
             // Generate pagination
             let paginationHTML = '';
@@ -891,7 +1038,7 @@
             // Previous button
             paginationHTML += `
             <li class="page-item ${this.data.currentPage === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="sinhVienManager.changePage(${this.data.currentPage - 1})">
+                <a class="page-link" href="#" onclick="event.preventDefault(); sinhVienManager.changePage(${this.data.currentPage - 1})">
                     <i class="fas fa-chevron-left"></i>
                 </a>
             </li>
@@ -909,7 +1056,7 @@
             for (let i = startPage; i <= endPage; i++) {
                 paginationHTML += `
                 <li class="page-item ${i === this.data.currentPage ? 'active' : ''}">
-                    <a class="page-link" href="#" onclick="sinhVienManager.changePage(${i})">${i}</a>
+                    <a class="page-link" href="#" onclick="event.preventDefault(); sinhVienManager.changePage(${i})">${i}</a>
                 </li>
             `;
             }
@@ -917,7 +1064,7 @@
             // Next button
             paginationHTML += `
             <li class="page-item ${this.data.currentPage === this.data.totalPages ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="sinhVienManager.changePage(${this.data.currentPage + 1})">
+                <a class="page-link" href="#" onclick="event.preventDefault(); sinhVienManager.changePage(${this.data.currentPage + 1})">
                     <i class="fas fa-chevron-right"></i>
                 </a>
             </li>
@@ -955,7 +1102,7 @@
             }
             return isActive ?
                 '<span class="badge bg-success">Hoạt động</span>' :
-                '<span class="badge bg-danger">Không hoạt động</span>';
+                '<span class="badge bg-danger status-deleted">Đã xóa</span>';
         }
 
         formatRecognitionStatus(student) {
@@ -976,9 +1123,9 @@
             if (show) {
                 tbody.innerHTML = `
                 <tr>
-                    <td colspan="10" class="text-center">
-                        <div class="loading-spinner"></div>
-                        <p class="mt-2">Đang tải dữ liệu...</p>
+                    <td colspan="10" class="text-center py-4">
+                        <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
+                        <p class="text-muted">Đang tải dữ liệu...</p>
                     </td>
                 </tr>
             `;
@@ -1010,39 +1157,58 @@
         }
 
         // Selection methods
-        toggleSelect(maSv) {
-            if (this.data.selectedStudents.has(maSv)) {
-                this.data.selectedStudents.delete(maSv);
-            } else {
+        toggleSelect(maSv, checked) {
+            if (checked) {
                 this.data.selectedStudents.add(maSv);
+            } else {
+                this.data.selectedStudents.delete(maSv);
             }
+            this.updateSelectionUI();
+            this.updateSelectAllState();
+        }
+
+        toggleSelectAll(checked) {
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+
+            checkboxes.forEach(cb => {
+                cb.checked = checked;
+                if (checked) {
+                    this.data.selectedStudents.add(cb.value);
+                } else {
+                    this.data.selectedStudents.delete(cb.value);
+                }
+            });
+
             this.updateSelectionUI();
         }
 
-        toggleSelectAll() {
+        updateSelectAllState() {
             const selectAll = document.getElementById('selectAll');
-            const checkboxes = document.querySelectorAll('#sinhvienTableBody input[type="checkbox"]');
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+            const checkedBoxes = document.querySelectorAll('.student-checkbox:checked');
 
-            if (selectAll.checked) {
-                checkboxes.forEach(cb => {
-                    cb.checked = true;
-                    this.data.selectedStudents.add(cb.value);
-                });
+            if (checkboxes.length === 0) {
+                selectAll.indeterminate = false;
+                selectAll.checked = false;
+            } else if (checkedBoxes.length === checkboxes.length) {
+                selectAll.indeterminate = false;
+                selectAll.checked = true;
+            } else if (checkedBoxes.length > 0) {
+                selectAll.indeterminate = true;
+                selectAll.checked = false;
             } else {
-                checkboxes.forEach(cb => {
-                    cb.checked = false;
-                    this.data.selectedStudents.delete(cb.value);
-                });
+                selectAll.indeterminate = false;
+                selectAll.checked = false;
             }
-            this.updateSelectionUI();
         }
 
         clearSelection() {
             this.data.selectedStudents.clear();
-            document.querySelectorAll('#sinhvienTableBody input[type="checkbox"]').forEach(cb => {
+            document.querySelectorAll('.student-checkbox').forEach(cb => {
                 cb.checked = false;
             });
             document.getElementById('selectAll').checked = false;
+            document.getElementById('selectAll').indeterminate = false;
             this.updateSelectionUI();
         }
 
@@ -1345,7 +1511,7 @@
             grid.innerHTML = this.data.faceImages.map(img => `
             <div class="face-image-item" data-id="${img.id}">
                 <img src="${img.url}" alt="${img.filename}">
-                                                <button type="button" class="face-image-delete"
+                <button type="button" class="face-image-delete"
                         onclick="sinhVienManager.removeFaceImage('${img.id}')">
                     <i class="fas fa-times"></i>
                 </button>
@@ -1497,6 +1663,48 @@
                 btn.innerHTML = '<i class="fas fa-magic me-2"></i>Thử lại';
 
                 this.showAlert('Không thể trích xuất đặc trưng: ' + error.message, 'danger');
+            }
+        }
+
+        async extractFeaturesForAll() {
+            const result = await Swal.fire({
+                title: 'Xác nhận trích xuất',
+                text: 'Bạn có muốn trích xuất đặc trưng cho tất cả sinh viên có ảnh?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Trích xuất',
+                cancelButtonText: 'Hủy'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    this.showLoading(true);
+
+                    const response = await fetch(`${this.API_BASE}/sinhvien/extract-features-all`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to extract features for all students');
+                    }
+
+                    const result = await response.json();
+                    this.showAlert(result.message || 'Trích xuất đặc trưng thành công!', 'success');
+
+                    this.loadData();
+                    this.updateStats();
+
+                } catch (error) {
+                    console.error('Error extracting features for all:', error);
+                    this.showAlert('Không thể trích xuất đặc trưng: ' + error.message, 'danger');
+                } finally {
+                    this.showLoading(false);
+                }
             }
         }
 
@@ -1666,6 +1874,44 @@
             }
         }
 
+        // Restore student
+        async restoreStudent(maSv) {
+            const result = await Swal.fire({
+                title: 'Xác nhận khôi phục',
+                text: `Bạn có chắc chắn muốn khôi phục sinh viên ${maSv}?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Khôi phục',
+                cancelButtonText: 'Hủy'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    this.showLoading(true);
+
+                    const response = await fetch(`${this.API_BASE}/sinhvien/${maSv}/restore`, {
+                        method: 'PUT'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to restore student');
+                    }
+
+                    this.showAlert('Khôi phục sinh viên thành công!', 'success');
+                    this.loadData();
+                    this.updateStats();
+
+                } catch (error) {
+                    console.error('Error restoring student:', error);
+                    this.showAlert('Không thể khôi phục sinh viên', 'danger');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+        }
+
         // Bulk operations
         async bulkDelete() {
             if (this.data.selectedStudents.size === 0) {
@@ -1722,6 +1968,55 @@
 
         async bulkDeactivate() {
             await this.bulkUpdateStatus(false);
+        }
+
+        async bulkRestore() {
+            if (this.data.selectedStudents.size === 0) {
+                this.showAlert('Vui lòng chọn sinh viên để khôi phục', 'warning');
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: 'Xác nhận khôi phục',
+                text: `Bạn có chắc chắn muốn khôi phục ${this.data.selectedStudents.size} sinh viên đã chọn?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Khôi phục',
+                cancelButtonText: 'Hủy'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    this.showLoading(true);
+
+                    const response = await fetch(`${this.API_BASE}/sinhvien/bulk-restore`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(Array.from(this.data.selectedStudents))
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to bulk restore students');
+                    }
+
+                    const result = await response.json();
+                    this.showAlert(result.message, 'success');
+
+                    this.clearSelection();
+                    this.loadData();
+                    this.updateStats();
+
+                } catch (error) {
+                    console.error('Error bulk restoring students:', error);
+                    this.showAlert('Không thể khôi phục sinh viên', 'danger');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
         }
 
         async bulkUpdateStatus(isActive) {
@@ -2010,15 +2305,11 @@
     document.addEventListener('DOMContentLoaded', function() {
         sinhVienManager = new SinhVienManager();
     });
-
-    // Pass current user data to sidebar if available
-    window.currentUser = /*[[${session.user}]]*/ null;
 </script>
 
 <!-- Pass current user data to sidebar -->
 <script th:inline="javascript">
     window.currentUser = /*[[${session.user}]]*/ null;
 </script>
-
 </body>
 </html>
