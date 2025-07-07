@@ -1,0 +1,38 @@
+# Face Recognition and Computer Vision
+insightface
+opencv-python
+numpy
+Pillow
+
+# Machine Learning and Scientific Computing
+scikit-learn
+scipy
+
+# HTTP Client Libraries
+requests
+aiohttp
+aiofiles
+
+# Data Processing
+pandas
+
+# Async Support
+asyncio-throttle
+
+seaborn
+# Optional: GPU Support (uncomment if using GPU)
+# onnxruntime-gpu
+
+# Development and Debugging
+tqdm
+loguru
+
+# System Dependencies (install via system package manager first)
+# For Ubuntu/Debian:
+
+#
+# For CentOS/RHEL:
+# sudo yum install python3-devel openssl-devel libffi-devel cmake boost-devel opencv-devel
+#
+# Installation:
+# pip install -r requirements.txt

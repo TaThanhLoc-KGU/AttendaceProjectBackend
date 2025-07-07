@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class FaceFeatureExtractor:
-    def __init__(self, backend_api_url: str, face_api_url: str, project_root: str):
+    def __init__(self, backend_api_url: str, face_api_url: str, project_root: str, credentials: Dict = None):
         """
         Khởi tạo class trích xuất đặc trưng khuôn mặt
 
@@ -27,9 +27,12 @@ class FaceFeatureExtractor:
             backend_api_url: URL của Spring Boot backend API
             face_api_url: URL của Face Recognition service API
             project_root: Đường dẫn gốc project face-attendance
+            credentials: Dict với username/password để đăng nhập (optional)
         """
         self.backend_api_url = backend_api_url.rstrip('/')
         self.face_api_url = face_api_url.rstrip('/')
+        self.credentials = credentials
+        self.session_cookies = None  # Lưu cookies sau khi đăng nhập
 
         # Đường dẫn chính xác theo cấu trúc project
         self.project_root = Path(project_root)
@@ -57,6 +60,44 @@ class FaceFeatureExtractor:
         logger.info(f"FaceFeatureExtractor initialized")
         logger.info(f"Project root: {self.project_root}")
         logger.info(f"Student base directory: {self.student_base_dir}")
+
+        # Nếu có credentials, sẽ đăng nhập khi cần
+        if credentials:
+            logger.info(f"Authentication credentials provided for user: {credentials.get('username')}")
+
+    async def login_session(self) -> bool:
+        """
+        Đăng nhập để lấy session cookies
+
+        Returns:
+            True nếu đăng nhập thành công
+        """
+        if not self.credentials:
+            logger.warning("No credentials provided for authentication")
+            return False
+
+        try:
+            login_data = {
+                'username': self.credentials['username'],
+                'password': self.credentials['password']
+            }
+
+            async with aiohttp.ClientSession() as session:
+                url = f"{self.backend_api_url}/auth/login"
+                async with session.post(url, json=login_data, headers=self.headers) as response:
+                    if response.status == 200:
+                        # Lưu cookies từ response
+                        self.session_cookies = response.cookies
+                        logger.info("✅ Login successful, session established")
+                        return True
+                    else:
+                        response_text = await response.text()
+                        logger.error(f"❌ Login failed: {response.status} - {response_text}")
+                        return False
+
+        except Exception as e:
+            logger.error(f"Login error: {str(e)}")
+            return False
 
     def get_student_image_paths(self, ma_sv: str) -> Dict:
         """
@@ -322,7 +363,7 @@ class FaceFeatureExtractor:
 
     async def get_student_info(self, ma_sv: str) -> Optional[Dict]:
         """
-        Lấy thông tin sinh viên từ backend
+        Lấy thông tin sinh viên từ backend - Thử nhiều cách
 
         Args:
             ma_sv: Mã sinh viên
@@ -330,24 +371,52 @@ class FaceFeatureExtractor:
         Returns:
             Thông tin sinh viên hoặc None
         """
+        # Cách 1: Thử lấy qua endpoint thông thường (có thể bị auth)
         try:
             async with aiohttp.ClientSession() as session:
                 url = f"{self.backend_api_url}/sinhvien/by-masv/{ma_sv}"
                 async with session.get(url, headers=self.headers) as response:
                     if response.status == 200:
                         data = await response.json()
-                        logger.info(f"✓ Sinh viên {ma_sv} tồn tại: {data.get('hoTen', 'N/A')}")
+                        logger.info(f"✓ [Normal API] Sinh viên {ma_sv} tồn tại: {data.get('hoTen', 'N/A')}")
                         return data
-                    else:
-                        logger.warning(f"✗ Không tìm thấy sinh viên {ma_sv} trong database")
-                        return None
         except Exception as e:
-            logger.error(f"Lỗi khi lấy thông tin sinh viên {ma_sv}: {str(e)}")
+            logger.debug(f"Normal API failed for {ma_sv}: {e}")
+
+        # Cách 2: Thử với authentication nếu có
+        if self.credentials:
+            # Đăng nhập nếu chưa có session
+            if not self.session_cookies:
+                await self.login_session()
+
+            if self.session_cookies:
+                try:
+                    async with aiohttp.ClientSession(cookies=self.session_cookies) as session:
+                        url = f"{self.backend_api_url}/sinhvien/by-masv/{ma_sv}"
+                        async with session.get(url, headers=self.headers) as response:
+                            if response.status == 200:
+                                data = await response.json()
+                                logger.info(f"✓ [Auth API] Sinh viên {ma_sv} tồn tại: {data.get('hoTen', 'N/A')}")
+                                return data
+                except Exception as e:
+                    logger.debug(f"Authenticated API failed for {ma_sv}: {e}")
+
+        # Cách 3: Kiểm tra thư mục file tồn tại (fallback logic)
+        student_dir = self.student_base_dir / ma_sv
+        if student_dir.exists():
+            logger.warning(f"⚠️  Không thể verify sinh viên {ma_sv} qua API, nhưng thư mục tồn tại")
+            return {
+                'maSv': ma_sv,
+                'hoTen': f'Student_{ma_sv}',
+                'note': 'Directory exists, API verification failed'
+            }
+        else:
+            logger.error(f"❌ Sinh viên {ma_sv} không tồn tại (không có thư mục)")
             return None
 
     async def save_embedding_to_backend(self, ma_sv: str, embedding: np.ndarray) -> bool:
         """
-        Lưu embedding vào backend database
+        Lưu embedding vào backend database - Sử dụng Python API
 
         Args:
             ma_sv: Mã sinh viên
@@ -356,28 +425,72 @@ class FaceFeatureExtractor:
         Returns:
             True nếu lưu thành công
         """
+        # Chuyển embedding thành base64 string như backend expect
+        embedding_bytes = embedding.astype(np.float32).tobytes()
+        embedding_b64 = base64.b64encode(embedding_bytes).decode('utf-8')
+
+        payload = {
+            'embedding': embedding_b64
+        }
+
+        # Cách 1: Thử Python API endpoint (không cần auth) - ĐÚNG ENDPOINT
         try:
-            # Chuyển embedding thành base64 string như backend expect
-            embedding_bytes = embedding.astype(np.float32).tobytes()
-            embedding_b64 = base64.b64encode(embedding_bytes).decode('utf-8')
-
-            payload = {
-                'embedding': embedding_b64
-            }
-
             async with aiohttp.ClientSession() as session:
-                url = f"{self.backend_api_url}/sinhvien/students/{ma_sv}/embedding"
+                url = f"{self.backend_api_url}/python/students/{ma_sv}/embedding"
                 async with session.post(url, json=payload, headers=self.headers) as response:
                     if response.status == 200:
-                        logger.info(f"✓ Lưu embedding cho sinh viên {ma_sv} thành công")
+                        logger.info(f"✓ [Python API] Lưu embedding cho sinh viên {ma_sv} thành công")
                         return True
                     else:
                         response_text = await response.text()
-                        logger.error(f"✗ Lỗi lưu embedding cho {ma_sv}: {response.status} - {response_text}")
-                        return False
-
+                        logger.debug(f"Python API save failed for {ma_sv}: {response.status} - {response_text}")
         except Exception as e:
-            logger.error(f"Lỗi khi lưu embedding cho {ma_sv}: {str(e)}")
+            logger.debug(f"Python API save failed for {ma_sv}: {e}")
+
+        # Cách 2: Thử với authentication
+        if self.credentials:
+            # Đăng nhập nếu chưa có session
+            if not self.session_cookies:
+                await self.login_session()
+
+            if self.session_cookies:
+                try:
+                    async with aiohttp.ClientSession(cookies=self.session_cookies) as session:
+                        url = f"{self.backend_api_url}/sinhvien/students/{ma_sv}/embedding"
+                        async with session.post(url, json=payload, headers=self.headers) as response:
+                            if response.status == 200:
+                                logger.info(f"✓ [Auth API] Lưu embedding cho sinh viên {ma_sv} thành công")
+                                return True
+                            else:
+                                response_text = await response.text()
+                                logger.error(f"✗ Auth API save failed for {ma_sv}: {response.status} - {response_text}")
+                except Exception as e:
+                    logger.debug(f"Authenticated API save failed for {ma_sv}: {e}")
+
+        # Cách 3: Lưu file local (fallback)
+        try:
+            embeddings_dir = self.project_root / "data" / "embeddings"
+            embeddings_dir.mkdir(parents=True, exist_ok=True)
+
+            embedding_file = embeddings_dir / f"{ma_sv}.npy"
+            np.save(embedding_file, embedding)
+
+            # Lưu thêm metadata
+            metadata_file = embeddings_dir / f"{ma_sv}_metadata.json"
+            metadata = {
+                'ma_sv': ma_sv,
+                'embedding_shape': embedding.shape,
+                'embedding_norm': float(np.linalg.norm(embedding)),
+                'timestamp': time.time(),
+                'note': 'Saved locally due to API failure'
+            }
+            with open(metadata_file, 'w') as f:
+                json.dump(metadata, f, indent=2)
+
+            logger.warning(f"⚠️  Lưu embedding local cho {ma_sv}: {embedding_file}")
+            return True
+        except Exception as e:
+            logger.error(f"❌ Không thể lưu embedding cho {ma_sv}: {e}")
             return False
 
     async def trigger_feature_extraction(self, ma_sv: str) -> bool:
@@ -640,14 +753,24 @@ async def main():
     BACKEND_API_URL = "http://localhost:8080/api"  # Spring Boot API
     FACE_API_URL = "http://localhost:8001"  # Face Recognition Service
 
+    # ========== CẤU HÌNH XÁC THỰC (TÙY CHỌN) ==========
+    # Nếu cần xác thực, uncomment và điền thông tin:
+    CREDENTIALS = {
+        'username': 'admin',  # Thay bằng username thực
+        'password': 'admin123'  # Thay bằng password thực
+    }
+    # Hoặc để None nếu không cần xác thực:
+    # CREDENTIALS = None
+
     print("🚀 KHỞI ĐỘNG SCRIPT TRÍCH XUẤT ĐẶC TRƯNG KHUÔN MẶT")
     print("=" * 60)
     print(f"📁 Project root: {PROJECT_ROOT}")
     print(f"🔗 Backend API: {BACKEND_API_URL}")
     print(f"🤖 Face API: {FACE_API_URL}")
+    print(f"🔐 Authentication: {'Enabled' if CREDENTIALS else 'Disabled'}")
 
     # Khởi tạo extractor
-    extractor = FaceFeatureExtractor(BACKEND_API_URL, FACE_API_URL, PROJECT_ROOT)
+    extractor = FaceFeatureExtractor(BACKEND_API_URL, FACE_API_URL, PROJECT_ROOT, CREDENTIALS)
 
     # Kiểm tra thư mục tồn tại
     if not extractor.student_base_dir.exists():
@@ -656,6 +779,15 @@ async def main():
         return
 
     print(f"✅ Thư mục sinh viên: {extractor.student_base_dir}")
+
+    # Test kết nối API (nếu có credentials)
+    if CREDENTIALS:
+        print("🔄 Kiểm tra kết nối API...")
+        login_success = await extractor.login_session()
+        if login_success:
+            print("✅ Kết nối API thành công")
+        else:
+            print("⚠️  Đăng nhập API thất bại, sẽ thử fallback methods")
 
     # Xử lý tất cả sinh viên
     logger.info("🔄 Bắt đầu xử lý batch trích xuất đặc trưng...")
