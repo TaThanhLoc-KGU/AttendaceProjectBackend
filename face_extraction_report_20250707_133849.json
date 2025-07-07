@@ -1,0 +1,126 @@
+{
+  "success": true,
+  "total_students": 1,
+  "success_count": 1,
+  "failed_count": 0,
+  "success_rate": 100.0,
+  "results": {
+    "21072006095": {
+      "ma_sv": "21072006095",
+      "status": "success",
+      "message": "✅ Xử lý thành công sinh viên 21072006095 (Chất lượng khá, nên thêm ảnh hoặc chụp lại)",
+      "metadata": {
+        "student_info": {
+          "ho_ten": "Student_21072006095",
+          "ma_lop": "N/A"
+        },
+        "images": {
+          "total_found": 6,
+          "profile_available": true,
+          "face_images_count": 5
+        },
+        "face_metadata": {
+          "total_images": 6,
+          "processed_images": 6,
+          "valid_faces": 6,
+          "face_qualities": [
+            {
+              "image": "profile.jpg",
+              "det_score": 0.8467384576797485,
+              "face_area": "1051045.5",
+              "age": 40,
+              "gender": 1
+            },
+            {
+              "image": "face_1.jpg",
+              "det_score": 0.8467384576797485,
+              "face_area": "1051045.5",
+              "age": 40,
+              "gender": 1
+            },
+            {
+              "image": "face_2.jpg",
+              "det_score": 0.7914210557937622,
+              "face_area": "974190.44",
+              "age": 60,
+              "gender": 1
+            },
+            {
+              "image": "face_3.jpg",
+              "det_score": 0.7804524898529053,
+              "face_area": "666730.0",
+              "age": 61,
+              "gender": 1
+            },
+            {
+              "image": "face_4.jpg",
+              "det_score": 0.7599526643753052,
+              "face_area": "991116.56",
+              "age": 60,
+              "gender": 1
+            },
+            {
+              "image": "face_5.jpg",
+              "det_score": 0.6631743907928467,
+              "face_area": "782105.7",
+              "age": 38,
+              "gender": 1
+            }
+          ],
+          "detection_results": [
+            {
+              "image": "profile.jpg",
+              "status": "success",
+              "det_score": 0.8467384576797485,
+              "face_area": "1051045.5"
+            },
+            {
+              "image": "face_1.jpg",
+              "status": "success",
+              "det_score": 0.8467384576797485,
+              "face_area": "1051045.5"
+            },
+            {
+              "image": "face_2.jpg",
+              "status": "success",
+              "det_score": 0.7914210557937622,
+              "face_area": "974190.44"
+            },
+            {
+              "image": "face_3.jpg",
+              "status": "success",
+              "det_score": 0.7804524898529053,
+              "face_area": "666730.0"
+            },
+            {
+              "image": "face_4.jpg",
+              "status": "success",
+              "det_score": 0.7599526643753052,
+              "face_area": "991116.56"
+            },
+            {
+              "image": "face_5.jpg",
+              "status": "success",
+              "det_score": 0.6631743907928467,
+              "face_area": "782105.7"
+            }
+          ]
+        },
+        "quality_info": {
+          "is_valid": "True",
+          "is_good_quality": "False",
+          "num_embeddings": 6,
+          "avg_similarity": 0.4813086688518524,
+          "min_similarity": 0.17561978101730347,
+          "max_similarity": 1.0,
+          "std_similarity": 0.18380212783813477,
+          "recommendation": "Chất lượng khá, nên thêm ảnh hoặc chụp lại"
+        },
+        "embedding_info": {
+          "dimension": 512,
+          "norm": 1.0000000000000002
+        }
+      }
+    }
+  }
+}

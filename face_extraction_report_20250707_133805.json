@@ -1,0 +1,15 @@
+{
+  "success": true,
+  "total_students": 1,
+  "success_count": 0,
+  "failed_count": 1,
+  "success_rate": 0.0,
+  "results": {
+    "21072006095": {
+      "ma_sv": "21072006095",
+      "status": "failed",
+      "message": "Sinh viên 21072006095 không tồn tại trong database",
+      "metadata": {}
+    }
+  }
+}
