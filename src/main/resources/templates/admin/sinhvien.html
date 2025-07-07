@@ -255,66 +255,6 @@
                     </h4>
                     <p class="page-subtitle mb-0">Quản lý thông tin và trích xuất đặc trưng khuôn mặt</p>
                 </div>
-
-                <div class="d-flex gap-2 flex-wrap">
-                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#studentModal"
-                            onclick="sinhVienManager.addStudent()">
-                        <i class="fas fa-plus me-2"></i>Thêm sinh viên
-                    </button>
-
-                    <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importModal">
-                        <i class="fas fa-file-excel me-2"></i>Import Excel
-                    </button>
-
-                    <!-- Enhanced Feature Extraction Dropdown -->
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-brain me-2"></i>Trích xuất AI
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li>
-                                <h6 class="dropdown-header">
-                                    <i class="fas fa-robot me-1"></i>Python AI Extraction
-                                </h6>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#" onclick="sinhVienManager.batchExtractFeatures()">
-                                    <i class="fas fa-users me-2 text-primary"></i>
-                                    Trích xuất tất cả sinh viên
-                                    <small class="d-block text-muted">Chạy Python script cho tất cả</small>
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <h6 class="dropdown-header">
-                                    <i class="fas fa-cog me-1"></i>Hệ thống
-                                </h6>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#" onclick="sinhVienManager.checkPythonEnvironment()">
-                                    <i class="fas fa-python me-2 text-info"></i>
-                                    Kiểm tra Python
-                                    <small class="d-block text-muted">Kiểm tra venv và packages</small>
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#" onclick="sinhVienManager.showBatchExtractionStatus()">
-                                    <i class="fas fa-chart-line me-2 text-success"></i>
-                                    Trạng thái extraction
-                                    <small class="d-block text-muted">Xem progress và logs</small>
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item text-warning" href="#" onclick="sinhVienManager.stopBatchExtraction()">
-                                    <i class="fas fa-stop me-2"></i>
-                                    Dừng extraction
-                                    <small class="d-block text-muted">Dừng quá trình đang chạy</small>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -369,40 +309,66 @@
             </div>
         </div>
 
-        <!-- Filter Bar -->
-        <div class="filter-bar">
-            <div class="filter-row">
-                <div class="search-group">
-                    <i class="search-icon fas fa-search"></i>
-                    <input type="text" class="form-control search-input"
-                           placeholder="Tìm kiếm theo mã SV, tên..." id="searchInput">
-                </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#studentModal"
+                    onclick="sinhVienManager.addStudent()">
+                <i class="fas fa-plus me-2"></i>Thêm sinh viên
+            </button>
 
-                <div class="form-group">
-                    <label for="classFilter">Lớp</label>
-                    <select id="classFilter" class="form-select">
-                        <option value="">Tất cả lớp</option>
-                    </select>
-                </div>
+            <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importModal">
+                <i class="fas fa-file-excel me-2"></i>Import Excel
+            </button>
 
-                <div class="form-group">
-                    <label for="statusFilter">Trạng thái</label>
-                    <select id="statusFilter" class="form-select">
-                        <option value="">Tất cả trạng thái</option>
-                        <option value="active">Đang hoạt động</option>
-                        <option value="inactive">Không hoạt động</option>
-                        <option value="deleted">Đã xóa</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label> </label>
-                    <button class="btn btn-primary" onclick="sinhVienManager.showAddModal()">
-                        <i class="fas fa-plus me-2"></i>Thêm sinh viên
-                    </button>
-                </div>
+            <!-- Enhanced Feature Extraction Dropdown -->
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-brain me-2"></i>Trích xuất AI
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <h6 class="dropdown-header">
+                            <i class="fas fa-robot me-1"></i>Python AI Extraction
+                        </h6>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="#" onclick="sinhVienManager.batchExtractFeatures()">
+                            <i class="fas fa-users me-2 text-primary"></i>
+                            Trích xuất tất cả sinh viên
+                            <small class="d-block text-muted">Chạy Python script cho tất cả</small>
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <h6 class="dropdown-header">
+                            <i class="fas fa-cog me-1"></i>Hệ thống
+                        </h6>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="#" onclick="sinhVienManager.checkPythonEnvironment()">
+                            <i class="fas fa-python me-2 text-info"></i>
+                            Kiểm tra Python
+                            <small class="d-block text-muted">Kiểm tra venv và packages</small>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="#" onclick="sinhVienManager.showBatchExtractionStatus()">
+                            <i class="fas fa-chart-line me-2 text-success"></i>
+                            Trạng thái extraction
+                            <small class="d-block text-muted">Xem progress và logs</small>
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item text-warning" href="#" onclick="sinhVienManager.stopBatchExtraction()">
+                            <i class="fas fa-stop me-2"></i>
+                            Dừng extraction
+                            <small class="d-block text-muted">Dừng quá trình đang chạy</small>
+                        </a>
+                    </li>
+                </ul>
             </div>
         </div>
+        <br>
 
         <!-- Bulk Actions -->
         <div class="bulk-actions" id="bulkActions">
@@ -1073,57 +1039,261 @@
             window.sinhVienManager = this;
         }
 
+        // THAY THẾ METHOD setupEventListeners() TRONG sinhvien.html
+
         setupEventListeners() {
-            // Search input with Enter key support
-            const searchInput = document.getElementById('searchInput');
-            let searchTimeout;
+            try {
+                // Helper function để safely add event listener
+                const addEventListenerSafely = (elementId, event, handler) => {
+                    const element = document.getElementById(elementId);
+                    if (element) {
+                        element.addEventListener(event, handler);
+                        console.log(`✅ Event listener added for: ${elementId}`);
+                    } else {
+                        console.warn(`⚠️ Element not found: ${elementId}`);
+                    }
+                };
 
-            // Handle input event
-            searchInput.addEventListener('input', (e) => {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    this.data.filters.search = e.target.value.trim();
-                    this.data.currentPage = 1;
-                    this.loadData();
-                }, 500);
-            });
+                // Search input with Enter key support
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    let searchTimeout;
 
-            // Handle Enter key
-            searchInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    clearTimeout(searchTimeout);
-                    this.data.filters.search = e.target.value.trim();
-                    this.data.currentPage = 1;
-                    this.loadData();
+                    // Handle input event
+                    searchInput.addEventListener('input', (e) => {
+                        clearTimeout(searchTimeout);
+                        searchTimeout = setTimeout(() => {
+                            this.data.filters.search = e.target.value.trim();
+                            this.data.currentPage = 1;
+                            this.loadData();
+                        }, 500);
+                    });
+
+                    // Handle Enter key
+                    searchInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            clearTimeout(searchTimeout);
+                            this.data.filters.search = e.target.value.trim();
+                            this.data.currentPage = 1;
+                            this.loadData();
+                        }
+                    });
+                    console.log('✅ Search input events added');
+                } else {
+                    console.warn('⚠️ Search input not found');
                 }
-            });
 
-            // Filter selects
-            document.getElementById('classFilter').addEventListener('change', (e) => {
-                this.data.filters.class = e.target.value;
-                this.data.currentPage = 1;
+                // Filter selects
+                addEventListenerSafely('classFilter', 'change', (e) => {
+                    this.data.filters.class = e.target.value;
+                    this.data.currentPage = 1;
+                    this.loadData();
+                });
+
+                addEventListenerSafely('statusFilter', 'change', (e) => {
+                    this.data.filters.status = e.target.value;
+                    this.data.currentPage = 1;
+                    this.loadData();
+                });
+
+                // Select all checkbox
+                addEventListenerSafely('selectAll', 'change', (e) => {
+                    this.toggleSelectAll(e.target.checked);
+                });
+
+                // Modal events - use querySelector as fallback
+                const sinhvienModal = document.getElementById('sinhvienModal') || document.getElementById('studentModal');
+                if (sinhvienModal) {
+                    sinhvienModal.addEventListener('hidden.bs.modal', () => {
+                        this.resetForm();
+                    });
+                    console.log('✅ Student modal events added');
+                } else {
+                    console.warn('⚠️ Student modal not found');
+                }
+
+                const importModal = document.getElementById('importModal');
+                if (importModal) {
+                    importModal.addEventListener('hidden.bs.modal', () => {
+                        this.resetImportModal();
+                    });
+                    console.log('✅ Import modal events added');
+                } else {
+                    console.warn('⚠️ Import modal not found');
+                }
+
+                // Page size selector
+                addEventListenerSafely('pageSize', 'change', (e) => {
+                    this.data.pageSize = parseInt(e.target.value);
+                    this.data.currentPage = 1;
+                    this.loadData();
+                });
+
+                // Refresh button
+                addEventListenerSafely('refreshBtn', 'click', () => {
+                    this.loadData();
+                    this.updateStats();
+                });
+
+                // File input events
+                addEventListenerSafely('profileImageFile', 'change', (e) => {
+                    this.handleProfileImageChange(e);
+                });
+
+                addEventListenerSafely('faceImageFile', 'change', (e) => {
+                    this.handleFaceImagesChange(e);
+                });
+
+                addEventListenerSafely('excelFile', 'change', (e) => {
+                    this.handleExcelUpload(e.target);
+                });
+
+                console.log('✅ All event listeners setup completed');
+
+            } catch (error) {
+                console.error('❌ Error setting up event listeners:', error);
+                // Don't throw error, just log it
+            }
+        }
+
+// THÊM method để safely handle file changes
+        handleProfileImageChange(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const preview = document.getElementById('profilePreview');
+                    if (preview) {
+                        preview.innerHTML = `<img src="${e.target.result}" alt="Profile" style="max-width: 100%; max-height: 200px;">`;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        handleFaceImagesChange(event) {
+            const files = Array.from(event.target.files);
+            files.forEach(file => {
+                this.addFaceImage(file);
+            });
+        }
+
+// CÁCH FIX CHO BATCH EXTRACTION ERROR
+        async startBatchExtraction() {
+            try {
+                this.addLogEntry('📡 Gửi request tới Python service...', 'info');
+
+                const response = await fetch(`${this.API_BASE}/python/extract-all`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                // CHECK MESSAGE INSTEAD OF STATUS
+                if (result.message && result.message.includes('completed successfully')) {
+                    this.addLogEntry('✅ Python batch extraction hoàn thành', 'success');
+
+                    // Parse output to get statistics
+                    const output = result.output || '';
+                    this.parseBatchResults(output);
+
+                    // Show success
+                    this.handleBatchSuccess(result);
+                } else {
+                    throw new Error(result.message || 'Batch extraction failed');
+                }
+
+            } catch (error) {
+                console.error('Batch extraction error:', error);
+                this.addLogEntry(`❌ Lỗi batch extraction: ${error.message}`, 'error');
+                this.handleBatchError(error);
+            }
+        }
+
+// THÊM method để parse kết quả từ Python output
+        parseBatchResults(output) {
+            try {
+                const lines = output.split('\n');
+
+                // Tìm thông tin statistics
+                let totalStudents = 0;
+                let successCount = 0;
+                let successRate = 0;
+
+                // Tìm dòng chứa thống kê
+                const statsLine = lines.find(line => line.includes('Hoàn thành xử lý. Thành công:'));
+                if (statsLine) {
+                    const match = statsLine.match(/Thành công: (\d+)\/(\d+) \((\d+\.?\d*)%\)/);
+                    if (match) {
+                        successCount = parseInt(match[1]);
+                        totalStudents = parseInt(match[2]);
+                        successRate = parseFloat(match[3]);
+
+                        // Update UI
+                        this.updateBatchStats(totalStudents, successCount, successRate);
+                    }
+                }
+
+                // Tìm thông tin chi tiết sinh viên
+                const studentLines = lines.filter(line =>
+                    line.includes('Bắt đầu xử lý sinh viên:') ||
+                    line.includes('✅ Xử lý thành công') ||
+                    line.includes('❌ Lỗi')
+                );
+
+                studentLines.forEach(line => {
+                    this.addLogEntry(line, line.includes('✅') ? 'success' : line.includes('❌') ? 'error' : 'info');
+                });
+
+            } catch (error) {
+                console.error('Error parsing batch results:', error);
+            }
+        }
+
+        handleBatchSuccess(result) {
+            // Hide progress modal nếu có
+            const modal = bootstrap.Modal.getInstance(document.getElementById('batchExtractionModal'));
+            if (modal) {
+                modal.hide();
+            }
+
+            // Show success message
+            Swal.fire({
+                title: '🎉 Batch Extraction Hoàn thành!',
+                html: `
+            <div class="text-center">
+                <p><strong>Python AI đã hoàn thành trích xuất đặc trưng!</strong></p>
+                <div class="mt-3">
+                    <button class="btn btn-info btn-sm" onclick="sinhVienManager.showDetailedLogs()">
+                        <i class="fas fa-list me-2"></i>Xem logs chi tiết
+                    </button>
+                </div>
+            </div>
+        `,
+                icon: 'success',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                // Refresh data
                 this.loadData();
+                this.updateStats();
             });
+        }
 
-            document.getElementById('statusFilter').addEventListener('change', (e) => {
-                this.data.filters.status = e.target.value;
-                this.data.currentPage = 1;
-                this.loadData();
-            });
-
-            // Select all checkbox
-            document.getElementById('selectAll').addEventListener('change', (e) => {
-                this.toggleSelectAll(e.target.checked);
-            });
-
-            // Modal events
-            document.getElementById('sinhvienModal').addEventListener('hidden.bs.modal', () => {
-                this.resetForm();
-            });
-
-            document.getElementById('importModal').addEventListener('hidden.bs.modal', () => {
-                this.resetImportModal();
+        handleBatchError(error) {
+            Swal.fire({
+                title: '❌ Lỗi Batch Extraction',
+                text: error.message,
+                icon: 'error',
+                confirmButtonText: 'OK'
             });
         }
 
@@ -3637,51 +3807,6 @@
 
             // Disable close button
             document.getElementById('batchCloseBtn').disabled = true;
-        }
-
-        /**
-         * Bắt đầu quá trình batch extraction
-         */
-        async startBatchExtraction() {
-            try {
-                this.addLogEntry('📡 Gửi request tới Python service...', 'info');
-
-                const response = await fetch(`${this.API_BASE}/python/extract-all`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                const result = await response.json();
-
-                if (result.status === 'started') {
-                    this.addLogEntry('✅ Python process started successfully', 'success');
-                    this.addLogEntry('📊 Bắt đầu monitor progress...', 'info');
-
-                    // Start monitoring progress
-                    this.startProgressMonitoring();
-                } else {
-                    throw new Error(result.message || 'Failed to start batch extraction');
-                }
-
-            } catch (error) {
-                console.error('Batch extraction error:', error);
-                this.addLogEntry(`❌ Lỗi khởi động: ${error.message}`, 'error');
-
-                // Enable close button
-                document.getElementById('batchCloseBtn').disabled = false;
-
-                Swal.fire({
-                    title: 'Lỗi khởi động',
-                    text: error.message,
-                    icon: 'error'
-                });
-            }
         }
 
         /**
