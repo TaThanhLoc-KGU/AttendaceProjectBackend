@@ -330,6 +330,27 @@
             z-index: 10;
             border-radius: 16px;
         }
+        .dropdown-item {
+            padding: 8px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-menu {
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
@@ -657,16 +678,18 @@
                 const response = await fetch('/api/khoa');
                 if (!response.ok) throw new Error('Failed to load khoa data');
 
-                this.khoaData = await response.json();
+                const allKhoa = await response.json();
+                // Chỉ lấy các khoa đang hoạt động
+                this.khoaData = allKhoa.filter(khoa => khoa.isActive === true);
                 this.populateKhoaSelects();
-                console.log('✅ Khoa data loaded:', this.khoaData.length, 'items');
+                console.log('✅ Active Khoa data loaded:', this.khoaData.length, 'items');
             } catch (error) {
                 console.error('❌ Error loading khoa:', error);
                 this.showNotification('Không thể tải dữ liệu khoa', 'error');
             }
         },
 
-        // Populate khoa dropdowns
+        // Populate khoa dropdowns with search functionality
         populateKhoaSelects() {
             const selects = ['filterKhoa', 'maKhoa'];
             selects.forEach(selectId => {
@@ -686,7 +709,108 @@
                     option.textContent = `${khoa.maKhoa} - ${khoa.tenKhoa}`;
                     select.appendChild(option);
                 });
+
+                // Add search functionality to select
+                this.makeSelectSearchable(select, selectId);
             });
+        },
+
+        // Make select searchable
+        makeSelectSearchable(selectElement, selectId) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'position-relative';
+            wrapper.style.width = '100%';
+
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.className = 'form-control modern-form-control';
+            searchInput.placeholder = selectId === 'filterKhoa' ? 'Tìm kiếm khoa...' : 'Chọn khoa...';
+            searchInput.id = selectId + '_search';
+
+            const dropdown = document.createElement('div');
+            dropdown.className = 'dropdown-menu w-100';
+            dropdown.style.maxHeight = '200px';
+            dropdown.style.overflowY = 'auto';
+            dropdown.style.display = 'none';
+
+            // Hide original select
+            selectElement.style.display = 'none';
+
+            // Insert wrapper after select
+            selectElement.parentNode.insertBefore(wrapper, selectElement.nextSibling);
+            wrapper.appendChild(searchInput);
+            wrapper.appendChild(dropdown);
+
+            // Populate dropdown
+            const updateDropdown = (searchTerm = '') => {
+                dropdown.innerHTML = '';
+
+                // Add default option
+                const defaultOption = document.createElement('div');
+                defaultOption.className = 'dropdown-item';
+                defaultOption.textContent = selectId === 'filterKhoa' ? 'Tất cả khoa' : 'Chọn khoa';
+                defaultOption.onclick = () => {
+                    selectElement.value = '';
+                    searchInput.value = defaultOption.textContent;
+                    dropdown.style.display = 'none';
+                    if (selectId === 'filterKhoa') {
+                        this.currentPage = 1;
+                        this.loadData();
+                    }
+                };
+                dropdown.appendChild(defaultOption);
+
+                // Filter and add khoa options
+                const filteredKhoa = this.khoaData.filter(khoa =>
+                    khoa.tenKhoa.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    khoa.maKhoa.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+
+                filteredKhoa.forEach(khoa => {
+                    const option = document.createElement('div');
+                    option.className = 'dropdown-item';
+                    option.textContent = `${khoa.maKhoa} - ${khoa.tenKhoa}`;
+                    option.onclick = () => {
+                        selectElement.value = khoa.maKhoa;
+                        searchInput.value = option.textContent;
+                        dropdown.style.display = 'none';
+                        if (selectId === 'filterKhoa') {
+                            this.currentPage = 1;
+                            this.loadData();
+                        }
+                    };
+                    dropdown.appendChild(option);
+                });
+            };
+
+            // Search input events
+            searchInput.addEventListener('input', (e) => {
+                updateDropdown(e.target.value);
+                dropdown.style.display = 'block';
+            });
+
+            searchInput.addEventListener('focus', () => {
+                updateDropdown(searchInput.value);
+                dropdown.style.display = 'block';
+            });
+
+            // Hide dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!wrapper.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            // Initialize dropdown
+            updateDropdown();
+
+            // Set initial value if select has value
+            if (selectElement.value) {
+                const selectedKhoa = this.khoaData.find(k => k.maKhoa === selectElement.value);
+                if (selectedKhoa) {
+                    searchInput.value = `${selectedKhoa.maKhoa} - ${selectedKhoa.tenKhoa}`;
+                }
+            }
         },
 
         // Load main data
@@ -821,7 +945,7 @@
         // Get khoa name by maKhoa
         getKhoaName(maKhoa) {
             const khoa = this.khoaData.find(k => k.maKhoa === maKhoa);
-            return khoa ? khoa.tenKhoa : maKhoa;
+            return khoa ? khoa.tenKhoa : 'Không xác định';
         },
 
         // Format status

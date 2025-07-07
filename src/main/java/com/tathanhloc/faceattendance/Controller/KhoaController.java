@@ -48,14 +48,12 @@ public class KhoaController {
     @GetMapping("/active")
     public ResponseEntity<List<KhoaDTO>> getAllActive() {
         try {
-            List<KhoaDTO> activeKhoas = khoaService.getAllActive();
+            List<KhoaDTO> activeKhoas = khoaService.getActiveKhoas(); // Đổi tên method
             return ResponseEntity.ok(activeKhoas);
         } catch (Exception e) {
-            // Thay vì dùng log, dùng System.err hoặc Logger
             System.err.println("❌ Error getting active khoa list: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.emptyList());
         }
     }
-
 }

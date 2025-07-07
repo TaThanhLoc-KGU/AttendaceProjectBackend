@@ -164,4 +164,15 @@ public class AdminDashboardController {
         model.addAttribute("currentUser", userDetails.getTaiKhoan());
         return "admin/system";
     }
+    @GetMapping("/taikhoan")
+    public String taikhoanManagement(Authentication authentication, Model model) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/?error=not_authenticated";
+        }
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        log.info("Admin taikhoan management access: {}", userDetails.getUsername());
+        model.addAttribute("currentUser", userDetails.getTaiKhoan());
+        return "admin/taikhoan";
+    }
 }

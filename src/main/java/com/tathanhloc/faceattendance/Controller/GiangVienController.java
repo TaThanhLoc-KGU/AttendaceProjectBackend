@@ -3,9 +3,11 @@ package com.tathanhloc.faceattendance.Controller;
 import com.tathanhloc.faceattendance.DTO.GiangVienDTO;
 import com.tathanhloc.faceattendance.Service.GiangVienService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -108,6 +110,38 @@ public class GiangVienController {
         stats.put("activeLecturers", giangVienService.countByStatus(true));
         stats.put("inactiveLecturers", giangVienService.countByStatus(false));
         return ResponseEntity.ok(stats);
+    }
+
+    // Thêm vào GiangVienController.java ngay sau @RequestMapping("/api/giangvien")
+
+    /**
+     * Lấy danh sách giảng viên đang hoạt động
+     */
+    @GetMapping("/active")
+    public ResponseEntity<List<GiangVienDTO>> getAllActive() {
+        try {
+            List<GiangVienDTO> activeGiangVien = giangVienService.getAllActive();
+            return ResponseEntity.ok(activeGiangVien);
+        } catch (Exception e) {
+            System.err.println("❌ Error getting active lecturer list: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.emptyList());
+        }
+    }
+
+    /**
+     * Lấy danh sách giảng viên không hoạt động
+     */
+    @GetMapping("/inactive")
+    public ResponseEntity<List<GiangVienDTO>> getAllInactive() {
+        try {
+            List<GiangVienDTO> inactiveGiangVien = giangVienService.getAllInactive();
+            return ResponseEntity.ok(inactiveGiangVien);
+        } catch (Exception e) {
+            System.err.println("❌ Error getting inactive lecturer list: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.emptyList());
+        }
     }
 
 

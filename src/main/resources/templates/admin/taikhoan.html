@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý Tài khoản</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <!-- Custom CSS -->
+  <link th:href="@{/css/common.css}" rel="stylesheet">
+  <link th:href="@{/css/sidebar.css}" rel="stylesheet">
+  <link th:href="@{/css/admin.css}" rel="stylesheet">
+
+  <style>
+    .stats-card {
+      background: #ffffff;
+      border: 1px solid #e9ecef;
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stats-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+
+    .stats-card.primary {
+      border-left: 4px solid #1c6681;
+    }
+
+    .stats-card.success {
+      border-left: 4px solid #27ae60;
+    }
+
+    .stats-card.warning {
+      border-left: 4px solid #f39c12;
+    }
+
+    .stats-card.info {
+      border-left: 4px solid #3498db;
+    }
+
+    .stats-card .stats-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .stats-card.primary .stats-icon {
+      background: rgba(28, 102, 129, 0.1);
+      color: #1c6681;
+    }
+
+    .stats-card.success .stats-icon {
+      background: rgba(39, 174, 96, 0.1);
+      color: #27ae60;
+    }
+
+    .stats-card.warning .stats-icon {
+      background: rgba(243, 156, 18, 0.1);
+      color: #f39c12;
+    }
+
+    .stats-card.info .stats-icon {
+      background: rgba(52, 152, 219, 0.1);
+      color: #3498db;
+    }
+
+    .batch-create-section {
+      background: #ffffff;
+      border: 1px solid #e9ecef;
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      border-left: 4px solid #1c6681;
+    }
+
+    .batch-create-section h5 {
+      color: #1c6681;
+      margin-bottom: 1rem;
+    }
+
+    .modern-card {
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .modern-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+
+    .modern-card .card-header {
+      background: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+      padding: 1rem 1.5rem;
+      font-weight: 600;
+    }
+
+    .user-list-item {
+      border: 1px solid #e9ecef;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      background: #ffffff;
+    }
+
+    .user-list-item:hover {
+      background: #f8f9fa;
+      border-color: #1c6681;
+      transform: translateX(4px);
+    }
+
+    .user-list-item.selected {
+      background: #e8f4f8;
+      border-color: #1c6681;
+      box-shadow: 0 2px 8px rgba(28, 102, 129, 0.15);
+    }
+
+    .role-badge {
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .role-badge.student {
+      background: rgba(52, 152, 219, 0.1);
+      color: #3498db;
+      border: 1px solid rgba(52, 152, 219, 0.2);
+    }
+
+    .role-badge.lecturer {
+      background: rgba(155, 89, 182, 0.1);
+      color: #9b59b6;
+      border: 1px solid rgba(155, 89, 182, 0.2);
+    }
+
+    .role-badge.admin {
+      background: rgba(231, 76, 60, 0.1);
+      color: #e74c3c;
+      border: 1px solid rgba(231, 76, 60, 0.2);
+    }
+
+    .btn-modern {
+      border-radius: 10px;
+      padding: 0.5rem 1.25rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      border: none;
+    }
+
+    .btn-modern:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .btn-primary-modern {
+      background: #1c6681;
+      color: white;
+    }
+
+    .btn-primary-modern:hover {
+      background: #155a73;
+      color: white;
+    }
+
+    .btn-success-modern {
+      background: #27ae60;
+      color: white;
+    }
+
+    .btn-success-modern:hover {
+      background: #229954;
+      color: white;
+    }
+
+    .btn-warning-modern {
+      background: #f39c12;
+      color: white;
+    }
+
+    .btn-warning-modern:hover {
+      background: #e67e22;
+      color: white;
+    }
+
+    .btn-danger-modern {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .btn-danger-modern:hover {
+      background: #c0392b;
+      color: white;
+    }
+
+    .btn-light-modern {
+      background: #f8f9fa;
+      color: #495057;
+      border: 1px solid #e9ecef;
+    }
+
+    .btn-light-modern:hover {
+      background: #e9ecef;
+      color: #495057;
+    }
+
+    .action-buttons .btn {
+      border-radius: 8px;
+      width: 36px;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 2px;
+      transition: all 0.3s ease;
+    }
+
+    .action-buttons .btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .table-modern {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .table-modern thead th {
+      background: #f8f9fa;
+      border: none;
+      font-weight: 600;
+      color: #495057;
+      padding: 1rem;
+    }
+
+    .table-modern tbody td {
+      padding: 1rem;
+      border-color: #f1f3f4;
+      vertical-align: middle;
+    }
+
+    .table-modern tbody tr:hover {
+      background: #f8f9fa;
+    }
+
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 9999;
+      backdrop-filter: blur(4px);
+    }
+
+    .loading-spinner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      text-align: center;
+    }
+
+    .modal-modern .modal-content {
+      border-radius: 16px;
+      border: none;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    }
+
+    .modal-modern .modal-header {
+      background: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+      border-radius: 16px 16px 0 0;
+      padding: 1.5rem;
+    }
+
+    .modal-modern .modal-body {
+      padding: 1.5rem;
+    }
+
+    .modal-modern .modal-footer {
+      background: #f8f9fa;
+      border-top: 1px solid #e9ecef;
+      border-radius: 0 0 16px 16px;
+      padding: 1rem 1.5rem;
+    }
+
+    .form-control-modern {
+      border-radius: 10px;
+      border: 1px solid #e9ecef;
+      padding: 0.75rem 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-control-modern:focus {
+      border-color: #1c6681;
+      box-shadow: 0 0 0 0.2rem rgba(28, 102, 129, 0.25);
+    }
+
+    .form-select-modern {
+      border-radius: 10px;
+      border: 1px solid #e9ecef;
+      padding: 0.75rem 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-select-modern:focus {
+      border-color: #1c6681;
+      box-shadow: 0 0 0 0.2rem rgba(28, 102, 129, 0.25);
+    }
+
+    .badge-modern {
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.8rem;
+    }
+
+    .empty-state {
+      padding: 3rem;
+      text-align: center;
+      color: #6c757d;
+    }
+
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    @media (max-width: 768px) {
+      .batch-create-section {
+        padding: 1.5rem;
+      }
+
+      .stats-card {
+        margin-bottom: 1rem;
+      }
+
+      .user-list-item {
+        padding: 0.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<!-- Sidebar -->
+<div th:replace="~{components/sidebar :: sidebar}"></div>
+
+
+<!-- Main Content -->
+<div class="main-content">
+  <!-- Top Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+    <div class="container-fluid">
+      <button class="btn btn-outline-secondary me-3" id="sidebarToggle">
+        <i class="fas fa-bars"></i>
+      </button>
+      <h4 class="mb-0 text-primary fw-bold">
+        <i class="fas fa-user-cog me-2"></i>Quản lý Tài khoản
+      </h4>
+      <div class="navbar-nav ms-auto">
+        <div class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button"
+             data-bs-toggle="dropdown">
+            <img src="https://via.placeholder.com/32" class="rounded-circle me-2" alt="Avatar">
+            <span th:text="${currentUser?.username}">Admin</span>
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i>Hồ sơ</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content Area -->
+  <div class="container-fluid p-4">
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+      <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card primary">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-muted mb-1">Tổng tài khoản</h6>
+              <h3 class="mb-0 fw-bold" id="totalAccounts">0</h3>
+            </div>
+            <div class="stats-icon">
+              <i class="fas fa-users"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card success">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-muted mb-1">Đang hoạt động</h6>
+              <h3 class="mb-0 fw-bold" id="activeAccounts">0</h3>
+            </div>
+            <div class="stats-icon">
+              <i class="fas fa-user-check"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card warning">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-muted mb-1">Đã vô hiệu hóa</h6>
+              <h3 class="mb-0 fw-bold" id="inactiveAccounts">0</h3>
+            </div>
+            <div class="stats-icon">
+              <i class="fas fa-user-times"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card info">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-muted mb-1">Chưa có tài khoản</h6>
+              <h3 class="mb-0 fw-bold" id="noAccountUsers">0</h3>
+            </div>
+            <div class="stats-icon">
+              <i class="fas fa-user-plus"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Batch Account Creation Section -->
+    <div class="batch-create-section">
+      <h5 class="mb-3">
+        <i class="fas fa-magic me-2"></i>Tạo tài khoản hàng loạt
+      </h5>
+      <p class="mb-3 text-muted">Chọn sinh viên và giảng viên để tạo tài khoản tự động. Tài khoản sẽ được tạo với mật khẩu mặc định.</p>
+
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-light-modern btn-modern" onclick="loadUsersWithoutAccounts()">
+              <i class="fas fa-sync-alt me-2"></i>Tải danh sách
+            </button>
+            <button class="btn btn-success-modern btn-modern" onclick="selectAllUsers()">
+              <i class="fas fa-check-double me-2"></i>Chọn tất cả
+            </button>
+            <button class="btn btn-warning-modern btn-modern" onclick="unselectAllUsers()">
+              <i class="fas fa-times me-2"></i>Bỏ chọn tất cả
+            </button>
+            <button class="btn btn-primary-modern btn-modern" data-bs-toggle="modal" data-bs-target="#createSingleAccountModal">
+              <i class="fas fa-user-plus me-2"></i>Thêm đơn lẻ
+            </button>
+          </div>
+        </div>
+        <div class="col-md-4 text-end mt-3 mt-md-0">
+          <button class="btn btn-danger-modern btn-modern" onclick="createSelectedAccounts()" id="createAccountsBtn" disabled>
+            <i class="fas fa-user-plus me-2"></i>Tạo tài khoản (<span id="selectedCount">0</span>)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users without accounts list -->
+    <div class="row mb-4">
+      <div class="col-lg-6 mb-4">
+        <div class="modern-card">
+          <div class="card-header">
+            <h6 class="mb-0">
+              <i class="fas fa-user-graduate me-2 text-primary"></i>Sinh viên chưa có tài khoản
+            </h6>
+          </div>
+          <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+            <div id="studentsWithoutAccount">
+              <div class="empty-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Đang tải dữ liệu...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6 mb-4">
+        <div class="modern-card">
+          <div class="card-header">
+            <h6 class="mb-0">
+              <i class="fas fa-chalkboard-teacher me-2 text-success"></i>Giảng viên chưa có tài khoản
+            </h6>
+          </div>
+          <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+            <div id="lecturersWithoutAccount">
+              <div class="empty-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Đang tải dữ liệu...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Existing Accounts Table -->
+    <div class="modern-card">
+      <div class="card-header d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
+        <h6 class="mb-0">
+          <i class="fas fa-list me-2"></i>Danh sách tài khoản hiện có
+        </h6>
+        <div class="d-flex flex-column flex-sm-row gap-2 w-100 w-lg-auto">
+          <div class="input-group" style="min-width: 250px;">
+            <input type="text" class="form-control form-control-modern" id="searchInput"
+                   placeholder="Tìm kiếm tài khoản...">
+            <button class="btn btn-outline-secondary" onclick="searchAccounts()">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+          <select class="form-select form-select-modern" id="roleFilter" onchange="filterByRole()" style="min-width: 150px;">
+            <option value="">Tất cả vai trò</option>
+            <option value="ADMIN">Admin</option>
+            <option value="GIANG_VIEN">Giảng viên</option>
+            <option value="SINH_VIEN">Sinh viên</option>
+          </select>
+          <select class="form-select form-select-modern" id="statusFilter" onchange="filterByStatus()" style="min-width: 150px;">
+            <option value="">Tất cả trạng thái</option>
+            <option value="true">Đang hoạt động</option>
+            <option value="false">Đã vô hiệu hóa</option>
+          </select>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-modern mb-0">
+            <thead>
+            <tr>
+              <th>ID</th>
+              <th>Tên đăng nhập</th>
+              <th>Vai trò</th>
+              <th>Họ tên</th>
+              <th>Mã số</th>
+              <th>Trạng thái</th>
+              <th>Ngày tạo</th>
+              <th class="text-center">Thao tác</th>
+            </tr>
+            </thead>
+            <tbody id="accountsTableBody">
+            <!-- Data will be loaded here -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state d-none" id="emptyState">
+          <i class="fas fa-users"></i>
+          <h5>Không có dữ liệu</h5>
+          <p>Không tìm thấy tài khoản nào phù hợp với bộ lọc hiện tại</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Single Account Modal -->
+<div class="modal fade modal-modern" id="createSingleAccountModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-user-plus me-2"></i>Tạo tài khoản đơn lẻ
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="singleAccountForm">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Vai trò <span class="text-danger">*</span></label>
+            <select class="form-select form-select-modern" id="singleAccountRole" onchange="loadUsersByRole()" required>
+              <option value="">Chọn vai trò</option>
+              <option value="SINH_VIEN">Sinh viên</option>
+              <option value="GIANG_VIEN">Giảng viên</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+          </div>
+
+          <div class="mb-3" id="userSelectionDiv" style="display: none;">
+            <label class="form-label fw-semibold">Chọn người dùng <span class="text-danger">*</span></label>
+            <select class="form-select form-select-modern" id="singleAccountUser" onchange="fillUserInfo()">
+              <option value="">Chọn người dùng</option>
+            </select>
+          </div>
+
+          <div class="mb-3" id="customUsernameDiv" style="display: none;">
+            <label class="form-label fw-semibold">Tên đăng nhập <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-modern" id="singleAccountUsername" placeholder="Nhập tên đăng nhập">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Mật khẩu <span class="text-danger">*</span></label>
+            <input type="password" class="form-control form-control-modern" id="singleAccountPassword" placeholder="Nhập mật khẩu">
+            <div class="form-text">
+              <small class="text-muted">
+                Mặc định: Sinh viên = MSSV, Giảng viên = Abc@123, Admin = admin@123
+              </small>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="singleAccountActive" checked>
+              <label class="form-check-label" for="singleAccountActive">
+                Kích hoạt tài khoản
+              </label>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-modern" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-primary-modern btn-modern" onclick="createSingleAccount()">
+          <i class="fas fa-save me-2"></i>Tạo tài khoản
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner">
+    <i class="fas fa-spinner fa-spin fa-3x mb-3"></i>
+    <h5>Đang xử lý...</h5>
+    <p id="loadingMessage">Vui lòng đợi</p>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Custom JS -->
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/sidebar.js}"></script>
+<script>
+  // Global variables
+  let allAccounts = [];
+  let filteredAccounts = [];
+  let studentsWithoutAccount = [];
+  let lecturersWithoutAccount = [];
+  let selectedUsers = new Set();
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+    loadUsersWithoutAccounts();
+  });
+
+  // Load dashboard statistics with detailed account info
+  async function loadDashboardData() {
+    try {
+      const [accountsResponse, studentsResponse, lecturersResponse] = await Promise.all([
+        fetch('/api/taikhoan'),
+        fetch('/api/sinhvien/active'),
+        fetch('/api/giangvien/active')
+      ]);
+
+      allAccounts = await accountsResponse.json();
+      const students = await studentsResponse.json();
+      const lecturers = await lecturersResponse.json();
+
+      // Map student and lecturer data to accounts for display
+      allAccounts = allAccounts.map(account => {
+        if (account.maSv) {
+          const student = students.find(s => s.maSv === account.maSv);
+          if (student) {
+            account.displayName = student.hoTen;
+            account.email = student.email;
+          }
+        } else if (account.maGv) {
+          const lecturer = lecturers.find(l => l.maGv === account.maGv);
+          if (lecturer) {
+            account.displayName = lecturer.hoTen;
+            account.email = lecturer.email;
+          }
+        }
+        return account;
+      });
+
+      filteredAccounts = [...allAccounts];
+
+      updateStatistics();
+      displayAccounts();
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      showNotification('Lỗi khi tải dữ liệu dashboard', 'error');
+    }
+  }
+
+  // Update statistics
+  function updateStatistics() {
+    const total = allAccounts.length;
+    const active = allAccounts.filter(acc => acc.isActive).length;
+    const inactive = total - active;
+
+    document.getElementById('totalAccounts').textContent = total;
+    document.getElementById('activeAccounts').textContent = active;
+    document.getElementById('inactiveAccounts').textContent = inactive;
+  }
+
+  // Load users without accounts
+  async function loadUsersWithoutAccounts() {
+    try {
+      showLoading('Đang tải danh sách người dùng...');
+
+      const [studentsResponse, lecturersResponse, accountsResponse] = await Promise.all([
+        fetch('/api/sinhvien/active'),
+        fetch('/api/giangvien/active'),
+        fetch('/api/taikhoan')
+      ]);
+
+      const students = await studentsResponse.json();
+      const lecturers = await lecturersResponse.json();
+      const accounts = await accountsResponse.json();
+
+      // Find students without accounts - more robust filtering
+      const studentAccountIds = new Set(accounts
+              .filter(acc => acc.maSv && acc.maSv.trim() !== '')
+              .map(acc => acc.maSv.trim())
+      );
+
+      studentsWithoutAccount = students.filter(student =>
+              student.maSv &&
+              student.maSv.trim() !== '' &&
+              !studentAccountIds.has(student.maSv.trim())
+      );
+
+      // Find lecturers without accounts - more robust filtering
+      const lecturerAccountIds = new Set(accounts
+              .filter(acc => acc.maGv && acc.maGv.trim() !== '')
+              .map(acc => acc.maGv.trim())
+      );
+
+      lecturersWithoutAccount = lecturers.filter(lecturer =>
+              lecturer.maGv &&
+              lecturer.maGv.trim() !== '' &&
+              !lecturerAccountIds.has(lecturer.maGv.trim())
+      );
+
+      console.log('Students without account:', studentsWithoutAccount.length);
+      console.log('Lecturers without account:', lecturersWithoutAccount.length);
+
+      displayUsersWithoutAccounts();
+      updateNoAccountUsersCount();
+
+      hideLoading();
+    } catch (error) {
+      console.error('Error loading users without accounts:', error);
+      showNotification('Lỗi khi tải danh sách người dùng', 'error');
+      hideLoading();
+    }
+  }
+
+  // Display users without accounts
+  function displayUsersWithoutAccounts() {
+    displayStudentsWithoutAccount();
+    displayLecturersWithoutAccount();
+  }
+
+  function displayStudentsWithoutAccount() {
+    const container = document.getElementById('studentsWithoutAccount');
+
+    if (studentsWithoutAccount.length === 0) {
+      container.innerHTML = `
+                    <div class="text-center p-4">
+                        <i class="fas fa-check-circle fa-2x text-success mb-3"></i>
+                        <p class="text-muted">Tất cả sinh viên đã có tài khoản</p>
+                    </div>
+                `;
+      return;
+    }
+
+    container.innerHTML = studentsWithoutAccount.map(student => `
+                <div class="user-list-item" data-id="${student.maSv}" data-type="student" onclick="toggleUserSelection(this)">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">${student.hoTen}</h6>
+                            <small class="text-muted">MSSV: ${student.maSv}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="role-badge student">Sinh viên</span>
+                            <div class="mt-1">
+                                <small class="text-muted">Username: ${student.maSv}</small><br>
+                                <small class="text-muted">Pass: ${student.maSv}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+  }
+
+  function displayLecturersWithoutAccount() {
+    const container = document.getElementById('lecturersWithoutAccount');
+
+    if (lecturersWithoutAccount.length === 0) {
+      container.innerHTML = `
+                    <div class="text-center p-4">
+                        <i class="fas fa-check-circle fa-2x text-success mb-3"></i>
+                        <p class="text-muted">Tất cả giảng viên đã có tài khoản</p>
+                    </div>
+                `;
+      return;
+    }
+
+    container.innerHTML = lecturersWithoutAccount.map(lecturer => `
+                <div class="user-list-item" data-id="${lecturer.maGv}" data-type="lecturer" onclick="toggleUserSelection(this)">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">${lecturer.hoTen}</h6>
+                            <small class="text-muted">Mã GV: ${lecturer.maGv}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="role-badge lecturer">Giảng viên</span>
+                            <div class="mt-1">
+                                <small class="text-muted">Username: ${lecturer.maGv}</small><br>
+                                <small class="text-muted">Pass: Abc@123</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+  }
+
+  // Update count of users without accounts
+  function updateNoAccountUsersCount() {
+    const count = studentsWithoutAccount.length + lecturersWithoutAccount.length;
+    document.getElementById('noAccountUsers').textContent = count;
+  }
+
+  // Toggle user selection
+  function toggleUserSelection(element) {
+    const id = element.dataset.id;
+    const type = element.dataset.type;
+    const key = `${type}_${id}`;
+
+    if (selectedUsers.has(key)) {
+      selectedUsers.delete(key);
+      element.classList.remove('selected');
+    } else {
+      selectedUsers.add(key);
+      element.classList.add('selected');
+    }
+
+    updateSelectedCount();
+  }
+
+  // Update selected count
+  function updateSelectedCount() {
+    const count = selectedUsers.size;
+    document.getElementById('selectedCount').textContent = count;
+    document.getElementById('createAccountsBtn').disabled = count === 0;
+  }
+
+  // Select all users
+  function selectAllUsers() {
+    selectedUsers.clear();
+
+    // Select all students
+    studentsWithoutAccount.forEach(student => {
+      selectedUsers.add(`student_${student.maSv}`);
+    });
+
+    // Select all lecturers
+    lecturersWithoutAccount.forEach(lecturer => {
+      selectedUsers.add(`lecturer_${lecturer.maGv}`);
+    });
+
+    // Update UI
+    document.querySelectorAll('.user-list-item').forEach(item => {
+      item.classList.add('selected');
+    });
+
+    updateSelectedCount();
+  }
+
+  // Unselect all users
+  function unselectAllUsers() {
+    selectedUsers.clear();
+
+    document.querySelectorAll('.user-list-item').forEach(item => {
+      item.classList.remove('selected');
+    });
+
+    updateSelectedCount();
+  }
+
+  // Create selected accounts
+  async function createSelectedAccounts() {
+    if (selectedUsers.size === 0) {
+      showNotification('Vui lòng chọn ít nhất một người dùng', 'warning');
+      return;
+    }
+
+    if (!confirm(`Bạn có chắc chắn muốn tạo ${selectedUsers.size} tài khoản không?`)) {
+      return;
+    }
+
+    try {
+      showLoading('Đang tạo tài khoản...');
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const userKey of selectedUsers) {
+        const [type, id] = userKey.split('_');
+
+        try {
+          const accountData = {
+            username: id,
+            passwordHash: type === 'student' ? id : 'Abc@123',
+            vaiTro: type === 'student' ? 'SINH_VIEN' : 'GIANG_VIEN',
+            isActive: true,
+            createdAt: new Date().toISOString()
+          };
+
+          if (type === 'student') {
+            accountData.maSv = id;
+          } else {
+            accountData.maGv = id;
+          }
+
+          await fetch('/api/taikhoan', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(accountData)
+          });
+
+          successCount++;
+        } catch (error) {
+          console.error(`Error creating account for ${id}:`, error);
+          errorCount++;
+        }
+      }
+
+      hideLoading();
+
+      if (successCount > 0) {
+        showNotification(`Đã tạo thành công ${successCount} tài khoản${errorCount > 0 ? `, ${errorCount} thất bại` : ''}`, 'success');
+
+        // Refresh data
+        selectedUsers.clear();
+        await loadUsersWithoutAccounts();
+        await loadDashboardData();
+      } else {
+        showNotification('Không thể tạo tài khoản nào', 'error');
+      }
+
+    } catch (error) {
+      console.error('Error creating accounts:', error);
+      showNotification('Lỗi khi tạo tài khoản', 'error');
+      hideLoading();
+    }
+  }
+
+  // Display accounts table
+  function displayAccounts() {
+    const tbody = document.getElementById('accountsTableBody');
+    const emptyState = document.getElementById('emptyState');
+
+    if (filteredAccounts.length === 0) {
+      tbody.innerHTML = '';
+      emptyState.classList.remove('d-none');
+      return;
+    }
+
+    emptyState.classList.add('d-none');
+    tbody.innerHTML = filteredAccounts.map(account => {
+      const fullName = getFullName(account);
+      const userCode = getUserCode(account);
+
+      return `
+                <tr>
+                    <td>${account.id}</td>
+                    <td>
+                        <div class="fw-semibold">${account.username}</div>
+                    </td>
+                    <td>
+                        <span class="badge ${getRoleBadgeClass(account.vaiTro)}">
+                            ${getRoleDisplayName(account.vaiTro)}
+                        </span>
+                    </td>
+                    <td>${fullName}</td>
+                    <td>${userCode}</td>
+                    <td>
+                        <span class="badge ${account.isActive ? 'bg-success' : 'bg-danger'}">
+                            ${account.isActive ? 'Hoạt động' : 'Vô hiệu hóa'}
+                        </span>
+                    </td>
+                    <td>${formatDate(account.createdAt)}</td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="resetPassword('${account.username}')"
+                                    title="Đặt lại mật khẩu">
+                                <i class="fas fa-key"></i>
+                            </button>
+                            <button class="btn btn-outline-${account.isActive ? 'warning' : 'success'}"
+                                    onclick="toggleAccountStatus(${account.id})"
+                                    title="${account.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'}">
+                                <i class="fas fa-${account.isActive ? 'ban' : 'check'}"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="deleteAccount(${account.id})"
+                                    title="Xóa tài khoản">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                `;
+    }).join('');
+  }
+
+  // Single account creation functions
+  async function loadUsersByRole() {
+    const role = document.getElementById('singleAccountRole').value;
+    const userSelect = document.getElementById('singleAccountUser');
+    const userSelectionDiv = document.getElementById('userSelectionDiv');
+    const customUsernameDiv = document.getElementById('customUsernameDiv');
+    const passwordField = document.getElementById('singleAccountPassword');
+
+    // Reset
+    userSelect.innerHTML = '<option value="">Chọn người dùng</option>';
+    userSelectionDiv.style.display = 'none';
+    customUsernameDiv.style.display = 'none';
+    passwordField.value = '';
+
+    if (role === 'ADMIN') {
+      customUsernameDiv.style.display = 'block';
+      passwordField.value = 'admin@123';
+      return;
+    }
+
+    if (role === 'SINH_VIEN') {
+      userSelectionDiv.style.display = 'block';
+      studentsWithoutAccount.forEach(student => {
+        const option = document.createElement('option');
+        option.value = JSON.stringify({id: student.maSv, name: student.hoTen, type: 'student'});
+        option.textContent = `${student.hoTen} (${student.maSv})`;
+        userSelect.appendChild(option);
+      });
+    } else if (role === 'GIANG_VIEN') {
+      userSelectionDiv.style.display = 'block';
+      lecturersWithoutAccount.forEach(lecturer => {
+        const option = document.createElement('option');
+        option.value = JSON.stringify({id: lecturer.maGv, name: lecturer.hoTen, type: 'lecturer'});
+        option.textContent = `${lecturer.hoTen} (${lecturer.maGv})`;
+        userSelect.appendChild(option);
+      });
+    }
+  }
+
+  function fillUserInfo() {
+    const userSelect = document.getElementById('singleAccountUser');
+    const usernameField = document.getElementById('singleAccountUsername');
+    const passwordField = document.getElementById('singleAccountPassword');
+
+    if (userSelect.value) {
+      const userData = JSON.parse(userSelect.value);
+      usernameField.value = userData.id;
+
+      if (userData.type === 'student') {
+        passwordField.value = userData.id; // MSSV
+      } else if (userData.type === 'lecturer') {
+        passwordField.value = 'Abc@123';
+      }
+    } else {
+      usernameField.value = '';
+      passwordField.value = '';
+    }
+  }
+
+  async function createSingleAccount() {
+    const form = document.getElementById('singleAccountForm');
+    const role = document.getElementById('singleAccountRole').value;
+    const userSelect = document.getElementById('singleAccountUser').value;
+    const username = document.getElementById('singleAccountUsername').value;
+    const password = document.getElementById('singleAccountPassword').value;
+    const isActive = document.getElementById('singleAccountActive').checked;
+
+    // Validation
+    if (!role) {
+      showNotification('Vui lòng chọn vai trò', 'warning');
+      return;
+    }
+
+    if (role !== 'ADMIN' && !userSelect) {
+      showNotification('Vui lòng chọn người dùng', 'warning');
+      return;
+    }
+
+    if (role === 'ADMIN' && !username) {
+      showNotification('Vui lòng nhập tên đăng nhập', 'warning');
+      return;
+    }
+
+    if (!password) {
+      showNotification('Vui lòng nhập mật khẩu', 'warning');
+      return;
+    }
+
+    try {
+      showLoading('Đang tạo tài khoản...');
+
+      const accountData = {
+        username: role === 'ADMIN' ? username : JSON.parse(userSelect).id,
+        passwordHash: password,
+        vaiTro: role,
+        isActive: isActive,
+        createdAt: new Date().toISOString()
+      };
+
+      if (role === 'SINH_VIEN') {
+        accountData.maSv = JSON.parse(userSelect).id;
+      } else if (role === 'GIANG_VIEN') {
+        accountData.maGv = JSON.parse(userSelect).id;
+      }
+
+      const response = await fetch('/api/taikhoan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(accountData)
+      });
+
+      if (response.ok) {
+        showNotification('Tạo tài khoản thành công!', 'success');
+
+        // Close modal and refresh data
+        const modal = bootstrap.Modal.getInstance(document.getElementById('createSingleAccountModal'));
+        modal.hide();
+        form.reset();
+
+        await loadUsersWithoutAccounts();
+        await loadDashboardData();
+      } else {
+        const error = await response.text();
+        throw new Error(error || 'Không thể tạo tài khoản');
+      }
+    } catch (error) {
+      console.error('Error creating single account:', error);
+      showNotification('Lỗi khi tạo tài khoản: ' + error.message, 'error');
+    } finally {
+      hideLoading();
+    }
+  }
+
+  // Helper functions
+  function getRoleBadgeClass(role) {
+    switch(role) {
+      case 'ADMIN': return 'bg-danger';
+      case 'GIANG_VIEN': return 'bg-primary';
+      case 'SINH_VIEN': return 'bg-info';
+      default: return 'bg-secondary';
+    }
+  }
+
+  function getRoleDisplayName(role) {
+    switch(role) {
+      case 'ADMIN': return 'Admin';
+      case 'GIANG_VIEN': return 'Giảng viên';
+      case 'SINH_VIEN': return 'Sinh viên';
+      default: return role;
+    }
+  }
+
+  function getFullName(account) {
+    return account.displayName || account.hoTen || '-';
+  }
+
+  function getUserCode(account) {
+    return account.maSv || account.maGv || '-';
+  }
+
+  function formatDate(dateString) {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('vi-VN');
+  }
+
+  // Account management functions
+  async function resetPassword(username) {
+    if (!confirm(`Bạn có chắc chắn muốn đặt lại mật khẩu cho tài khoản "${username}" không?`)) {
+      return;
+    }
+
+    try {
+      showLoading('Đang đặt lại mật khẩu...');
+
+      const response = await fetch(`/api/auth/reset-password?username=${username}`, {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        showNotification('Đặt lại mật khẩu thành công! Mật khẩu mới đã được gửi qua email.', 'success');
+      } else {
+        throw new Error('Không thể đặt lại mật khẩu');
+      }
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      showNotification('Lỗi khi đặt lại mật khẩu: ' + error.message, 'error');
+    } finally {
+      hideLoading();
+    }
+  }
+
+  async function toggleAccountStatus(accountId) {
+    const account = allAccounts.find(acc => acc.id === accountId);
+    if (!account) return;
+
+    const action = account.isActive ? 'vô hiệu hóa' : 'kích hoạt';
+    if (!confirm(`Bạn có chắc chắn muốn ${action} tài khoản "${account.username}" không?`)) {
+      return;
+    }
+
+    try {
+      showLoading(`Đang ${action} tài khoản...`);
+
+      const updatedAccount = {
+        ...account,
+        isActive: !account.isActive
+      };
+
+      const response = await fetch(`/api/taikhoan/${accountId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedAccount)
+      });
+
+      if (response.ok) {
+        showNotification(`${action.charAt(0).toUpperCase() + action.slice(1)} tài khoản thành công!`, 'success');
+        await loadDashboardData();
+      } else {
+        throw new Error(`Không thể ${action} tài khoản`);
+      }
+    } catch (error) {
+      console.error('Error toggling account status:', error);
+      showNotification(`Lỗi khi ${action} tài khoản: ` + error.message, 'error');
+    } finally {
+      hideLoading();
+    }
+  }
+
+  async function deleteAccount(accountId) {
+    const account = allAccounts.find(acc => acc.id === accountId);
+    if (!account) return;
+
+    if (!confirm(`Bạn có chắc chắn muốn xóa tài khoản "${account.username}" không? Hành động này không thể hoàn tác!`)) {
+      return;
+    }
+
+    try {
+      showLoading('Đang xóa tài khoản...');
+
+      const response = await fetch(`/api/taikhoan/${accountId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        showNotification('Xóa tài khoản thành công!', 'success');
+        await loadDashboardData();
+      } else {
+        throw new Error('Không thể xóa tài khoản');
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      showNotification('Lỗi khi xóa tài khoản: ' + error.message, 'error');
+    } finally {
+      hideLoading();
+    }
+  }
+
+  // Search and filter functions
+  function searchAccounts() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+
+    if (searchTerm === '') {
+      filteredAccounts = [...allAccounts];
+    } else {
+      filteredAccounts = allAccounts.filter(account =>
+              account.username.toLowerCase().includes(searchTerm) ||
+              (account.maSv && account.maSv.toLowerCase().includes(searchTerm)) ||
+              (account.maGv && account.maGv.toLowerCase().includes(searchTerm))
+      );
+    }
+
+    applyFilters();
+    displayAccounts();
+  }
+
+  function filterByRole() {
+    applyFilters();
+    displayAccounts();
+  }
+
+  function filterByStatus() {
+    applyFilters();
+    displayAccounts();
+  }
+
+  function applyFilters() {
+    const roleFilter = document.getElementById('roleFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    let filtered = [...filteredAccounts];
+
+    if (roleFilter) {
+      filtered = filtered.filter(account => account.vaiTro === roleFilter);
+    }
+
+    if (statusFilter !== '') {
+      const isActive = statusFilter === 'true';
+      filtered = filtered.filter(account => account.isActive === isActive);
+    }
+
+    filteredAccounts = filtered;
+  }
+
+  // Search on Enter key
+  document.getElementById('searchInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      searchAccounts();
+    }
+  });
+
+  // Utility functions
+  function showLoading(message = 'Đang xử lý...') {
+    document.getElementById('loadingMessage').textContent = message;
+    document.getElementById('loadingOverlay').style.display = 'block';
+  }
+
+  function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }
+
+  function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${getBootstrapClass(type)} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 10000; min-width: 300px;';
+
+    notification.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${getIconClass(type)} me-2"></i>
+                    <span>${message}</span>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+
+    document.body.appendChild(notification);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 5000);
+  }
+
+  function getBootstrapClass(type) {
+    switch(type) {
+      case 'success': return 'success';
+      case 'error': return 'danger';
+      case 'warning': return 'warning';
+      default: return 'info';
+    }
+  }
+
+  function getIconClass(type) {
+    switch(type) {
+      case 'success': return 'check-circle';
+      case 'error': return 'exclamation-circle';
+      case 'warning': return 'exclamation-triangle';
+      default: return 'info-circle';
+    }
+  }
+
+  // Refresh data periodically
+  setInterval(() => {
+    loadDashboardData();
+  }, 30000); // Refresh every 30 seconds
+</script>
+</body>
+</html>

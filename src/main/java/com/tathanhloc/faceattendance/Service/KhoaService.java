@@ -38,8 +38,7 @@ public class KhoaService extends BaseService<Khoa, String, KhoaDTO> {
         return entity.getIsActive() != null && entity.getIsActive();
     }
 
-    @Override
-    @Cacheable(value = "khoa")
+    @Cacheable(value = "khoa")  // Bỏ @Override
     public List<KhoaDTO> getAllActive() {
         return khoaRepository.findByIsActiveTrue().stream()
                 .map(this::toDTO)
@@ -123,5 +122,12 @@ public class KhoaService extends BaseService<Khoa, String, KhoaDTO> {
         log.debug("Tìm khoa theo mã khoa {} từ database", maKhoa);
         return toDTO(khoaRepository.findById(maKhoa)
                 .orElseThrow(() -> new ResourceNotFoundException("Khoa", "mã khoa", maKhoa)));
+    }
+
+    @Cacheable(value = "khoa")
+    public List<KhoaDTO> getActiveKhoas() {  // Đổi tên method
+        return khoaRepository.findByIsActiveTrue().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 }
