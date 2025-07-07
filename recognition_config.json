@@ -1,0 +1,24 @@
+{
+  "recognition_threshold": 0.45,
+  "quality_threshold": 0.8,
+  "target_fps": 7.898923465687323,
+  "detection_scales": [
+    [
+      320,
+      320
+    ],
+    [
+      416,
+      416
+    ],
+    [
+      512,
+      512
+    ],
+    [
+      640,
+      640
+    ]
+  ],
+  "last_updated": 1751818272.330521
+}

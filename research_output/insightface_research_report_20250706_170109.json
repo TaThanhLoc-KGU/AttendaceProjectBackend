@@ -1,0 +1,65 @@
+{
+  "success": true,
+  "model_name": "buffalo_l",
+  "total_students": 1,
+  "success_count": 1,
+  "failed_count": 0,
+  "success_rate": 100.0,
+  "total_processing_time": 1.7718493938446045,
+  "avg_time_per_student": 1.7718493938446045,
+  "statistics": {
+    "total_processed": 6,
+    "total_faces_detected": 6,
+    "embedding_extracted": 6,
+    "quality_analysis": [],
+    "model_performance": {}
+  },
+  "results": {
+    "21072006095": {
+      "student_id": "21072006095",
+      "status": "success",
+      "message": "✅ Thành công - Chất lượng kém - cần chụp lại ảnh",
+      "face_count": 6,
+      "embedding_quality": {
+        "num_embeddings": 6,
+        "cosine_similarities": [
+          1.0000001192092896,
+          0.45620518922805786,
+          0.518427848815918,
+          0.512058436870575,
+          0.29804110527038574,
+          0.45620518922805786,
+          0.518427848815918,
+          0.512058436870575,
+          0.29804110527038574,
+          0.3239929974079132,
+          0.5905611515045166,
+          0.22529709339141846,
+          0.36738425493240356,
+          0.14182673394680023,
+          0.3748149573802948
+        ],
+        "mean_similarity": 0.43955621123313904,
+        "std_similarity": 0.19283272325992584,
+        "min_similarity": 0.14182673394680023,
+        "max_similarity": 1.0000001192092896,
+        "embedding_norms": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "mean_norm": 1.0,
+        "std_norm": 0.0,
+        "quality_score": 0.35479538999523763,
+        "recommendation": "Chất lượng kém - cần chụp lại ảnh"
+      },
+      "processing_time": 1.7716269493103027,
+      "image_count": 6,
+      "backend_saved": true,
+      "ensemble_norm": 0.9999999403953552
+    }
+  }
+}

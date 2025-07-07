@@ -1,0 +1,51 @@
+{
+  "success": true,
+  "model_name": "buffalo_l",
+  "total_students": 1,
+  "success_count": 1,
+  "failed_count": 0,
+  "success_rate": 100.0,
+  "total_processing_time": 1.5472760200500488,
+  "avg_time_per_student": 1.5472760200500488,
+  "processing_stats": {
+    "total_images_processed": 6,
+    "total_faces_detected": 6,
+    "successful_extractions": 6,
+    "failed_extractions": 0,
+    "preprocessing_improved": 0,
+    "quality_metrics": []
+  },
+  "results": {
+    "21072006095": {
+      "student_id": "21072006095",
+      "status": "success",
+      "message": "✅ Success - Poor quality - retake all photos with better lighting/angles",
+      "face_count": 6,
+      "embedding_quality": {
+        "num_embeddings": 6,
+        "mean_similarity": 0.4586641192436218,
+        "std_similarity": 0.191040500998497,
+        "min_similarity": 0.1369258016347885,
+        "max_similarity": 0.9999999403953552,
+        "embedding_norms": [
+          0.9999999403953552,
+          0.9999999403953552,
+          1.0,
+          0.9999999403953552,
+          1.0,
+          1.0
+        ],
+        "mean_norm": 0.9999999701976776,
+        "std_norm": 2.9802322387695312e-08,
+        "consistency_score": 0.37104069611328594,
+        "quality_score": 0.3710406850554115,
+        "recommendation": "Poor quality - retake all photos with better lighting/angles"
+      },
+      "processing_time": 1.5470809936523438,
+      "model_used": "buffalo_l",
+      "image_count": 6,
+      "backend_saved": true,
+      "ensemble_norm": 1.0
+    }
+  }
+}
