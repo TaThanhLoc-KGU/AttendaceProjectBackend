@@ -239,24 +239,80 @@
     </style>
 </head>
 <body>
+<!-- Main Wrapper -->
 <div class="main-wrapper">
     <!-- Include Sidebar Component -->
     <div th:replace="~{components/sidebar :: sidebar}"></div>
 
     <!-- Main Content -->
     <div class="main-content">
-        <!-- Header -->
-        <div class="header">
-            <div class="header-content">
-                <div class="header-left">
-                    <button class="sidebar-toggle" id="sidebarToggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <h1 class="page-title">Quản lý Sinh viên</h1>
+        <!-- Page Header -->
+        <div class="page-header mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h4 class="page-title mb-0">
+                        <i class="fas fa-users me-2"></i>Quản lý sinh viên
+                    </h4>
+                    <p class="page-subtitle mb-0">Quản lý thông tin và trích xuất đặc trưng khuôn mặt</p>
                 </div>
-                <div class="header-right">
-                    <div class="user-info">
-                        <span th:text="'Xin chào, ' + ${session.user?.hoTen ?: 'Admin'}">Xin chào, Admin</span>
+
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#studentModal"
+                            onclick="sinhVienManager.addStudent()">
+                        <i class="fas fa-plus me-2"></i>Thêm sinh viên
+                    </button>
+
+                    <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importModal">
+                        <i class="fas fa-file-excel me-2"></i>Import Excel
+                    </button>
+
+                    <!-- Enhanced Feature Extraction Dropdown -->
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-brain me-2"></i>Trích xuất AI
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="fas fa-robot me-1"></i>Python AI Extraction
+                                </h6>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="sinhVienManager.batchExtractFeatures()">
+                                    <i class="fas fa-users me-2 text-primary"></i>
+                                    Trích xuất tất cả sinh viên
+                                    <small class="d-block text-muted">Chạy Python script cho tất cả</small>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="fas fa-cog me-1"></i>Hệ thống
+                                </h6>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="sinhVienManager.checkPythonEnvironment()">
+                                    <i class="fas fa-python me-2 text-info"></i>
+                                    Kiểm tra Python
+                                    <small class="d-block text-muted">Kiểm tra venv và packages</small>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="sinhVienManager.showBatchExtractionStatus()">
+                                    <i class="fas fa-chart-line me-2 text-success"></i>
+                                    Trạng thái extraction
+                                    <small class="d-block text-muted">Xem progress và logs</small>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-warning" href="#" onclick="sinhVienManager.stopBatchExtraction()">
+                                    <i class="fas fa-stop me-2"></i>
+                                    Dừng extraction
+                                    <small class="d-block text-muted">Dừng quá trình đang chạy</small>
+                                </a>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -340,7 +396,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>&nbsp;</label>
+                    <label> </label>
                     <button class="btn btn-primary" onclick="sinhVienManager.showAddModal()">
                         <i class="fas fa-plus me-2"></i>Thêm sinh viên
                     </button>
@@ -450,124 +506,118 @@
     </div>
 </div>
 
-<!-- Add/Edit Student Modal -->
-<div class="modal fade admin-modal" id="sinhvienModal" tabindex="-1">
+<!-- Enhanced Student Modal với Python Extraction -->
+<div class="modal fade admin-modal" id="studentModal" tabindex="-1">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalTitle">Thêm sinh viên mới</h5>
+                <h5 class="modal-title" id="studentModalTitle">Thêm sinh viên mới</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="sinhvienForm">
+                <form id="studentForm">
+                    <!-- Existing form fields... -->
                     <div class="row">
-                        <!-- Left Column - Basic Info -->
                         <div class="col-md-6">
-                            <h6 class="fw-bold mb-3">Thông tin cơ bản</h6>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="maSv" class="form-label">Mã sinh viên <span class="text-danger">*</span></label>
-                                    <input type="text" id="maSv" name="maSv" class="form-control" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="hoTen" class="form-label">Họ và tên <span class="text-danger">*</span></label>
-                                    <input type="text" id="hoTen" name="hoTen" class="form-control" required>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="email" class="form-label">Email</label>
-                                    <input type="email" id="email" name="email" class="form-control">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="gioiTinh" class="form-label">Giới tính</label>
-                                    <select id="gioiTinh" name="gioiTinh" class="form-select">
-                                        <option value="">Chọn giới tính</option>
-                                        <option value="NAM">Nam</option>
-                                        <option value="NU">Nữ</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="ngaySinh" class="form-label">Ngày sinh</label>
-                                    <input type="date" id="ngaySinh" name="ngaySinh" class="form-control">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="maLop" class="form-label">Lớp <span class="text-danger">*</span></label>
-                                    <select id="maLop" name="maLop" class="form-select" required>
-                                        <option value="">Chọn lớp</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <!-- Profile Image Upload -->
                             <div class="mb-3">
-                                <label class="form-label">Ảnh đại diện</label>
-                                <div class="upload-drop-zone" id="profileUploadZone">
-                                    <div id="profilePreview" class="d-none">
-                                        <img id="profileImg" src="/placeholder.svg" alt="Profile" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
-                                        <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="sinhVienManager.removeProfileImage()">
-                                            <i class="fas fa-trash"></i> Xóa ảnh
-                                        </button>
-                                    </div>
-                                    <div id="profileUploadPlaceholder">
-                                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-2"></i>
-                                        <p class="mb-0">Kéo thả ảnh vào đây hoặc click để chọn</p>
-                                        <small class="text-muted">Hỗ trợ: JPG, PNG, WEBP (tối đa 5MB)</small>
-                                    </div>
-                                </div>
-                                <input type="file" id="profileImageFile" accept="image/*" style="display: none;">
+                                <label class="form-label">Mã sinh viên <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="maSv" required>
                             </div>
                         </div>
-
-                        <!-- Right Column - Face Recognition -->
                         <div class="col-md-6">
-                            <h6 class="fw-bold mb-3">Nhận diện khuôn mặt</h6>
-
-                            <!-- Face Images Upload -->
                             <div class="mb-3">
-                                <label class="form-label">Ảnh khuôn mặt (tối đa 5 ảnh)</label>
-                                <div class="upload-drop-zone mb-3" id="faceUploadZone">
-                                    <i class="fas fa-user-plus fa-3x text-muted mb-2"></i>
-                                    <p class="mb-0">Tải lên ảnh khuôn mặt</p>
-                                    <small class="text-muted">Khuyến nghị: 1 ảnh chính diện + 4 ảnh góc khác</small>
-                                </div>
-                                <input type="file" id="faceImageFile" accept="image/*" multiple style="display: none;">
+                                <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="hoTen" required>
+                            </div>
+                        </div>
+                    </div>
 
-                                <!-- Face Images Grid -->
-                                <div class="face-images-grid" id="faceImagesGrid">
-                                    <!-- Face images will be displayed here -->
-                                </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Mã lớp</label>
+                                <input type="text" class="form-control" id="maLop">
+                            </div>
+                        </div>
+                    </div>
 
-                                <div class="progress-container" id="uploadProgress" style="display: none;">
-                                    <div class="progress">
-                                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    <!-- Image Upload Section -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-images me-2"></i>Upload ảnh khuôn mặt
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <!-- Profile Image -->
+                            <div class="mb-4">
+                                <label class="form-label">Ảnh profile</label>
+                                <div class="profile-upload-area" onclick="sinhVienManager.triggerProfileUpload()">
+                                    <input type="file" id="profileImageInput" accept="image/*" style="display: none;"
+                                           onchange="sinhVienManager.handleProfileUpload(event)">
+                                    <div id="profilePreview" class="upload-preview">
+                                        <i class="fas fa-user-circle fa-3x text-muted"></i>
+                                        <p class="mt-2 mb-0">Click để upload ảnh profile</p>
+                                        <small class="text-muted">JPG, PNG, WEBP (Max 5MB)</small>
                                     </div>
-                                    <small class="text-muted mt-1">Đang tải lên...</small>
                                 </div>
                             </div>
 
-                            <!-- Feature Extraction Section -->
-                            <div class="feature-extraction-section">
-                                <div class="extraction-status" id="extractionStatus">
-                                    <span class="status-indicator empty" id="statusIndicator"></span>
-                                    <span id="statusText">Chưa có đặc trưng</span>
+                            <!-- Face Images -->
+                            <div class="mb-4">
+                                <label class="form-label">Ảnh khuôn mặt (tối thiểu 3 ảnh)</label>
+                                <div class="face-upload-grid" id="faceUploadGrid">
+                                    <!-- Face upload slots will be generated by JavaScript -->
                                 </div>
-
-                                <button type="button" class="btn btn-info btn-sm" id="extractFeaturesBtn"
-                                        onclick="sinhVienManager.extractFeatures()" disabled>
-                                    <i class="fas fa-magic me-2"></i>Trích xuất đặc trưng
+                                <button type="button" class="btn btn-outline-primary btn-sm mt-2"
+                                        onclick="sinhVienManager.addFaceUploadSlot()">
+                                    <i class="fas fa-plus me-1"></i>Thêm ảnh khuôn mặt
                                 </button>
+                            </div>
 
-                                <div class="mt-2">
-                                    <small class="text-muted">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        Cần có ít nhất 1 ảnh khuôn mặt để trích xuất đặc trưng
-                                    </small>
+                            <!-- AI Feature Extraction Section -->
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-brain me-2"></i>Trích xuất đặc trưng AI
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="feature-extraction-status mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="status-indicator empty me-3" id="aiStatusIndicator"></div>
+                                            <div>
+                                                <div class="fw-bold" id="aiStatusText">Chưa có đặc trưng AI</div>
+                                                <small class="text-muted" id="aiStatusDetail">Cần upload ảnh khuôn mặt trước</small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <button type="button" class="btn btn-primary" id="extractAIFeaturesBtn"
+                                                onclick="sinhVienManager.extractFeatures()" disabled>
+                                            <i class="fas fa-brain me-2"></i>Trích xuất bằng Python AI
+                                        </button>
+
+                                        <button type="button" class="btn btn-outline-info btn-sm"
+                                                onclick="sinhVienManager.showAIExtractionInfo()">
+                                            <i class="fas fa-info-circle me-1"></i>Thông tin AI
+                                        </button>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-lightbulb me-1"></i>
+                                            <strong>Python AI Extraction:</strong> Sử dụng InsightFace model để trích xuất đặc trưng
+                                            chất lượng cao với độ chính xác 99.8%. Cần ít nhất 3 ảnh khuôn mặt rõ nét.
+                                        </small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -577,7 +627,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                 <button type="button" class="btn btn-primary" onclick="sinhVienManager.saveStudent()">
-                    <i class="fas fa-save me-2"></i>Lưu
+                    <i class="fas fa-save me-2"></i>Lưu sinh viên
                 </button>
             </div>
         </div>
@@ -698,6 +748,139 @@
     </div>
 </div>
 
+<!-- AI Feature Extraction Progress Modal -->
+<div class="modal fade" id="aiExtractionModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">
+                    <i class="fas fa-brain me-2 text-primary"></i>Trích xuất đặc trưng AI
+                </h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="extraction-animation mb-4">
+                    <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;">
+                        <span class="visually-hidden">Đang xử lý...</span>
+                    </div>
+                </div>
+
+                <h6 id="extractionStatusTitle">Đang khởi động Python AI...</h6>
+                <p class="text-muted" id="extractionStatusDetail">Vui lòng đợi trong giây lát</p>
+
+                <div class="progress mb-3" style="height: 8px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                         role="progressbar" style="width: 0%" id="extractionProgressBar"></div>
+                </div>
+
+                <div class="extraction-steps">
+                    <small class="text-muted">
+                        <div class="step" id="step1">📸 Đọc ảnh khuôn mặt...</div>
+                        <div class="step" id="step2">🔍 Phát hiện khuôn mặt...</div>
+                        <div class="step" id="step3">🧠 Trích xuất đặc trưng...</div>
+                        <div class="step" id="step4">💾 Lưu vào database...</div>
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="sinhVienManager.cancelExtraction()">
+                    <i class="fas fa-times me-1"></i>Hủy
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Batch Extraction Monitor Modal -->
+<div class="modal fade" id="batchExtractionModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-users me-2"></i>Trích xuất hàng loạt - Python AI
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Batch Progress Overview -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <div class="stat-number" id="batchTotalStudents">0</div>
+                                <div class="stat-label">Tổng sinh viên</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <div class="stat-number" id="batchSuccessCount">0</div>
+                                <div class="stat-label">Thành công</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body text-center">
+                                <div class="stat-number" id="batchFailedCount">0</div>
+                                <div class="stat-label">Thất bại</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <div class="stat-number" id="batchSuccessRate">0%</div>
+                                <div class="stat-label">Tỷ lệ thành công</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Progress -->
+                <div class="progress-container">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold">Tiến độ chung</span>
+                        <span id="batchOverallProgress">0%</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 12px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                             role="progressbar" style="width: 0%" id="batchMainProgressBar"></div>
+                    </div>
+
+                    <div class="current-processing">
+                        <small class="text-muted">
+                            Đang xử lý: <span class="fw-bold" id="batchCurrentStudent">-</span>
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Real-time Log -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-terminal me-2"></i>Log trích xuất thời gian thực
+                        </h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="log-container" id="batchLogContainer" style="height: 300px; overflow-y: auto; background: #f8f9fa; padding: 15px; font-family: monospace; font-size: 12px;">
+                            <div class="log-entry">🚀 Bắt đầu quá trình trích xuất hàng loạt...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="sinhVienManager.stopBatchExtraction()">
+                    <i class="fas fa-stop me-2"></i>Dừng extraction
+                </button>
+                <button type="type" class="btn btn-secondary" data-bs-dismiss="modal" disabled id="batchCloseBtn">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Loading Overlay -->
 <div class="loading-overlay" id="globalLoading" style="display: none;">
     <div class="text-center">
@@ -705,6 +888,146 @@
         <p class="mt-2">Đang xử lý...</p>
     </div>
 </div>
+
+<!-- Enhanced CSS for AI features -->
+<style>
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .status-indicator.empty {
+        background-color: #6c757d;
+    }
+
+    .status-indicator.processing {
+        background-color: #ffc107;
+        animation: pulse 1.5s infinite;
+    }
+
+    .status-indicator.success {
+        background-color: #28a745;
+    }
+
+    .status-indicator.error {
+        background-color: #dc3545;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    .profile-upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 40px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .profile-upload-area:hover {
+        border-color: #007bff;
+        background-color: #f8f9ff;
+    }
+
+    .face-upload-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .face-upload-slot {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .face-upload-slot:hover {
+        border-color: #007bff;
+        background-color: #f8f9ff;
+    }
+
+    .face-upload-slot img {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 6px;
+    }
+
+    .face-upload-slot .remove-btn {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .extraction-steps .step {
+        padding: 2px 0;
+        opacity: 0.5;
+        transition: opacity 0.3s ease;
+    }
+
+    .extraction-steps .step.active {
+        opacity: 1;
+        font-weight: bold;
+    }
+
+    .log-container .log-entry {
+        margin-bottom: 5px;
+        padding: 2px 0;
+    }
+
+    .log-container .log-entry.success {
+        color: #28a745;
+    }
+
+    .log-container .log-entry.error {
+        color: #dc3545;
+    }
+
+    .log-container .log-entry.info {
+        color: #007bff;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        display: block;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+
+    .progress-container {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+    }
+</style>
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -2298,6 +2621,1345 @@
             this.updateStats();
             this.showAlert('Dữ liệu đã được làm mới', 'info');
         }
+
+        async extractFeatures() {
+            if (!this.data.currentStudentId) {
+                this.showAlert('Vui lòng lưu sinh viên trước khi trích xuất đặc trưng', 'warning');
+                return;
+            }
+
+            if (this.data.faceImages.length === 0) {
+                this.showAlert('Cần có ít nhất 1 ảnh khuôn mặt để trích xuất đặc trưng', 'warning');
+                return;
+            }
+
+            try {
+                // Update UI to processing state
+                this.updateExtractionUI('processing');
+
+                // Show progress modal
+                this.showExtractionProgress();
+
+                // Call Python extraction API
+                const response = await fetch(`${this.API_BASE}/python/extract/${this.data.currentStudentId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                // Hide progress modal
+                this.hideExtractionProgress();
+
+                if (result.status === 'success') {
+                    // Update UI to success state
+                    this.updateExtractionUI('success');
+
+                    // Show detailed success message
+                    this.showExtractionResult(result);
+
+                    this.showAlert('Trích xuất đặc trưng thành công!', 'success');
+                } else {
+                    // Handle extraction failure
+                    this.updateExtractionUI('error');
+                    this.showExtractionError(result);
+                }
+
+            } catch (error) {
+                console.error('Feature extraction error:', error);
+
+                // Hide progress modal
+                this.hideExtractionProgress();
+
+                // Update UI to error state
+                this.updateExtractionUI('error');
+
+                // Show error message
+                let errorMessage = 'Lỗi trích xuất đặc trưng: ' + error.message;
+
+                if (error.message.includes('404')) {
+                    errorMessage = 'Python service chưa sẵn sàng. Vui lòng kiểm tra cấu hình.';
+                } else if (error.message.includes('500')) {
+                    errorMessage = 'Lỗi server. Vui lòng kiểm tra Python environment và logs.';
+                }
+
+                this.showAlert(errorMessage, 'error');
+            }
+        }
+
+        /**
+         * Trích xuất đặc trưng cho tất cả sinh viên
+         */
+        // THAY THẾ METHOD batchExtractFeatures() TRONG sinhvien.html
+
+        async batchExtractFeatures() {
+            const confirmResult = await Swal.fire({
+                title: 'Xác nhận Python AI Batch',
+                html: `
+            <div class="text-start">
+                <p><strong>Quá trình này sẽ:</strong></p>
+                <ul>
+                    <li>🧠 Sử dụng Python AI (InsightFace)</li>
+                    <li>📸 Quét tất cả thư mục sinh viên</li>
+                    <li>💾 Lưu embedding vào database</li>
+                    <li>⏱️ Thời gian ước tính: 2-5 phút</li>
+                </ul>
+            </div>
+        `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '🚀 Bắt đầu',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#007bff',
+                width: '500px'
+            });
+
+            if (!confirmResult.isConfirmed) return;
+
+            try {
+                // Show progress
+                Swal.fire({
+                    title: 'Đang chạy Python AI...',
+                    html: `
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p>Đang trích xuất đặc trưng bằng InsightFace AI...</p>
+                    <small class="text-muted">Quá trình này có thể mất vài phút</small>
+                </div>
+            `,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false
+                });
+
+                // GỌI ENDPOINT MỚI - QUAN TRỌNG!
+                const response = await fetch(`${this.API_BASE}/python/extract-all`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                Swal.close();
+
+                if (result.status === 'success') {
+                    // Parse thông tin từ output
+                    const output = result.output || '';
+                    const lines = output.split('\n');
+
+                    // Tìm thông tin thống kê
+                    let totalStudents = 0;
+                    let successCount = 0;
+                    let successRate = 0;
+
+                    // Parse từ output của Python
+                    const statsLine = lines.find(line => line.includes('Hoàn thành xử lý. Thành công:'));
+                    if (statsLine) {
+                        const match = statsLine.match(/Thành công: (\d+)\/(\d+) \((\d+\.?\d*)%\)/);
+                        if (match) {
+                            successCount = parseInt(match[1]);
+                            totalStudents = parseInt(match[2]);
+                            successRate = parseFloat(match[3]);
+                        }
+                    }
+
+                    await Swal.fire({
+                        title: '🎉 Python AI Batch Hoàn thành!',
+                        html: `
+                    <div class="text-start">
+                        <h6>📊 Kết quả trích xuất:</h6>
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="card border-primary">
+                                    <div class="card-body text-center">
+                                        <h4 class="text-primary">${totalStudents}</h4>
+                                        <small>Tổng sinh viên</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="card border-success">
+                                    <div class="card-body text-center">
+                                        <h4 class="text-success">${successCount}</h4>
+                                        <small>Thành công</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="card border-info">
+                                    <div class="card-body text-center">
+                                        <h4 class="text-info">${successRate.toFixed(1)}%</h4>
+                                        <small>Tỷ lệ thành công</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <button class="btn btn-info btn-sm w-100" onclick="sinhVienManager.showDetailedLogs()">
+                                <i class="fas fa-list me-2"></i>Xem logs chi tiết
+                            </button>
+                        </div>
+                    </div>
+                `,
+                        icon: successRate > 80 ? 'success' : successRate > 50 ? 'warning' : 'error',
+                        confirmButtonText: 'OK',
+                        width: '600px'
+                    });
+
+                    // Store logs for detailed view
+                    this.lastExtractionLogs = result.output;
+
+                    // Refresh data
+                    this.loadData();
+                    this.updateStats();
+
+                } else {
+                    throw new Error(result.message || 'Python batch extraction failed');
+                }
+
+            } catch (error) {
+                console.error('Batch extraction error:', error);
+
+                Swal.close();
+
+                await Swal.fire({
+                    title: '❌ Lỗi Python AI Batch',
+                    html: `
+                <div class="text-start">
+                    <p><strong>Lỗi:</strong> ${error.message}</p>
+                    <div class="mt-3">
+                        <h6>🔧 Các bước khắc phục:</h6>
+                        <ol>
+                            <li>Kiểm tra Python environment</li>
+                            <li>Đảm bảo virtual environment đã activate</li>
+                            <li>Kiểm tra script face_feature_extractor.py</li>
+                            <li>Xem logs Spring Boot để biết chi tiết</li>
+                        </ol>
+                    </div>
+                </div>
+            `,
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    width: '500px'
+                });
+            }
+        }
+
+// THÊM METHOD MỚI để hiển thị logs chi tiết
+        showDetailedLogs() {
+            if (!this.lastExtractionLogs) {
+                this.showAlert('Không có logs để hiển thị', 'warning');
+                return;
+            }
+
+            Swal.fire({
+                title: '📋 Chi tiết Python AI Logs',
+                html: `
+            <div class="text-start" style="max-height: 400px; overflow-y: auto;">
+                <pre style="font-size: 12px; background: #f8f9fa; padding: 15px; border-radius: 5px;">${this.lastExtractionLogs}</pre>
+            </div>
+        `,
+                confirmButtonText: 'Đóng',
+                width: '800px'
+            });
+        }
+
+// THÊM METHOD kiểm tra Python environment
+        async checkPythonEnvironment() {
+            try {
+                Swal.fire({
+                    title: 'Đang kiểm tra Python AI...',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const response = await fetch(`${this.API_BASE}/python/check-environment`);
+                const result = await response.json();
+
+                Swal.close();
+
+                if (result.status === 'success') {
+                    Swal.fire({
+                        title: '✅ Python AI Environment OK',
+                        html: `
+                    <div class="text-start">
+                        <h6>🔧 Cấu hình hệ thống:</h6>
+                        <ul>
+                            <li><strong>Virtual Env:</strong> ${result.venvPath}</li>
+                            <li><strong>Script Path:</strong> ${result.scriptPath}</li>
+                            <li><strong>Script File:</strong> ${result.scriptFile}</li>
+                        </ul>
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Tất cả packages AI đã sẵn sàng: InsightFace, OpenCV, NumPy
+                        </div>
+                    </div>
+                `,
+                        icon: 'success',
+                        confirmButtonText: 'OK',
+                        width: '600px'
+                    });
+                } else {
+                    Swal.fire({
+                        title: '❌ Python Environment Error',
+                        html: `
+                    <div class="text-start">
+                        <div class="alert alert-danger">
+                            <strong>Lỗi:</strong> ${result.message}
+                        </div>
+                        <h6>🔧 Cách khắc phục:</h6>
+                        <ol>
+                            <li>Kiểm tra virtual environment tồn tại</li>
+                            <li>Cài đặt packages: <code>pip install insightface opencv-python numpy</code></li>
+                            <li>Restart Spring Boot application</li>
+                        </ol>
+                    </div>
+                `,
+                        icon: 'error',
+                        confirmButtonText: 'OK',
+                        width: '600px'
+                    });
+                }
+
+            } catch (error) {
+                Swal.close();
+                console.error('Error checking Python environment:', error);
+                this.showAlert('Lỗi kiểm tra Python environment: ' + error.message, 'error');
+            }
+        }
+
+        /**
+         * Hiển thị progress modal cho trích xuất cá nhân
+         */
+        showExtractionProgress() {
+            Swal.fire({
+                title: 'Đang trích xuất đặc trưng...',
+                html: `
+                <div class="progress mb-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated"
+                         role="progressbar" style="width: 100%"></div>
+                </div>
+                <p id="extractionStatus">Đang xử lý ảnh khuôn mặt...</p>
+            `,
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+
+        /**
+         * Ẩn progress modal
+         */
+        hideExtractionProgress() {
+            Swal.close();
+        }
+
+        /**
+         * Hiển thị kết quả trích xuất thành công
+         */
+        showExtractionResult(result) {
+            const metadata = result.metadata || {};
+            const qualityInfo = metadata.quality_info || {};
+            const embeddingInfo = metadata.embedding_info || {};
+
+            Swal.fire({
+                title: 'Trích xuất thành công!',
+                html: `
+                <div class="text-start">
+                    <h6>📊 Thông tin trích xuất:</h6>
+                    <ul>
+                        <li><strong>Số embedding:</strong> ${qualityInfo.num_embeddings || 'N/A'}</li>
+                        <li><strong>Chất lượng:</strong> ${qualityInfo.recommendation || 'N/A'}</li>
+                        <li><strong>Similarity trung bình:</strong> ${qualityInfo.avg_similarity ? (qualityInfo.avg_similarity * 100).toFixed(1) + '%' : 'N/A'}</li>
+                        <li><strong>Kích thước embedding:</strong> ${embeddingInfo.dimension || 'N/A'} dimensions</li>
+                    </ul>
+                </div>
+            `,
+                icon: 'success',
+                confirmButtonText: 'OK'
+            });
+        }
+
+        /**
+         * Hiển thị lỗi trích xuất
+         */
+        showExtractionError(result) {
+            Swal.fire({
+                title: 'Trích xuất thất bại',
+                text: result.message || 'Có lỗi xảy ra trong quá trình trích xuất đặc trưng',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
+
+        /**
+         * Hiển thị progress modal cho trích xuất hàng loạt
+         */
+        showBatchExtractionProgress() {
+            let progressInterval;
+
+            Swal.fire({
+                title: 'Trích xuất hàng loạt đang chạy...',
+                html: `
+                <div class="mb-3">
+                    <div class="progress">
+                        <div id="batchProgress" class="progress-bar progress-bar-striped progress-bar-animated"
+                             role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div id="batchStatus" class="text-center">
+                    <p>Đang khởi động...</p>
+                    <small class="text-muted">Sinh viên hiện tại: <span id="currentStudent">-</span></small>
+                </div>
+                <div class="mt-3">
+                    <button class="btn btn-danger btn-sm" onclick="sinhVienManager.stopBatchExtraction()">
+                        <i class="fas fa-stop me-1"></i>Dừng
+                    </button>
+                </div>
+            `,
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                showCancelButton: false,
+                didOpen: () => {
+                    // Bắt đầu polling progress
+                    progressInterval = setInterval(() => {
+                        this.updateBatchProgress();
+                    }, 2000);
+                },
+                willClose: () => {
+                    if (progressInterval) {
+                        clearInterval(progressInterval);
+                    }
+                }
+            });
+        }
+
+        /**
+         * Cập nhật progress của batch extraction
+         */
+        async updateBatchProgress() {
+            try {
+                const response = await fetch(`${this.API_BASE}/python/progress`);
+                const progress = await response.json();
+
+                const progressBar = document.getElementById('batchProgress');
+                const statusDiv = document.getElementById('batchStatus');
+                const currentStudentSpan = document.getElementById('currentStudent');
+
+                if (progress.status === 'completed') {
+                    // Hoàn thành
+                    progressBar.style.width = '100%';
+                    progressBar.className = 'progress-bar bg-success';
+                    statusDiv.innerHTML = '<p class="text-success">✅ Hoàn thành!</p>';
+
+                    setTimeout(() => {
+                        Swal.close();
+                        this.showBatchExtractionResults(progress.result);
+                    }, 1500);
+
+                } else if (progress.status === 'error') {
+                    // Lỗi
+                    progressBar.className = 'progress-bar bg-danger';
+                    statusDiv.innerHTML = '<p class="text-danger">❌ Có lỗi xảy ra</p>';
+
+                    setTimeout(() => {
+                        Swal.close();
+                        this.showAlert('Lỗi batch extraction: ' + progress.error, 'error');
+                    }, 1500);
+
+                } else if (progress.status === 'running') {
+                    // Đang chạy
+                    if (progress.currentStudent) {
+                        currentStudentSpan.textContent = progress.currentStudent;
+                    }
+
+                    // Estimate progress dựa trên thời gian
+                    const elapsed = Date.now() - progress.startTime;
+                    const estimatedProgress = Math.min(90, (elapsed / (5 * 60 * 1000)) * 100); // 5 phút ước tính
+                    progressBar.style.width = estimatedProgress + '%';
+                }
+
+            } catch (error) {
+                console.error('Error updating batch progress:', error);
+            }
+        }
+
+        /**
+         * Dừng batch extraction
+         */
+        async stopBatchExtraction() {
+            try {
+                const response = await fetch(`${this.API_BASE}/python/stop`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                Swal.close();
+                this.showAlert(result.message, result.status === 'success' ? 'info' : 'error');
+
+            } catch (error) {
+                console.error('Error stopping batch extraction:', error);
+                this.showAlert('Lỗi dừng extraction', 'error');
+            }
+        }
+
+        /**
+         * Hiển thị kết quả batch extraction
+         */
+        showBatchExtractionResults(results) {
+            if (!results) {
+                this.showAlert('Không có kết quả từ batch extraction', 'warning');
+                return;
+            }
+
+            const successCount = results.success_count || 0;
+            const totalCount = results.total_students || 0;
+            const successRate = results.success_rate || 0;
+
+            Swal.fire({
+                title: 'Kết quả trích xuất hàng loạt',
+                html: `
+                <div class="text-start">
+                    <h6>📊 Thống kê tổng quan:</h6>
+                    <ul>
+                        <li><strong>Tổng sinh viên:</strong> ${totalCount}</li>
+                        <li><strong>Thành công:</strong> <span class="text-success">${successCount}</span></li>
+                        <li><strong>Thất bại:</strong> <span class="text-danger">${totalCount - successCount}</span></li>
+                        <li><strong>Tỷ lệ thành công:</strong> <span class="text-info">${successRate.toFixed(1)}%</span></li>
+                    </ul>
+
+                    <div class="mt-3">
+                        <button class="btn btn-info btn-sm" onclick="sinhVienManager.showDetailedResults()">
+                            <i class="fas fa-list me-1"></i>Xem chi tiết
+                        </button>
+                    </div>
+                </div>
+            `,
+                icon: successRate > 80 ? 'success' : successRate > 50 ? 'warning' : 'error',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                // Refresh danh sách sinh viên để cập nhật trạng thái
+                this.loadStudents();
+            });
+
+            // Lưu kết quả để xem chi tiết
+            this.lastBatchResults = results;
+        }
+
+        /**
+         * Hiển thị kết quả chi tiết
+         */
+        showDetailedResults() {
+            if (!this.lastBatchResults || !this.lastBatchResults.results) {
+                this.showAlert('Không có kết quả chi tiết', 'warning');
+                return;
+            }
+
+            const results = this.lastBatchResults.results;
+            let successList = [];
+            let failedList = [];
+
+            Object.entries(results).forEach(([maSv, result]) => {
+                if (result.status === 'success') {
+                    successList.push(`✅ ${maSv}: ${result.message}`);
+                } else {
+                    failedList.push(`❌ ${maSv}: ${result.message}`);
+                }
+            });
+
+            const htmlContent = `
+            <div class="text-start" style="max-height: 400px; overflow-y: auto;">
+                ${successList.length > 0 ? `
+                    <h6 class="text-success">Thành công (${successList.length}):</h6>
+                    <ul class="list-unstyled small">
+                        ${successList.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                ` : ''}
+
+                ${failedList.length > 0 ? `
+                    <h6 class="text-danger mt-3">Thất bại (${failedList.length}):</h6>
+                    <ul class="list-unstyled small">
+                        ${failedList.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                ` : ''}
+            </div>
+        `;
+
+            Swal.fire({
+                title: 'Chi tiết kết quả',
+                html: htmlContent,
+                width: '600px',
+                confirmButtonText: 'Đóng'
+            });
+        }
+
+        /**
+         * Kiểm tra Python environment
+         */
+        async checkPythonEnvironment() {
+            try {
+                Swal.fire({
+                    title: 'Đang kiểm tra Python environment...',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const response = await fetch(`${this.API_BASE}/python/check-environment`);
+                const result = await response.json();
+
+                Swal.close();
+
+                if (result.status === 'success') {
+                    Swal.fire({
+                        title: 'Python Environment OK',
+                        html: `
+                        <div class="text-start">
+                            <p><strong>✅ Trạng thái:</strong> Sẵn sàng</p>
+                            <p><strong>📁 Virtual Env:</strong> ${result.venvPath}</p>
+                            <p><strong>📄 Script Path:</strong> ${result.scriptPath}</p>
+                            <p><strong>📦 Packages:</strong> insightface, numpy, cv2</p>
+                        </div>
+                    `,
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Python Environment Error',
+                        text: result.message,
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+
+            } catch (error) {
+                Swal.close();
+                console.error('Error checking Python environment:', error);
+                this.showAlert('Lỗi kiểm tra Python environment: ' + error.message, 'error');
+            }
+        }
+
+        /**
+         * Hiển thị trạng thái batch extraction
+         */
+        showBatchExtractionStatus() {
+            // Redirect tới trang batch extraction hoặc hiển thị modal status
+            this.checkPythonEnvironment();
+        }
+
+        /**
+         * Update UI extraction button state
+         */
+        updateExtractionUI(state) {
+            const btn = document.getElementById('extractFeaturesBtn');
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+
+            if (!btn) return;
+
+            switch (state) {
+                case 'processing':
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+                    btn.className = 'btn btn-warning btn-sm';
+                    btn.disabled = true;
+                    if (statusIndicator) {
+                        statusIndicator.className = 'status-indicator processing';
+                    }
+                    if (statusText) {
+                        statusText.textContent = 'Đang trích xuất...';
+                    }
+                    break;
+
+                case 'success':
+                    btn.innerHTML = '<i class="fas fa-check me-2"></i>Đã có đặc trưng';
+                    btn.className = 'btn btn-success btn-sm';
+                    btn.disabled = true;
+                    if (statusIndicator) {
+                        statusIndicator.className = 'status-indicator success';
+                    }
+                    if (statusText) {
+                        statusText.textContent = 'Đã có đặc trưng';
+                    }
+                    break;
+
+                case 'error':
+                    btn.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Lỗi trích xuất';
+                    btn.className = 'btn btn-danger btn-sm';
+                    btn.disabled = false;
+                    if (statusIndicator) {
+                        statusIndicator.className = 'status-indicator error';
+                    }
+                    if (statusText) {
+                        statusText.textContent = 'Lỗi trích xuất';
+                    }
+                    break;
+
+                default:
+                    btn.innerHTML = '<i class="fas fa-magic me-2"></i>Trích xuất đặc trưng';
+                    btn.className = 'btn btn-info btn-sm';
+                    btn.disabled = this.data.faceImages.length === 0;
+                    if (statusIndicator) {
+                        statusIndicator.className = 'status-indicator empty';
+                    }
+                    if (statusText) {
+                        statusText.textContent = 'Chưa có đặc trưng';
+                    }
+                    break;
+            }
+        }
+// Thêm các method này vào class SinhVienManager trong sinhvien.html
+
+        /**
+         * Hiển thị thông tin về AI extraction
+         */
+        showAIExtractionInfo() {
+            Swal.fire({
+                title: '🧠 Python AI Feature Extraction',
+                html: `
+            <div class="text-start">
+                <h6>📋 Thông tin kỹ thuật:</h6>
+                <ul>
+                    <li><strong>Model:</strong> InsightFace Buffalo-L</li>
+                    <li><strong>Embedding Size:</strong> 512 dimensions</li>
+                    <li><strong>Accuracy:</strong> 99.8% trên LFW dataset</li>
+                    <li><strong>Processing Time:</strong> ~2-5 giây/sinh viên</li>
+                </ul>
+
+                <h6>✅ Yêu cầu:</h6>
+                <ul>
+                    <li>Ít nhất 3 ảnh khuôn mặt rõ nét</li>
+                    <li>Khuôn mặt chiếm ít nhất 40x40 pixels</li>
+                    <li>Ánh sáng đều, không bị che mặt</li>
+                    <li>Python environment đã cài đặt</li>
+                </ul>
+
+                <h6>🔧 Quy trình:</h6>
+                <ol>
+                    <li>Phát hiện khuôn mặt trong ảnh</li>
+                    <li>Chuẩn hóa và tiền xử lý</li>
+                    <li>Trích xuất đặc trưng 512D</li>
+                    <li>Tạo embedding tổng hợp</li>
+                    <li>Lưu vào database</li>
+                </ol>
+            </div>
+        `,
+                icon: 'info',
+                confirmButtonText: 'Hiểu rồi',
+                width: '600px'
+            });
+        }
+
+        /**
+         * Xử lý upload face images với preview
+         */
+        handleFaceUpload(event, slotIndex) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file
+            if (!this.validateImageFile(file)) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const slot = document.querySelector(`[data-slot-index="${slotIndex}"]`);
+                if (slot) {
+                    slot.innerHTML = `
+                <img src="${e.target.result}" alt="Face ${slotIndex + 1}">
+                <button type="button" class="remove-btn" onclick="sinhVienManager.removeFaceImage(${slotIndex})">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+                }
+
+                // Store file data
+                this.data.faceImages[slotIndex] = {
+                    file: file,
+                    preview: e.target.result,
+                    name: file.name
+                };
+
+                // Update AI extraction button state
+                this.updateAIExtractionButton();
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        /**
+         * Thêm slot upload ảnh khuôn mặt
+         */
+        addFaceUploadSlot() {
+            const grid = document.getElementById('faceUploadGrid');
+            const currentSlots = grid.children.length;
+
+            if (currentSlots >= 8) {
+                this.showAlert('Tối đa 8 ảnh khuôn mặt', 'warning');
+                return;
+            }
+
+            const slotIndex = currentSlots;
+            const slot = document.createElement('div');
+            slot.className = 'face-upload-slot';
+            slot.setAttribute('data-slot-index', slotIndex);
+            slot.onclick = () => this.triggerFaceUpload(slotIndex);
+
+            slot.innerHTML = `
+        <input type="file" accept="image/*" style="display: none;"
+               onchange="sinhVienManager.handleFaceUpload(event, ${slotIndex})">
+        <div class="text-center">
+            <i class="fas fa-plus fa-2x text-muted"></i>
+            <div class="mt-2">
+                <small>Ảnh ${slotIndex + 1}</small>
+            </div>
+        </div>
+    `;
+
+            grid.appendChild(slot);
+        }
+
+        /**
+         * Trigger file input cho face upload
+         */
+        triggerFaceUpload(slotIndex) {
+            const slot = document.querySelector(`[data-slot-index="${slotIndex}"]`);
+            const input = slot.querySelector('input[type="file"]');
+            input.click();
+        }
+
+        /**
+         * Xóa ảnh khuôn mặt
+         */
+        removeFaceImage(slotIndex) {
+            const slot = document.querySelector(`[data-slot-index="${slotIndex}"]`);
+            if (slot) {
+                slot.innerHTML = `
+            <input type="file" accept="image/*" style="display: none;"
+                   onchange="sinhVienManager.handleFaceUpload(event, ${slotIndex})">
+            <div class="text-center">
+                <i class="fas fa-plus fa-2x text-muted"></i>
+                <div class="mt-2">
+                    <small>Ảnh ${slotIndex + 1}</small>
+                </div>
+            </div>
+        `;
+                slot.onclick = () => this.triggerFaceUpload(slotIndex);
+            }
+
+            // Remove from data
+            delete this.data.faceImages[slotIndex];
+
+            // Update button state
+            this.updateAIExtractionButton();
+        }
+
+        /**
+         * Cập nhật trạng thái nút AI extraction
+         */
+        updateAIExtractionButton() {
+            const btn = document.getElementById('extractAIFeaturesBtn');
+            const statusText = document.getElementById('aiStatusText');
+            const statusDetail = document.getElementById('aiStatusDetail');
+            const statusIndicator = document.getElementById('aiStatusIndicator');
+
+            const faceCount = Object.keys(this.data.faceImages).length;
+
+            if (faceCount >= 3) {
+                btn.disabled = false;
+                btn.className = 'btn btn-primary';
+                btn.innerHTML = '<i class="fas fa-brain me-2"></i>Trích xuất bằng Python AI';
+
+                statusText.textContent = 'Sẵn sàng trích xuất';
+                statusDetail.textContent = `${faceCount} ảnh khuôn mặt đã upload`;
+                statusIndicator.className = 'status-indicator empty me-3';
+
+            } else if (faceCount > 0) {
+                btn.disabled = true;
+                btn.className = 'btn btn-warning';
+                btn.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Cần thêm ảnh';
+
+                statusText.textContent = 'Cần thêm ảnh';
+                statusDetail.textContent = `${faceCount}/3 ảnh tối thiểu`;
+                statusIndicator.className = 'status-indicator empty me-3';
+
+            } else {
+                btn.disabled = true;
+                btn.className = 'btn btn-secondary';
+                btn.innerHTML = '<i class="fas fa-upload me-2"></i>Upload ảnh trước';
+
+                statusText.textContent = 'Chưa có ảnh';
+                statusDetail.textContent = 'Cần upload ít nhất 3 ảnh khuôn mặt';
+                statusIndicator.className = 'status-indicator empty me-3';
+            }
+        }
+
+        /**
+         * Validate image file
+         */
+        validateImageFile(file) {
+            // Check file type
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                this.showAlert('Chỉ chấp nhận file JPG, PNG, WEBP', 'error');
+                return false;
+            }
+
+            // Check file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                this.showAlert('File quá lớn. Tối đa 5MB', 'error');
+                return false;
+            }
+
+            return true;
+        }
+
+        /**
+         * Initialize face upload grid
+         */
+        initializeFaceUploadGrid() {
+            const grid = document.getElementById('faceUploadGrid');
+            grid.innerHTML = '';
+
+            // Add 5 initial slots
+            for (let i = 0; i < 5; i++) {
+                this.addFaceUploadSlot();
+            }
+        }
+
+        /**
+         * Cancel extraction process
+         */
+        async cancelExtraction() {
+            try {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('aiExtractionModal'));
+                modal.hide();
+
+                // Call stop API if available
+                await fetch(`${this.API_BASE}/python/stop`, {
+                    method: 'POST'
+                });
+
+                this.showAlert('Đã hủy quá trình trích xuất', 'info');
+            } catch (error) {
+                console.error('Error canceling extraction:', error);
+            }
+        }
+
+        /**
+         * Enhanced batch extraction với real-time updates
+         */
+        async batchExtractFeatures() {
+            const result = await Swal.fire({
+                title: '🚀 Khởi động Python AI Batch',
+                html: `
+            <div class="text-start">
+                <p><strong>Quá trình này sẽ:</strong></p>
+                <ul>
+                    <li>📸 Quét tất cả thư mục sinh viên</li>
+                    <li>🧠 Trích xuất đặc trưng bằng InsightFace</li>
+                    <li>💾 Lưu embedding vào database</li>
+                    <li>⏱️ Thời gian ước tính: 2-5 phút</li>
+                </ul>
+
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Lưu ý:</strong> Đảm bảo Python environment đã được setup và
+                    Face Recognition Service đang chạy.
+                </div>
+            </div>
+        `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#007bff',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fas fa-rocket me-2"></i>Bắt đầu',
+                cancelButtonText: 'Hủy',
+                width: '600px'
+            });
+
+            if (result.isConfirmed) {
+                // Show batch extraction modal
+                this.showBatchExtractionModal();
+
+                // Start batch process
+                await this.startBatchExtraction();
+            }
+        }
+
+        /**
+         * Hiển thị modal batch extraction
+         */
+        showBatchExtractionModal() {
+            const modal = new bootstrap.Modal(document.getElementById('batchExtractionModal'));
+            modal.show();
+
+            // Reset counters
+            document.getElementById('batchTotalStudents').textContent = '0';
+            document.getElementById('batchSuccessCount').textContent = '0';
+            document.getElementById('batchFailedCount').textContent = '0';
+            document.getElementById('batchSuccessRate').textContent = '0%';
+            document.getElementById('batchOverallProgress').textContent = '0%';
+            document.getElementById('batchCurrentStudent').textContent = 'Đang khởi động...';
+
+            // Reset progress bar
+            const progressBar = document.getElementById('batchMainProgressBar');
+            progressBar.style.width = '0%';
+            progressBar.className = 'progress-bar progress-bar-striped progress-bar-animated';
+
+            // Clear log
+            const logContainer = document.getElementById('batchLogContainer');
+            logContainer.innerHTML = '<div class="log-entry">🚀 Khởi động Python AI batch extraction...</div>';
+
+            // Disable close button
+            document.getElementById('batchCloseBtn').disabled = true;
+        }
+
+        /**
+         * Bắt đầu quá trình batch extraction
+         */
+        async startBatchExtraction() {
+            try {
+                this.addLogEntry('📡 Gửi request tới Python service...', 'info');
+
+                const response = await fetch(`${this.API_BASE}/python/extract-all`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.status === 'started') {
+                    this.addLogEntry('✅ Python process started successfully', 'success');
+                    this.addLogEntry('📊 Bắt đầu monitor progress...', 'info');
+
+                    // Start monitoring progress
+                    this.startProgressMonitoring();
+                } else {
+                    throw new Error(result.message || 'Failed to start batch extraction');
+                }
+
+            } catch (error) {
+                console.error('Batch extraction error:', error);
+                this.addLogEntry(`❌ Lỗi khởi động: ${error.message}`, 'error');
+
+                // Enable close button
+                document.getElementById('batchCloseBtn').disabled = false;
+
+                Swal.fire({
+                    title: 'Lỗi khởi động',
+                    text: error.message,
+                    icon: 'error'
+                });
+            }
+        }
+
+        /**
+         * Bắt đầu monitoring progress
+         */
+        startProgressMonitoring() {
+            this.progressInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`${this.API_BASE}/python/progress`);
+                    const progress = await response.json();
+
+                    this.updateBatchProgress(progress);
+
+                    // Stop monitoring if completed or error
+                    if (progress.status === 'completed' || progress.status === 'error') {
+                        clearInterval(this.progressInterval);
+                        this.handleBatchCompletion(progress);
+                    }
+
+                } catch (error) {
+                    console.error('Error fetching progress:', error);
+                    this.addLogEntry(`⚠️ Lỗi lấy progress: ${error.message}`, 'error');
+                }
+            }, 2000); // Update every 2 seconds
+        }
+
+        /**
+         * Cập nhật batch progress
+         */
+        updateBatchProgress(progress) {
+            // Update current student
+            if (progress.currentStudent) {
+                document.getElementById('batchCurrentStudent').textContent = progress.currentStudent;
+                this.addLogEntry(`🔄 Đang xử lý: ${progress.currentStudent}`, 'info');
+            }
+
+            // Update statistics if available
+            if (progress.stats) {
+                // Parse stats string to extract numbers
+                this.parseAndUpdateStats(progress.stats);
+            }
+
+            // Estimate overall progress based on time
+            if (progress.startTime) {
+                const elapsed = Date.now() - progress.startTime;
+                const estimatedTotal = 5 * 60 * 1000; // 5 minutes estimate
+                const estimatedProgress = Math.min(95, (elapsed / estimatedTotal) * 100);
+
+                document.getElementById('batchOverallProgress').textContent = `${estimatedProgress.toFixed(0)}%`;
+                document.getElementById('batchMainProgressBar').style.width = `${estimatedProgress}%`;
+            }
+        }
+
+        /**
+         * Parse stats string và update UI
+         */
+        parseAndUpdateStats(statsString) {
+            // Example: "Thành công: 15/20 (75.0%)"
+            const matches = statsString.match(/Thành công: (\d+)\/(\d+) \((\d+\.?\d*)%\)/);
+
+            if (matches) {
+                const successCount = parseInt(matches[1]);
+                const totalCount = parseInt(matches[2]);
+                const successRate = parseFloat(matches[3]);
+                const failedCount = totalCount - successCount;
+
+                document.getElementById('batchTotalStudents').textContent = totalCount;
+                document.getElementById('batchSuccessCount').textContent = successCount;
+                document.getElementById('batchFailedCount').textContent = failedCount;
+                document.getElementById('batchSuccessRate').textContent = `${successRate.toFixed(1)}%`;
+
+                // Update progress bar
+                const progress = (successCount + failedCount) / totalCount * 100;
+                document.getElementById('batchMainProgressBar').style.width = `${progress}%`;
+                document.getElementById('batchOverallProgress').textContent = `${progress.toFixed(0)}%`;
+            }
+        }
+
+        /**
+         * Xử lý khi batch completion
+         */
+        handleBatchCompletion(progress) {
+            // Enable close button
+            document.getElementById('batchCloseBtn').disabled = false;
+
+            // Update progress bar to 100%
+            const progressBar = document.getElementById('batchMainProgressBar');
+            progressBar.style.width = '100%';
+
+            if (progress.status === 'completed') {
+                progressBar.className = 'progress-bar bg-success';
+                this.addLogEntry('🎉 Hoàn thành batch extraction!', 'success');
+
+                // Show final results
+                if (progress.result) {
+                    this.showFinalBatchResults(progress.result);
+                }
+
+            } else if (progress.status === 'error') {
+                progressBar.className = 'progress-bar bg-danger';
+                this.addLogEntry(`❌ Batch extraction lỗi: ${progress.error}`, 'error');
+
+                Swal.fire({
+                    title: 'Batch extraction thất bại',
+                    text: progress.error,
+                    icon: 'error'
+                });
+            }
+        }
+
+        /**
+         * Hiển thị kết quả cuối cùng
+         */
+        showFinalBatchResults(results) {
+            const successCount = results.success_count || 0;
+            const totalCount = results.total_students || 0;
+            const successRate = results.success_rate || 0;
+
+            // Update final stats
+            document.getElementById('batchTotalStudents').textContent = totalCount;
+            document.getElementById('batchSuccessCount').textContent = successCount;
+            document.getElementById('batchFailedCount').textContent = totalCount - successCount;
+            document.getElementById('batchSuccessRate').textContent = `${successRate.toFixed(1)}%`;
+
+            this.addLogEntry(`📊 Kết quả cuối: ${successCount}/${totalCount} thành công (${successRate.toFixed(1)}%)`, 'success');
+
+            // Store results for detailed view
+            this.lastBatchResults = results;
+
+            // Auto-close modal after 3 seconds and show summary
+            setTimeout(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('batchExtractionModal'));
+                modal.hide();
+
+                this.showBatchSummary(results);
+            }, 3000);
+        }
+
+        /**
+         * Hiển thị tóm tắt batch results
+         */
+        showBatchSummary(results) {
+            const successCount = results.success_count || 0;
+            const totalCount = results.total_students || 0;
+            const successRate = results.success_rate || 0;
+
+            Swal.fire({
+                title: 'Batch Extraction Hoàn thành',
+                html: `
+            <div class="text-start">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <h3 class="text-success">${successCount}</h3>
+                                <small>Thành công</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card border-danger">
+                            <div class="card-body text-center">
+                                <h3 class="text-danger">${totalCount - successCount}</h3>
+                                <small>Thất bại</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 text-center">
+                    <h5>Tỷ lệ thành công: <span class="text-primary">${successRate.toFixed(1)}%</span></h5>
+                </div>
+
+                <div class="mt-3">
+                    <button class="btn btn-info btn-sm w-100" onclick="sinhVienManager.showDetailedResults()">
+                        <i class="fas fa-list me-2"></i>Xem kết quả chi tiết
+                    </button>
+                </div>
+            </div>
+        `,
+                icon: successRate > 80 ? 'success' : successRate > 50 ? 'warning' : 'error',
+                confirmButtonText: 'OK',
+                width: '500px'
+            }).then(() => {
+                // Refresh student list
+                this.loadStudents();
+            });
+        }
+
+        /**
+         * Thêm log entry
+         */
+        addLogEntry(message, type = 'info') {
+            const logContainer = document.getElementById('batchLogContainer');
+            const timestamp = new Date().toLocaleTimeString();
+
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        /**
+         * Enhanced stop batch extraction
+         */
+        async stopBatchExtraction() {
+            const result = await Swal.fire({
+                title: 'Xác nhận dừng',
+                text: 'Bạn có chắc muốn dừng quá trình batch extraction?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Dừng',
+                cancelButtonText: 'Tiếp tục'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    this.addLogEntry('🛑 Đang dừng batch extraction...', 'info');
+
+                    const response = await fetch(`${this.API_BASE}/python/stop`, {
+                        method: 'POST'
+                    });
+
+                    const result = await response.json();
+
+                    // Stop progress monitoring
+                    if (this.progressInterval) {
+                        clearInterval(this.progressInterval);
+                    }
+
+                    // Update UI
+                    const progressBar = document.getElementById('batchMainProgressBar');
+                    progressBar.className = 'progress-bar bg-warning';
+
+                    this.addLogEntry('⏹️ Batch extraction đã dừng', 'info');
+
+                    // Enable close button
+                    document.getElementById('batchCloseBtn').disabled = false;
+
+                    Swal.fire({
+                        title: 'Đã dừng',
+                        text: result.message,
+                        icon: 'info'
+                    });
+
+                } catch (error) {
+                    console.error('Error stopping extraction:', error);
+                    this.addLogEntry(`❌ Lỗi dừng extraction: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        /**
+         * Initialize modal events
+         */
+        initializeModalEvents() {
+            // Handle modal close events
+            const batchModal = document.getElementById('batchExtractionModal');
+            batchModal.addEventListener('hidden.bs.modal', () => {
+                if (this.progressInterval) {
+                    clearInterval(this.progressInterval);
+                }
+            });
+
+            // Initialize face upload grid when student modal opens
+            const studentModal = document.getElementById('studentModal');
+            studentModal.addEventListener('shown.bs.modal', () => {
+                this.initializeFaceUploadGrid();
+            });
+        }
+
+// Call this in your init method
+// this.initializeModalEvents();
+
     }
 
     // Initialize manager when page loads
