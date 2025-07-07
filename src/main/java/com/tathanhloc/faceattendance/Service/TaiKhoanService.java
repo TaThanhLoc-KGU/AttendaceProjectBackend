@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,10 +42,43 @@ public class TaiKhoanService extends BaseService<TaiKhoan, Long, TaiKhoanDTO> {
         return entity.getIsActive() != null && entity.getIsActive();
     }
 
+// Thêm vào TaiKhoanService.java
+
+    public boolean existsByUsername(String username) {
+        return taiKhoanRepository.existsByUsername(username);
+    }
+
+    // Cải thiện method create() trong TaiKhoanService.java
     public TaiKhoanDTO create(TaiKhoanDTO dto) {
-        TaiKhoan entity = toEntity(dto);
-        entity.setId(null);
-        return toDTO(taiKhoanRepository.save(entity));
+        try {
+            // Validation
+            if (dto.getUsername() == null || dto.getUsername().trim().isEmpty()) {
+                throw new RuntimeException("Username không được để trống");
+            }
+
+            if (existsByUsername(dto.getUsername())) {
+                throw new RuntimeException("Username đã tồn tại: " + dto.getUsername());
+            }
+
+            // Set default values
+            if (dto.getCreatedAt() == null) {
+                dto.setCreatedAt(LocalDateTime.now());
+            }
+
+            if (dto.getIsActive() == null) {
+                dto.setIsActive(true);
+            }
+
+            TaiKhoan entity = toEntity(dto);
+            entity.setId(null); // Đảm bảo tạo mới
+
+            TaiKhoan saved = taiKhoanRepository.save(entity);
+            return toDTO(saved);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error in TaiKhoanService.create(): " + e.getMessage());
+            throw e;
+        }
     }
 
     public TaiKhoanDTO update(Long id, TaiKhoanDTO dto) {
