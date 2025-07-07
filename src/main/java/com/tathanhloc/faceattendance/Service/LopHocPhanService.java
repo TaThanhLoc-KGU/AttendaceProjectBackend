@@ -7,11 +7,10 @@ import com.tathanhloc.faceattendance.Repository.LopHocPhanRepository;
 import com.tathanhloc.faceattendance.Repository.MonHocRepository;
 import com.tathanhloc.faceattendance.Repository.SinhVienRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,7 +43,16 @@ public class LopHocPhanService {
         entity.setIsActive(dto.getIsActive());
         entity.setMonHoc(monHocRepository.findById(dto.getMaMh()).orElseThrow());
         entity.setGiangVien(giangVienRepository.findById(dto.getMaGv()).orElseThrow());
-        entity.setSinhViens(dto.getMaSvs().stream().map(idSv -> sinhVienRepository.findById(idSv).orElseThrow()).collect(Collectors.toSet()));
+
+        // FIX: Check null trước khi xử lý maSvs
+        if (dto.getMaSvs() != null && !dto.getMaSvs().isEmpty()) {
+            entity.setSinhViens(dto.getMaSvs().stream()
+                    .map(idSv -> sinhVienRepository.findById(idSv).orElseThrow())
+                    .collect(Collectors.toSet()));
+        } else {
+            entity.setSinhViens(new HashSet<>());
+        }
+
         return toDTO(lopHocPhanRepository.save(entity));
     }
 
@@ -61,7 +69,12 @@ public class LopHocPhanService {
                 .isActive(e.getIsActive())
                 .maMh(e.getMonHoc().getMaMh())
                 .maGv(e.getGiangVien().getMaGv())
-                .maSvs(e.getSinhViens().stream().map(sv -> sv.getMaSv()).collect(Collectors.toSet()))
+                // FIX: Check null trước khi xử lý sinhViens
+                .maSvs(e.getSinhViens() != null ?
+                        e.getSinhViens().stream().map(sv -> sv.getMaSv()).collect(Collectors.toSet()) :
+                        new HashSet<>())
+                // Thêm số lượng sinh viên để hiển thị
+                .soLuongSinhVien(e.getSinhViens() != null ? e.getSinhViens().size() : 0)
                 .build();
     }
 
@@ -74,9 +87,12 @@ public class LopHocPhanService {
                 .isActive(dto.getIsActive())
                 .monHoc(monHocRepository.findById(dto.getMaMh()).orElseThrow())
                 .giangVien(giangVienRepository.findById(dto.getMaGv()).orElseThrow())
-                .sinhViens(dto.getMaSvs().stream()
-                        .map(id -> sinhVienRepository.findById(id).orElseThrow())
-                        .collect(Collectors.toSet()))
+                // FIX: Khởi tạo HashSet rỗng nếu maSvs null
+                .sinhViens(dto.getMaSvs() != null && !dto.getMaSvs().isEmpty() ?
+                        dto.getMaSvs().stream()
+                                .map(id -> sinhVienRepository.findById(id).orElseThrow())
+                                .collect(Collectors.toSet()) :
+                        new HashSet<>())
                 .build();
     }
 
@@ -85,5 +101,4 @@ public class LopHocPhanService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy lớp học phần"));
         return toDTO(lhp);
     }
-
 }

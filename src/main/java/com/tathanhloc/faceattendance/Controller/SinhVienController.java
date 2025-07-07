@@ -134,11 +134,10 @@ public class SinhVienController {
     // Thêm endpoint này vào SinhVienController.java
 
     @GetMapping("/all")
-    public ResponseEntity<List<SinhVienDTO>> getAll() {
+    public ResponseEntity<List<SinhVienDTO>> getAllStudentsNoPagination() {
         log.info("Lấy tất cả sinh viên (không phân trang)");
         return ResponseEntity.ok(sinhVienService.getAll());
     }
-
     /**
      * Upload ảnh đại diện sinh viên
      */
@@ -506,6 +505,8 @@ public class SinhVienController {
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", "Không thể thực hiện cập nhật hàng loạt: " + e.getMessage()));
         }
+
+
     }
 
     /**
@@ -542,5 +543,13 @@ public class SinhVienController {
         }
     }
 
+    /**
+     * Lấy tất cả sinh viên đang hoạt động (không phân trang)
+     */
+    @GetMapping("/active/all")
+    public ResponseEntity<List<SinhVienDTO>> getAllActiveStudents() {
+        log.info("Lấy tất cả sinh viên đang hoạt động (không phân trang)");
+        return ResponseEntity.ok(sinhVienService.getAllActive());
+    }
 }
 

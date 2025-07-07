@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Lớp học phần - Face Attendance</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/sidebar.css}" rel="stylesheet">
+    <link th:href="@{/css/admin.css}" rel="stylesheet">
+</head>
+<body>
+<div class="main-wrapper">
+    <!-- Include Sidebar Component -->
+    <div th:replace="~{components/sidebar :: sidebar}"></div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Quản lý Lớp học phần</h1>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-primary" onclick="openCreateModal()">
+                        <i class="fas fa-plus me-2"></i>Tạo lớp học phần
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Filter and Action Bar -->
+            <div class="admin-table-wrapper">
+                <div class="admin-table-header">
+                    <h5 class="admin-table-title">Danh sách lớp học phần</h5>
+                    <div class="table-actions">
+                        <div class="input-group me-3" style="width: 300px;">
+                            <input type="text" class="form-control" id="searchInput" placeholder="Tìm kiếm lớp học phần...">
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <button class="btn btn-success btn-sm" onclick="refreshData()">
+                            <i class="fas fa-sync-alt me-1"></i>Làm mới
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter Bar -->
+                <div class="filter-bar">
+                    <div class="filter-row">
+                        <div class="form-group">
+                            <label for="subjectFilter" class="form-label">Môn học:</label>
+                            <select class="form-select" id="subjectFilter">
+                                <option value="">Tất cả môn học</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="semesterFilter" class="form-label">Học kỳ:</label>
+                            <select class="form-select" id="semesterFilter">
+                                <option value="">Tất cả học kỳ</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="yearFilter" class="form-label">Năm học:</label>
+                            <select class="form-select" id="yearFilter">
+                                <option value="">Tất cả năm học</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="teacherFilter" class="form-label">Giảng viên:</label>
+                            <select class="form-select" id="teacherFilter">
+                                <option value="">Tất cả giảng viên</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="table-responsive">
+                    <table class="table admin-table">
+                        <thead>
+                        <tr>
+                            <th>Mã LHP</th>
+                            <th>Môn học</th>
+                            <th>Nhóm</th>
+                            <th>Học kỳ</th>
+                            <th>Năm học</th>
+                            <th>Giảng viên</th>
+                            <th>Số SV</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody id="lhpTableBody">
+                        <tr>
+                            <td colspan="9" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Đang tải...</span>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loadingState" class="loading-overlay" style="display: none;">
+                    <div class="loading-spinner"></div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-chalkboard-teacher fa-3x text-muted mb-3"></i>
+                    <h4>Chưa có lớp học phần nào</h4>
+                    <p class="text-muted">Nhấn "Tạo lớp học phần" để bắt đầu</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tạo/Sửa Lớp học phần -->
+<div class="modal fade" id="lhpModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Tạo lớp học phần</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="lhpForm">
+                    <input type="hidden" id="lhpId">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="maLhp" class="form-label">Mã lớp học phần <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="maLhp" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="nhom" class="form-label">Nhóm <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="nhom" min="1" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="maMh" class="form-label">Môn học <span class="text-danger">*</span></label>
+                                <select class="form-select" id="maMh" required>
+                                    <option value="">Chọn môn học</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="maGv" class="form-label">Giảng viên <span class="text-danger">*</span></label>
+                                <select class="form-select" id="maGv" required>
+                                    <option value="">Chọn giảng viên</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="hocKy" class="form-label">Học kỳ <span class="text-danger">*</span></label>
+                                <select class="form-select" id="hocKy" required>
+                                    <option value="">Chọn học kỳ</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="namHoc" class="form-label">Năm học <span class="text-danger">*</span></label>
+                                <select class="form-select" id="namHoc" required>
+                                    <option value="">Chọn năm học</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="isActive" checked>
+                            <label class="form-check-label" for="isActive">Kích hoạt</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="saveLhp()">
+                    <span class="btn-text">Lưu</span>
+                    <div class="spinner-border spinner-border-sm d-none ms-2" role="status"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Quản lý Sinh viên -->
+<div class="modal fade" id="studentModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-users me-2"></i>Quản lý sinh viên - <span id="currentLhpInfo"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Danh sách sinh viên trong lớp -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-user-check me-2"></i>
+                                    Sinh viên trong lớp (<span id="enrolledCount">0</span>)
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" id="enrolledSearch"
+                                           placeholder="Tìm sinh viên trong lớp...">
+                                </div>
+                                <div class="student-list" id="enrolledStudents" style="height: 400px; overflow-y: auto;">
+                                    <div class="text-center py-4">
+                                        <div class="spinner-border text-success" role="status"></div>
+                                        <p class="mt-2 text-muted">Đang tải...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách sinh viên có thể thêm -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-user-plus me-2"></i>
+                                    Sinh viên có thể thêm (<span id="availableCount">0</span>)
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" id="availableSearch"
+                                           placeholder="Tìm sinh viên để thêm...">
+                                </div>
+                                <div class="student-list" id="availableStudents" style="height: 400px; overflow-y: auto;">
+                                    <div class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status"></div>
+                                        <p class="mt-2 text-muted">Đang tải...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-success" onclick="refreshStudentData()">
+                    <i class="fas fa-sync-alt me-2"></i>Làm mới
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Chuyển nhóm -->
+<div class="modal fade" id="transferModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exchange-alt me-2"></i>Chuyển nhóm học phần
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Chuyển sinh viên sang nhóm khác của cùng môn học
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><strong>Sinh viên:</strong></label>
+                    <p class="form-control-plaintext" id="transferStudentInfo"></p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><strong>Lớp học phần hiện tại:</strong></label>
+                    <p class="form-control-plaintext" id="transferCurrentLhp"></p>
+                </div>
+                <div class="mb-3">
+                    <label for="transferToLhp" class="form-label">Chuyển đến lớp học phần: <span class="text-danger">*</span></label>
+                    <select class="form-select" id="transferToLhp" required>
+                        <option value="">Chọn lớp học phần</option>
+                    </select>
+                </div>
+                <input type="hidden" id="transferStudentId">
+                <input type="hidden" id="transferFromLhp">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-warning" onclick="executeTransfer()">
+                    <i class="fas fa-exchange-alt me-2"></i>Chuyển nhóm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Container -->
+<div id="notificationContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/sidebar.js}"></script>
+
+<script>
+    // Constants
+    const API_BASE = '/api';
+
+    // Global Data
+    let lhpData = [];
+    let subjectData = [];
+    let teacherData = [];
+    let semesterData = [];
+    let yearData = [];
+    let studentData = [];
+    let currentLhpId = null;
+    let filteredData = [];
+    let enrolledStudents = [];
+    let availableStudents = [];
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        initializePage();
+        setupEventListeners();
+    });
+
+    async function initializePage() {
+        console.log('🚀 Initializing LopHocPhan page...');
+        showLoading(true);
+
+        try {
+            await Promise.all([
+                loadLhpData(),
+                loadSubjectData(),
+                loadTeacherData(),
+                loadSemesterData(),
+                loadYearData(),
+                loadStudentData()
+            ]);
+
+            populateFilters();
+            console.log('✅ Page initialized successfully');
+        } catch (error) {
+            console.error('❌ Error initializing page:', error);
+            showNotification('Lỗi khi tải dữ liệu: ' + error.message, 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    function setupEventListeners() {
+        // Search
+        document.getElementById('searchInput').addEventListener('input', filterData);
+
+        // Filters
+        document.getElementById('subjectFilter').addEventListener('change', filterData);
+        document.getElementById('semesterFilter').addEventListener('change', filterData);
+        document.getElementById('yearFilter').addEventListener('change', filterData);
+        document.getElementById('teacherFilter').addEventListener('change', filterData);
+
+        // Student search
+        document.getElementById('enrolledSearch').addEventListener('input', filterEnrolledStudents);
+        document.getElementById('availableSearch').addEventListener('input', filterAvailableStudents);
+
+        // Sidebar toggle
+        document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+    }
+
+    // Data Loading Functions
+    async function loadLhpData() {
+        try {
+            const response = await fetch(`${API_BASE}/lophocphan`);
+            if (!response.ok) throw new Error('Failed to load LHP data');
+
+            lhpData = await response.json();
+            filteredData = [...lhpData];
+            renderLhpTable();
+            console.log('✅ LHP data loaded:', lhpData.length);
+        } catch (error) {
+            console.error('❌ Error loading LHP:', error);
+            lhpData = [];
+            renderLhpTable();
+        }
+    }
+
+    async function loadSubjectData() {
+        try {
+            const response = await fetch(`${API_BASE}/monhoc`);
+            if (!response.ok) throw new Error('Failed to load subjects');
+
+            subjectData = await response.json();
+            console.log('✅ Subject data loaded:', subjectData.length);
+        } catch (error) {
+            console.error('❌ Error loading subjects:', error);
+            subjectData = [];
+        }
+    }
+
+    async function loadTeacherData() {
+        try {
+            const response = await fetch(`${API_BASE}/giangvien`);
+            if (!response.ok) throw new Error('Failed to load teachers');
+
+            const allTeachers = await response.json();
+            teacherData = allTeachers.filter(t => t.isActive);
+            console.log('✅ Teacher data loaded:', teacherData.length);
+        } catch (error) {
+            console.error('❌ Error loading teachers:', error);
+            teacherData = [];
+        }
+    }
+
+    async function loadSemesterData() {
+        try {
+            const response = await fetch(`${API_BASE}/hocky`);
+            if (!response.ok) throw new Error('Failed to load semesters');
+
+            semesterData = await response.json();
+            console.log('✅ Semester data loaded:', semesterData.length);
+        } catch (error) {
+            console.error('❌ Error loading semesters:', error);
+            semesterData = [];
+        }
+    }
+
+    async function loadYearData() {
+        try {
+            const response = await fetch(`${API_BASE}/namhoc`);
+            if (!response.ok) throw new Error('Failed to load years');
+
+            yearData = await response.json();
+            console.log('✅ Year data loaded:', yearData.length);
+        } catch (error) {
+            console.error('❌ Error loading years:', error);
+            yearData = [];
+        }
+    }
+
+    async function loadStudentData() {
+        try {
+            // Sử dụng endpoint /all để lấy tất cả sinh viên
+            const response = await fetch(`${API_BASE}/sinhvien/all`);
+            if (!response.ok) throw new Error('Failed to load students');
+
+            const allStudents = await response.json();
+
+            // Filter chỉ lấy sinh viên đang hoạt động
+            studentData = allStudents.filter(s => s.isActive);
+            console.log('✅ Student data loaded:', studentData.length);
+        } catch (error) {
+            console.error('❌ Error loading students:', error);
+            studentData = [];
+        }
+    }
+
+    // UI Functions
+    function populateFilters() {
+        // Subject filter
+        const subjectFilter = document.getElementById('subjectFilter');
+        subjectFilter.innerHTML = '<option value="">Tất cả môn học</option>';
+        subjectData.forEach(subject => {
+            subjectFilter.innerHTML += `<option value="${subject.maMh}">${subject.tenMh}</option>`;
+        });
+
+        // Teacher filter
+        const teacherFilter = document.getElementById('teacherFilter');
+        teacherFilter.innerHTML = '<option value="">Tất cả giảng viên</option>';
+        teacherData.forEach(teacher => {
+            teacherFilter.innerHTML += `<option value="${teacher.maGv}">${teacher.hoTen}</option>`;
+        });
+
+        // Semester filter
+        const semesterFilter = document.getElementById('semesterFilter');
+        semesterFilter.innerHTML = '<option value="">Tất cả học kỳ</option>';
+        semesterData.forEach(semester => {
+            semesterFilter.innerHTML += `<option value="${semester.maHocKy}">${semester.tenHocKy}</option>`;
+        });
+
+        // Year filter
+        const yearFilter = document.getElementById('yearFilter');
+        yearFilter.innerHTML = '<option value="">Tất cả năm học</option>';
+        yearData.forEach(year => {
+            yearFilter.innerHTML += `<option value="${year.maNamHoc}">${year.maNamHoc}</option>`;
+        });
+
+        // Populate modal selects
+        populateModalSelects();
+    }
+
+    function populateModalSelects() {
+        // Modal subject select
+        const maMhSelect = document.getElementById('maMh');
+        maMhSelect.innerHTML = '<option value="">Chọn môn học</option>';
+        subjectData.forEach(subject => {
+            maMhSelect.innerHTML += `<option value="${subject.maMh}">${subject.tenMh}</option>`;
+        });
+
+        // Modal teacher select
+        const maGvSelect = document.getElementById('maGv');
+        maGvSelect.innerHTML = '<option value="">Chọn giảng viên</option>';
+        teacherData.forEach(teacher => {
+            maGvSelect.innerHTML += `<option value="${teacher.maGv}">${teacher.hoTen}</option>`;
+        });
+
+        // Modal semester select
+        const hocKySelect = document.getElementById('hocKy');
+        hocKySelect.innerHTML = '<option value="">Chọn học kỳ</option>';
+        semesterData.forEach(semester => {
+            hocKySelect.innerHTML += `<option value="${semester.maHocKy}">${semester.tenHocKy}</option>`;
+        });
+
+        // Modal year select
+        const namHocSelect = document.getElementById('namHoc');
+        namHocSelect.innerHTML = '<option value="">Chọn năm học</option>';
+        yearData.forEach(year => {
+            namHocSelect.innerHTML += `<option value="${year.maNamHoc}">${year.maNamHoc}</option>`;
+        });
+    }
+
+    function renderLhpTable() {
+        const tbody = document.getElementById('lhpTableBody');
+        const emptyState = document.getElementById('emptyState');
+
+        if (filteredData.length === 0) {
+            tbody.innerHTML = '';
+            emptyState.style.display = 'block';
+            return;
+        }
+
+        emptyState.style.display = 'none';
+
+        tbody.innerHTML = filteredData.map(lhp => {
+            const subject = subjectData.find(s => s.maMh === lhp.maMh) || {};
+            const teacher = teacherData.find(t => t.maGv === lhp.maGv) || {};
+            const semester = semesterData.find(s => s.maHocKy === lhp.hocKy) || {};
+
+            return `
+                <tr>
+                    <td>
+                        <strong class="text-primary">${lhp.maLhp}</strong>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <span class="fw-medium">${subject.tenMh || 'N/A'}</span>
+                            <small class="text-muted">${lhp.maMh}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-primary">Nhóm ${lhp.nhom}</span>
+                    </td>
+                    <td>${semester.tenHocKy || lhp.hocKy}</td>
+                    <td>${lhp.namHoc}</td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <span class="fw-medium">${teacher.hoTen || 'N/A'}</span>
+                            <small class="text-muted">${lhp.maGv}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-info">${lhp.soLuongSinhVien || 0} SV</span>
+                    </td>
+                    <td>
+                        <span class="status-badge ${lhp.isActive ? 'status-active' : 'status-inactive'}">
+                            ${lhp.isActive ? 'Hoạt động' : 'Ngừng hoạt động'}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-view" onclick="manageStudents('${lhp.maLhp}')" title="Quản lý sinh viên">
+                                <i class="fas fa-users"></i>
+                            </button>
+                            <button class="btn-action btn-edit" onclick="editLhp('${lhp.maLhp}')" title="Sửa">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-action btn-delete" onclick="deleteLhp('${lhp.maLhp}')" title="Xóa">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function filterData() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const subjectFilter = document.getElementById('subjectFilter').value;
+        const semesterFilter = document.getElementById('semesterFilter').value;
+        const yearFilter = document.getElementById('yearFilter').value;
+        const teacherFilter = document.getElementById('teacherFilter').value;
+
+        filteredData = lhpData.filter(lhp => {
+            const subject = subjectData.find(s => s.maMh === lhp.maMh) || {};
+            const teacher = teacherData.find(t => t.maGv === lhp.maGv) || {};
+
+            const matchesSearch = !searchTerm ||
+                lhp.maLhp.toLowerCase().includes(searchTerm) ||
+                (subject.tenMh && subject.tenMh.toLowerCase().includes(searchTerm)) ||
+                (teacher.hoTen && teacher.hoTen.toLowerCase().includes(searchTerm)) ||
+                lhp.nhom.toString().includes(searchTerm);
+
+            const matchesSubject = !subjectFilter || lhp.maMh === subjectFilter;
+            const matchesSemester = !semesterFilter || lhp.hocKy === semesterFilter;
+            const matchesYear = !yearFilter || lhp.namHoc === yearFilter;
+            const matchesTeacher = !teacherFilter || lhp.maGv === teacherFilter;
+
+            return matchesSearch && matchesSubject && matchesSemester && matchesYear && matchesTeacher;
+        });
+
+        renderLhpTable();
+    }
+
+    // Modal Functions
+    function openCreateModal() {
+        document.getElementById('modalTitle').textContent = 'Tạo lớp học phần';
+        document.getElementById('lhpForm').reset();
+        document.getElementById('lhpId').value = '';
+        document.getElementById('isActive').checked = true;
+        currentLhpId = null;
+
+        const modal = new bootstrap.Modal(document.getElementById('lhpModal'));
+        modal.show();
+    }
+
+    function editLhp(maLhp) {
+        const lhp = lhpData.find(l => l.maLhp === maLhp);
+        if (!lhp) return;
+
+        document.getElementById('modalTitle').textContent = 'Sửa lớp học phần';
+        document.getElementById('lhpId').value = lhp.maLhp;
+        document.getElementById('maLhp').value = lhp.maLhp;
+        document.getElementById('nhom').value = lhp.nhom;
+        document.getElementById('maMh').value = lhp.maMh;
+        document.getElementById('maGv').value = lhp.maGv;
+        document.getElementById('hocKy').value = lhp.hocKy;
+        document.getElementById('namHoc').value = lhp.namHoc;
+        document.getElementById('isActive').checked = lhp.isActive;
+
+        currentLhpId = maLhp;
+        const modal = new bootstrap.Modal(document.getElementById('lhpModal'));
+        modal.show();
+    }
+
+    async function saveLhp() {
+        const form = document.getElementById('lhpForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const btnText = document.querySelector('.btn-text');
+        const spinner = document.querySelector('.spinner-border');
+
+        btnText.textContent = 'Đang lưu...';
+        spinner.classList.remove('d-none');
+
+        const lhpDataToSave = {
+            maLhp: document.getElementById('maLhp').value,
+            nhom: parseInt(document.getElementById('nhom').value),
+            maMh: document.getElementById('maMh').value,
+            maGv: document.getElementById('maGv').value,
+            hocKy: document.getElementById('hocKy').value,
+            namHoc: document.getElementById('namHoc').value,
+            isActive: document.getElementById('isActive').checked
+        };
+
+        try {
+            const url = currentLhpId ? `${API_BASE}/lophocphan/${currentLhpId}` : `${API_BASE}/lophocphan`;
+            const method = currentLhpId ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(lhpDataToSave)
+            });
+
+            if (response.ok) {
+                showNotification(currentLhpId ? 'Cập nhật thành công!' : 'Tạo lớp học phần thành công!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('lhpModal')).hide();
+                await loadLhpData();
+            } else {
+                const error = await response.text();
+                throw new Error(error);
+            }
+        } catch (error) {
+            console.error('Error saving LHP:', error);
+            showNotification('Lỗi khi lưu: ' + error.message, 'error');
+        } finally {
+            btnText.textContent = 'Lưu';
+            spinner.classList.add('d-none');
+        }
+    }
+
+    async function deleteLhp(maLhp) {
+        if (!confirm('Bạn có chắc chắn muốn xóa lớp học phần này?')) return;
+
+        try {
+            showLoading(true);
+            const response = await fetch(`${API_BASE}/lophocphan/${maLhp}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                showNotification('Xóa lớp học phần thành công!', 'success');
+                await loadLhpData();
+            } else {
+                throw new Error('Failed to delete');
+            }
+        } catch (error) {
+            console.error('Error deleting LHP:', error);
+            showNotification('Lỗi khi xóa lớp học phần', 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Student Management Functions
+    async function manageStudents(maLhp) {
+        currentLhpId = maLhp;
+        const lhp = lhpData.find(l => l.maLhp === maLhp);
+        if (!lhp) return;
+
+        const subject = subjectData.find(s => s.maMh === lhp.maMh) || {};
+        document.getElementById('currentLhpInfo').textContent =
+            `${lhp.maLhp} - ${subject.tenMh} (Nhóm ${lhp.nhom})`;
+
+        const modal = new bootstrap.Modal(document.getElementById('studentModal'));
+        modal.show();
+
+        await loadStudentsByLhp(maLhp);
+    }
+
+    async function loadStudentsByLhp(maLhp) {
+        try {
+            // Load enrolled students
+            const enrolledResponse = await fetch(`${API_BASE}/lophocphan/${maLhp}/sinhvien`);
+            if (enrolledResponse.ok) {
+                enrolledStudents = await enrolledResponse.json();
+            } else {
+                enrolledStudents = [];
+            }
+
+            // Load available students (not in this LHP)
+            const enrolledIds = enrolledStudents.map(s => s.maSv);
+            availableStudents = studentData.filter(s => !enrolledIds.includes(s.maSv));
+
+            renderStudentLists();
+        } catch (error) {
+            console.error('Error loading students:', error);
+            showNotification('Lỗi khi tải danh sách sinh viên', 'error');
+        }
+    }
+
+    function renderStudentLists() {
+        renderEnrolledStudents();
+        renderAvailableStudents();
+    }
+
+    function renderEnrolledStudents() {
+        const container = document.getElementById('enrolledStudents');
+        const countElement = document.getElementById('enrolledCount');
+
+        countElement.textContent = enrolledStudents.length;
+
+        if (enrolledStudents.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-user-slash fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">Chưa có sinh viên nào</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = enrolledStudents.map(student => `
+            <div class="student-item border rounded p-3 mb-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">${student.hoTen}</h6>
+                        <small class="text-muted">${student.maSv}</small>
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-warning" onclick="openTransferModal('${student.maSv}')" title="Chuyển nhóm">
+                            <i class="fas fa-exchange-alt"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="removeStudent('${student.maSv}')" title="Xóa khỏi lớp">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderAvailableStudents() {
+        const container = document.getElementById('availableStudents');
+        const countElement = document.getElementById('availableCount');
+
+        countElement.textContent = availableStudents.length;
+
+        if (availableStudents.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-user-check fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">Không có sinh viên để thêm</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = availableStudents.map(student => `
+            <div class="student-item border rounded p-3 mb-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">${student.hoTen}</h6>
+                        <small class="text-muted">${student.maSv}</small>
+                    </div>
+                    <button class="btn btn-outline-success btn-sm" onclick="addStudent('${student.maSv}')" title="Thêm vào lớp">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function addStudent(maSv) {
+        if (!currentLhpId) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/lophocphan/${currentLhpId}/sinhvien/${maSv}`, {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                showNotification('Thêm sinh viên thành công!', 'success');
+                await loadStudentsByLhp(currentLhpId);
+                await loadLhpData(); // Refresh main table
+            } else {
+                throw new Error('Failed to add student');
+            }
+        } catch (error) {
+            console.error('Error adding student:', error);
+            showNotification('Lỗi khi thêm sinh viên', 'error');
+        }
+    }
+
+    async function removeStudent(maSv) {
+        if (!currentLhpId) return;
+        if (!confirm('Bạn có chắc chắn muốn xóa sinh viên này khỏi lớp?')) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/lophocphan/${currentLhpId}/sinhvien/${maSv}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                showNotification('Xóa sinh viên thành công!', 'success');
+                await loadStudentsByLhp(currentLhpId);
+                await loadLhpData(); // Refresh main table
+            } else {
+                throw new Error('Failed to remove student');
+            }
+        } catch (error) {
+            console.error('Error removing student:', error);
+            showNotification('Lỗi khi xóa sinh viên', 'error');
+        }
+    }
+
+    // Transfer Functions
+    async function openTransferModal(maSv) {
+        const student = enrolledStudents.find(s => s.maSv === maSv);
+        const currentLhp = lhpData.find(l => l.maLhp === currentLhpId);
+
+        if (!student || !currentLhp) return;
+
+        document.getElementById('transferStudentInfo').textContent = `${student.hoTen} (${student.maSv})`;
+        document.getElementById('transferCurrentLhp').textContent = `${currentLhp.maLhp} - Nhóm ${currentLhp.nhom}`;
+        document.getElementById('transferStudentId').value = maSv;
+        document.getElementById('transferFromLhp').value = currentLhpId;
+
+        // Load available LHP for same subject
+        const transferSelect = document.getElementById('transferToLhp');
+        transferSelect.innerHTML = '<option value="">Chọn lớp học phần</option>';
+
+        const sameLhps = lhpData.filter(l => l.maMh === currentLhp.maMh && l.maLhp !== currentLhpId && l.isActive);
+        sameLhps.forEach(lhp => {
+            transferSelect.innerHTML += `<option value="${lhp.maLhp}">${lhp.maLhp} - Nhóm ${lhp.nhom}</option>`;
+        });
+
+        const modal = new bootstrap.Modal(document.getElementById('transferModal'));
+        modal.show();
+    }
+
+    async function executeTransfer() {
+        const studentId = document.getElementById('transferStudentId').value;
+        const fromLhp = document.getElementById('transferFromLhp').value;
+        const toLhp = document.getElementById('transferToLhp').value;
+
+        if (!toLhp) {
+            showNotification('Vui lòng chọn lớp học phần đích', 'warning');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/lophocphan/transfer`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    maSv: studentId,
+                    fromLhp: fromLhp,
+                    toLhp: toLhp
+                })
+            });
+
+            if (response.ok) {
+                showNotification('Chuyển nhóm thành công!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('transferModal')).hide();
+                await loadStudentsByLhp(currentLhpId);
+                await loadLhpData(); // Refresh main table
+            } else {
+                throw new Error('Failed to transfer student');
+            }
+        } catch (error) {
+            console.error('Error transferring student:', error);
+            showNotification('Lỗi khi chuyển nhóm', 'error');
+        }
+    }
+
+    // Search Functions
+    function filterEnrolledStudents() {
+        const searchTerm = document.getElementById('enrolledSearch').value.toLowerCase();
+        const filteredStudents = enrolledStudents.filter(student =>
+            student.hoTen.toLowerCase().includes(searchTerm) ||
+            student.maSv.toLowerCase().includes(searchTerm)
+        );
+
+        const container = document.getElementById('enrolledStudents');
+        container.innerHTML = filteredStudents.map(student => `
+            <div class="student-item border rounded p-3 mb-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">${student.hoTen}</h6>
+                        <small class="text-muted">${student.maSv}</small>
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-warning" onclick="openTransferModal('${student.maSv}')" title="Chuyển nhóm">
+                            <i class="fas fa-exchange-alt"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="removeStudent('${student.maSv}')" title="Xóa khỏi lớp">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function filterAvailableStudents() {
+        const searchTerm = document.getElementById('availableSearch').value.toLowerCase();
+        const filteredStudents = availableStudents.filter(student =>
+            student.hoTen.toLowerCase().includes(searchTerm) ||
+            student.maSv.toLowerCase().includes(searchTerm)
+        );
+
+        const container = document.getElementById('availableStudents');
+        container.innerHTML = filteredStudents.map(student => `
+            <div class="student-item border rounded p-3 mb-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">${student.hoTen}</h6>
+                        <small class="text-muted">${student.maSv}</small>
+                    </div>
+                    <button class="btn btn-outline-success btn-sm" onclick="addStudent('${student.maSv}')" title="Thêm vào lớp">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Utility Functions
+    async function refreshData() {
+        await initializePage();
+        showNotification('Dữ liệu đã được làm mới!', 'success');
+    }
+
+    async function refreshStudentData() {
+        if (currentLhpId) {
+            await loadStudentsByLhp(currentLhpId);
+            showNotification('Danh sách sinh viên đã được làm mới!', 'success');
+        }
+    }
+
+    function showLoading(show) {
+        const loadingState = document.getElementById('loadingState');
+        if (loadingState) {
+            loadingState.style.display = show ? 'flex' : 'none';
+        }
+    }
+
+    function showNotification(message, type = 'info') {
+        const container = document.getElementById('notificationContainer');
+        const alertClass = type === 'error' ? 'danger' : type;
+        const iconClass = {
+            success: 'check-circle',
+            error: 'exclamation-triangle',
+            warning: 'exclamation-circle',
+            info: 'info-circle'
+        }[type] || 'info-circle';
+
+        const alertHtml = `
+            <div class="alert alert-${alertClass} alert-dismissible fade show" role="alert">
+                <i class="fas fa-${iconClass} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+
+        container.insertAdjacentHTML('beforeend', alertHtml);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            const alerts = container.querySelectorAll('.alert');
+            if (alerts.length > 0) {
+                alerts[0].remove();
+            }
+        }, 5000);
+    }
+
+    function toggleSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        const mainContent = document.querySelector('.main-content');
+
+        if (sidebar && mainContent) {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+        }
+    }
+</script>
+</body>
+</html>

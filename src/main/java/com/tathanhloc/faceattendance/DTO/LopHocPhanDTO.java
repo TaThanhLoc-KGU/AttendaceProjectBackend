@@ -20,4 +20,7 @@ public class LopHocPhanDTO {
     private String maMh;
     private String maGv;
     private Set<String> maSvs;
+
+    private Integer soLuongSinhVien;
+
 }
