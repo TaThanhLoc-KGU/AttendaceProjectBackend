@@ -314,36 +314,44 @@
         </div>
 
         <!-- Filter Bar -->
-        <div class="filter-bar">
-            <div class="filter-row">
-                <div class="search-group">
-                    <i class="search-icon fas fa-search"></i>
-                    <input type="text" class="form-control search-input"
-                           placeholder="Tìm kiếm theo mã SV, tên..." id="searchInput">
-                </div>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Quản lý sinh viên</h1>
+            <div class="btn-group" role="group">
+                <!-- Existing buttons -->
+                <button type="button" class="btn btn-success" onclick="sinhVienManager.showAddModal()">
+                    <i class="fas fa-plus me-2"></i>Thêm sinh viên
+                </button>
 
-                <div class="form-group">
-                    <label for="classFilter">Lớp</label>
-                    <select id="classFilter" class="form-select">
-                        <option value="">Tất cả lớp</option>
-                    </select>
-                </div>
+                <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importModal">
+                    <i class="fas fa-file-excel me-2"></i>Import Excel
+                </button>
 
-                <div class="form-group">
-                    <label for="statusFilter">Trạng thái</label>
-                    <select id="statusFilter" class="form-select">
-                        <option value="">Tất cả trạng thái</option>
-                        <option value="active">Đang hoạt động</option>
-                        <option value="inactive">Không hoạt động</option>
-                        <option value="deleted">Đã xóa</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>&nbsp;</label>
-                    <button class="btn btn-primary" onclick="sinhVienManager.showAddModal()">
-                        <i class="fas fa-plus me-2"></i>Thêm sinh viên
+                <!-- New batch extraction button -->
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-magic me-2"></i>Trích xuất đặc trưng
                     </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="sinhVienManager.batchExtractFeatures()">
+                                <i class="fas fa-users me-2 text-primary"></i>
+                                Tất cả sinh viên
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="sinhVienManager.checkPythonEnvironment()">
+                                <i class="fas fa-cog me-2 text-info"></i>
+                                Kiểm tra Python
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="sinhVienManager.showBatchExtractionStatus()">
+                                <i class="fas fa-chart-bar me-2 text-success"></i>
+                                Trạng thái hệ thống
+                            </a>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -385,6 +393,7 @@
                     <button class="btn btn-sm btn-outline-success" onclick="sinhVienManager.showImportModal()">
                         <i class="fas fa-file-import me-1"></i>Import Excel
                     </button>
+
                     <div class="dropdown">
                         <button class="btn btn-sm btn-outline-info dropdown-toggle" type="button"
                                 data-bs-toggle="dropdown">
@@ -703,6 +712,64 @@
     <div class="text-center">
         <div class="loading-spinner"></div>
         <p class="mt-2">Đang xử lý...</p>
+    </div>
+</div>
+
+<!-- Modal hiển thị trạng thái Python Environment -->
+<div class="modal fade" id="pythonEnvModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-cog me-2"></i>
+                    Trạng thái Python Environment
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="pythonEnvContent">
+                <div class="text-center">
+                    <div class="spinner-border text-info" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Đang kiểm tra...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-info" onclick="sinhVienManager.checkPythonEnvironment()">
+                    <i class="fas fa-redo me-2"></i>Kiểm tra lại
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal hiển thị trạng thái batch extraction -->
+<div class="modal fade" id="batchStatusModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Trạng thái trích xuất đặc trưng
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="batchStatusContent">
+                <div class="text-center">
+                    <div class="spinner-border text-success" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Đang tải thông tin...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-success" onclick="sinhVienManager.showBatchExtractionStatus()">
+                    <i class="fas fa-sync me-2"></i>Làm mới
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1601,6 +1668,9 @@
             }
         }
 
+        // Cập nhật phần JavaScript trong sinhvien.html
+// Thay thế method extractFeatures() hiện tại
+
         async extractFeatures() {
             if (!this.data.currentStudentId) {
                 this.showAlert('Vui lòng lưu sinh viên trước khi trích xuất đặc trưng', 'warning');
@@ -1613,17 +1683,13 @@
             }
 
             try {
-                // Update status to processing
-                const indicator = document.getElementById('statusIndicator');
-                const text = document.getElementById('statusText');
-                const btn = document.getElementById('extractFeaturesBtn');
+                // Update UI to processing state
+                this.updateExtractionUI('processing');
 
-                indicator.className = 'status-indicator processing';
-                text.textContent = 'Đang trích xuất...';
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+                // Show progress modal
+                this.showExtractionProgress();
 
-                // Call Python feature extraction service
+                // Call feature extraction API
                 const response = await fetch(`${this.API_BASE}/sinhvien/${this.data.currentStudentId}/extract-features`, {
                     method: 'POST',
                     headers: {
@@ -1631,38 +1697,393 @@
                     }
                 });
 
-                if (response.status === 404) {
-                    throw new Error('API endpoint chưa được triển khai. Vui lòng thêm endpoint extract-features vào SinhVienController.');
-                }
-
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.message || 'Feature extraction failed');
+                    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
                 }
 
                 const result = await response.json();
 
-                // Update status to ready
-                indicator.className = 'status-indicator ready';
-                text.textContent = 'Đã có đặc trưng';
-                btn.innerHTML = '<i class="fas fa-check me-2"></i>Đã hoàn thành';
+                // Hide progress modal
+                this.hideExtractionProgress();
 
-                this.showAlert('Trích xuất đặc trưng thành công!', 'success');
+                if (result.status === 'success') {
+                    // Update UI to success state
+                    this.updateExtractionUI('success');
+
+                    // Show detailed success message
+                    this.showExtractionResult(result);
+
+                    this.showAlert('Trích xuất đặc trưng thành công!', 'success');
+                } else {
+                    // Handle extraction failure
+                    this.updateExtractionUI('error');
+                    this.showExtractionError(result);
+                }
 
             } catch (error) {
-                console.error('Error extracting features:', error);
+                console.error('Feature extraction error:', error);
 
-                // Update status to error
-                const indicator = document.getElementById('statusIndicator');
-                const text = document.getElementById('statusText');
-                const btn = document.getElementById('extractFeaturesBtn');
+                // Hide progress modal
+                this.hideExtractionProgress();
 
-                indicator.className = 'status-indicator error';
-                text.textContent = 'Lỗi trích xuất';
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-magic me-2"></i>Thử lại';
+                // Update UI to error state
+                this.updateExtractionUI('error');
 
-                this.showAlert('Không thể trích xuất đặc trưng: ' + error.message, 'danger');
+                // Show error message
+                let errorMessage = 'Lỗi trích xuất đặc trưng: ' + error.message;
+
+                if (error.message.includes('404')) {
+                    errorMessage = 'API endpoint chưa được triển khai. Vui lòng kiểm tra backend.';
+                } else if (error.message.includes('500')) {
+                    errorMessage = 'Lỗi server. Vui lòng kiểm tra Python service và logs.';
+                }
+
+                this.showAlert(errorMessage, 'danger');
+            }
+        }
+
+// Thêm các method mới hỗ trợ
+
+        updateExtractionUI(state) {
+            const indicator = document.getElementById('statusIndicator');
+            const text = document.getElementById('statusText');
+            const btn = document.getElementById('extractFeaturesBtn');
+
+            switch (state) {
+                case 'processing':
+                    indicator.className = 'status-indicator processing';
+                    text.textContent = 'Đang trích xuất...';
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+                    break;
+
+                case 'success':
+                    indicator.className = 'status-indicator ready';
+                    text.textContent = 'Đã có đặc trưng';
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check me-2"></i>Đã hoàn thành';
+                    btn.className = 'btn btn-success btn-sm';
+                    break;
+
+                case 'error':
+                    indicator.className = 'status-indicator error';
+                    text.textContent = 'Lỗi trích xuất';
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Thử lại';
+                    btn.className = 'btn btn-warning btn-sm';
+                    break;
+
+                default:
+                    this.updateExtractButtonState();
+            }
+        }
+
+        showExtractionProgress() {
+            // Tạo modal progress nếu chưa có
+            if (!document.getElementById('extractionProgressModal')) {
+                const modalHTML = `
+            <div class="modal fade" id="extractionProgressModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header border-0">
+                            <h5 class="modal-title">
+                                <i class="fas fa-magic me-2 text-info"></i>
+                                Đang trích xuất đặc trưng khuôn mặt
+                            </h5>
+                        </div>
+                        <div class="modal-body text-center">
+                            <div class="mb-3">
+                                <div class="spinner-border text-info" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                            <p class="mb-2">Đang phân tích ảnh khuôn mặt...</p>
+                            <p class="text-muted small">Quá trình này có thể mất vài phút</p>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-info"
+                                     role="progressbar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+            }
+
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('extractionProgressModal'));
+            modal.show();
+        }
+
+        hideExtractionProgress() {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('extractionProgressModal'));
+            if (modal) {
+                modal.hide();
+            }
+        }
+
+        showExtractionResult(result) {
+            // Tạo modal kết quả nếu chưa có
+            if (!document.getElementById('extractionResultModal')) {
+                const modalHTML = `
+            <div class="modal fade" id="extractionResultModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-success text-white">
+                            <h5 class="modal-title">
+                                <i class="fas fa-check-circle me-2"></i>
+                                Trích xuất đặc trưng thành công
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="extractionResultContent">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+            }
+
+            // Populate result content
+            const content = document.getElementById('extractionResultContent');
+            const details = result.extractionDetails || {};
+            const metadata = details.metadata || {};
+
+            content.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-info-circle me-2 text-info"></i>Thông tin chung</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Số ảnh xử lý:</strong> ${result.faceCount} ảnh</li>
+                    <li><strong>Trạng thái:</strong> <span class="badge bg-success">Thành công</span></li>
+                    <li><strong>Thời gian:</strong> ${new Date().toLocaleString('vi-VN')}</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-chart-bar me-2 text-info"></i>Chi tiết kỹ thuật</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Embedding ID:</strong> ${details.student_id || 'N/A'}</li>
+                    <li><strong>Chất lượng:</strong> ${metadata.quality_info?.recommendation || 'Tốt'}</li>
+                    <li><strong>Độ tương tự:</strong> ${metadata.quality_info?.avg_similarity?.toFixed(3) || 'N/A'}</li>
+                </ul>
+            </div>
+        </div>
+
+        ${metadata.face_metadata ? `
+            <hr>
+            <h6><i class="fas fa-image me-2 text-info"></i>Chi tiết xử lý ảnh</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Ảnh</th>
+                            <th>Độ tin cậy</th>
+                            <th>Diện tích khuôn mặt</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${metadata.face_metadata.detection_results?.map(detection => `
+                            <tr>
+                                <td>${detection.image}</td>
+                                <td>${(detection.det_score * 100).toFixed(1)}%</td>
+                                <td>${parseInt(detection.face_area).toLocaleString()} px²</td>
+                                <td>
+                                    <span class="badge ${detection.status === 'success' ? 'bg-success' : 'bg-warning'}">
+                                        ${detection.status === 'success' ? 'Thành công' : 'Cảnh báo'}
+                                    </span>
+                                </td>
+                            </tr>
+                        `).join('') || '<tr><td colspan="4">Không có dữ liệu chi tiết</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+        ` : ''}
+    `;
+
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('extractionResultModal'));
+            modal.show();
+        }
+
+        showExtractionError(result) {
+            const errorDetails = result.extractionResult || result.details || {};
+
+            // Tạo modal lỗi nếu chưa có
+            if (!document.getElementById('extractionErrorModal')) {
+                const modalHTML = `
+            <div class="modal fade" id="extractionErrorModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Lỗi trích xuất đặc trưng
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="extractionErrorContent">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                            <button type="button" class="btn btn-warning" onclick="app.extractFeatures()" data-bs-dismiss="modal">
+                                <i class="fas fa-redo me-2"></i>Thử lại
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+            }
+
+            // Populate error content
+            const content = document.getElementById('extractionErrorContent');
+            content.innerHTML = `
+        <div class="alert alert-danger">
+            <h6><i class="fas fa-exclamation-circle me-2"></i>Mô tả lỗi</h6>
+            <p class="mb-0">${result.error || result.details || 'Lỗi không xác định'}</p>
+        </div>
+
+        ${errorDetails.message ? `
+            <div class="mt-3">
+                <h6><i class="fas fa-info-circle me-2"></i>Chi tiết</h6>
+                <p class="text-muted">${errorDetails.message}</p>
+            </div>
+        ` : ''}
+
+        <div class="mt-3">
+            <h6><i class="fas fa-lightbulb me-2"></i>Gợi ý khắc phục</h6>
+            <ul class="mb-0">
+                <li>Kiểm tra chất lượng ảnh khuôn mặt</li>
+                <li>Đảm bảo khuôn mặt rõ nét và không bị che</li>
+                <li>Thử với ít nhất 3-5 ảnh khác nhau</li>
+                <li>Kiểm tra kết nối Python service</li>
+            </ul>
+        </div>
+    `;
+
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('extractionErrorModal'));
+            modal.show();
+        }
+
+// Cập nhật method checkFeatureStatus
+        async checkFeatureStatus() {
+            if (!this.data.currentStudentId) return;
+
+            try {
+                const response = await fetch(`${this.API_BASE}/sinhvien/${this.data.currentStudentId}/feature-status`);
+                if (response.ok) {
+                    const status = await response.json();
+                    this.updateFeatureStatusUI(status);
+                }
+            } catch (error) {
+                console.error('Error checking feature status:', error);
+            }
+        }
+
+        updateFeatureStatusUI(status) {
+            const indicator = document.getElementById('statusIndicator');
+            const text = document.getElementById('statusText');
+            const btn = document.getElementById('extractFeaturesBtn');
+
+            switch (status.status) {
+                case 'ready':
+                    indicator.className = 'status-indicator ready';
+                    text.textContent = 'Đã có đặc trưng';
+                    btn.innerHTML = '<i class="fas fa-check me-2"></i>Đã hoàn thành';
+                    btn.className = 'btn btn-success btn-sm';
+                    btn.disabled = false;
+                    break;
+
+                case 'pending':
+                    indicator.className = 'status-indicator pending';
+                    text.textContent = 'Chưa trích xuất';
+                    btn.innerHTML = '<i class="fas fa-magic me-2"></i>Trích xuất đặc trưng';
+                    btn.className = 'btn btn-info btn-sm';
+                    btn.disabled = false;
+                    break;
+
+                case 'no_images':
+                    indicator.className = 'status-indicator error';
+                    text.textContent = 'Cần ảnh khuôn mặt';
+                    btn.innerHTML = '<i class="fas fa-magic me-2"></i>Cần ảnh khuôn mặt';
+                    btn.className = 'btn btn-secondary btn-sm';
+                    btn.disabled = true;
+                    break;
+            }
+        }
+
+// Thêm method để batch extract
+        async batchExtractFeatures() {
+            const confirmResult = await Swal.fire({
+                title: 'Xác nhận batch trích xuất',
+                text: 'Bạn có muốn trích xuất đặc trưng cho tất cả sinh viên?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Bắt đầu',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#007bff'
+            });
+
+            if (!confirmResult.isConfirmed) return;
+
+            try {
+                // Show progress
+                Swal.fire({
+                    title: 'Đang xử lý batch extraction...',
+                    text: 'Quá trình này có thể mất nhiều phút',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const response = await fetch(`${this.API_BASE}/sinhvien/batch-extract-features`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                Swal.close();
+
+                if (response.ok) {
+                    await Swal.fire({
+                        title: 'Batch extraction hoàn thành!',
+                        html: `
+                    <p>Tổng sinh viên: ${result.results?.total_students || 'N/A'}</p>
+                    <p>Thành công: ${result.results?.success_count || 'N/A'}</p>
+                    <p>Thất bại: ${result.results?.failed_count || 'N/A'}</p>
+                    <p>Tỷ lệ thành công: ${result.results?.success_rate?.toFixed(1) || 'N/A'}%</p>
+                `,
+                        icon: 'success'
+                    });
+
+                    // Refresh current student status
+                    this.checkFeatureStatus();
+                } else {
+                    throw new Error(result.error || 'Batch extraction failed');
+                }
+
+            } catch (error) {
+                console.error('Batch extraction error:', error);
+                Swal.fire({
+                    title: 'Lỗi batch extraction',
+                    text: error.message,
+                    icon: 'error'
+                });
             }
         }
 
@@ -2292,12 +2713,289 @@
             }
         }
 
+        async checkPythonEnvironment() {
+            try {
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('pythonEnvModal'));
+                modal.show();
+
+                // Reset content
+                document.getElementById('pythonEnvContent').innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border text-info" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Đang kiểm tra Python environment...</p>
+            </div>
+        `;
+
+                const response = await fetch(`${this.API_BASE}/sinhvien/check-python-environment`);
+                const result = await response.json();
+
+                if (response.ok) {
+                    this.displayPythonEnvironmentStatus(result.environment);
+                } else {
+                    throw new Error(result.error || 'Không thể kiểm tra Python environment');
+                }
+
+            } catch (error) {
+                console.error('Error checking Python environment:', error);
+                document.getElementById('pythonEnvContent').innerHTML = `
+            <div class="alert alert-danger">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Lỗi kiểm tra</h6>
+                <p class="mb-0">${error.message}</p>
+            </div>
+        `;
+            }
+        }
+
+        displayPythonEnvironmentStatus(env) {
+            const content = document.getElementById('pythonEnvContent');
+
+            content.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-python me-2 text-info"></i>Python Environment</h6>
+                <div class="env-check-item ${env.python_available ? 'success' : 'error'}">
+                    <i class="fas fa-${env.python_available ? 'check' : 'times'} me-2"></i>
+                    <strong>Python:</strong> ${env.python_available ? 'Có sẵn' : 'Không có'}
+                    ${env.python_version ? `<br><small>${env.python_version}</small>` : ''}
+                </div>
+
+                <div class="env-check-item ${env.script_exists ? 'success' : 'error'}">
+                    <i class="fas fa-${env.script_exists ? 'check' : 'times'} me-2"></i>
+                    <strong>Script:</strong> ${env.script_exists ? 'Tồn tại' : 'Không tìm thấy'}
+                    <br><small>${env.script_path}</small>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <h6><i class="fas fa-cogs me-2 text-info"></i>Cấu hình hệ thống</h6>
+                <div class="env-check-item success">
+                    <i class="fas fa-check me-2"></i>
+                    <strong>Python Executable:</strong>
+                    <br><small>${env.python_executable}</small>
+                </div>
+
+                ${env.error ? `
+                    <div class="env-check-item error">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Lỗi:</strong>
+                        <br><small>${env.error}</small>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+
+        ${!env.python_available || !env.script_exists ? `
+            <hr>
+            <div class="alert alert-warning">
+                <h6><i class="fas fa-lightbulb me-2"></i>Hướng dẫn khắc phục</h6>
+                <ul class="mb-0">
+                    ${!env.python_available ? '<li>Cài đặt Python 3.7+ và đảm bảo có trong PATH</li>' : ''}
+                    ${!env.script_exists ? '<li>Kiểm tra đường dẫn script trong application.properties</li>' : ''}
+                    <li>Cài đặt các dependencies: pip install insightface opencv-python numpy</li>
+                    <li>Khởi động Face Recognition Service trước khi sử dụng</li>
+                </ul>
+            </div>
+        ` : `
+            <hr>
+            <div class="alert alert-success">
+                <h6><i class="fas fa-check-circle me-2"></i>Môi trường sẵn sàng</h6>
+                <p class="mb-0">Python environment đã được cấu hình đúng và sẵn sàng trích xuất đặc trưng.</p>
+            </div>
+        `}
+    `;
+        }
+
+// Method hiển thị trạng thái batch extraction
+        async showBatchExtractionStatus() {
+            try {
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('batchStatusModal'));
+                modal.show();
+
+                // Reset content
+                document.getElementById('batchStatusContent').innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Đang tải thông tin trạng thái...</p>
+            </div>
+        `;
+
+                // Load all students to get status
+                await this.loadStudents();
+                this.displayBatchExtractionStatus();
+
+            } catch (error) {
+                console.error('Error loading batch status:', error);
+                document.getElementById('batchStatusContent').innerHTML = `
+            <div class="alert alert-danger">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Lỗi tải trạng thái</h6>
+                <p class="mb-0">${error.message}</p>
+            </div>
+        `;
+            }
+        }
+
+        displayBatchExtractionStatus() {
+            const students = this.data.students;
+            const totalStudents = students.length;
+            const studentsWithFeatures = students.filter(s => s.embedding && s.embedding.trim() !== '').length;
+            const studentsWithImages = students.filter(s => s.faceImageCount > 0).length;
+            const studentsReady = studentsWithImages - studentsWithFeatures;
+            const studentsWithoutImages = totalStudents - studentsWithImages;
+
+            const completionRate = totalStudents > 0 ? (studentsWithFeatures / totalStudents * 100) : 0;
+
+            const content = document.getElementById('batchStatusContent');
+
+            content.innerHTML = `
+        <!-- Thống kê tổng quan -->
+        <div class="batch-stats">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <span class="stat-number">${totalStudents}</span>
+                        <span class="stat-label">Tổng sinh viên</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <span class="stat-number">${studentsWithFeatures}</span>
+                        <span class="stat-label">Đã có đặc trưng</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <span class="stat-number">${studentsReady}</span>
+                        <span class="stat-label">Sẵn sàng trích xuất</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <span class="stat-number">${completionRate.toFixed(1)}%</span>
+                        <span class="stat-label">Hoàn thành</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="progress-container">
+            <h6><i class="fas fa-chart-line me-2"></i>Tiến độ hoàn thành</h6>
+            <div class="progress mb-2" style="height: 20px;">
+                <div class="progress-bar bg-success" role="progressbar"
+                     style="width: ${completionRate}%"
+                     aria-valuenow="${completionRate}" aria-valuemin="0" aria-valuemax="100">
+                    ${completionRate.toFixed(1)}%
+                </div>
+            </div>
+            <div class="row text-center">
+                <div class="col-3">
+                    <small class="text-success">
+                        <i class="fas fa-check-circle me-1"></i>
+                        ${studentsWithFeatures} Hoàn thành
+                    </small>
+                </div>
+                <div class="col-3">
+                    <small class="text-warning">
+                        <i class="fas fa-clock me-1"></i>
+                        ${studentsReady} Sẵn sàng
+                    </small>
+                </div>
+                <div class="col-3">
+                    <small class="text-info">
+                        <i class="fas fa-images me-1"></i>
+                        ${studentsWithImages} Có ảnh
+                    </small>
+                </div>
+                <div class="col-3">
+                    <small class="text-muted">
+                        <i class="fas fa-user-slash me-1"></i>
+                        ${studentsWithoutImages} Thiếu ảnh
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="text-center mb-3">
+            ${studentsReady > 0 ? `
+                <button class="btn btn-primary me-2" onclick="app.batchExtractFeatures()">
+                    <i class="fas fa-magic me-2"></i>
+                    Trích xuất ${studentsReady} sinh viên
+                </button>
+            ` : ''}
+
+            <button class="btn btn-outline-info me-2" onclick="app.checkPythonEnvironment()">
+                <i class="fas fa-cog me-2"></i>
+                Kiểm tra Python
+            </button>
+
+            <button class="btn btn-outline-secondary" onclick="app.showBatchExtractionStatus()">
+                <i class="fas fa-sync me-2"></i>
+                Làm mới
+            </button>
+        </div>
+
+        <!-- Chi tiết từng sinh viên -->
+        <div class="feature-grid">
+            ${students.slice(0, 20).map(student => {
+                let statusClass, statusIcon, statusText;
+
+                if (student.embedding && student.embedding.trim() !== '') {
+                    statusClass = 'has-features';
+                    statusIcon = 'check-circle text-success';
+                    statusText = 'Đã có đặc trưng';
+                } else if (student.faceImageCount > 0) {
+                    statusClass = 'no-features';
+                    statusIcon = 'clock text-warning';
+                    statusText = 'Sẵn sàng trích xuất';
+                } else {
+                    statusClass = 'error';
+                    statusIcon = 'exclamation-triangle text-danger';
+                    statusText = 'Thiếu ảnh khuôn mặt';
+                }
+
+                return `
+                    <div class="feature-card ${statusClass}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">${student.maSv}</h6>
+                                <p class="mb-1 text-muted">${student.hoTen}</p>
+                                <small class="text-muted">${student.maLop || 'N/A'}</small>
+                            </div>
+                            <div class="text-end">
+                                <i class="fas fa-${statusIcon} mb-1"></i>
+                                <br>
+                                <small>${statusText}</small>
+                                ${student.faceImageCount > 0 ? `<br><small>${student.faceImageCount} ảnh</small>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+
+        ${students.length > 20 ? `
+            <div class="text-center mt-3">
+                <small class="text-muted">Hiển thị 20/${students.length} sinh viên đầu tiên</small>
+            </div>
+        ` : ''}
+    `;
+        }
+
         // Utility methods
         refreshData() {
             this.loadData();
             this.updateStats();
             this.showAlert('Dữ liệu đã được làm mới', 'info');
         }
+
+
     }
 
     // Initialize manager when page loads
@@ -2305,11 +3003,124 @@
     document.addEventListener('DOMContentLoaded', function() {
         sinhVienManager = new SinhVienManager();
     });
+
 </script>
 
 <!-- Pass current user data to sidebar -->
 <script th:inline="javascript">
     window.currentUser = /*[[${session.user}]]*/ null;
 </script>
+<style>
+    .feature-status-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid #007bff;
+    }
+
+    .feature-status-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .status-indicator.ready {
+        background-color: #28a745;
+    }
+
+    .status-indicator.pending {
+        background-color: #ffc107;
+    }
+
+    .status-indicator.processing {
+        background-color: #17a2b8;
+        animation: pulse 1.5s infinite;
+    }
+
+    .status-indicator.error {
+        background-color: #dc3545;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    .env-check-item {
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 8px;
+    }
+
+    .env-check-item.success {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+    }
+
+    .env-check-item.error {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
+
+    .batch-stats {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .batch-stats .stat-item {
+        text-align: center;
+        padding: 10px;
+    }
+
+    .batch-stats .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        display: block;
+    }
+
+    .batch-stats .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+
+    .progress-container {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .feature-card {
+        border: 1px solid #e3e6f0;
+        border-radius: 8px;
+        padding: 15px;
+        background: white;
+    }
+
+    .feature-card.has-features {
+        border-left-color: #28a745;
+        border-left-width: 4px;
+    }
+
+    .feature-card.no-features {
+        border-left-color: #ffc107;
+        border-left-width: 4px;
+    }
+
+    .feature-card.error {
+        border-left-color: #dc3545;
+        border-left-width: 4px;
+    }
+</style>
 </body>
 </html>

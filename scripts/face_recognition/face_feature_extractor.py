@@ -12,6 +12,9 @@ import time
 import asyncio
 import aiohttp
 from sklearn.preprocessing import normalize
+import argparse
+import json
+import sys
 
 # Cấu hình logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -743,71 +746,204 @@ def print_detailed_results(results: Dict):
 
     print("\n" + "=" * 100)
 
+async def process_single_student(ma_sv: str, extractor: 'FaceFeatureExtractor') -> None:
+    """
+    Xử lý một sinh viên duy nhất và trả về kết quả dưới dạng JSON
+
+    Args:
+        ma_sv: Mã sinh viên
+        extractor: Instance của FaceFeatureExtractor
+    """
+    try:
+        logger.info(f"🔄 Processing single student: {ma_sv}")
+
+        # Xử lý sinh viên
+        result = await extractor.process_student(ma_sv)
+
+        # Chuẩn bị kết quả JSON
+        json_result = {
+            "success": result['status'] == 'success',
+            "student_id": ma_sv,
+            "status": result['status'],
+            "message": result['message'],
+            "embedding": result.get('embedding'),
+            "metadata": result.get('metadata', {})
+        }
+
+        # In JSON result để Java có thể parse
+        print(json.dumps(json_result, ensure_ascii=False, indent=2))
+
+        # Exit code
+        sys.exit(0 if result['status'] == 'success' else 1)
+
+    except Exception as e:
+        logger.error(f"💥 Error processing single student {ma_sv}: {str(e)}")
+
+        # In JSON error result
+        error_result = {
+            "success": False,
+            "student_id": ma_sv,
+            "status": "error",
+            "message": f"Lỗi xử lý sinh viên: {str(e)}",
+            "error": str(e)
+        }
+
+        print(json.dumps(error_result, ensure_ascii=False, indent=2))
+        sys.exit(1)
+
+def parse_arguments():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(description='Face Feature Extractor')
+
+    # Mode selection
+    parser.add_argument('--single-student', action='store_true',
+                        help='Process single student mode')
+    parser.add_argument('--batch-mode', action='store_true',
+                        help='Process all students mode')
+
+    # Student ID for single mode
+    parser.add_argument('--student-id', type=str,
+                        help='Student ID for single student mode')
+
+    # Configuration overrides
+    parser.add_argument('--project-root', type=str,
+                        help='Override project root path')
+    parser.add_argument('--backend-api', type=str,
+                        help='Override backend API URL')
+    parser.add_argument('--face-api', type=str,
+                        help='Override face API URL')
+
+    return parser.parse_args()
 
 async def main():
     """
-    Hàm main để chạy script
+    Enhanced main function với argument parsing
     """
+    args = parse_arguments()
+
     # ========== CẤU HÌNH HỆ THỐNG ==========
-    PROJECT_ROOT = "/home/loki/Desktop/face-attendance"  # ĐƯỜNG DẪN PROJECT CỦA BẠN
-    BACKEND_API_URL = "http://localhost:8080/api"  # Spring Boot API
-    FACE_API_URL = "http://localhost:8001"  # Face Recognition Service
+    PROJECT_ROOT = args.project_root or "/home/loki/Desktop/face-attendance"
+    BACKEND_API_URL = args.backend_api or "http://localhost:8080/api"
+    FACE_API_URL = args.face_api or "http://localhost:8001"
 
-    # ========== CẤU HÌNH XÁC THỰC (TÙY CHỌN) ==========
-    # Nếu cần xác thực, uncomment và điền thông tin:
+    # ========== CẤU HÌNH XÁC THỰC ==========
     CREDENTIALS = {
-        'username': 'admin',  # Thay bằng username thực
-        'password': 'admin123'  # Thay bằng password thực
+        'username': 'admin',
+        'password': 'admin123'
     }
-    # Hoặc để None nếu không cần xác thực:
-    # CREDENTIALS = None
-
-    print("🚀 KHỞI ĐỘNG SCRIPT TRÍCH XUẤT ĐẶC TRƯNG KHUÔN MẶT")
-    print("=" * 60)
-    print(f"📁 Project root: {PROJECT_ROOT}")
-    print(f"🔗 Backend API: {BACKEND_API_URL}")
-    print(f"🤖 Face API: {FACE_API_URL}")
-    print(f"🔐 Authentication: {'Enabled' if CREDENTIALS else 'Disabled'}")
 
     # Khởi tạo extractor
     extractor = FaceFeatureExtractor(BACKEND_API_URL, FACE_API_URL, PROJECT_ROOT, CREDENTIALS)
 
     # Kiểm tra thư mục tồn tại
     if not extractor.student_base_dir.exists():
-        print(f"❌ Lỗi: Thư mục sinh viên không tồn tại: {extractor.student_base_dir}")
-        print("💡 Hãy kiểm tra lại đường dẫn PROJECT_ROOT")
-        return
-
-    print(f"✅ Thư mục sinh viên: {extractor.student_base_dir}")
-
-    # Test kết nối API (nếu có credentials)
-    if CREDENTIALS:
-        print("🔄 Kiểm tra kết nối API...")
-        login_success = await extractor.login_session()
-        if login_success:
-            print("✅ Kết nối API thành công")
+        if args.single_student:
+            error_result = {
+                "success": False,
+                "status": "error",
+                "message": f"Thư mục sinh viên không tồn tại: {extractor.student_base_dir}"
+            }
+            print(json.dumps(error_result, ensure_ascii=False, indent=2))
+            sys.exit(1)
         else:
-            print("⚠️  Đăng nhập API thất bại, sẽ thử fallback methods")
+            print(f"❌ Lỗi: Thư mục sinh viên không tồn tại: {extractor.student_base_dir}")
+            return
 
-    # Xử lý tất cả sinh viên
-    logger.info("🔄 Bắt đầu xử lý batch trích xuất đặc trưng...")
-    results = await extractor.process_all_students()
+    # Xử lý theo mode
+    if args.single_student:
+        # Single student mode
+        if not args.student_id:
+            error_result = {
+                "success": False,
+                "status": "error",
+                "message": "Cần cung cấp --student-id cho single student mode"
+            }
+            print(json.dumps(error_result, ensure_ascii=False, indent=2))
+            sys.exit(1)
 
-    # In kết quả chi tiết
-    print_detailed_results(results)
+        # Test kết nối API (optional)
+        if CREDENTIALS:
+            login_success = await extractor.login_session()
+            if not login_success:
+                logger.warning("⚠️ Đăng nhập API thất bại, sẽ thử fallback methods")
 
-    # Lưu kết quả ra file nếu cần
-    timestamp = time.strftime("%Y%m%d_%H%M%S")
-    report_file = f"face_extraction_report_{timestamp}.json"
+        # Xử lý sinh viên duy nhất
+        await process_single_student(args.student_id, extractor)
 
-    try:
-        with open(report_file, 'w', encoding='utf-8') as f:
-            json.dump(results, f, ensure_ascii=False, indent=2, default=str)
-        print(f"💾 Báo cáo đã được lưu: {report_file}")
-    except Exception as e:
-        print(f"⚠️  Không thể lưu báo cáo: {e}")
+    elif args.batch_mode:
+        # Batch mode (existing logic)
+        print("🚀 KHỞI ĐỘNG SCRIPT TRÍCH XUẤT ĐẶC TRƯNG KHUÔN MẶT - BATCH MODE")
+        print("=" * 60)
+        print(f"📁 Project root: {PROJECT_ROOT}")
+        print(f"🔗 Backend API: {BACKEND_API_URL}")
+        print(f"🤖 Face API: {FACE_API_URL}")
+
+        # Test kết nối API
+        if CREDENTIALS:
+            print("🔄 Kiểm tra kết nối API...")
+            login_success = await extractor.login_session()
+            if login_success:
+                print("✅ Kết nối API thành công")
+            else:
+                print("⚠️ Đăng nhập API thất bại, sẽ thử fallback methods")
+
+        # Xử lý tất cả sinh viên
+        logger.info("🔄 Bắt đầu xử lý batch trích xuất đặc trưng...")
+        results = await extractor.process_all_students()
+
+        # In kết quả chi tiết
+        print_detailed_results(results)
+
+        # Lưu kết quả ra file
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        report_file = f"face_extraction_report_{timestamp}.json"
+
+        try:
+            with open(report_file, 'w', encoding='utf-8') as f:
+                json.dump(results, f, ensure_ascii=False, indent=2, default=str)
+            print(f"💾 Báo cáo đã được lưu: {report_file}")
+
+            # In JSON result cho batch mode
+            batch_result = {
+                "success": True,
+                "batch_mode": True,
+                "total_students": results['total_students'],
+                "success_count": results['success_count'],
+                "failed_count": results['failed_count'],
+                "success_rate": results['success_rate'],
+                "report_file": report_file,
+                "results": results['results']
+            }
+            print(json.dumps(batch_result, ensure_ascii=False, indent=2, default=str))
+
+        except Exception as e:
+            print(f"⚠️ Không thể lưu báo cáo: {e}")
+            # In JSON result ngay cả khi không lưu được file
+            batch_result = {
+                "success": True,
+                "batch_mode": True,
+                "total_students": results['total_students'],
+                "success_count": results['success_count'],
+                "failed_count": results['failed_count'],
+                "success_rate": results['success_rate'],
+                "results": results['results'],
+                "warning": "Không thể lưu báo cáo file"
+            }
+            print(json.dumps(batch_result, ensure_ascii=False, indent=2, default=str))
+
+    else:
+        # Default mode - show help
+        print("🚀 FACE FEATURE EXTRACTOR")
+        print("=" * 50)
+        print("Sử dụng:")
+        print("  --single-student --student-id <MSSV>  : Xử lý một sinh viên")
+        print("  --batch-mode                          : Xử lý tất cả sinh viên")
+        print()
+        print("Ví dụ:")
+        print("  python face_feature_extractor.py --single-student --student-id 21072006095")
+        print("  python face_feature_extractor.py --batch-mode")
 
 
 if __name__ == "__main__":
-    # Chạy async main
+    # Chạy async main với argument parsing
     asyncio.run(main())

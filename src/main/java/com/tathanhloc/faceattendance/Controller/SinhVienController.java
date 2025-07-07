@@ -5,6 +5,7 @@ import com.tathanhloc.faceattendance.Service.SinhVienService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,10 @@ import java.util.List;
 import java.util.Map;
 import com.tathanhloc.faceattendance.Service.ExcelService;
 import com.tathanhloc.faceattendance.DTO.ImportResultDTO;
+import com.tathanhloc.faceattendance.service.PythonFeatureExtractionService;
+import java.util.concurrent.CompletableFuture;
+
+
 
 @RestController
 @RequestMapping("/api/sinhvien")
@@ -36,6 +41,9 @@ public class SinhVienController {
     private final FileUploadService fileUploadService;
     private final FaceRecognitionService faceRecognitionService;
     private final ExcelService excelService;
+
+    @Autowired
+    private PythonFeatureExtractionService pythonFeatureExtractionService;
 
     @GetMapping
     public ResponseEntity<Page<SinhVienDTO>> getAll(@RequestParam(defaultValue = "0") int page,
@@ -249,7 +257,7 @@ public class SinhVienController {
     }
 
     /**
-     * API trích xuất đặc trưng khuôn mặt
+     * API trích xuất đặc trưng khuôn mặt - Phiên bản đã tích hợp
      */
     @PostMapping("/{maSv}/extract-features")
     public ResponseEntity<Map<String, Object>> extractFeatures(@PathVariable String maSv) {
@@ -266,23 +274,215 @@ public class SinhVienController {
                         .body(Map.of("error", "Không có ảnh khuôn mặt để trích xuất đặc trưng"));
             }
 
-            // TODO: Gọi Python service để trích xuất đặc trưng
-            // String embedding = pythonFeatureExtractionService.extractFeatures(maSv);
+            // Gọi Python service để trích xuất đặc trưng
+            Map<String, Object> extractionResult = pythonFeatureExtractionService.extractFeatures(maSv);
 
-            // Tạm thời trả về mock data
-            String mockEmbedding = "mock_embedding_" + System.currentTimeMillis();
-            sinhVienService.saveEmbedding(maSv, mockEmbedding);
+            if (extractionResult.get("success").equals(true)) {
+                // Lưu embedding vào database nếu thành công
+                String embedding = (String) extractionResult.get("embedding");
+                if (embedding != null && !embedding.isEmpty()) {
+                    sinhVienService.saveEmbedding(maSv, embedding);
+                }
 
-            return ResponseEntity.ok(Map.of(
-                    "status", "success",
-                    "message", "Trích xuất đặc trưng thành công",
-                    "faceCount", faceImages.size()
-            ));
+                return ResponseEntity.ok(Map.of(
+                        "status", "success",
+                        "message", "Trích xuất đặc trưng thành công",
+                        "faceCount", faceImages.size(),
+                        "extractionDetails", extractionResult
+                ));
+            } else {
+                // Trả về lỗi từ Python service
+                return ResponseEntity.badRequest()
+                        .body(Map.of(
+                                "error", "Trích xuất đặc trưng thất bại",
+                                "details", extractionResult.get("message"),
+                                "extractionResult", extractionResult
+                        ));
+            }
 
         } catch (Exception e) {
             log.error("Error extracting features for student {}: ", maSv, e);
             return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Không thể trích xuất đặc trưng: " + e.getMessage()));
+                    .body(Map.of(
+                            "error", "Không thể trích xuất đặc trưng: " + e.getMessage(),
+                            "details", e.getCause() != null ? e.getCause().getMessage() : "Unknown error"
+                    ));
+        }
+    }
+    /**
+     * API trích xuất đặc trưng khuôn mặt - Phiên bản async
+     */
+    @PostMapping("/{maSv}/extract-features-async")
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> extractFeaturesAsync(@PathVariable String maSv) {
+        try {
+            log.info("Starting async feature extraction for student: {}", maSv);
+
+            // Kiểm tra sinh viên tồn tại
+            SinhVienDTO sinhVien = sinhVienService.getByMaSv(maSv);
+
+            // Kiểm tra có ảnh khuôn mặt không
+            List<Map<String, Object>> faceImages = fileUploadService.getFaceImages(maSv);
+            if (faceImages.isEmpty()) {
+                return CompletableFuture.completedFuture(
+                        ResponseEntity.badRequest()
+                                .body(Map.of("error", "Không có ảnh khuôn mặt để trích xuất đặc trưng"))
+                );
+            }
+
+            // Gọi Python service async
+            return pythonFeatureExtractionService.extractFeaturesAsync(maSv)
+                    .thenApply(extractionResult -> {
+                        try {
+                            if (extractionResult.get("success").equals(true)) {
+                                // Lưu embedding vào database nếu thành công
+                                String embedding = (String) extractionResult.get("embedding");
+                                if (embedding != null && !embedding.isEmpty()) {
+                                    sinhVienService.saveEmbedding(maSv, embedding);
+                                }
+
+                                return ResponseEntity.ok(Map.of(
+                                        "status", "success",
+                                        "message", "Trích xuất đặc trưng thành công",
+                                        "faceCount", faceImages.size(),
+                                        "extractionDetails", extractionResult
+                                ));
+                            } else {
+                                return ResponseEntity.badRequest()
+                                        .body(Map.of(
+                                                "error", "Trích xuất đặc trưng thất bại",
+                                                "details", extractionResult.get("message"),
+                                                "extractionResult", extractionResult
+                                        ));
+                            }
+                        } catch (Exception e) {
+                            log.error("Error saving extraction result for student {}: ", maSv, e);
+                            return ResponseEntity.internalServerError()
+                                    .body(Map.of("error", "Lỗi khi lưu kết quả: " + e.getMessage()));
+                        }
+                    });
+
+        } catch (Exception e) {
+            log.error("Error starting async feature extraction for student {}: ", maSv, e);
+            return CompletableFuture.completedFuture(
+                    ResponseEntity.internalServerError()
+                            .body(Map.of("error", "Không thể khởi động trích xuất đặc trưng: " + e.getMessage()))
+            );
+        }
+    }
+
+    /**
+     * API batch trích xuất đặc trưng cho tất cả sinh viên
+     */
+    @PostMapping("/batch-extract-features")
+    public ResponseEntity<Map<String, Object>> batchExtractFeatures() {
+        try {
+            log.info("Starting batch feature extraction for all students");
+
+            // Gọi Python service để batch extract
+            Map<String, Object> extractionResult = pythonFeatureExtractionService.extractAllFeatures();
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "completed",
+                    "message", "Batch trích xuất đặc trưng đã hoàn thành",
+                    "results", extractionResult
+            ));
+
+        } catch (Exception e) {
+            log.error("Error in batch feature extraction: ", e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Lỗi batch trích xuất đặc trưng: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * API batch trích xuất đặc trưng - Phiên bản async
+     */
+    @PostMapping("/batch-extract-features-async")
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> batchExtractFeaturesAsync() {
+        try {
+            log.info("Starting async batch feature extraction for all students");
+
+            return pythonFeatureExtractionService.extractAllFeaturesAsync()
+                    .thenApply(extractionResult -> {
+                        return ResponseEntity.ok(Map.of(
+                                "status", "completed",
+                                "message", "Batch trích xuất đặc trưng đã hoàn thành",
+                                "results", extractionResult
+                        ));
+                    });
+
+        } catch (Exception e) {
+            log.error("Error starting async batch feature extraction: ", e);
+            return CompletableFuture.completedFuture(
+                    ResponseEntity.internalServerError()
+                            .body(Map.of("error", "Lỗi khởi động batch trích xuất đặc trưng: " + e.getMessage()))
+            );
+        }
+    }
+
+    /**
+     * API kiểm tra Python environment
+     */
+    @GetMapping("/check-python-environment")
+    public ResponseEntity<Map<String, Object>> checkPythonEnvironment() {
+        try {
+            Map<String, Object> envCheck = pythonFeatureExtractionService.checkPythonEnvironment();
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "success",
+                    "environment", envCheck
+            ));
+
+        } catch (Exception e) {
+            log.error("Error checking Python environment: ", e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Lỗi kiểm tra Python environment: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * API lấy trạng thái đặc trưng của sinh viên
+     */
+    @GetMapping("/{maSv}/feature-status")
+    public ResponseEntity<Map<String, Object>> getFeatureStatus(@PathVariable String maSv) {
+        try {
+            // Kiểm tra sinh viên tồn tại
+            SinhVienDTO sinhVien = sinhVienService.getByMaSv(maSv);
+
+            // Kiểm tra có embedding không
+            boolean hasEmbedding = sinhVien.getEmbedding() != null && !sinhVien.getEmbedding().isEmpty();
+
+            // Đếm số ảnh khuôn mặt
+            List<Map<String, Object>> faceImages = fileUploadService.getFaceImages(maSv);
+            int faceCount = faceImages.size();
+
+            // Xác định trạng thái
+            String status;
+            String message;
+
+            if (hasEmbedding) {
+                status = "ready";
+                message = "Đã có đặc trưng khuôn mặt";
+            } else if (faceCount > 0) {
+                status = "pending";
+                message = "Có ảnh khuôn mặt, chưa trích xuất đặc trưng";
+            } else {
+                status = "no_images";
+                message = "Chưa có ảnh khuôn mặt";
+            }
+
+            return ResponseEntity.ok(Map.of(
+                    "status", status,
+                    "message", message,
+                    "hasEmbedding", hasEmbedding,
+                    "faceCount", faceCount,
+                    "studentId", maSv
+            ));
+
+        } catch (Exception e) {
+            log.error("Error getting feature status for student {}: ", maSv, e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Lỗi lấy trạng thái đặc trưng: " + e.getMessage()));
         }
     }
 
@@ -508,21 +708,6 @@ public class SinhVienController {
         }
     }
 
-    /**
-     * Kiểm tra trạng thái Python environment
-     */
-    @GetMapping("/check-python-environment")
-    public ResponseEntity<Map<String, Object>> checkPythonEnvironment() {
-        try {
-            log.info("Checking Python environment");
-            Map<String, Object> status = faceRecognitionService.checkPythonEnvironment();
-            return ResponseEntity.ok(status);
-        } catch (Exception e) {
-            log.error("Error checking Python environment: ", e);
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Không thể kiểm tra Python environment: " + e.getMessage()));
-        }
-    }
 
     /**
      * Khởi tạo Python scripts
