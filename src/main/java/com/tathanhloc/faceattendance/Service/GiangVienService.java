@@ -33,9 +33,16 @@ public class GiangVienService {
 
     @Transactional
     public GiangVienDTO create(GiangVienDTO dto) {
+        // Validate mã giảng viên
         if (giangVienRepository.existsById(dto.getMaGv())) {
-            throw new RuntimeException("Mã giảng viên đã tồn tại");
+            throw new RuntimeException("Mã giảng viên đã tồn tại: " + dto.getMaGv());
         }
+
+        // Validate email
+        if (giangVienRepository.existsByEmail(dto.getEmail())) {
+            throw new RuntimeException("Email đã được sử dụng: " + dto.getEmail());
+        }
+
         GiangVien gv = toEntity(dto);
         return toDTO(giangVienRepository.save(gv));
     }
@@ -44,6 +51,12 @@ public class GiangVienService {
     public GiangVienDTO update(String maGv, GiangVienDTO dto) {
         GiangVien existing = giangVienRepository.findById(maGv)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy giảng viên"));
+
+        // Validate email (loại trừ chính nó)
+        if (!existing.getEmail().equals(dto.getEmail()) &&
+                giangVienRepository.existsByEmail(dto.getEmail())) {
+            throw new RuntimeException("Email đã được sử dụng: " + dto.getEmail());
+        }
 
         existing.setHoTen(dto.getHoTen());
         existing.setEmail(dto.getEmail());
@@ -56,13 +69,6 @@ public class GiangVienService {
         }
 
         return toDTO(giangVienRepository.save(existing));
-    }
-
-    public void delete(String maGv) {
-        if (!giangVienRepository.existsById(maGv)) {
-            throw new RuntimeException("Không tìm thấy để xóa");
-        }
-        giangVienRepository.deleteById(maGv);
     }
 
     // Mapping
@@ -94,5 +100,88 @@ public class GiangVienService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy giảng viên"));
         return toDTO(gv);
     }
+
+    // Thêm các methods sau vào GiangVienService.java hiện tại:
+
+    /**
+     * Lấy danh sách giảng viên đang hoạt động
+     */
+    public List<GiangVienDTO> getAllActive() {
+        return giangVienRepository.findByIsActiveTrue().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+    /**
+     * Lấy danh sách giảng viên đã nghỉ việc
+     */
+    public List<GiangVienDTO> getAllInactive() {
+        return giangVienRepository.findByIsActiveFalse().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    public boolean existsByMaGv(String maGv) {
+        return giangVienRepository.existsById(maGv);
+    }
+
+    public boolean existsByEmail(String email, String excludeMaGv) {
+        if (excludeMaGv != null && !excludeMaGv.trim().isEmpty()) {
+            // Đang edit - loại trừ chính nó
+            return giangVienRepository.existsByEmailAndMaGvNot(email, excludeMaGv);
+        } else {
+            // Đang tạo mới
+            return giangVienRepository.existsByEmail(email);
+        }
+    }
+
+
+    /**
+     * Xóa mềm giảng viên (soft delete)
+     */
+    @Transactional
+    public void softDelete(String maGv) {
+        GiangVien gv = giangVienRepository.findById(maGv)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy giảng viên"));
+        gv.setIsActive(false);
+        giangVienRepository.save(gv);
+    }
+    /**
+     * Khôi phục giảng viên
+     */
+    @Transactional
+    public void restore(String maGv) {
+        GiangVien gv = giangVienRepository.findById(maGv)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy giảng viên"));
+        gv.setIsActive(true);
+        giangVienRepository.save(gv);
+    }
+
+    /**
+     * Đếm số lượng theo trạng thái
+     */
+    public long countByStatus(boolean isActive) {
+        return isActive ?
+                giangVienRepository.countByIsActiveTrue() :
+                giangVienRepository.countByIsActiveFalse();
+    }
+
+
+    /**
+     * Tìm kiếm giảng viên
+     */
+    public List<GiangVienDTO> search(String keyword) {
+        return giangVienRepository.findByHoTenContainingIgnoreCaseOrEmailContainingIgnoreCase(keyword, keyword)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    public void delete(String maGv) {
+        softDelete(maGv); // Thay đổi từ hard delete sang soft delete
+    }
+
+
+    /**********************************/
+
 
 }

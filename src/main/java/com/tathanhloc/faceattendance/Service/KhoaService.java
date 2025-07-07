@@ -41,8 +41,9 @@ public class KhoaService extends BaseService<Khoa, String, KhoaDTO> {
     @Override
     @Cacheable(value = "khoa")
     public List<KhoaDTO> getAllActive() {
-        log.debug("Lấy danh sách khoa đang hoạt động từ database");
-        return super.getAllActive();
+        return khoaRepository.findByIsActiveTrue().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     @Override

@@ -2,9 +2,11 @@ package com.tathanhloc.faceattendance.Controller;
 import com.tathanhloc.faceattendance.DTO.KhoaDTO;
 import com.tathanhloc.faceattendance.Service.KhoaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -43,6 +45,17 @@ public class KhoaController {
     public ResponseEntity<KhoaDTO> getByMaKhoa(@PathVariable String maKhoa) {
         return ResponseEntity.ok(khoaService.getByMaKhoa(maKhoa));
     }
-
+    @GetMapping("/active")
+    public ResponseEntity<List<KhoaDTO>> getAllActive() {
+        try {
+            List<KhoaDTO> activeKhoas = khoaService.getAllActive();
+            return ResponseEntity.ok(activeKhoas);
+        } catch (Exception e) {
+            // Thay vì dùng log, dùng System.err hoặc Logger
+            System.err.println("❌ Error getting active khoa list: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.emptyList());
+        }
+    }
 
 }

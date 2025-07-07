@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Giảng viên</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/sidebar.css}" rel="stylesheet">
+    <link th:href="@{/css/admin.css}" rel="stylesheet">
+    <style>
+        .stats-card-modern {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-card-modern:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .stats-card-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+        }
+
+        .stats-card-modern.primary::before {
+            background: #1c6681;
+        }
+
+        .stats-card-modern.success::before {
+            background: #27ae60;
+        }
+
+        .stats-card-modern.warning::before {
+            background: #f39c12;
+        }
+
+        .stats-card-modern.info::before {
+            background: #3498db;
+        }
+
+        .stats-icon-modern {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        .stats-card-modern.primary .stats-icon-modern {
+            background: #1c6681;
+        }
+
+        .stats-card-modern.success .stats-icon-modern {
+            background: #27ae60;
+        }
+
+        .stats-card-modern.warning .stats-icon-modern {
+            background: #f39c12;
+        }
+
+        .stats-card-modern.info .stats-icon-modern {
+            background: #3498db;
+        }
+
+        .stats-number-modern {
+            font-size: 32px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            line-height: 1;
+        }
+
+        .stats-label-modern {
+            color: #7f8c8d;
+            font-size: 14px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .modern-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f0f0f0;
+            overflow: hidden;
+        }
+
+        .modern-card-header {
+            padding: 24px 24px 0 24px;
+            border-bottom: none;
+        }
+
+        .modern-card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .modern-card-subtitle {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin: 4px 0 0 0;
+        }
+
+        .modern-filter-bar {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f0f0f0;
+            margin-bottom: 24px;
+        }
+
+        .modern-btn {
+            border-radius: 10px;
+            font-weight: 500;
+            padding: 10px 20px;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .modern-btn-primary {
+            background: #1c6681;
+            color: white;
+        }
+
+        .modern-btn-primary:hover {
+            background: #155a73;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(28, 102, 129, 0.3);
+        }
+
+        .modern-btn-outline {
+            background: transparent;
+            border: 2px solid #e9ecef;
+            color: #6c757d;
+        }
+
+        .modern-btn-outline:hover {
+            background: #f8f9fa;
+            border-color: #1c6681;
+            color: #1c6681;
+        }
+
+        .modern-form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 16px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .modern-form-control:focus {
+            border-color: #1c6681;
+            box-shadow: 0 0 0 0.2rem rgba(28, 102, 129, 0.15);
+        }
+
+        .modern-table {
+            border-radius: 0;
+        }
+
+        .modern-table thead th {
+            background: #f8f9fa;
+            border: none;
+            padding: 16px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 14px;
+        }
+
+        .modern-table tbody td {
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        .modern-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .modern-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .modern-badge.success {
+            background: rgba(39, 174, 96, 0.1);
+            color: #27ae60;
+        }
+
+        .modern-badge.danger {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+        }
+
+        .modern-badge.info {
+            background: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 2px;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn-edit {
+            background: rgba(243, 156, 18, 0.1);
+            color: #f39c12;
+        }
+
+        .action-btn-edit:hover {
+            background: #f39c12;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .action-btn-delete {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+        }
+
+        .action-btn-delete:hover {
+            background: #e74c3c;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .action-btn-restore {
+            background: rgba(39, 174, 96, 0.1);
+            color: #27ae60;
+        }
+
+        .action-btn-restore:hover {
+            background: #27ae60;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .modern-modal .modal-content {
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .modern-modal .modal-header {
+            background: #f8f9fa;
+            border-radius: 16px 16px 0 0;
+            padding: 20px 24px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .modern-modal .modal-title {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .modern-modal .modal-body {
+            padding: 24px;
+        }
+
+        .modern-modal .modal-footer {
+            padding: 16px 24px;
+            background: #f8f9fa;
+            border-radius: 0 0 16px 16px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .modern-tabs {
+            border: none;
+            margin-bottom: 24px;
+        }
+
+        .modern-tabs .nav-link {
+            border: none;
+            color: #6c757d;
+            font-weight: 500;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-right: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .modern-tabs .nav-link.active {
+            background: #1c6681;
+            color: white;
+        }
+
+        .modern-tabs .nav-link:hover:not(.active) {
+            background: #f8f9fa;
+            color: #1c6681;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border-radius: 16px;
+        }
+    </style>
+</head>
+<body>
+<div class="main-wrapper">
+    <!-- Include Sidebar Component -->
+    <div th:replace="~{components/sidebar :: sidebar}"></div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Quản lý Giảng viên</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <span th:text="'Xin chào, ' + ${session.user?.hoTen ?: 'Admin'}">Xin chào, Admin</span>
+                        <a href="/logout" class="logout-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="page-content">
+            <div class="container-fluid">
+                <!-- Page Header -->
+                <div class="modern-card-header">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <h2 class="modern-card-title">
+                                <i class="fas fa-chalkboard-teacher me-2"></i>Quản lý Giảng viên
+                            </h2>
+                            <p class="modern-card-subtitle">Quản lý thông tin giảng viên trong hệ thống</p>
+                        </div>
+                        <button class="btn modern-btn modern-btn-primary" onclick="giangVienManager.showCreateModal()">
+                            <i class="fas fa-plus me-2"></i>Thêm Giảng viên
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="row g-4 mb-4">
+                    <div class="col-md-3">
+                        <div class="stats-card-modern primary">
+                            <div class="stats-icon-modern">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stats-number-modern" id="totalLecturers">0</div>
+                            <p class="stats-label-modern">Tổng Giảng viên</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card-modern success">
+                            <div class="stats-icon-modern">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="stats-number-modern" id="activeLecturers">0</div>
+                            <p class="stats-label-modern">Đang Hoạt động</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card-modern warning">
+                            <div class="stats-icon-modern">
+                                <i class="fas fa-user-times"></i>
+                            </div>
+                            <div class="stats-number-modern" id="inactiveLecturers">0</div>
+                            <p class="stats-label-modern">Đã Nghỉ việc</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card-modern info">
+                            <div class="stats-icon-modern">
+                                <i class="fas fa-university"></i>
+                            </div>
+                            <div class="stats-number-modern" id="totalFaculties">0</div>
+                            <p class="stats-label-modern">Số Khoa</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View Tabs -->
+                <ul class="nav nav-tabs modern-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" onclick="giangVienManager.switchView('active')">
+                            <i class="fas fa-user-check me-2"></i>Đang Hoạt động
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="giangVienManager.switchView('inactive')">
+                            <i class="fas fa-user-times me-2"></i>Đã Nghỉ việc
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="giangVienManager.switchView('all')">
+                            <i class="fas fa-list me-2"></i>Tất cả
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Search and Filters -->
+                <div class="modern-filter-bar">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Tìm kiếm</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="text" class="form-control modern-form-control border-start-0"
+                                       id="searchInput" placeholder="Tìm theo mã GV, tên, email...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Khoa</label>
+                            <select class="form-select modern-form-control" id="filterKhoa">
+                                <option value="">Tất cả khoa</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Sắp xếp theo</label>
+                            <select class="form-select modern-form-control" id="sortBy">
+                                <option value="hoTen">Tên A-Z</option>
+                                <option value="hoTen,desc">Tên Z-A</option>
+                                <option value="maGv">Mã GV</option>
+                                <option value="email">Email</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button class="btn modern-btn modern-btn-outline" onclick="giangVienManager.loadData()">
+                                    <i class="fas fa-filter me-2"></i>Lọc
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Table -->
+                <div class="modern-card position-relative">
+                    <div class="loading-overlay d-none" id="tableLoading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Đang tải...</span>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table modern-table mb-0">
+                            <thead>
+                            <tr>
+                                <th>Mã GV</th>
+                                <th>Họ tên</th>
+                                <th>Email</th>
+                                <th>Khoa</th>
+                                <th>Trạng thái</th>
+                                <th class="text-center">Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody id="dataTableBody">
+                            <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div class="text-center py-5 d-none" id="emptyState">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Không có dữ liệu</h5>
+                        <p class="text-muted">Không tìm thấy giảng viên nào phù hợp với bộ lọc hiện tại</p>
+                    </div>
+
+                    <!-- Pagination -->
+                    <nav class="p-3" id="pagination"></nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Modal -->
+<div class="modal fade modern-modal" id="lecturerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Thêm Giảng viên</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="lecturerForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Mã Giảng viên <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control modern-form-control" id="maGv" required>
+                            <div class="invalid-feedback">Vui lòng nhập mã giảng viên</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Họ tên <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control modern-form-control" id="hoTen" required>
+                            <div class="invalid-feedback">Vui lòng nhập họ tên</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control modern-form-control" id="email" required>
+                            <div class="invalid-feedback">Vui lòng nhập email hợp lệ</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Khoa <span class="text-danger">*</span></label>
+                            <select class="form-select modern-form-control" id="maKhoa" required>
+                                <option value="">Chọn khoa</option>
+                            </select>
+                            <div class="invalid-feedback">Vui lòng chọn khoa</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="isActive" checked>
+                                <label class="form-check-label fw-semibold" for="isActive">
+                                    Đang hoạt động
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary modern-btn" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Hủy
+                </button>
+                <button type="button" class="btn modern-btn modern-btn-primary" onclick="giangVienManager.save()">
+                    <i class="fas fa-save me-2"></i>Lưu
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade modern-modal" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Xác nhận xóa
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa giảng viên <strong id="deleteItemName"></strong>?</p>
+                <p class="text-muted">Giảng viên sẽ được chuyển sang trạng thái "Đã nghỉ việc" và có thể khôi phục sau.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary modern-btn" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger modern-btn" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-2"></i>Xóa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Restore Confirmation Modal -->
+<div class="modal fade modern-modal" id="restoreModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-success">
+                    <i class="fas fa-undo me-2"></i>Xác nhận khôi phục
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn khôi phục giảng viên <strong id="restoreItemName"></strong>?</p>
+                <p class="text-muted">Giảng viên sẽ được chuyển về trạng thái "Đang hoạt động".</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary modern-btn" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-success modern-btn" id="confirmRestoreBtn">
+                    <i class="fas fa-undo me-2"></i>Khôi phục
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script th:src="@{/js/sidebar.js}"></script>
+<script th:src="@{/js/admin.js}"></script>
+
+<script>
+    // Giảng viên Manager
+    const giangVienManager = {
+        API_BASE: '/api/giangvien',
+        currentView: 'active',
+        currentPage: 1,
+        itemsPerPage: 10,
+        totalItems: 0,
+        totalPages: 0,
+        data: [],
+        khoaData: [],
+        isEditing: false,
+        editingId: null,
+
+        // Initialize
+        async init() {
+            console.log('🚀 Initializing Giảng viên Manager...');
+            await this.loadKhoaData();
+            await this.loadData();
+            await this.updateStats();
+            this.bindEvents();
+            console.log('✅ Giảng viên Manager initialized');
+        },
+
+        // Load khoa data for dropdowns
+        async loadKhoaData() {
+            try {
+                const response = await fetch('/api/khoa');
+                if (!response.ok) throw new Error('Failed to load khoa data');
+
+                this.khoaData = await response.json();
+                this.populateKhoaSelects();
+                console.log('✅ Khoa data loaded:', this.khoaData.length, 'items');
+            } catch (error) {
+                console.error('❌ Error loading khoa:', error);
+                this.showNotification('Không thể tải dữ liệu khoa', 'error');
+            }
+        },
+
+        // Populate khoa dropdowns
+        populateKhoaSelects() {
+            const selects = ['filterKhoa', 'maKhoa'];
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (!select) return;
+
+                // Keep existing options for filter
+                if (selectId === 'filterKhoa') {
+                    select.innerHTML = '<option value="">Tất cả khoa</option>';
+                } else {
+                    select.innerHTML = '<option value="">Chọn khoa</option>';
+                }
+
+                this.khoaData.forEach(khoa => {
+                    const option = document.createElement('option');
+                    option.value = khoa.maKhoa;
+                    option.textContent = `${khoa.maKhoa} - ${khoa.tenKhoa}`;
+                    select.appendChild(option);
+                });
+            });
+        },
+
+        // Load main data
+        async loadData() {
+            try {
+                this.showTableLoading(true);
+
+                // Build query parameters
+                const params = new URLSearchParams({
+                    page: this.currentPage - 1,
+                    size: this.itemsPerPage
+                });
+
+                // Add search filter
+                const searchText = document.getElementById('searchInput').value.trim();
+                if (searchText) {
+                    params.append('search', searchText);
+                }
+
+                // Add khoa filter
+                const khoaFilter = document.getElementById('filterKhoa').value;
+                if (khoaFilter) {
+                    params.append('khoa', khoaFilter);
+                }
+
+                // Add sort
+                const sortBy = document.getElementById('sortBy').value;
+                if (sortBy) {
+                    params.append('sort', sortBy);
+                }
+
+                // Determine endpoint based on view
+                let endpoint = `${this.API_BASE}`;
+                if (this.currentView === 'active') {
+                    params.append('status', 'active');
+                } else if (this.currentView === 'inactive') {
+                    params.append('status', 'inactive');
+                }
+
+                const response = await fetch(`${endpoint}?${params}`);
+                if (!response.ok) throw new Error('Failed to load data');
+
+                const result = await response.json();
+
+                // Handle response format
+                if (Array.isArray(result)) {
+                    this.data = result;
+                    this.totalItems = result.length;
+                    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
+                } else if (result.content) {
+                    this.data = result.content;
+                    this.totalItems = result.totalElements;
+                    this.totalPages = result.totalPages;
+                    this.currentPage = result.number + 1;
+                }
+
+                this.renderTable();
+                this.renderPagination();
+                console.log('✅ Data loaded:', this.data.length, 'items');
+
+            } catch (error) {
+                console.error('❌ Error loading data:', error);
+                this.showNotification('Không thể tải dữ liệu', 'error');
+            } finally {
+                this.showTableLoading(false);
+            }
+        },
+
+        // Render table
+        renderTable() {
+            const tbody = document.getElementById('dataTableBody');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!this.data || this.data.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('d-none');
+                return;
+            }
+
+            emptyState.classList.add('d-none');
+
+            tbody.innerHTML = this.data.map(item => `
+                    <tr>
+                        <td><strong>${item.maGv}</strong></td>
+                        <td>${item.hoTen}</td>
+                        <td>
+                            <a href="mailto:${item.email}" class="text-decoration-none">
+                                ${item.email}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="modern-badge info">
+                                ${this.getKhoaName(item.maKhoa)}
+                            </span>
+                        </td>
+                        <td>${this.formatStatus(item.isActive)}</td>
+                        <td class="text-center">
+                            <div class="d-flex justify-content-center gap-1">
+                                <button class="action-btn action-btn-edit"
+                                        onclick="giangVienManager.showEditModal('${item.maGv}')"
+                                        title="Chỉnh sửa">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                ${this.renderActionButton(item)}
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+        },
+
+        // Render action button based on status
+        renderActionButton(item) {
+            if (item.isActive) {
+                return `
+                        <button class="action-btn action-btn-delete"
+                                onclick="giangVienManager.showDeleteModal('${item.maGv}', '${item.hoTen}')"
+                                title="Xóa">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+            } else {
+                return `
+                        <button class="action-btn action-btn-restore"
+                                onclick="giangVienManager.showRestoreModal('${item.maGv}', '${item.hoTen}')"
+                                title="Khôi phục">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                    `;
+            }
+        },
+
+        // Get khoa name by maKhoa
+        getKhoaName(maKhoa) {
+            const khoa = this.khoaData.find(k => k.maKhoa === maKhoa);
+            return khoa ? khoa.tenKhoa : maKhoa;
+        },
+
+        // Format status
+        formatStatus(isActive) {
+            if (isActive === null || isActive === undefined) {
+                return '<span class="modern-badge">N/A</span>';
+            }
+            return isActive ?
+                '<span class="modern-badge success">Đang hoạt động</span>' :
+                '<span class="modern-badge danger">Đã nghỉ việc</span>';
+        },
+
+        // Render pagination
+        renderPagination() {
+            const pagination = document.getElementById('pagination');
+
+            if (this.totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            const startPage = Math.max(1, this.currentPage - 2);
+            const endPage = Math.min(this.totalPages, this.currentPage + 2);
+
+            let paginationHTML = `
+                    <ul class="pagination justify-content-center mb-0">
+                        <li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
+                            <a class="page-link" href="#" onclick="event.preventDefault(); giangVienManager.changePage(${this.currentPage - 1})">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                `;
+
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `
+                        <li class="page-item ${i === this.currentPage ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="event.preventDefault(); giangVienManager.changePage(${i})">${i}</a>
+                        </li>
+                    `;
+            }
+
+            paginationHTML += `
+                        <li class="page-item ${this.currentPage === this.totalPages ? 'disabled' : ''}">
+                            <a class="page-link" href="#" onclick="event.preventDefault(); giangVienManager.changePage(${this.currentPage + 1})">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                `;
+
+            pagination.innerHTML = paginationHTML;
+        },
+
+        // Change page
+        changePage(page) {
+            if (page < 1 || page > this.totalPages || page === this.currentPage) return;
+            this.currentPage = page;
+            this.loadData();
+        },
+
+        // Switch view
+        switchView(view) {
+            this.currentView = view;
+            this.currentPage = 1;
+
+            // Update active tab
+            document.querySelectorAll('.modern-tabs .nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            this.loadData();
+        },
+
+        // Update statistics
+        async updateStats() {
+            try {
+                const [allResponse, khoaResponse] = await Promise.all([
+                    fetch(`${this.API_BASE}`),
+                    fetch('/api/khoa')
+                ]);
+
+                if (!allResponse.ok || !khoaResponse.ok) {
+                    throw new Error('Failed to load statistics');
+                }
+
+                const allData = await allResponse.json();
+                const khoaData = await khoaResponse.json();
+
+                const activeCount = allData.filter(item => item.isActive).length;
+                const inactiveCount = allData.filter(item => !item.isActive).length;
+
+                document.getElementById('totalLecturers').textContent = allData.length;
+                document.getElementById('activeLecturers').textContent = activeCount;
+                document.getElementById('inactiveLecturers').textContent = inactiveCount;
+                document.getElementById('totalFaculties').textContent = khoaData.length;
+
+            } catch (error) {
+                console.error('❌ Error loading statistics:', error);
+            }
+        },
+
+        // Show create modal
+        showCreateModal() {
+            this.isEditing = false;
+            this.editingId = null;
+
+            document.getElementById('modalTitle').textContent = 'Thêm Giảng viên';
+            document.getElementById('lecturerForm').reset();
+            document.getElementById('maGv').disabled = false;
+            document.getElementById('isActive').checked = true;
+
+            // Clear validation
+            this.clearValidation();
+
+            new bootstrap.Modal(document.getElementById('lecturerModal')).show();
+        },
+
+        // Show edit modal
+        async showEditModal(maGv) {
+            try {
+                const response = await fetch(`${this.API_BASE}/${maGv}`);
+                if (!response.ok) throw new Error('Failed to load lecturer data');
+
+                const lecturer = await response.json();
+
+                this.isEditing = true;
+                this.editingId = maGv;
+
+                document.getElementById('modalTitle').textContent = 'Chỉnh sửa Giảng viên';
+                document.getElementById('maGv').value = lecturer.maGv;
+                document.getElementById('maGv').disabled = true;
+                document.getElementById('hoTen').value = lecturer.hoTen;
+                document.getElementById('email').value = lecturer.email;
+                document.getElementById('maKhoa').value = lecturer.maKhoa;
+                document.getElementById('isActive').checked = lecturer.isActive;
+
+                // Clear validation
+                this.clearValidation();
+
+                new bootstrap.Modal(document.getElementById('lecturerModal')).show();
+
+            } catch (error) {
+                console.error('❌ Error loading lecturer:', error);
+                this.showNotification('Không thể tải thông tin giảng viên', 'error');
+            }
+        },
+
+        // Save (create or update)
+        async save() {
+            if (!this.validateForm()) return;
+
+            const formData = {
+                maGv: document.getElementById('maGv').value.trim(),
+                hoTen: document.getElementById('hoTen').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                maKhoa: document.getElementById('maKhoa').value,
+                isActive: document.getElementById('isActive').checked
+            };
+
+            try {
+                const url = this.isEditing ?
+                    `${this.API_BASE}/${this.editingId}` :
+                    this.API_BASE;
+
+                const method = this.isEditing ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    throw new Error(errorData || 'Failed to save lecturer');
+                }
+
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('lecturerModal')).hide();
+
+                // Reload data and stats
+                await Promise.all([this.loadData(), this.updateStats()]);
+
+                this.showNotification(
+                    this.isEditing ? 'Cập nhật giảng viên thành công!' : 'Thêm giảng viên thành công!',
+                    'success'
+                );
+
+            } catch (error) {
+                console.error('❌ Error saving lecturer:', error);
+                this.showNotification(
+                    'Lỗi khi lưu: ' + error.message,
+                    'error'
+                );
+            }
+        },
+
+        // Validate form
+        validateForm() {
+            const form = document.getElementById('lecturerForm');
+            const inputs = form.querySelectorAll('input[required], select[required]');
+            let isValid = true;
+
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    input.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    input.classList.remove('is-invalid');
+                    input.classList.add('is-valid');
+                }
+            });
+
+            // Email validation
+            const email = document.getElementById('email');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (email.value && !emailRegex.test(email.value)) {
+                email.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            return isValid;
+        },
+
+        // Clear form validation
+        clearValidation() {
+            const form = document.getElementById('lecturerForm');
+            const inputs = form.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.classList.remove('is-invalid', 'is-valid');
+            });
+        },
+
+        // Show delete modal
+        showDeleteModal(maGv, hoTen) {
+            document.getElementById('deleteItemName').textContent = `${maGv} - ${hoTen}`;
+
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+
+            // Set up confirm button
+            document.getElementById('confirmDeleteBtn').onclick = () => {
+                this.performDelete(maGv);
+                modal.hide();
+            };
+        },
+
+        // Show restore modal
+        showRestoreModal(maGv, hoTen) {
+            document.getElementById('restoreItemName').textContent = `${maGv} - ${hoTen}`;
+
+            const modal = new bootstrap.Modal(document.getElementById('restoreModal'));
+            modal.show();
+
+            // Set up confirm button
+            document.getElementById('confirmRestoreBtn').onclick = () => {
+                this.performRestore(maGv);
+                modal.hide();
+            };
+        },
+
+        // Perform delete (soft delete)
+        async performDelete(maGv) {
+            try {
+                const response = await fetch(`${this.API_BASE}/${maGv}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete lecturer');
+                }
+
+                await Promise.all([this.loadData(), this.updateStats()]);
+                this.showNotification('Giảng viên đã được chuyển sang trạng thái "Đã nghỉ việc"!', 'success');
+
+            } catch (error) {
+                console.error('❌ Error deleting lecturer:', error);
+                this.showNotification('Lỗi khi xóa: ' + error.message, 'error');
+            }
+        },
+
+        // Perform restore
+        async performRestore(maGv) {
+            try {
+                const response = await fetch(`${this.API_BASE}/${maGv}/restore`, {
+                    method: 'PUT'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to restore lecturer');
+                }
+
+                await Promise.all([this.loadData(), this.updateStats()]);
+                this.showNotification('Khôi phục giảng viên thành công!', 'success');
+
+            } catch (error) {
+                console.error('❌ Error restoring lecturer:', error);
+                this.showNotification('Lỗi khi khôi phục: ' + error.message, 'error');
+            }
+        },
+
+        // Show table loading
+        showTableLoading(show) {
+            const overlay = document.getElementById('tableLoading');
+            if (show) {
+                overlay.classList.remove('d-none');
+            } else {
+                overlay.classList.add('d-none');
+            }
+        },
+
+        // Show notification
+        showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = `
+                    top: 20px;
+                    right: 20px;
+                    z-index: 9999;
+                    min-width: 300px;
+                `;
+
+            notification.innerHTML = `
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+
+            document.body.appendChild(notification);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        },
+
+        // Bind events
+        bindEvents() {
+            // Search on input
+            document.getElementById('searchInput').addEventListener('input',
+                this.debounce(() => {
+                    this.currentPage = 1;
+                    this.loadData();
+                }, 500)
+            );
+
+            // Filter on change
+            document.getElementById('filterKhoa').addEventListener('change', () => {
+                this.currentPage = 1;
+                this.loadData();
+            });
+
+            document.getElementById('sortBy').addEventListener('change', () => {
+                this.currentPage = 1;
+                this.loadData();
+            });
+
+            // Form validation on input
+            const form = document.getElementById('lecturerForm');
+            form.addEventListener('input', (e) => {
+                if (e.target.classList.contains('is-invalid')) {
+                    if (e.target.value.trim()) {
+                        e.target.classList.remove('is-invalid');
+                        e.target.classList.add('is-valid');
+                    }
+                }
+            });
+        },
+
+        // Debounce utility
+        debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    };
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+        giangVienManager.init();
+    });
+
+    // Auto refresh every 5 minutes
+    setInterval(() => {
+        giangVienManager.updateStats();
+    }, 5 * 60 * 1000);
+</script>
+</body>
+</html>
