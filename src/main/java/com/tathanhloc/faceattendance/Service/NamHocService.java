@@ -1,7 +1,12 @@
 package com.tathanhloc.faceattendance.Service;
 
+import com.tathanhloc.faceattendance.DTO.HocKyDTO;
 import com.tathanhloc.faceattendance.DTO.NamHocDTO;
+import com.tathanhloc.faceattendance.Model.HocKy;
+import com.tathanhloc.faceattendance.Model.HocKyNamHoc;
 import com.tathanhloc.faceattendance.Model.NamHoc;
+import com.tathanhloc.faceattendance.Repository.HocKyNamHocRepository;
+import com.tathanhloc.faceattendance.Repository.HocKyRepository;
 import com.tathanhloc.faceattendance.Repository.NamHocRepository;
 import com.tathanhloc.faceattendance.Exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -11,8 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +25,8 @@ import java.util.Optional;
 public class NamHocService {
 
     private final NamHocRepository namHocRepository;
+    private final HocKyNamHocRepository hocKyNamHocRepository;
+    private final HocKyRepository hocKyRepository;
 
     public List<NamHocDTO> getAll() {
         try {
@@ -203,7 +210,7 @@ public class NamHocService {
     // ============ HELPER METHODS ============
 
     @Transactional
-    private void unsetAllCurrent() {
+    protected void unsetAllCurrent() {
         List<NamHoc> currentYears = namHocRepository.findAll().stream()
                 .filter(nh -> Boolean.TRUE.equals(nh.getIsCurrent()))
                 .toList();
@@ -320,6 +327,180 @@ public class NamHocService {
                 .moTa(dto.getMoTa())
                 .isActive(dto.getIsActive() != null ? dto.getIsActive() : true)
                 .isCurrent(dto.getIsCurrent() != null ? dto.getIsCurrent() : false)
+                .build();
+    }
+
+    @Transactional
+    public Map<String, Object> createSemestersForYear(String maNamHoc) {
+        log.info("Creating default semesters for academic year: {}", maNamHoc);
+
+        try {
+            // Kiểm tra năm học tồn tại
+            NamHoc namHoc = namHocRepository.findById(maNamHoc)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy năm học: " + maNamHoc));
+
+            // Kiểm tra đã có học kỳ chưa
+            List<HocKyNamHoc> existingRelations = hocKyNamHocRepository.findByNamHoc_MaNamHoc(maNamHoc);
+            if (!existingRelations.isEmpty()) {
+                throw new RuntimeException("Năm học này đã có học kỳ được tạo");
+            }
+
+            // Parse năm học để tạo học kỳ
+            String[] years = maNamHoc.split("-");
+            if (years.length != 2) {
+                throw new RuntimeException("Định dạng mã năm học không hợp lệ: " + maNamHoc);
+            }
+
+            int startYear = Integer.parseInt(years[0].trim());
+            int endYear = Integer.parseInt(years[1].trim());
+
+            List<HocKy> createdSemesters = new ArrayList<>();
+            List<HocKyNamHoc> createdRelations = new ArrayList<>();
+
+            // Tạo Học kỳ 1 (Tháng 9 - Tháng 1)
+            HocKy semester1 = createSemester(
+                    "HK1_" + maNamHoc,
+                    "Học kỳ 1 - " + maNamHoc,
+                    LocalDate.of(startYear, 9, 1),
+                    LocalDate.of(startYear + 1, 1, 31),
+                    "Học kỳ 1 của năm học " + maNamHoc
+            );
+            createdSemesters.add(semester1);
+
+            // Tạo Học kỳ 2 (Tháng 2 - Tháng 6)
+            HocKy semester2 = createSemester(
+                    "HK2_" + maNamHoc,
+                    "Học kỳ 2 - " + maNamHoc,
+                    LocalDate.of(endYear, 2, 1),
+                    LocalDate.of(endYear, 6, 30),
+                    "Học kỳ 2 của năm học " + maNamHoc
+            );
+            createdSemesters.add(semester2);
+
+            // Tạo relationships trong bảng hoc_ky_nam_hoc
+            for (HocKy semester : createdSemesters) {
+                HocKyNamHoc relation = HocKyNamHoc.builder()
+                        .hocKy(semester)
+                        .namHoc(namHoc)
+                        .isActive(true)
+                        .build();
+
+                HocKyNamHoc savedRelation = hocKyNamHocRepository.save(relation);
+                createdRelations.add(savedRelation);
+
+                log.debug("✅ Created relationship: {} - {}", semester.getMaHocKy(), maNamHoc);
+            }
+
+            // Chuẩn bị response
+            Map<String, Object> result = new HashMap<>();
+            result.put("maNamHoc", maNamHoc);
+            result.put("createdSemesters", createdSemesters.size());
+            result.put("semesters", createdSemesters.stream()
+                    .map(this::convertToHocKyDTO)
+                    .collect(Collectors.toList()));
+            result.put("message", "Đã tạo thành công " + createdSemesters.size() + " học kỳ cho năm học " + maNamHoc);
+
+            log.info("✅ Successfully created {} semesters for academic year: {}",
+                    createdSemesters.size(), maNamHoc);
+
+            return result;
+
+        } catch (Exception e) {
+            log.error("❌ Error creating semesters for academic year: {}", maNamHoc, e);
+            throw new RuntimeException("Lỗi khi tạo học kỳ: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Lấy danh sách học kỳ theo năm học
+     */
+    public List<HocKyDTO> getSemestersByYear(String maNamHoc) {
+        log.debug("Getting semesters for academic year: {}", maNamHoc);
+
+        try {
+            List<HocKyNamHoc> relations = hocKyNamHocRepository.findByNamHoc_MaNamHocAndIsActive(maNamHoc, true);
+
+            return relations.stream()
+                    .map(relation -> convertToHocKyDTO(relation.getHocKy()))
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            log.error("❌ Error getting semesters for academic year: {}", maNamHoc, e);
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Xóa tất cả học kỳ của năm học
+     */
+    @Transactional
+    public void deleteSemestersOfYear(String maNamHoc) {
+        log.info("Deleting all semesters of academic year: {}", maNamHoc);
+
+        try {
+            List<HocKyNamHoc> relations = hocKyNamHocRepository.findByNamHoc_MaNamHoc(maNamHoc);
+
+            for (HocKyNamHoc relation : relations) {
+                // Soft delete relation
+                relation.setIsActive(false);
+                hocKyNamHocRepository.save(relation);
+
+                // Soft delete học kỳ
+                HocKy hocKy = relation.getHocKy();
+                hocKy.setIsActive(false);
+                hocKyRepository.save(hocKy);
+
+                log.debug("✅ Deleted semester: {}", hocKy.getMaHocKy());
+            }
+
+            log.info("✅ Successfully deleted {} semesters for academic year: {}",
+                    relations.size(), maNamHoc);
+
+        } catch (Exception e) {
+            log.error("❌ Error deleting semesters for academic year: {}", maNamHoc, e);
+            throw new RuntimeException("Lỗi khi xóa học kỳ: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Helper method để tạo học kỳ
+     */
+    private HocKy createSemester(String maHocKy, String tenHocKy, LocalDate ngayBatDau,
+                                 LocalDate ngayKetThuc, String moTa) {
+
+        // Kiểm tra học kỳ đã tồn tại chưa
+        if (hocKyRepository.existsById(maHocKy)) {
+            throw new RuntimeException("Học kỳ đã tồn tại: " + maHocKy);
+        }
+
+        HocKy hocKy = HocKy.builder()
+                .maHocKy(maHocKy)
+                .tenHocKy(tenHocKy)
+                .ngayBatDau(ngayBatDau)
+                .ngayKetThuc(ngayKetThuc)
+                .moTa(moTa)
+                .isActive(true)
+                .isCurrent(false)
+                .build();
+
+        HocKy saved = hocKyRepository.save(hocKy);
+        log.debug("✅ Created semester: {}", saved.getMaHocKy());
+
+        return saved;
+    }
+
+    /**
+     * Convert HocKy to DTO
+     */
+    private HocKyDTO convertToHocKyDTO(HocKy hocKy) {
+        return HocKyDTO.builder()
+                .maHocKy(hocKy.getMaHocKy())
+                .tenHocKy(hocKy.getTenHocKy())
+                .ngayBatDau(hocKy.getNgayBatDau())
+                .ngayKetThuc(hocKy.getNgayKetThuc())
+                .moTa(hocKy.getMoTa())
+                .isActive(hocKy.getIsActive())
+                .isCurrent(hocKy.getIsCurrent())
                 .build();
     }
 }

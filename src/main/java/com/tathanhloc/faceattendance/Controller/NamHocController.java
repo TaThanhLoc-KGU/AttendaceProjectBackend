@@ -1,5 +1,6 @@
 package com.tathanhloc.faceattendance.Controller;
 
+import com.tathanhloc.faceattendance.DTO.HocKyDTO;
 import com.tathanhloc.faceattendance.DTO.NamHocDTO;
 import com.tathanhloc.faceattendance.Service.NamHocService;
 import jakarta.validation.Valid;
@@ -9,9 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/namhoc")
@@ -183,5 +182,103 @@ public class NamHocController {
         );
 
         return ResponseEntity.ok(stats);
+    }
+    /**
+     * Tạo học kỳ mặc định cho năm học
+     */
+    @PostMapping("/{maNamHoc}/create-semesters")
+    public ResponseEntity<Map<String, Object>> createSemestersForYear(@PathVariable String maNamHoc) {
+        log.info("API call: Create semesters for academic year: {}", maNamHoc);
+
+        try {
+            Map<String, Object> result = namHocService.createSemestersForYear(maNamHoc);
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            log.error("❌ Error in createSemestersForYear API: {}", e.getMessage());
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            errorResponse.put("maNamHoc", maNamHoc);
+            errorResponse.put("success", false);
+
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    /**
+     * Lấy danh sách học kỳ theo năm học
+     */
+    @GetMapping("/{maNamHoc}/semesters")
+    public ResponseEntity<List<HocKyDTO>> getSemestersByYear(@PathVariable String maNamHoc) {
+        log.info("API call: Get semesters for academic year: {}", maNamHoc);
+
+        try {
+            List<HocKyDTO> semesters = namHocService.getSemestersByYear(maNamHoc);
+            return ResponseEntity.ok(semesters);
+
+        } catch (Exception e) {
+            log.error("❌ Error getting semesters for year: {}", maNamHoc, e);
+            return ResponseEntity.badRequest().body(Collections.emptyList());
+        }
+    }
+
+    /**
+     * Xóa tất cả học kỳ của năm học
+     */
+    @DeleteMapping("/{maNamHoc}/semesters")
+    public ResponseEntity<Map<String, Object>> deleteSemestersOfYear(@PathVariable String maNamHoc) {
+        log.info("API call: Delete semesters for academic year: {}", maNamHoc);
+
+        try {
+            namHocService.deleteSemestersOfYear(maNamHoc);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Đã xóa thành công tất cả học kỳ của năm học " + maNamHoc);
+            response.put("maNamHoc", maNamHoc);
+            response.put("success", true);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("❌ Error deleting semesters for year: {}", maNamHoc, e);
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            errorResponse.put("maNamHoc", maNamHoc);
+            errorResponse.put("success", false);
+
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    /**
+     * Kiểm tra năm học đã có học kỳ chưa
+     */
+    @GetMapping("/{maNamHoc}/has-semesters")
+    public ResponseEntity<Map<String, Object>> checkHasSemesters(@PathVariable String maNamHoc) {
+        log.debug("API call: Check if academic year has semesters: {}", maNamHoc);
+
+        try {
+            List<HocKyDTO> semesters = namHocService.getSemestersByYear(maNamHoc);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("maNamHoc", maNamHoc);
+            response.put("hasSemesters", !semesters.isEmpty());
+            response.put("semesterCount", semesters.size());
+            response.put("semesters", semesters);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("❌ Error checking semesters for year: {}", maNamHoc, e);
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            errorResponse.put("maNamHoc", maNamHoc);
+            errorResponse.put("hasSemesters", false);
+
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
     }
 }

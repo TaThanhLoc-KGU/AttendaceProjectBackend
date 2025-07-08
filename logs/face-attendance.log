@@ -30478,3 +30478,1240 @@ java.lang.RuntimeException: Không thể lấy danh sách năm học: JDBC excep
         hk1_0.ten_hoc_ky 
     from
         hoc_ky hk1_0
+2025-07-08 12:05:42 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Securing POST /api/namhoc/with-semesters
+2025-07-08 12:05:42 [http-nio-8080-exec-8] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:05:42 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Secured POST /api/namhoc/with-semesters
+2025-07-08 12:05:42 [http-nio-8080-exec-8] INFO  c.t.f.Controller.NamHocController - Tạo năm học mới với học kỳ mặc định: 2025-2026
+2025-07-08 12:05:42 [http-nio-8080-exec-8] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0
+2025-07-08 12:05:42 [http-nio-8080-exec-8] DEBUG org.hibernate.SQL - 
+    update
+        nam_hoc 
+    set
+        is_active=?,
+        is_current=?,
+        mo_ta=?,
+        ngay_bat_dau=?,
+        ngay_ket_thuc=?,
+        ten_nam_hoc=? 
+    where
+        ma_nam_hoc=?
+2025-07-08 12:05:42 [http-nio-8080-exec-8] DEBUG org.hibernate.SQL - 
+    update
+        nam_hoc 
+    set
+        is_active=?,
+        is_current=?,
+        mo_ta=?,
+        ngay_bat_dau=?,
+        ngay_ket_thuc=?,
+        ten_nam_hoc=? 
+    where
+        ma_nam_hoc=?
+2025-07-08 12:05:42 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/namhoc/all
+2025-07-08 12:05:42 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/hocky/all
+2025-07-08 12:05:42 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/namhoc/current
+2025-07-08 12:05:42 [http-nio-8080-exec-3] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:05:42 [http-nio-8080-exec-4] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:05:42 [http-nio-8080-exec-10] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:05:42 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/namhoc/all
+2025-07-08 12:05:42 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/hocky/all
+2025-07-08 12:05:42 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/namhoc/current
+2025-07-08 12:05:42 [http-nio-8080-exec-3] INFO  c.t.f.Controller.NamHocController - Lấy danh sách tất cả năm học (bao gồm inactive)
+2025-07-08 12:05:42 [http-nio-8080-exec-4] INFO  c.t.f.Controller.HocKyController - Lấy danh sách tất cả học kỳ (bao gồm inactive)
+2025-07-08 12:05:42 [http-nio-8080-exec-10] INFO  c.t.f.Controller.NamHocController - Lấy năm học hiện tại
+2025-07-08 12:05:42 [http-nio-8080-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0
+2025-07-08 12:05:42 [http-nio-8080-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0
+2025-07-08 12:05:42 [http-nio-8080-exec-4] DEBUG org.hibernate.SQL - 
+    select
+        hk1_0.ma_hoc_ky,
+        hk1_0.is_active,
+        hk1_0.is_current,
+        hk1_0.mo_ta,
+        hk1_0.ngay_bat_dau,
+        hk1_0.ngay_ket_thuc,
+        hk1_0.ten_hoc_ky 
+    from
+        hoc_ky hk1_0
+2025-07-08 12:05:42 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/hocky/current
+2025-07-08 12:05:42 [http-nio-8080-exec-2] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:05:42 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/hocky/current
+2025-07-08 12:05:42 [http-nio-8080-exec-2] INFO  c.t.f.Controller.HocKyController - Lấy học kỳ hiện tại
+2025-07-08 12:05:42 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        hk1_0.ma_hoc_ky,
+        hk1_0.is_active,
+        hk1_0.is_current,
+        hk1_0.mo_ta,
+        hk1_0.ngay_bat_dau,
+        hk1_0.ngay_ket_thuc,
+        hk1_0.ten_hoc_ky 
+    from
+        hoc_ky hk1_0
+2025-07-08 12:05:51 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Securing POST /api/namhoc/with-semesters
+2025-07-08 12:05:51 [http-nio-8080-exec-1] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:05:51 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Secured POST /api/namhoc/with-semesters
+2025-07-08 12:05:51 [http-nio-8080-exec-1] INFO  c.t.f.Controller.NamHocController - Tạo năm học mới với học kỳ mặc định: 2025-2026
+2025-07-08 12:05:51 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0
+2025-07-08 12:05:51 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    update
+        nam_hoc 
+    set
+        is_active=?,
+        is_current=?,
+        mo_ta=?,
+        ngay_bat_dau=?,
+        ngay_ket_thuc=?,
+        ten_nam_hoc=? 
+    where
+        ma_nam_hoc=?
+2025-07-08 12:05:51 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    update
+        nam_hoc 
+    set
+        is_active=?,
+        is_current=?,
+        mo_ta=?,
+        ngay_bat_dau=?,
+        ngay_ket_thuc=?,
+        ten_nam_hoc=? 
+    where
+        ma_nam_hoc=?
+2025-07-08 12:05:51 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/namhoc/current
+2025-07-08 12:05:51 [http-nio-8080-exec-7] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/hocky/all
+2025-07-08 12:05:51 [http-nio-8080-exec-6] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/namhoc/all
+2025-07-08 12:05:51 [http-nio-8080-exec-7] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:05:51 [http-nio-8080-exec-9] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:05:51 [http-nio-8080-exec-6] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:05:51 [http-nio-8080-exec-7] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/hocky/all
+2025-07-08 12:05:51 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/namhoc/current
+2025-07-08 12:05:51 [http-nio-8080-exec-6] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/namhoc/all
+2025-07-08 12:05:51 [http-nio-8080-exec-9] INFO  c.t.f.Controller.NamHocController - Lấy năm học hiện tại
+2025-07-08 12:05:51 [http-nio-8080-exec-6] INFO  c.t.f.Controller.NamHocController - Lấy danh sách tất cả năm học (bao gồm inactive)
+2025-07-08 12:05:51 [http-nio-8080-exec-7] INFO  c.t.f.Controller.HocKyController - Lấy danh sách tất cả học kỳ (bao gồm inactive)
+2025-07-08 12:05:51 [http-nio-8080-exec-9] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0
+2025-07-08 12:05:51 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        hk1_0.ma_hoc_ky,
+        hk1_0.is_active,
+        hk1_0.is_current,
+        hk1_0.mo_ta,
+        hk1_0.ngay_bat_dau,
+        hk1_0.ngay_ket_thuc,
+        hk1_0.ten_hoc_ky 
+    from
+        hoc_ky hk1_0
+2025-07-08 12:05:51 [http-nio-8080-exec-6] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0
+2025-07-08 12:05:51 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/hocky/current
+2025-07-08 12:05:51 [http-nio-8080-exec-5] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:05:51 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/hocky/current
+2025-07-08 12:05:51 [http-nio-8080-exec-5] INFO  c.t.f.Controller.HocKyController - Lấy học kỳ hiện tại
+2025-07-08 12:05:51 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        hk1_0.ma_hoc_ky,
+        hk1_0.is_active,
+        hk1_0.is_current,
+        hk1_0.mo_ta,
+        hk1_0.ngay_bat_dau,
+        hk1_0.ngay_ket_thuc,
+        hk1_0.ten_hoc_ky 
+    from
+        hoc_ky hk1_0
+2025-07-08 12:06:00 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Securing GET /admin/cauhinh-hocky
+2025-07-08 12:06:00 [http-nio-8080-exec-8] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:06:00 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Secured GET /admin/cauhinh-hocky
+2025-07-08 12:06:00 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/common.css
+2025-07-08 12:06:00 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/sidebar.css
+2025-07-08 12:06:00 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/admin.css
+2025-07-08 12:06:00 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Securing GET /js/common.js
+2025-07-08 12:06:00 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Securing GET /js/sidebar.js
+2025-07-08 12:06:00 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/sidebar.css
+2025-07-08 12:06:00 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/common.css
+2025-07-08 12:06:00 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/admin.css
+2025-07-08 12:06:00 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Secured GET /js/common.js
+2025-07-08 12:06:00 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Secured GET /js/sidebar.js
+2025-07-08 12:06:00 [http-nio-8080-exec-10] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:06:00 [http-nio-8080-exec-4] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:06:00 [http-nio-8080-exec-3] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:06:00 [http-nio-8080-exec-2] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:06:00 [http-nio-8080-exec-1] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:06:00 [http-nio-8080-exec-7] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/namhoc/all
+2025-07-08 12:06:00 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/hocky/all
+2025-07-08 12:06:00 [http-nio-8080-exec-6] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/auth/me
+2025-07-08 12:06:00 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/namhoc/current
+2025-07-08 12:06:00 [http-nio-8080-exec-7] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:06:00 [http-nio-8080-exec-6] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:06:00 [http-nio-8080-exec-9] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:06:00 [http-nio-8080-exec-5] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:06:00 [http-nio-8080-exec-7] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/namhoc/all
+2025-07-08 12:06:00 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/hocky/all
+2025-07-08 12:06:00 [http-nio-8080-exec-6] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/auth/me
+2025-07-08 12:06:00 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/namhoc/current
+2025-07-08 12:06:00 [http-nio-8080-exec-9] INFO  c.t.f.Controller.HocKyController - Lấy danh sách tất cả học kỳ (bao gồm inactive)
+2025-07-08 12:06:00 [http-nio-8080-exec-7] INFO  c.t.f.Controller.NamHocController - Lấy danh sách tất cả năm học (bao gồm inactive)
+2025-07-08 12:06:00 [http-nio-8080-exec-5] INFO  c.t.f.Controller.NamHocController - Lấy năm học hiện tại
+2025-07-08 12:06:00 [http-nio-8080-exec-6] INFO  c.t.f.Controller.AuthController - Current user info requested: admin
+2025-07-08 12:06:00 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0
+2025-07-08 12:06:00 [http-nio-8080-exec-9] DEBUG org.hibernate.SQL - 
+    select
+        hk1_0.ma_hoc_ky,
+        hk1_0.is_active,
+        hk1_0.is_current,
+        hk1_0.mo_ta,
+        hk1_0.ngay_bat_dau,
+        hk1_0.ngay_ket_thuc,
+        hk1_0.ten_hoc_ky 
+    from
+        hoc_ky hk1_0
+2025-07-08 12:06:00 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0
+2025-07-08 12:06:00 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/hocky/current
+2025-07-08 12:06:00 [http-nio-8080-exec-8] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:06:00 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/hocky/current
+2025-07-08 12:06:00 [http-nio-8080-exec-8] INFO  c.t.f.Controller.HocKyController - Lấy học kỳ hiện tại
+2025-07-08 12:06:00 [http-nio-8080-exec-8] DEBUG org.hibernate.SQL - 
+    select
+        hk1_0.ma_hoc_ky,
+        hk1_0.is_active,
+        hk1_0.is_current,
+        hk1_0.mo_ta,
+        hk1_0.ngay_bat_dau,
+        hk1_0.ngay_ket_thuc,
+        hk1_0.ten_hoc_ky 
+    from
+        hoc_ky hk1_0
+2025-07-08 12:06:57 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Securing POST /api/namhoc/with-semesters
+2025-07-08 12:06:57 [http-nio-8080-exec-4] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:06:57 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Secured POST /api/namhoc/with-semesters
+2025-07-08 12:06:57 [http-nio-8080-exec-4] INFO  c.t.f.Controller.NamHocController - Tạo năm học mới với học kỳ mặc định: 2026-2027
+2025-07-08 12:06:57 [http-nio-8080-exec-4] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0 
+    where
+        nh1_0.ma_nam_hoc=?
+2025-07-08 12:06:57 [http-nio-8080-exec-4] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        nam_hoc
+        (is_active, is_current, mo_ta, ngay_bat_dau, ngay_ket_thuc, ten_nam_hoc, ma_nam_hoc) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-07-08 12:06:57 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/namhoc/all
+2025-07-08 12:06:57 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/namhoc/current
+2025-07-08 12:06:57 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/hocky/all
+2025-07-08 12:06:57 [http-nio-8080-exec-2] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:06:57 [http-nio-8080-exec-3] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:06:57 [http-nio-8080-exec-1] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:06:57 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/hocky/all
+2025-07-08 12:06:57 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/namhoc/current
+2025-07-08 12:06:57 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/namhoc/all
+2025-07-08 12:06:57 [http-nio-8080-exec-1] INFO  c.t.f.Controller.NamHocController - Lấy danh sách tất cả năm học (bao gồm inactive)
+2025-07-08 12:06:57 [http-nio-8080-exec-2] INFO  c.t.f.Controller.HocKyController - Lấy danh sách tất cả học kỳ (bao gồm inactive)
+2025-07-08 12:06:57 [http-nio-8080-exec-3] INFO  c.t.f.Controller.NamHocController - Lấy năm học hiện tại
+2025-07-08 12:06:57 [http-nio-8080-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0
+2025-07-08 12:06:57 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0
+2025-07-08 12:06:57 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        hk1_0.ma_hoc_ky,
+        hk1_0.is_active,
+        hk1_0.is_current,
+        hk1_0.mo_ta,
+        hk1_0.ngay_bat_dau,
+        hk1_0.ngay_ket_thuc,
+        hk1_0.ten_hoc_ky 
+    from
+        hoc_ky hk1_0
+2025-07-08 12:06:57 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/hocky/current
+2025-07-08 12:06:57 [http-nio-8080-exec-10] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:06:57 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/hocky/current
+2025-07-08 12:06:57 [http-nio-8080-exec-10] INFO  c.t.f.Controller.HocKyController - Lấy học kỳ hiện tại
+2025-07-08 12:06:57 [http-nio-8080-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        hk1_0.ma_hoc_ky,
+        hk1_0.is_active,
+        hk1_0.is_current,
+        hk1_0.mo_ta,
+        hk1_0.ngay_bat_dau,
+        hk1_0.ngay_ket_thuc,
+        hk1_0.ten_hoc_ky 
+    from
+        hoc_ky hk1_0
+2025-07-08 12:07:03 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Securing DELETE /api/namhoc/2026-2027
+2025-07-08 12:07:03 [http-nio-8080-exec-9] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:07:03 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Secured DELETE /api/namhoc/2026-2027
+2025-07-08 12:07:03 [http-nio-8080-exec-9] INFO  c.t.f.Controller.NamHocController - Xóa mềm năm học với ID: 2026-2027
+2025-07-08 12:07:03 [http-nio-8080-exec-9] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0 
+    where
+        nh1_0.ma_nam_hoc=?
+2025-07-08 12:07:03 [http-nio-8080-exec-9] DEBUG org.hibernate.SQL - 
+    update
+        nam_hoc 
+    set
+        is_active=?,
+        is_current=?,
+        mo_ta=?,
+        ngay_bat_dau=?,
+        ngay_ket_thuc=?,
+        ten_nam_hoc=? 
+    where
+        ma_nam_hoc=?
+2025-07-08 12:07:03 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/namhoc/all
+2025-07-08 12:07:03 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/namhoc/current
+2025-07-08 12:07:03 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/hocky/all
+2025-07-08 12:07:03 [http-nio-8080-exec-5] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:07:03 [http-nio-8080-exec-4] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:07:03 [http-nio-8080-exec-8] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:07:03 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/namhoc/all
+2025-07-08 12:07:03 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/hocky/all
+2025-07-08 12:07:03 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/namhoc/current
+2025-07-08 12:07:03 [http-nio-8080-exec-5] INFO  c.t.f.Controller.NamHocController - Lấy danh sách tất cả năm học (bao gồm inactive)
+2025-07-08 12:07:03 [http-nio-8080-exec-4] INFO  c.t.f.Controller.NamHocController - Lấy năm học hiện tại
+2025-07-08 12:07:03 [http-nio-8080-exec-8] INFO  c.t.f.Controller.HocKyController - Lấy danh sách tất cả học kỳ (bao gồm inactive)
+2025-07-08 12:07:03 [http-nio-8080-exec-4] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0
+2025-07-08 12:07:03 [http-nio-8080-exec-8] DEBUG org.hibernate.SQL - 
+    select
+        hk1_0.ma_hoc_ky,
+        hk1_0.is_active,
+        hk1_0.is_current,
+        hk1_0.mo_ta,
+        hk1_0.ngay_bat_dau,
+        hk1_0.ngay_ket_thuc,
+        hk1_0.ten_hoc_ky 
+    from
+        hoc_ky hk1_0
+2025-07-08 12:07:03 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0
+2025-07-08 12:07:03 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/hocky/current
+2025-07-08 12:07:03 [http-nio-8080-exec-1] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@4539aade, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=0D50C335A4B777C0ED5B4743F463E65F], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:07:03 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/hocky/current
+2025-07-08 12:07:03 [http-nio-8080-exec-1] INFO  c.t.f.Controller.HocKyController - Lấy học kỳ hiện tại
+2025-07-08 12:07:03 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        hk1_0.ma_hoc_ky,
+        hk1_0.is_active,
+        hk1_0.is_current,
+        hk1_0.mo_ta,
+        hk1_0.ngay_bat_dau,
+        hk1_0.ngay_ket_thuc,
+        hk1_0.ten_hoc_ky 
+    from
+        hoc_ky hk1_0
+2025-07-08 12:25:54 [File Watcher] INFO  o.s.b.d.a.LocalDevToolsAutoConfiguration$RestartingClassPathChangeChangedEventListener - Restarting due to 1 class path change (0 additions, 1 deletion, 0 modifications)
+2025-07-08 12:25:54 [Thread-37] INFO  o.s.b.w.e.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-07-08 12:25:54 [tomcat-shutdown] INFO  o.a.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-8080"]
+2025-07-08 12:25:54 [tomcat-shutdown] INFO  o.s.b.w.e.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-07-08 12:25:54 [Thread-37] INFO  o.a.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-8080"]
+2025-07-08 12:25:54 [Thread-37] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-07-08 12:25:54 [Thread-37] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-10 - Shutdown initiated...
+2025-07-08 12:25:54 [Thread-37] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-10 - Shutdown completed.
+2025-07-08 12:25:54 [restartedMain] INFO  c.t.f.FaceAttendanceApplication - Starting FaceAttendanceApplication using Java 24.0.1 with PID 228191 (/home/loki/Desktop/face-attendance/target/classes started by loki in /home/loki/Desktop/face-attendance)
+2025-07-08 12:25:54 [restartedMain] DEBUG c.t.f.FaceAttendanceApplication - Running with Spring Boot v3.4.4, Spring v6.2.5
+2025-07-08 12:25:54 [restartedMain] INFO  c.t.f.FaceAttendanceApplication - No active profile set, falling back to 1 default profile: "default"
+2025-07-08 12:25:54 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-07-08 12:25:54 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 34 ms. Found 20 JPA repository interfaces.
+2025-07-08 12:25:54 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-07-08 12:25:54 [restartedMain] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-07-08 12:25:54 [restartedMain] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-07-08 12:25:54 [restartedMain] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.39]
+2025-07-08 12:25:54 [restartedMain] INFO  o.a.c.c.C.[Tomcat-2].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-07-08 12:25:54 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 739 ms
+2025-07-08 12:25:55 [restartedMain] WARN  o.a.c.c.C.[Tomcat-2].[localhost].[/] - Cannot deserialize session attribute [SPRING_SECURITY_CONTEXT] for session [ACA838FC1078D0543FDCAEA0D318D350]
+2025-07-08 12:25:55 [restartedMain] ERROR o.a.catalina.session.StandardManager - Exception loading sessions from persistent storage
+java.lang.ClassCastException: class java.io.ObjectStreamClass cannot be cast to class java.lang.String (java.io.ObjectStreamClass and java.lang.String are in module java.base of loader 'bootstrap')
+	at java.base/java.io.ObjectInputStream.readTypeString(ObjectInputStream.java:1730)
+	at java.base/java.io.ObjectStreamClass.readNonProxy(ObjectStreamClass.java:606)
+	at java.base/java.io.ObjectInputStream.readClassDescriptor(ObjectInputStream.java:941)
+	at java.base/java.io.ObjectInputStream.readNonProxyDesc(ObjectInputStream.java:1935)
+	at java.base/java.io.ObjectInputStream.readClassDesc(ObjectInputStream.java:1818)
+	at java.base/java.io.ObjectInputStream.readOrdinaryObject(ObjectInputStream.java:2134)
+	at java.base/java.io.ObjectInputStream.readObject0(ObjectInputStream.java:1653)
+	at java.base/java.io.ObjectInputStream.readObject(ObjectInputStream.java:495)
+	at java.base/java.io.ObjectInputStream.readObject(ObjectInputStream.java:453)
+	at org.apache.catalina.session.StandardSession.doReadObject(StandardSession.java:1198)
+	at org.apache.catalina.session.StandardSession.readObjectData(StandardSession.java:831)
+	at org.apache.catalina.session.StandardManager.doLoad(StandardManager.java:210)
+	at org.apache.catalina.session.StandardManager.load(StandardManager.java:156)
+	at org.apache.catalina.session.StandardManager.startInternal(StandardManager.java:345)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.StandardContext.startInternal(StandardContext.java:4494)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1203)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1193)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:75)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:148)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:749)
+	at org.apache.catalina.core.StandardHost.startInternal(StandardHost.java:772)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1203)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1193)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:75)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:148)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:749)
+	at org.apache.catalina.core.StandardEngine.startInternal(StandardEngine.java:203)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.StandardService.startInternal(StandardService.java:415)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.StandardServer.startInternal(StandardServer.java:870)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.startup.Tomcat.start(Tomcat.java:437)
+	at org.springframework.boot.web.embedded.tomcat.TomcatWebServer.initialize(TomcatWebServer.java:128)
+	at org.springframework.boot.web.embedded.tomcat.TomcatWebServer.<init>(TomcatWebServer.java:107)
+	at org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory.getTomcatWebServer(TomcatServletWebServerFactory.java:517)
+	at org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory.getWebServer(TomcatServletWebServerFactory.java:219)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.createWebServer(ServletWebServerApplicationContext.java:193)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.onRefresh(ServletWebServerApplicationContext.java:167)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:621)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350)
+	at com.tathanhloc.faceattendance.FaceAttendanceApplication.main(FaceAttendanceApplication.java:18)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:50)
+2025-07-08 12:25:55 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-07-08 12:25:55 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2025-07-08 12:25:55 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-07-08 12:25:55 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-11 - Starting...
+2025-07-08 12:25:55 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-11 - Added connection com.mysql.cj.jdbc.ConnectionImpl@5af6da3c
+2025-07-08 12:25:55 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-11 - Start completed.
+2025-07-08 12:25:55 [restartedMain] WARN  org.hibernate.dialect.Dialect - HHH000511: The 5.5.5 version for [org.hibernate.dialect.MySQLDialect] is no longer supported, hence certain features may not work properly. The minimum supported version is 8.0.0. Check the community dialects project for available legacy versions.
+2025-07-08 12:25:55 [restartedMain] INFO  o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-11)']
+	Database driver: undefined/unknown
+	Database version: 5.5.5
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-07-08 12:25:55 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-07-08 12:25:55 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-07-08 12:25:55 [restartedMain] INFO  o.s.s.c.a.a.c.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer - Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2025-07-08 12:25:55 [restartedMain] WARN  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2025-07-08 12:25:55 [restartedMain] WARN  o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'namHocController': Resolution of declared constructors on bean Class [com.tathanhloc.faceattendance.Controller.NamHocController] from ClassLoader [org.springframework.boot.devtools.restart.classloader.RestartClassLoader@4defd4b3] failed
+2025-07-08 12:25:55 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-07-08 12:25:55 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-11 - Shutdown initiated...
+2025-07-08 12:25:56 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-11 - Shutdown completed.
+2025-07-08 12:25:56 [restartedMain] INFO  o.a.catalina.core.StandardService - Stopping service [Tomcat]
+2025-07-08 12:25:56 [restartedMain] INFO  o.s.b.a.l.ConditionEvaluationReportLogger - 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2025-07-08 12:25:56 [restartedMain] ERROR o.s.boot.SpringApplication - Application run failed
+org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'namHocController': Resolution of declared constructors on bean Class [com.tathanhloc.faceattendance.Controller.NamHocController] from ClassLoader [org.springframework.boot.devtools.restart.classloader.RestartClassLoader@4defd4b3] failed
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.determineCandidateConstructors(AutowiredAnnotationBeanPostProcessor.java:384)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.determineConstructorsFromBeanPostProcessors(AbstractAutowireCapableBeanFactory.java:1320)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1215)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:563)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:523)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:347)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.instantiateSingleton(DefaultListableBeanFactory.java:1155)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingleton(DefaultListableBeanFactory.java:1121)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1056)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:987)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:627)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350)
+	at com.tathanhloc.faceattendance.FaceAttendanceApplication.main(FaceAttendanceApplication.java:18)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:50)
+Caused by: java.lang.NoClassDefFoundError: com/tathanhloc/faceattendance/Service/NamHocService
+	at java.base/java.lang.Class.getDeclaredConstructors0(Native Method)
+	at java.base/java.lang.Class.privateGetDeclaredConstructors(Class.java:3006)
+	at java.base/java.lang.Class.getDeclaredConstructors(Class.java:2356)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.determineCandidateConstructors(AutowiredAnnotationBeanPostProcessor.java:379)
+	... 23 common frames omitted
+Caused by: java.lang.ClassNotFoundException: com.tathanhloc.faceattendance.Service.NamHocService
+	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:580)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:490)
+	at java.base/java.lang.Class.forName0(Native Method)
+	at java.base/java.lang.Class.forName(Class.java:543)
+	at org.springframework.boot.devtools.restart.classloader.RestartClassLoader.loadClass(RestartClassLoader.java:121)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:490)
+	... 27 common frames omitted
+2025-07-08 12:26:57 [restartedMain] INFO  c.t.f.FaceAttendanceApplication - Starting FaceAttendanceApplication using Java 24.0.1 with PID 228191 (/home/loki/Desktop/face-attendance/target/classes started by loki in /home/loki/Desktop/face-attendance)
+2025-07-08 12:26:57 [restartedMain] DEBUG c.t.f.FaceAttendanceApplication - Running with Spring Boot v3.4.4, Spring v6.2.5
+2025-07-08 12:26:57 [restartedMain] INFO  c.t.f.FaceAttendanceApplication - No active profile set, falling back to 1 default profile: "default"
+2025-07-08 12:26:57 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-07-08 12:26:57 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 25 ms. Found 20 JPA repository interfaces.
+2025-07-08 12:26:57 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-07-08 12:26:57 [restartedMain] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-07-08 12:26:57 [restartedMain] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-07-08 12:26:57 [restartedMain] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.39]
+2025-07-08 12:26:57 [restartedMain] INFO  o.a.c.c.C.[Tomcat-3].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-07-08 12:26:57 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 462 ms
+2025-07-08 12:26:57 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-07-08 12:26:57 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2025-07-08 12:26:57 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-07-08 12:26:57 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-12 - Starting...
+2025-07-08 12:26:57 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-12 - Added connection com.mysql.cj.jdbc.ConnectionImpl@7b5bb8e4
+2025-07-08 12:26:57 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-12 - Start completed.
+2025-07-08 12:26:57 [restartedMain] WARN  org.hibernate.dialect.Dialect - HHH000511: The 5.5.5 version for [org.hibernate.dialect.MySQLDialect] is no longer supported, hence certain features may not work properly. The minimum supported version is 8.0.0. Check the community dialects project for available legacy versions.
+2025-07-08 12:26:57 [restartedMain] INFO  o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-12)']
+	Database driver: undefined/unknown
+	Database version: 5.5.5
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-07-08 12:26:58 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-07-08 12:26:58 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-07-08 12:26:58 [restartedMain] INFO  o.s.s.c.a.a.c.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer - Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2025-07-08 12:26:58 [restartedMain] WARN  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2025-07-08 12:26:58 [restartedMain] WARN  o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'namHocController': Resolution of declared constructors on bean Class [com.tathanhloc.faceattendance.Controller.NamHocController] from ClassLoader [org.springframework.boot.devtools.restart.classloader.RestartClassLoader@d7ccc5d] failed
+2025-07-08 12:26:58 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-07-08 12:26:58 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-12 - Shutdown initiated...
+2025-07-08 12:26:58 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-12 - Shutdown completed.
+2025-07-08 12:26:58 [restartedMain] INFO  o.a.catalina.core.StandardService - Stopping service [Tomcat]
+2025-07-08 12:26:58 [restartedMain] INFO  o.s.b.a.l.ConditionEvaluationReportLogger - 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2025-07-08 12:26:58 [restartedMain] ERROR o.s.boot.SpringApplication - Application run failed
+org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'namHocController': Resolution of declared constructors on bean Class [com.tathanhloc.faceattendance.Controller.NamHocController] from ClassLoader [org.springframework.boot.devtools.restart.classloader.RestartClassLoader@d7ccc5d] failed
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.determineCandidateConstructors(AutowiredAnnotationBeanPostProcessor.java:384)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.determineConstructorsFromBeanPostProcessors(AbstractAutowireCapableBeanFactory.java:1320)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1215)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:563)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:523)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:347)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.instantiateSingleton(DefaultListableBeanFactory.java:1155)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingleton(DefaultListableBeanFactory.java:1121)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1056)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:987)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:627)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350)
+	at com.tathanhloc.faceattendance.FaceAttendanceApplication.main(FaceAttendanceApplication.java:18)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:50)
+Caused by: java.lang.NoClassDefFoundError: com/tathanhloc/faceattendance/Service/NamHocService
+	at java.base/java.lang.Class.getDeclaredConstructors0(Native Method)
+	at java.base/java.lang.Class.privateGetDeclaredConstructors(Class.java:3006)
+	at java.base/java.lang.Class.getDeclaredConstructors(Class.java:2356)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.determineCandidateConstructors(AutowiredAnnotationBeanPostProcessor.java:379)
+	... 23 common frames omitted
+Caused by: java.lang.ClassNotFoundException: com.tathanhloc.faceattendance.Service.NamHocService
+	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:580)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:490)
+	at java.base/java.lang.Class.forName0(Native Method)
+	at java.base/java.lang.Class.forName(Class.java:543)
+	at org.springframework.boot.devtools.restart.classloader.RestartClassLoader.loadClass(RestartClassLoader.java:121)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:490)
+	... 27 common frames omitted
+2025-07-08 12:27:13 [restartedMain] INFO  c.t.f.FaceAttendanceApplication - Starting FaceAttendanceApplication using Java 24.0.1 with PID 228191 (/home/loki/Desktop/face-attendance/target/classes started by loki in /home/loki/Desktop/face-attendance)
+2025-07-08 12:27:13 [restartedMain] DEBUG c.t.f.FaceAttendanceApplication - Running with Spring Boot v3.4.4, Spring v6.2.5
+2025-07-08 12:27:13 [restartedMain] INFO  c.t.f.FaceAttendanceApplication - No active profile set, falling back to 1 default profile: "default"
+2025-07-08 12:27:13 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-07-08 12:27:13 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 29 ms. Found 20 JPA repository interfaces.
+2025-07-08 12:27:13 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-07-08 12:27:13 [restartedMain] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-07-08 12:27:13 [restartedMain] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-07-08 12:27:13 [restartedMain] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.39]
+2025-07-08 12:27:13 [restartedMain] INFO  o.a.c.c.C.[Tomcat-4].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-07-08 12:27:13 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 576 ms
+2025-07-08 12:27:13 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-07-08 12:27:14 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2025-07-08 12:27:14 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-07-08 12:27:14 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-13 - Starting...
+2025-07-08 12:27:14 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-13 - Added connection com.mysql.cj.jdbc.ConnectionImpl@69f45f4d
+2025-07-08 12:27:14 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-13 - Start completed.
+2025-07-08 12:27:14 [restartedMain] WARN  org.hibernate.dialect.Dialect - HHH000511: The 5.5.5 version for [org.hibernate.dialect.MySQLDialect] is no longer supported, hence certain features may not work properly. The minimum supported version is 8.0.0. Check the community dialects project for available legacy versions.
+2025-07-08 12:27:14 [restartedMain] INFO  o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-13)']
+	Database driver: undefined/unknown
+	Database version: 5.5.5
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-07-08 12:27:14 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-07-08 12:27:14 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-07-08 12:27:14 [restartedMain] INFO  o.s.s.c.a.a.c.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer - Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2025-07-08 12:27:14 [restartedMain] WARN  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2025-07-08 12:27:14 [restartedMain] WARN  o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'namHocController' defined in file [/home/loki/Desktop/face-attendance/target/classes/com/tathanhloc/faceattendance/Controller/NamHocController.class]: Unsatisfied dependency expressed through constructor parameter 0: No qualifying bean of type 'com.tathanhloc.faceattendance.Service.NamHocService' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {}
+2025-07-08 12:27:14 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-07-08 12:27:14 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-13 - Shutdown initiated...
+2025-07-08 12:27:14 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-13 - Shutdown completed.
+2025-07-08 12:27:14 [restartedMain] INFO  o.a.catalina.core.StandardService - Stopping service [Tomcat]
+2025-07-08 12:27:14 [restartedMain] INFO  o.s.b.a.l.ConditionEvaluationReportLogger - 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2025-07-08 12:27:14 [restartedMain] ERROR o.s.b.d.LoggingFailureAnalysisReporter - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Parameter 0 of constructor in com.tathanhloc.faceattendance.Controller.NamHocController required a bean of type 'com.tathanhloc.faceattendance.Service.NamHocService' that could not be found.
+
+
+Action:
+
+Consider defining a bean of type 'com.tathanhloc.faceattendance.Service.NamHocService' in your configuration.
+
+2025-07-08 12:30:58 [restartedMain] INFO  c.t.f.FaceAttendanceApplication - Starting FaceAttendanceApplication using Java 24.0.1 with PID 228191 (/home/loki/Desktop/face-attendance/target/classes started by loki in /home/loki/Desktop/face-attendance)
+2025-07-08 12:30:58 [restartedMain] DEBUG c.t.f.FaceAttendanceApplication - Running with Spring Boot v3.4.4, Spring v6.2.5
+2025-07-08 12:30:58 [restartedMain] INFO  c.t.f.FaceAttendanceApplication - No active profile set, falling back to 1 default profile: "default"
+2025-07-08 12:30:58 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-07-08 12:30:58 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 19 ms. Found 20 JPA repository interfaces.
+2025-07-08 12:30:59 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-07-08 12:30:59 [restartedMain] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-07-08 12:30:59 [restartedMain] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-07-08 12:30:59 [restartedMain] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.39]
+2025-07-08 12:30:59 [restartedMain] INFO  o.a.c.c.C.[Tomcat-5].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-07-08 12:30:59 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 449 ms
+2025-07-08 12:30:59 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-07-08 12:30:59 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2025-07-08 12:30:59 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-07-08 12:30:59 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-14 - Starting...
+2025-07-08 12:30:59 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-14 - Added connection com.mysql.cj.jdbc.ConnectionImpl@13a50529
+2025-07-08 12:30:59 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-14 - Start completed.
+2025-07-08 12:30:59 [restartedMain] WARN  org.hibernate.dialect.Dialect - HHH000511: The 5.5.5 version for [org.hibernate.dialect.MySQLDialect] is no longer supported, hence certain features may not work properly. The minimum supported version is 8.0.0. Check the community dialects project for available legacy versions.
+2025-07-08 12:30:59 [restartedMain] INFO  o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-14)']
+	Database driver: undefined/unknown
+	Database version: 5.5.5
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-07-08 12:30:59 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-07-08 12:30:59 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-07-08 12:30:59 [restartedMain] INFO  o.s.s.c.a.a.c.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer - Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2025-07-08 12:30:59 [restartedMain] WARN  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2025-07-08 12:31:00 [restartedMain] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-07-08 12:31:00 [restartedMain] INFO  c.t.f.S.PythonFeatureExtractionService - Python wrapper script created: /home/loki/Desktop/face-attendance/extract_wrapper.py
+2025-07-08 12:31:00 [restartedMain] INFO  c.t.f.S.PythonFeatureExtractionService - Bash script created: /home/loki/Desktop/face-attendance/run_extraction.sh
+2025-07-08 12:31:00 [restartedMain] INFO  c.t.f.S.PythonFeatureExtractionService - Python scripts initialized successfully at: /home/loki/Desktop/face-attendance
+2025-07-08 12:31:00 [restartedMain] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page template: index
+2025-07-08 12:31:00 [restartedMain] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 1 endpoint beneath base path '/actuator'
+2025-07-08 12:31:00 [restartedMain] DEBUG o.s.s.web.DefaultSecurityFilterChain - Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, CorsFilter, LogoutFilter, UsernamePasswordAuthenticationFilter, ConcurrentSessionFilter, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, SessionManagementFilter, ExceptionTranslationFilter, AuthorizationFilter
+2025-07-08 12:31:01 [restartedMain] INFO  o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2025-07-08 12:31:01 [restartedMain] INFO  o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-07-08 12:31:01 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-07-08 12:31:01 [restartedMain] INFO  c.t.f.FaceAttendanceApplication - Started FaceAttendanceApplication in 2.388 seconds (process running for 4588.519)
+2025-07-08 12:31:01 [restartedMain] DEBUG org.hibernate.SQL - 
+    select
+        tk1_0.id,
+        tk1_0.created_at,
+        tk1_0.ma_gv,
+        tk1_0.is_active,
+        tk1_0.password_hash,
+        tk1_0.ma_sv,
+        tk1_0.username,
+        tk1_0.vai_tro 
+    from
+        taikhoan tk1_0 
+    where
+        tk1_0.username=?
+2025-07-08 12:31:01 [restartedMain] INFO  o.s.b.d.a.ConditionEvaluationDeltaLoggingListener - Condition evaluation unchanged
+2025-07-08 12:33:23 [http-nio-8080-exec-1] INFO  o.a.c.c.C.[Tomcat-5].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-07-08 12:33:23 [http-nio-8080-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-07-08 12:33:23 [http-nio-8080-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 2 ms
+2025-07-08 12:33:23 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/namhoc/all
+2025-07-08 12:33:23 [http-nio-8080-exec-1] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-07-08 12:33:23 [http-nio-8080-exec-1] DEBUG o.s.s.w.s.SessionManagementFilter - Request requested invalid session id ACA838FC1078D0543FDCAEA0D318D350
+2025-07-08 12:33:23 [http-nio-8080-exec-1] DEBUG o.s.s.w.s.HttpSessionRequestCache - Saved request http://localhost:8080/api/namhoc/all?continue to session
+2025-07-08 12:33:23 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Securing GET /?error=not_authenticated
+2025-07-08 12:33:23 [http-nio-8080-exec-2] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-07-08 12:33:23 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Secured GET /?error=not_authenticated
+2025-07-08 12:33:23 [http-nio-8080-exec-2] INFO  c.t.f.Controller.HomeController - === HOME PAGE ACCESS ===
+2025-07-08 12:33:23 [http-nio-8080-exec-2] INFO  c.t.f.Controller.HomeController - Authentication present: false
+2025-07-08 12:33:23 [http-nio-8080-exec-2] INFO  c.t.f.Controller.HomeController - Is authenticated: false
+2025-07-08 12:33:23 [http-nio-8080-exec-2] INFO  c.t.f.Controller.HomeController - Error message: not_authenticated
+2025-07-08 12:33:23 [http-nio-8080-exec-2] INFO  c.t.f.Controller.HomeController - Showing login page
+2025-07-08 12:33:23 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/auth.css
+2025-07-08 12:33:23 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/common.css
+2025-07-08 12:33:23 [http-nio-8080-exec-4] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-07-08 12:33:23 [http-nio-8080-exec-3] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-07-08 12:33:23 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/common.css
+2025-07-08 12:33:23 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/auth.css
+2025-07-08 12:37:54 [http-nio-8080-exec-7] DEBUG o.s.security.web.FilterChainProxy - Securing GET /admin/cauhinh-hocky
+2025-07-08 12:37:54 [http-nio-8080-exec-7] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-07-08 12:37:54 [http-nio-8080-exec-7] DEBUG o.s.s.w.s.HttpSessionRequestCache - Saved request http://localhost:8080/admin/cauhinh-hocky?continue to session
+2025-07-08 12:37:54 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Securing GET /?error=not_authenticated
+2025-07-08 12:37:54 [http-nio-8080-exec-8] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-07-08 12:37:54 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Secured GET /?error=not_authenticated
+2025-07-08 12:37:54 [http-nio-8080-exec-8] INFO  c.t.f.Controller.HomeController - === HOME PAGE ACCESS ===
+2025-07-08 12:37:54 [http-nio-8080-exec-8] INFO  c.t.f.Controller.HomeController - Authentication present: false
+2025-07-08 12:37:54 [http-nio-8080-exec-8] INFO  c.t.f.Controller.HomeController - Is authenticated: false
+2025-07-08 12:37:54 [http-nio-8080-exec-8] INFO  c.t.f.Controller.HomeController - Error message: not_authenticated
+2025-07-08 12:37:54 [http-nio-8080-exec-8] INFO  c.t.f.Controller.HomeController - Showing login page
+2025-07-08 12:37:54 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/auth.css
+2025-07-08 12:37:54 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/common.css
+2025-07-08 12:37:54 [http-nio-8080-exec-9] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-07-08 12:37:54 [http-nio-8080-exec-10] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-07-08 12:37:54 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/auth.css
+2025-07-08 12:37:54 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/common.css
+2025-07-08 12:37:56 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Securing POST /login
+2025-07-08 12:37:56 [http-nio-8080-exec-1] INFO  c.t.f.S.CustomUserDetailsService - Loading user by username: admin
+2025-07-08 12:37:56 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        tk1_0.id,
+        tk1_0.created_at,
+        tk1_0.ma_gv,
+        tk1_0.is_active,
+        tk1_0.password_hash,
+        tk1_0.ma_sv,
+        tk1_0.username,
+        tk1_0.vai_tro 
+    from
+        taikhoan tk1_0 
+    where
+        tk1_0.username=?
+2025-07-08 12:37:56 [http-nio-8080-exec-1] INFO  c.t.f.S.CustomUserDetailsService - User found: admin with role: ADMIN and active status: true
+2025-07-08 12:37:56 [http-nio-8080-exec-1] DEBUG o.s.s.a.d.DaoAuthenticationProvider - Authenticated user
+2025-07-08 12:37:56 [http-nio-8080-exec-1] DEBUG o.s.s.w.a.s.SessionFixationProtectionStrategy - Invalidating session with Id 'DA339D1D54E9D7FF4E04BD3D4EBA1242' and migrating attributes.
+2025-07-08 12:37:56 [http-nio-8080-exec-1] DEBUG o.s.s.w.a.s.SessionFixationProtectionStrategy - Started new session: 95D0CD9677B9B1D327F15E36C395850C
+2025-07-08 12:37:56 [http-nio-8080-exec-1] DEBUG o.s.s.w.a.s.SessionFixationProtectionStrategy - Changed session id from DA339D1D54E9D7FF4E04BD3D4EBA1242
+2025-07-08 12:37:56 [http-nio-8080-exec-1] DEBUG o.s.s.c.session.SessionRegistryImpl - Registering session 95D0CD9677B9B1D327F15E36C395850C, for principal com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe
+2025-07-08 12:37:56 [http-nio-8080-exec-1] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Stored SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]] to HttpSession [org.apache.catalina.session.StandardSessionFacade@5b61341f]
+2025-07-08 12:37:56 [http-nio-8080-exec-1] DEBUG o.s.s.w.a.UsernamePasswordAuthenticationFilter - Set SecurityContextHolder to UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]
+2025-07-08 12:37:56 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Securing GET /admin/dashboard
+2025-07-08 12:37:56 [http-nio-8080-exec-2] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:56 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Secured GET /admin/dashboard
+2025-07-08 12:37:56 [http-nio-8080-exec-2] INFO  c.t.f.C.AdminDashboardController - === ADMIN DASHBOARD ACCESS ===
+2025-07-08 12:37:56 [http-nio-8080-exec-2] INFO  c.t.f.C.AdminDashboardController - Authentication: UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]
+2025-07-08 12:37:56 [http-nio-8080-exec-2] INFO  c.t.f.C.AdminDashboardController - Is Authenticated: true
+2025-07-08 12:37:56 [http-nio-8080-exec-2] INFO  c.t.f.C.AdminDashboardController - ✅ Admin dashboard access granted for user: admin
+2025-07-08 12:37:56 [http-nio-8080-exec-2] INFO  c.t.f.C.AdminDashboardController - User role: ADMIN
+2025-07-08 12:37:56 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        sv1_0.ma_sv,
+        sv1_0.email,
+        sv1_0.embedding,
+        sv1_0.gioi_tinh,
+        sv1_0.hinh_anh,
+        sv1_0.ho_ten,
+        sv1_0.is_active,
+        sv1_0.ma_lop,
+        sv1_0.ngay_sinh 
+    from
+        sinhvien sv1_0
+2025-07-08 12:37:56 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        l1_0.ma_lop,
+        l1_0.is_active,
+        kh1_0.ma_khoahoc,
+        kh1_0.nam_bat_dau,
+        kh1_0.nam_ket_thuc,
+        kh1_0.ten_khoahoc,
+        mk1_0.ma_khoa,
+        mk1_0.is_active,
+        mk1_0.ten_khoa,
+        n1_0.ma_nganh,
+        n1_0.is_active,
+        n1_0.ma_khoa,
+        n1_0.ten_nganh,
+        l1_0.ten_lop 
+    from
+        lop l1_0 
+    left join
+        khoahoc kh1_0 
+            on kh1_0.ma_khoahoc=l1_0.ma_khoahoc 
+    left join
+        khoa mk1_0 
+            on mk1_0.ma_khoa=l1_0.ma_khoa 
+    left join
+        nganh n1_0 
+            on n1_0.ma_nganh=l1_0.ma_nganh 
+    where
+        l1_0.ma_lop=?
+2025-07-08 12:37:56 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        l1_0.ma_lop,
+        l1_0.is_active,
+        kh1_0.ma_khoahoc,
+        kh1_0.nam_bat_dau,
+        kh1_0.nam_ket_thuc,
+        kh1_0.ten_khoahoc,
+        mk1_0.ma_khoa,
+        mk1_0.is_active,
+        mk1_0.ten_khoa,
+        n1_0.ma_nganh,
+        n1_0.is_active,
+        n1_0.ma_khoa,
+        n1_0.ten_nganh,
+        l1_0.ten_lop 
+    from
+        lop l1_0 
+    left join
+        khoahoc kh1_0 
+            on kh1_0.ma_khoahoc=l1_0.ma_khoahoc 
+    left join
+        khoa mk1_0 
+            on mk1_0.ma_khoa=l1_0.ma_khoa 
+    left join
+        nganh n1_0 
+            on n1_0.ma_nganh=l1_0.ma_nganh 
+    where
+        l1_0.ma_lop=?
+2025-07-08 12:37:56 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        l1_0.ma_lop,
+        l1_0.is_active,
+        kh1_0.ma_khoahoc,
+        kh1_0.nam_bat_dau,
+        kh1_0.nam_ket_thuc,
+        kh1_0.ten_khoahoc,
+        mk1_0.ma_khoa,
+        mk1_0.is_active,
+        mk1_0.ten_khoa,
+        n1_0.ma_nganh,
+        n1_0.is_active,
+        n1_0.ma_khoa,
+        n1_0.ten_nganh,
+        l1_0.ten_lop 
+    from
+        lop l1_0 
+    left join
+        khoahoc kh1_0 
+            on kh1_0.ma_khoahoc=l1_0.ma_khoahoc 
+    left join
+        khoa mk1_0 
+            on mk1_0.ma_khoa=l1_0.ma_khoa 
+    left join
+        nganh n1_0 
+            on n1_0.ma_nganh=l1_0.ma_nganh 
+    where
+        l1_0.ma_lop=?
+2025-07-08 12:37:56 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        l1_0.ma_lop,
+        l1_0.is_active,
+        kh1_0.ma_khoahoc,
+        kh1_0.nam_bat_dau,
+        kh1_0.nam_ket_thuc,
+        kh1_0.ten_khoahoc,
+        mk1_0.ma_khoa,
+        mk1_0.is_active,
+        mk1_0.ten_khoa,
+        n1_0.ma_nganh,
+        n1_0.is_active,
+        n1_0.ma_khoa,
+        n1_0.ten_nganh,
+        l1_0.ten_lop 
+    from
+        lop l1_0 
+    left join
+        khoahoc kh1_0 
+            on kh1_0.ma_khoahoc=l1_0.ma_khoahoc 
+    left join
+        khoa mk1_0 
+            on mk1_0.ma_khoa=l1_0.ma_khoa 
+    left join
+        nganh n1_0 
+            on n1_0.ma_nganh=l1_0.ma_nganh 
+    where
+        l1_0.ma_lop=?
+2025-07-08 12:37:56 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        gv1_0.ma_gv,
+        gv1_0.email,
+        gv1_0.ho_ten,
+        gv1_0.is_active,
+        gv1_0.ma_khoa 
+    from
+        giangvien gv1_0
+2025-07-08 12:37:56 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        k1_0.ma_khoa,
+        k1_0.is_active,
+        k1_0.ten_khoa 
+    from
+        khoa k1_0 
+    where
+        k1_0.ma_khoa=?
+2025-07-08 12:37:56 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        k1_0.ma_khoa,
+        k1_0.is_active,
+        k1_0.ten_khoa 
+    from
+        khoa k1_0 
+    where
+        k1_0.ma_khoa=?
+2025-07-08 12:37:56 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        k1_0.ma_khoa,
+        k1_0.is_active,
+        k1_0.ten_khoa 
+    from
+        khoa k1_0 
+    where
+        k1_0.ma_khoa=?
+2025-07-08 12:37:56 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        count(*) 
+    from
+        lop l1_0
+2025-07-08 12:37:56 [http-nio-8080-exec-2] INFO  c.t.f.Service.DiemDanhService - Đếm số lượng điểm danh trong ngày
+2025-07-08 12:37:56 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        count(dd1_0.id) 
+    from
+        diemdanh dd1_0 
+    where
+        dd1_0.ngay_diem_danh=?
+2025-07-08 12:37:56 [http-nio-8080-exec-2] INFO  c.t.f.C.AdminDashboardController - Dashboard stats loaded - Students: 59, Lecturers: 6, Classes: 4, Attendance: 0
+2025-07-08 12:37:56 [http-nio-8080-exec-2] INFO  c.t.f.C.AdminDashboardController - ✅ Admin dashboard loaded successfully
+2025-07-08 12:37:56 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/common.css
+2025-07-08 12:37:56 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/common.css
+2025-07-08 12:37:56 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/sidebar.css
+2025-07-08 12:37:56 [http-nio-8080-exec-6] DEBUG o.s.security.web.FilterChainProxy - Securing GET /js/common.js
+2025-07-08 12:37:56 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/admin.css
+2025-07-08 12:37:56 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Securing GET /js/admin.js
+2025-07-08 12:37:56 [http-nio-8080-exec-7] DEBUG o.s.security.web.FilterChainProxy - Securing GET /js/sidebar.js
+2025-07-08 12:37:56 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Secured GET /js/admin.js
+2025-07-08 12:37:56 [http-nio-8080-exec-4] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:56 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/admin.css
+2025-07-08 12:37:56 [http-nio-8080-exec-7] DEBUG o.s.security.web.FilterChainProxy - Secured GET /js/sidebar.js
+2025-07-08 12:37:56 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/sidebar.css
+2025-07-08 12:37:56 [http-nio-8080-exec-6] DEBUG o.s.security.web.FilterChainProxy - Secured GET /js/common.js
+2025-07-08 12:37:56 [http-nio-8080-exec-8] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:56 [http-nio-8080-exec-5] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:56 [http-nio-8080-exec-7] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:56 [http-nio-8080-exec-3] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:56 [http-nio-8080-exec-6] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:56 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/auth/me
+2025-07-08 12:37:56 [http-nio-8080-exec-10] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:56 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/auth/me
+2025-07-08 12:37:56 [http-nio-8080-exec-10] INFO  c.t.f.Controller.AuthController - Current user info requested: admin
+2025-07-08 12:37:59 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Securing GET /admin/cauhinh-hocky
+2025-07-08 12:37:59 [http-nio-8080-exec-9] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:59 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Secured GET /admin/cauhinh-hocky
+2025-07-08 12:37:59 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/admin.css
+2025-07-08 12:37:59 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/common.css
+2025-07-08 12:37:59 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Securing GET /css/sidebar.css
+2025-07-08 12:37:59 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Securing GET /js/common.js
+2025-07-08 12:37:59 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Securing GET /js/sidebar.js
+2025-07-08 12:37:59 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/sidebar.css
+2025-07-08 12:37:59 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Secured GET /js/sidebar.js
+2025-07-08 12:37:59 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Secured GET /js/common.js
+2025-07-08 12:37:59 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/admin.css
+2025-07-08 12:37:59 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Secured GET /css/common.css
+2025-07-08 12:37:59 [http-nio-8080-exec-8] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:59 [http-nio-8080-exec-4] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:59 [http-nio-8080-exec-1] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:59 [http-nio-8080-exec-2] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:59 [http-nio-8080-exec-5] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:59 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/namhoc/current
+2025-07-08 12:37:59 [http-nio-8080-exec-7] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/auth/me
+2025-07-08 12:37:59 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/hocky/all
+2025-07-08 12:37:59 [http-nio-8080-exec-6] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/namhoc/all
+2025-07-08 12:37:59 [http-nio-8080-exec-7] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:59 [http-nio-8080-exec-10] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:59 [http-nio-8080-exec-3] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:59 [http-nio-8080-exec-6] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:59 [http-nio-8080-exec-7] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/auth/me
+2025-07-08 12:37:59 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/hocky/all
+2025-07-08 12:37:59 [http-nio-8080-exec-10] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/namhoc/current
+2025-07-08 12:37:59 [http-nio-8080-exec-7] INFO  c.t.f.Controller.AuthController - Current user info requested: admin
+2025-07-08 12:37:59 [http-nio-8080-exec-6] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/namhoc/all
+2025-07-08 12:37:59 [http-nio-8080-exec-3] INFO  c.t.f.Controller.HocKyController - Lấy danh sách tất cả học kỳ (bao gồm inactive)
+2025-07-08 12:37:59 [http-nio-8080-exec-10] INFO  c.t.f.Controller.NamHocController - Lấy năm học hiện tại
+2025-07-08 12:37:59 [http-nio-8080-exec-6] INFO  c.t.f.Controller.NamHocController - Lấy danh sách tất cả năm học (bao gồm inactive)
+2025-07-08 12:37:59 [http-nio-8080-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0
+2025-07-08 12:37:59 [http-nio-8080-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        hk1_0.ma_hoc_ky,
+        hk1_0.is_active,
+        hk1_0.is_current,
+        hk1_0.mo_ta,
+        hk1_0.ngay_bat_dau,
+        hk1_0.ngay_ket_thuc,
+        hk1_0.ten_hoc_ky 
+    from
+        hoc_ky hk1_0
+2025-07-08 12:37:59 [http-nio-8080-exec-6] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0
+2025-07-08 12:37:59 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/hocky/current
+2025-07-08 12:37:59 [http-nio-8080-exec-9] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:37:59 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/hocky/current
+2025-07-08 12:37:59 [http-nio-8080-exec-9] INFO  c.t.f.Controller.HocKyController - Lấy học kỳ hiện tại
+2025-07-08 12:37:59 [http-nio-8080-exec-9] DEBUG org.hibernate.SQL - 
+    select
+        hk1_0.ma_hoc_ky,
+        hk1_0.is_active,
+        hk1_0.is_current,
+        hk1_0.mo_ta,
+        hk1_0.ngay_bat_dau,
+        hk1_0.ngay_ket_thuc,
+        hk1_0.ten_hoc_ky 
+    from
+        hoc_ky hk1_0
+2025-07-08 12:38:03 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Securing POST /api/namhoc/with-semesters
+2025-07-08 12:38:03 [http-nio-8080-exec-2] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:38:03 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Secured POST /api/namhoc/with-semesters
+2025-07-08 12:38:03 [http-nio-8080-exec-2] INFO  c.t.f.Controller.NamHocController - Tạo năm học mới với học kỳ mặc định: 2025-2026
+2025-07-08 12:38:03 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0
+2025-07-08 12:38:03 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    update
+        nam_hoc 
+    set
+        is_active=?,
+        is_current=?,
+        mo_ta=?,
+        ngay_bat_dau=?,
+        ngay_ket_thuc=?,
+        ten_nam_hoc=? 
+    where
+        ma_nam_hoc=?
+2025-07-08 12:38:03 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    update
+        nam_hoc 
+    set
+        is_active=?,
+        is_current=?,
+        mo_ta=?,
+        ngay_bat_dau=?,
+        ngay_ket_thuc=?,
+        ten_nam_hoc=? 
+    where
+        ma_nam_hoc=?
+2025-07-08 12:38:03 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/namhoc/all
+2025-07-08 12:38:03 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/namhoc/current
+2025-07-08 12:38:03 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/hocky/all
+2025-07-08 12:38:03 [http-nio-8080-exec-8] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:38:03 [http-nio-8080-exec-1] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:38:03 [http-nio-8080-exec-4] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:38:03 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/namhoc/current
+2025-07-08 12:38:03 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/hocky/all
+2025-07-08 12:38:03 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/namhoc/all
+2025-07-08 12:38:03 [http-nio-8080-exec-8] INFO  c.t.f.Controller.HocKyController - Lấy danh sách tất cả học kỳ (bao gồm inactive)
+2025-07-08 12:38:03 [http-nio-8080-exec-1] INFO  c.t.f.Controller.NamHocController - Lấy danh sách tất cả năm học (bao gồm inactive)
+2025-07-08 12:38:03 [http-nio-8080-exec-4] INFO  c.t.f.Controller.NamHocController - Lấy năm học hiện tại
+2025-07-08 12:38:03 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0
+2025-07-08 12:38:03 [http-nio-8080-exec-4] DEBUG org.hibernate.SQL - 
+    select
+        nh1_0.ma_nam_hoc,
+        nh1_0.is_active,
+        nh1_0.is_current,
+        nh1_0.mo_ta,
+        nh1_0.ngay_bat_dau,
+        nh1_0.ngay_ket_thuc,
+        nh1_0.ten_nam_hoc 
+    from
+        nam_hoc nh1_0
+2025-07-08 12:38:03 [http-nio-8080-exec-8] DEBUG org.hibernate.SQL - 
+    select
+        hk1_0.ma_hoc_ky,
+        hk1_0.is_active,
+        hk1_0.is_current,
+        hk1_0.mo_ta,
+        hk1_0.ngay_bat_dau,
+        hk1_0.ngay_ket_thuc,
+        hk1_0.ten_hoc_ky 
+    from
+        hoc_ky hk1_0
+2025-07-08 12:38:03 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/hocky/current
+2025-07-08 12:38:03 [http-nio-8080-exec-5] DEBUG o.s.s.w.c.HttpSessionSecurityContextRepository - Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.tathanhloc.faceattendance.Security.CustomUserDetails@30373fbe, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=DA339D1D54E9D7FF4E04BD3D4EBA1242], Granted Authorities=[ROLE_ADMIN]]]
+2025-07-08 12:38:03 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/hocky/current
+2025-07-08 12:38:03 [http-nio-8080-exec-5] INFO  c.t.f.Controller.HocKyController - Lấy học kỳ hiện tại
+2025-07-08 12:38:03 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        hk1_0.ma_hoc_ky,
+        hk1_0.is_active,
+        hk1_0.is_current,
+        hk1_0.mo_ta,
+        hk1_0.ngay_bat_dau,
+        hk1_0.ngay_ket_thuc,
+        hk1_0.ten_hoc_ky 
+    from
+        hoc_ky hk1_0
