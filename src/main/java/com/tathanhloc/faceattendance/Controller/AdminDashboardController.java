@@ -236,4 +236,15 @@ public class AdminDashboardController {
         model.addAttribute("currentUser", userDetails.getTaiKhoan());
         return "admin/phonghoc";
     }
+
+    @GetMapping("/cauhinh-hocky")
+    public String cauhinhHockyManagement(Authentication authentication, Model model) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/?error=not_authenticated";
+        }
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        model.addAttribute("currentUser", userDetails.getTaiKhoan());
+        return "admin/cauhinh-hocky";
+
+    }
 }

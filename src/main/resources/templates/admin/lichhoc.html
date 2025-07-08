@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Lịch học - Face Attendance</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/sidebar.css}" rel="stylesheet">
+    <link th:href="@{/css/admin.css}" rel="stylesheet">
+
+    <style>
+        .schedule-calendar {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .calendar-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .time-slot {
+            border-right: 1px solid #e9ecef;
+            padding: 0.5rem;
+            font-size: 0.875rem;
+            background: #f8f9fa;
+            min-width: 80px;
+        }
+
+        .day-column {
+            border-right: 1px solid #e9ecef;
+            min-height: 600px;
+            position: relative;
+        }
+
+        .day-header {
+            background: #495057;
+            color: white;
+            padding: 0.75rem;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .schedule-item {
+            position: absolute;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 6px;
+            padding: 8px;
+            margin: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .schedule-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .schedule-item.conflict {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+        }
+
+        .schedule-item .title {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .schedule-item .info {
+            font-size: 0.7rem;
+            opacity: 0.9;
+        }
+
+        .conflict-badge {
+            background: #dc3545;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 5px;
+        }
+
+        .filter-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .view-toggle {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .view-toggle .btn-group .btn {
+            border-radius: 25px;
+            margin: 0 2px;
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stats-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .list-view-table .schedule-row {
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .list-view-table .schedule-row:hover {
+            background-color: rgba(102, 126, 234, 0.1);
+        }
+
+        .time-cell {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .conflict-indicator {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="main-wrapper">
+    <!-- Include Sidebar Component -->
+    <div th:replace="~{components/sidebar :: sidebar}"></div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Quản lý Lịch học</h1>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-primary" onclick="openCreateModal()">
+                        <i class="fas fa-plus me-2"></i>Tạo lịch học
+                    </button>
+                    <button class="btn btn-info" onclick="checkAllConflicts()">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Kiểm tra trùng lịch
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-icon text-primary">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <h3 id="totalSchedules">0</h3>
+                        <p class="mb-0">Tổng lịch học</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-icon text-success">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                        </div>
+                        <h3 id="activeTeachers">0</h3>
+                        <p class="mb-0">Giảng viên có lịch</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-icon text-warning">
+                            <i class="fas fa-door-open"></i>
+                        </div>
+                        <h3 id="usedRooms">0</h3>
+                        <p class="mb-0">Phòng học sử dụng</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-icon text-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h3 id="conflicts">0</h3>
+                        <p class="mb-0">Trùng lịch</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View Toggle -->
+            <div class="view-toggle">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Chế độ xem</h5>
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="viewMode" id="calendarView" checked>
+                        <label class="btn btn-outline-primary" for="calendarView">
+                            <i class="fas fa-calendar me-2"></i>Lịch tuần
+                        </label>
+
+                        <input type="radio" class="btn-check" name="viewMode" id="listView">
+                        <label class="btn btn-outline-primary" for="listView">
+                            <i class="fas fa-list me-2"></i>Danh sách
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <h5 class="mb-3">Bộ lọc</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="filterGiangVien" class="form-label">Giảng viên:</label>
+                        <select class="form-select" id="filterGiangVien">
+                            <option value="">Tất cả giảng viên</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filterPhongHoc" class="form-label">Phòng học:</label>
+                        <select class="form-select" id="filterPhongHoc">
+                            <option value="">Tất cả phòng học</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="filterThu" class="form-label">Thứ:</label>
+                        <select class="form-select" id="filterThu">
+                            <option value="">Tất cả</option>
+                            <option value="2">Thứ 2</option>
+                            <option value="3">Thứ 3</option>
+                            <option value="4">Thứ 4</option>
+                            <option value="5">Thứ 5</option>
+                            <option value="6">Thứ 6</option>
+                            <option value="7">Thứ 7</option>
+                            <option value="8">Chủ nhật</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="filterSemester" class="form-label">Học kỳ:</label>
+                        <select class="form-select" id="filterSemester">
+                            <option value="">Tất cả</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="filterYear" class="form-label">Năm học:</label>
+                        <select class="form-select" id="filterYear">
+                            <option value="">Tất cả</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Tìm kiếm theo tên môn học, mã lớp học phần...">
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="showConflictsOnly">
+                            <label class="form-check-label" for="showConflictsOnly">
+                                Chỉ hiển thị lịch có trùng
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar View -->
+            <div id="calendarViewContainer" class="schedule-calendar">
+                <div class="calendar-header">
+                    <h4 class="mb-0">Lịch học tuần</h4>
+                </div>
+                <div class="d-flex">
+                    <!-- Time Column -->
+                    <div class="time-column">
+                        <div class="day-header">Tiết</div>
+                        <div id="timeSlots"></div>
+                    </div>
+                    <!-- Days Columns -->
+                    <div class="flex-grow-1 d-flex">
+                        <div class="day-column flex-fill" data-day="2">
+                            <div class="day-header">Thứ 2</div>
+                            <div class="day-content" id="day-2"></div>
+                        </div>
+                        <div class="day-column flex-fill" data-day="3">
+                            <div class="day-header">Thứ 3</div>
+                            <div class="day-content" id="day-3"></div>
+                        </div>
+                        <div class="day-column flex-fill" data-day="4">
+                            <div class="day-header">Thứ 4</div>
+                            <div class="day-content" id="day-4"></div>
+                        </div>
+                        <div class="day-column flex-fill" data-day="5">
+                            <div class="day-header">Thứ 5</div>
+                            <div class="day-content" id="day-5"></div>
+                        </div>
+                        <div class="day-column flex-fill" data-day="6">
+                            <div class="day-header">Thứ 6</div>
+                            <div class="day-content" id="day-6"></div>
+                        </div>
+                        <div class="day-column flex-fill" data-day="7">
+                            <div class="day-header">Thứ 7</div>
+                            <div class="day-content" id="day-7"></div>
+                        </div>
+                        <div class="day-column flex-fill" data-day="8">
+                            <div class="day-header">Chủ nhật</div>
+                            <div class="day-content" id="day-8"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List View -->
+            <div id="listViewContainer" class="admin-table-wrapper" style="display: none;">
+                <div class="admin-table-header">
+                    <h5 class="admin-table-title">Danh sách lịch học</h5>
+                    <div class="table-actions">
+                        <button class="btn btn-success btn-sm" onclick="refreshData()">
+                            <i class="fas fa-sync-alt me-1"></i>Làm mới
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table admin-table list-view-table">
+                        <thead>
+                        <tr>
+                            <th>Mã lịch</th>
+                            <th>Môn học</th>
+                            <th>Giảng viên</th>
+                            <th>Phòng học</th>
+                            <th>Thứ</th>
+                            <th>Tiết</th>
+                            <th>Thời gian</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody id="scheduleTableBody">
+                        <tr>
+                            <td colspan="9" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Đang tải...</span>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tạo/Sửa Lịch học -->
+<div class="modal fade" id="scheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Tạo lịch học</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="scheduleForm">
+                    <input type="hidden" id="scheduleId">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="maLich" class="form-label">Mã lịch học <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="maLich" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="maLhp" class="form-label">Lớp học phần <span class="text-danger">*</span></label>
+                                <select class="form-select" id="maLhp" required>
+                                    <option value="">Chọn lớp học phần</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="thu" class="form-label">Thứ <span class="text-danger">*</span></label>
+                                <select class="form-select" id="thu" required>
+                                    <option value="">Chọn thứ</option>
+                                    <option value="2">Thứ 2</option>
+                                    <option value="3">Thứ 3</option>
+                                    <option value="4">Thứ 4</option>
+                                    <option value="5">Thứ 5</option>
+                                    <option value="6">Thứ 6</option>
+                                    <option value="7">Thứ 7</option>
+                                    <option value="8">Chủ nhật</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="tietBatDau" class="form-label">Tiết bắt đầu <span class="text-danger">*</span></label>
+                                <select class="form-select" id="tietBatDau" required>
+                                    <option value="">Chọn tiết</option>
+                                    <option value="1">Tiết 1 (7:00-7:45)</option>
+                                    <option value="2">Tiết 2 (7:50-8:35)</option>
+                                    <option value="3">Tiết 3 (8:40-9:25)</option>
+                                    <option value="4">Tiết 4 (9:35-10:20)</option>
+                                    <option value="5">Tiết 5 (10:25-11:10)</option>
+                                    <option value="6">Tiết 6 (11:15-12:00)</option>
+                                    <option value="7">Tiết 7 (13:00-13:45)</option>
+                                    <option value="8">Tiết 8 (13:50-14:35)</option>
+                                    <option value="9">Tiết 9 (14:40-15:25)</option>
+                                    <option value="10">Tiết 10 (15:35-16:20)</option>
+                                    <option value="11">Tiết 11 (16:25-17:10)</option>
+                                    <option value="12">Tiết 12 (17:15-18:00)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="soTiet" class="form-label">Số tiết <span class="text-danger">*</span></label>
+                                <select class="form-select" id="soTiet" required>
+                                    <option value="">Chọn số tiết</option>
+                                    <option value="1">1 tiết</option>
+                                    <option value="2">2 tiết</option>
+                                    <option value="3">3 tiết</option>
+                                    <option value="4">4 tiết</option>
+                                    <option value="5">5 tiết</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="maPhong" class="form-label">Phòng học <span class="text-danger">*</span></label>
+                        <select class="form-select" id="maPhong" required>
+                            <option value="">Chọn phòng học</option>
+                        </select>
+                    </div>
+
+                    <!-- Conflict Check Section -->
+                    <div id="conflictCheckSection" style="display: none;">
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Phát hiện trùng lịch!</h6>
+                            <div id="conflictDetails"></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-warning" onclick="checkConflictsBeforeSave()">
+                    <i class="fas fa-search me-2"></i>Kiểm tra trùng lịch
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveSchedule()">
+                    <span class="btn-text">Lưu</span>
+                    <div class="spinner-border spinner-border-sm d-none ms-2" role="status"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Chi tiết lịch học -->
+<div class="modal fade" id="scheduleDetailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chi tiết lịch học</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="scheduleDetailContent">
+                <!-- Content will be populated by JS -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="editFromDetail()">
+                    <i class="fas fa-edit me-2"></i>Chỉnh sửa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Container -->
+<div id="notificationContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/sidebar.js}"></script>
+
+<script>
+    // Constants
+    const API_BASE = '/api';
+
+    // Global Data
+    let scheduleData = [];
+    let lopHocPhanData = [];
+    let phongHocData = [];
+    let giangVienData = [];
+    let semesterData = [];
+    let yearData = [];
+    let filteredData = [];
+    let currentScheduleId = null;
+    let currentViewMode = 'calendar';
+
+    // Time slots configuration
+    const TIME_SLOTS = [
+        { tiet: 1, time: '7:00-7:45' },
+        { tiet: 2, time: '7:50-8:35' },
+        { tiet: 3, time: '8:40-9:25' },
+        { tiet: 4, time: '9:35-10:20' },
+        { tiet: 5, time: '10:25-11:10' },
+        { tiet: 6, time: '11:15-12:00' },
+        { tiet: 7, time: '13:00-13:45' },
+        { tiet: 8, time: '13:50-14:35' },
+        { tiet: 9, time: '14:40-15:25' },
+        { tiet: 10, time: '15:35-16:20' },
+        { tiet: 11, time: '16:25-17:10' },
+        { tiet: 12, time: '17:15-18:00' }
+    ];
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        initializePage();
+        setupEventListeners();
+    });
+
+    async function initializePage() {
+        console.log('🚀 Initializing LichHoc page...');
+        showLoading(true);
+
+        try {
+            await Promise.all([
+                loadScheduleData(),
+                loadLopHocPhanData(),
+                loadPhongHocData(),
+                loadGiangVienData(),
+                loadSemesterData(),
+                loadYearData()
+            ]);
+
+            populateFilters();
+            populateModalSelects();
+            setupTimeSlots();
+            updateStatistics();
+            renderCurrentView();
+
+            console.log('✅ Page initialized successfully');
+        } catch (error) {
+            console.error('❌ Error initializing page:', error);
+            showNotification('Lỗi khi tải dữ liệu: ' + error.message, 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    function setupEventListeners() {
+        // View mode toggle
+        document.querySelectorAll('input[name="viewMode"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                currentViewMode = this.id === 'calendarView' ? 'calendar' : 'list';
+                toggleView();
+            });
+        });
+
+        // Filters
+        document.getElementById('filterGiangVien').addEventListener('change', filterData);
+        document.getElementById('filterPhongHoc').addEventListener('change', filterData);
+        document.getElementById('filterThu').addEventListener('change', filterData);
+        document.getElementById('filterSemester').addEventListener('change', filterData);
+        document.getElementById('filterYear').addEventListener('change', filterData);
+        document.getElementById('searchInput').addEventListener('input', filterData);
+        document.getElementById('showConflictsOnly').addEventListener('change', filterData);
+
+        // Modal form fields
+        document.getElementById('thu').addEventListener('change', checkConflictsOnFieldChange);
+        document.getElementById('tietBatDau').addEventListener('change', checkConflictsOnFieldChange);
+        document.getElementById('soTiet').addEventListener('change', checkConflictsOnFieldChange);
+        document.getElementById('maPhong').addEventListener('change', checkConflictsOnFieldChange);
+        document.getElementById('maLhp').addEventListener('change', checkConflictsOnFieldChange);
+
+        // Sidebar toggle
+        document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+    }
+
+    // Data Loading Functions
+    async function loadScheduleData() {
+        try {
+            const response = await fetch(`${API_BASE}/lichhoc`);
+            if (!response.ok) throw new Error('Failed to load schedule data');
+
+            scheduleData = await response.json();
+            filteredData = [...scheduleData];
+            console.log('✅ Schedule data loaded:', scheduleData.length);
+        } catch (error) {
+            console.error('❌ Error loading schedules:', error);
+            scheduleData = [];
+            filteredData = [];
+        }
+    }
+
+    async function loadLopHocPhanData() {
+        try {
+            const response = await fetch(`${API_BASE}/lophocphan`);
+            if (!response.ok) throw new Error('Failed to load LHP data');
+
+            lopHocPhanData = await response.json();
+            console.log('✅ LHP data loaded:', lopHocPhanData.length);
+        } catch (error) {
+            console.error('❌ Error loading LHP:', error);
+            lopHocPhanData = [];
+        }
+    }
+
+    async function loadPhongHocData() {
+        try {
+            const response = await fetch(`${API_BASE}/phonghoc`);
+            if (!response.ok) throw new Error('Failed to load rooms');
+
+            phongHocData = await response.json();
+            console.log('✅ Room data loaded:', phongHocData.length);
+        } catch (error) {
+            console.error('❌ Error loading rooms:', error);
+            phongHocData = [];
+        }
+    }
+
+    async function loadGiangVienData() {
+        try {
+            const response = await fetch(`${API_BASE}/giangvien`);
+            if (!response.ok) throw new Error('Failed to load teachers');
+
+            const allTeachers = await response.json();
+            giangVienData = Array.isArray(allTeachers) ? allTeachers.filter(t => t.isActive) : [];
+            console.log('✅ Teacher data loaded:', giangVienData.length);
+        } catch (error) {
+            console.error('❌ Error loading teachers:', error);
+            giangVienData = [];
+        }
+    }
+
+    async function loadSemesterData() {
+        try {
+            const response = await fetch(`${API_BASE}/hocky`);
+            if (!response.ok) throw new Error('Failed to load semesters');
+
+            semesterData = await response.json();
+            console.log('✅ Semester data loaded:', semesterData.length);
+        } catch (error) {
+            console.error('❌ Error loading semesters:', error);
+            semesterData = [];
+        }
+    }
+
+    async function loadYearData() {
+        try {
+            const response = await fetch(`${API_BASE}/namhoc`);
+            if (!response.ok) throw new Error('Failed to load years');
+
+            yearData = await response.json();
+            console.log('✅ Year data loaded:', yearData.length);
+        } catch (error) {
+            console.error('❌ Error loading years:', error);
+            yearData = [];
+        }
+    }
+
+    // UI Functions
+    function populateFilters() {
+        // Teacher filter
+        const teacherFilter = document.getElementById('filterGiangVien');
+        teacherFilter.innerHTML = '<option value="">Tất cả giảng viên</option>';
+        giangVienData.forEach(teacher => {
+            teacherFilter.innerHTML += `<option value="${teacher.maGv}">${teacher.hoTen}</option>`;
+        });
+
+        // Room filter
+        const roomFilter = document.getElementById('filterPhongHoc');
+        roomFilter.innerHTML = '<option value="">Tất cả phòng học</option>';
+        phongHocData.forEach(room => {
+            roomFilter.innerHTML += `<option value="${room.maPhong}">${room.tenPhong}</option>`;
+        });
+
+        // Semester filter
+        const semesterFilter = document.getElementById('filterSemester');
+        semesterFilter.innerHTML = '<option value="">Tất cả</option>';
+        semesterData.forEach(semester => {
+            semesterFilter.innerHTML += `<option value="${semester.maHocKy}">${semester.tenHocKy}</option>`;
+        });
+
+        // Year filter
+        const yearFilter = document.getElementById('filterYear');
+        yearFilter.innerHTML = '<option value="">Tất cả</option>';
+        yearData.forEach(year => {
+            yearFilter.innerHTML += `<option value="${year.maNamHoc}">${year.maNamHoc}</option>`;
+        });
+    }
+
+    function populateModalSelects() {
+        // LHP select
+        const lhpSelect = document.getElementById('maLhp');
+        lhpSelect.innerHTML = '<option value="">Chọn lớp học phần</option>';
+        lopHocPhanData.forEach(lhp => {
+            lhpSelect.innerHTML += `<option value="${lhp.maLhp}">${lhp.maLhp} - ${lhp.tenMonHoc || ''}</option>`;
+        });
+
+        // Room select
+        const roomSelect = document.getElementById('maPhong');
+        roomSelect.innerHTML = '<option value="">Chọn phòng học</option>';
+        phongHocData.forEach(room => {
+            roomSelect.innerHTML += `<option value="${room.maPhong}">${room.tenPhong}</option>`;
+        });
+    }
+
+    function setupTimeSlots() {
+        const timeSlotsContainer = document.getElementById('timeSlots');
+        timeSlotsContainer.innerHTML = '';
+
+        TIME_SLOTS.forEach(slot => {
+            const timeSlotDiv = document.createElement('div');
+            timeSlotDiv.className = 'time-slot';
+            timeSlotDiv.innerHTML = `
+                <div><strong>Tiết ${slot.tiet}</strong></div>
+                <div>${slot.time}</div>
+            `;
+            timeSlotsContainer.appendChild(timeSlotDiv);
+        });
+    }
+
+    function toggleView() {
+        const calendarView = document.getElementById('calendarViewContainer');
+        const listView = document.getElementById('listViewContainer');
+
+        if (currentViewMode === 'calendar') {
+            calendarView.style.display = 'block';
+            listView.style.display = 'none';
+            renderCalendarView();
+        } else {
+            calendarView.style.display = 'none';
+            listView.style.display = 'block';
+            renderListView();
+        }
+    }
+
+    function renderCurrentView() {
+        if (currentViewMode === 'calendar') {
+            renderCalendarView();
+        } else {
+            renderListView();
+        }
+    }
+
+    function renderCalendarView() {
+        // Clear all day contents
+        for (let day = 2; day <= 8; day++) {
+            const dayContent = document.getElementById(`day-${day}`);
+            if (dayContent) {
+                dayContent.innerHTML = '';
+            }
+        }
+
+        // Render schedule items
+        filteredData.forEach(schedule => {
+            renderScheduleItem(schedule);
+        });
+    }
+
+    function renderScheduleItem(schedule) {
+        const dayContent = document.getElementById(`day-${schedule.thu}`);
+        if (!dayContent) return;
+
+        const scheduleItem = document.createElement('div');
+        scheduleItem.className = 'schedule-item';
+        scheduleItem.setAttribute('data-schedule-id', schedule.maLich);
+
+        // Calculate position based on time slot
+        const topPosition = (schedule.tietBatDau - 1) * 50 + 5; // 50px per slot + offset
+        const height = schedule.soTiet * 50 - 10; // Height based on duration
+
+        scheduleItem.style.top = `${topPosition}px`;
+        scheduleItem.style.height = `${height}px`;
+        scheduleItem.style.left = '5px';
+        scheduleItem.style.right = '5px';
+
+        // Check for conflicts
+        const hasConflict = checkScheduleConflict(schedule);
+        if (hasConflict) {
+            scheduleItem.classList.add('conflict');
+        }
+
+        scheduleItem.innerHTML = `
+            <div class="title">${schedule.tenMonHoc || 'N/A'}</div>
+            <div class="info">
+                <div><i class="fas fa-user me-1"></i>${schedule.tenGiangVien || 'N/A'}</div>
+                <div><i class="fas fa-door-open me-1"></i>${schedule.tenPhong || schedule.maPhong}</div>
+                <div><i class="fas fa-users me-1"></i>Nhóm ${schedule.nhom || 'N/A'}</div>
+                ${hasConflict ? '<span class="conflict-badge">Trùng lịch</span>' : ''}
+            </div>
+        `;
+
+        scheduleItem.addEventListener('click', () => showScheduleDetail(schedule.maLich));
+        dayContent.appendChild(scheduleItem);
+    }
+
+    function checkScheduleConflict(schedule) {
+        return filteredData.some(other =>
+            other.maLich !== schedule.maLich &&
+            other.thu === schedule.thu &&
+            other.maPhong === schedule.maPhong &&
+            isTimeOverlap(
+                schedule.tietBatDau, schedule.soTiet,
+                other.tietBatDau, other.soTiet
+            )
+        );
+    }
+
+    function isTimeOverlap(start1, duration1, start2, duration2) {
+        const end1 = start1 + duration1 - 1;
+        const end2 = start2 + duration2 - 1;
+        return !(end1 < start2 || end2 < start1);
+    }
+
+    function renderListView() {
+        const tbody = document.getElementById('scheduleTableBody');
+
+        if (filteredData.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center py-4">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Không có lịch học nào</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = filteredData.map(schedule => {
+            const hasConflict = checkScheduleConflict(schedule);
+            const timeSlot = TIME_SLOTS.find(t => t.tiet === schedule.tietBatDau);
+            const endTiet = schedule.tietBatDau + schedule.soTiet - 1;
+
+            return `
+                <tr class="schedule-row" onclick="showScheduleDetail('${schedule.maLich}')">
+                    <td>
+                        <strong class="text-primary">${schedule.maLich}</strong>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <span class="fw-medium">${schedule.tenMonHoc || 'N/A'}</span>
+                            <small class="text-muted">${schedule.maLhp}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <span class="fw-medium">${schedule.tenGiangVien || 'N/A'}</span>
+                            <small class="text-muted">${schedule.maGv || 'N/A'}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">${schedule.tenPhong || schedule.maPhong}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-primary">${getDayName(schedule.thu)}</span>
+                    </td>
+                    <td class="time-cell">
+                        Tiết ${schedule.tietBatDau} - ${endTiet}
+                    </td>
+                    <td class="time-cell">
+                        ${timeSlot ? timeSlot.time : 'N/A'}
+                    </td>
+                    <td>
+                        ${hasConflict ?
+                '<span class="conflict-indicator"><i class="fas fa-exclamation-triangle me-1"></i>Trùng lịch</span>' :
+                '<span class="text-success"><i class="fas fa-check me-1"></i>Bình thường</span>'
+            }
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-view" onclick="event.stopPropagation(); showScheduleDetail('${schedule.maLich}')" title="Xem chi tiết">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-action btn-edit" onclick="event.stopPropagation(); editSchedule('${schedule.maLich}')" title="Sửa">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-action btn-delete" onclick="event.stopPropagation(); deleteSchedule('${schedule.maLich}')" title="Xóa">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function getDayName(day) {
+        const dayNames = {
+            2: 'Thứ 2',
+            3: 'Thứ 3',
+            4: 'Thứ 4',
+            5: 'Thứ 5',
+            6: 'Thứ 6',
+            7: 'Thứ 7',
+            8: 'Chủ nhật'
+        };
+        return dayNames[day] || 'N/A';
+    }
+
+    function filterData() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const giangVienFilter = document.getElementById('filterGiangVien').value;
+        const phongHocFilter = document.getElementById('filterPhongHoc').value;
+        const thuFilter = document.getElementById('filterThu').value;
+        const semesterFilter = document.getElementById('filterSemester').value;
+        const yearFilter = document.getElementById('filterYear').value;
+        const showConflictsOnly = document.getElementById('showConflictsOnly').checked;
+
+        filteredData = scheduleData.filter(schedule => {
+            const matchesSearch = !searchTerm ||
+                (schedule.tenMonHoc && schedule.tenMonHoc.toLowerCase().includes(searchTerm)) ||
+                (schedule.maLhp && schedule.maLhp.toLowerCase().includes(searchTerm)) ||
+                (schedule.tenGiangVien && schedule.tenGiangVien.toLowerCase().includes(searchTerm)) ||
+                (schedule.tenPhong && schedule.tenPhong.toLowerCase().includes(searchTerm));
+
+            const matchesGiangVien = !giangVienFilter || schedule.maGv === giangVienFilter;
+            const matchesPhongHoc = !phongHocFilter || schedule.maPhong === phongHocFilter;
+            const matchesThu = !thuFilter || schedule.thu.toString() === thuFilter;
+            const matchesSemester = !semesterFilter || schedule.hocKy === semesterFilter;
+            const matchesYear = !yearFilter || schedule.namHoc === yearFilter;
+
+            const hasConflict = showConflictsOnly ? checkScheduleConflict(schedule) : true;
+
+            return matchesSearch && matchesGiangVien && matchesPhongHoc &&
+                matchesThu && matchesSemester && matchesYear && hasConflict;
+        });
+
+        renderCurrentView();
+        updateStatistics();
+    }
+
+    function updateStatistics() {
+        document.getElementById('totalSchedules').textContent = filteredData.length;
+
+        const uniqueTeachers = new Set(filteredData.map(s => s.maGv).filter(Boolean));
+        document.getElementById('activeTeachers').textContent = uniqueTeachers.size;
+
+        const uniqueRooms = new Set(filteredData.map(s => s.maPhong).filter(Boolean));
+        document.getElementById('usedRooms').textContent = uniqueRooms.size;
+
+        const conflictCount = filteredData.filter(schedule => checkScheduleConflict(schedule)).length;
+        document.getElementById('conflicts').textContent = conflictCount;
+    }
+
+    // Modal Functions
+    function openCreateModal() {
+        document.getElementById('modalTitle').textContent = 'Tạo lịch học';
+        document.getElementById('scheduleForm').reset();
+        document.getElementById('scheduleId').value = '';
+        document.getElementById('conflictCheckSection').style.display = 'none';
+        currentScheduleId = null;
+
+        const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+        modal.show();
+    }
+
+    function editSchedule(maLich) {
+        const schedule = scheduleData.find(s => s.maLich === maLich);
+        if (!schedule) return;
+
+        document.getElementById('modalTitle').textContent = 'Sửa lịch học';
+        document.getElementById('scheduleId').value = schedule.maLich;
+        document.getElementById('maLich').value = schedule.maLich;
+        document.getElementById('maLhp').value = schedule.maLhp;
+        document.getElementById('thu').value = schedule.thu;
+        document.getElementById('tietBatDau').value = schedule.tietBatDau;
+        document.getElementById('soTiet').value = schedule.soTiet;
+        document.getElementById('maPhong').value = schedule.maPhong;
+        document.getElementById('conflictCheckSection').style.display = 'none';
+
+        currentScheduleId = maLich;
+        const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+        modal.show();
+    }
+
+    async function saveSchedule() {
+        const form = document.getElementById('scheduleForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const btnText = document.querySelector('.btn-text');
+        const spinner = document.querySelector('.spinner-border');
+
+        btnText.textContent = 'Đang lưu...';
+        spinner.classList.remove('d-none');
+
+        const scheduleDataToSave = {
+            maLich: document.getElementById('maLich').value,
+            maLhp: document.getElementById('maLhp').value,
+            thu: parseInt(document.getElementById('thu').value),
+            tietBatDau: parseInt(document.getElementById('tietBatDau').value),
+            soTiet: parseInt(document.getElementById('soTiet').value),
+            maPhong: document.getElementById('maPhong').value,
+            isActive: true
+        };
+
+        try {
+            const url = currentScheduleId ?
+                `${API_BASE}/lichhoc/${currentScheduleId}` :
+                `${API_BASE}/lichhoc`;
+            const method = currentScheduleId ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(scheduleDataToSave)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showNotification(
+                    currentScheduleId ? 'Cập nhật lịch học thành công!' : 'Tạo lịch học thành công!',
+                    'success'
+                );
+                bootstrap.Modal.getInstance(document.getElementById('scheduleModal')).hide();
+                await loadScheduleData();
+                renderCurrentView();
+                updateStatistics();
+            } else {
+                if (result.hasConflict) {
+                    showConflictWarning(result);
+                } else {
+                    throw new Error(result.message || 'Lỗi không xác định');
+                }
+            }
+        } catch (error) {
+            console.error('Error saving schedule:', error);
+            showNotification('Lỗi khi lưu: ' + error.message, 'error');
+        } finally {
+            btnText.textContent = 'Lưu';
+            spinner.classList.add('d-none');
+        }
+    }
+
+    async function deleteSchedule(maLich) {
+        if (!confirm('Bạn có chắc chắn muốn xóa lịch học này?')) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/lichhoc/${maLich}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                showNotification('Xóa lịch học thành công!', 'success');
+                await loadScheduleData();
+                renderCurrentView();
+                updateStatistics();
+            } else {
+                throw new Error('Failed to delete');
+            }
+        } catch (error) {
+            console.error('Error deleting schedule:', error);
+            showNotification('Lỗi khi xóa lịch học', 'error');
+        }
+    }
+
+    // Conflict Checking Functions
+    async function checkConflictsBeforeSave() {
+        const form = document.getElementById('scheduleForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const scheduleData = {
+            maLhp: document.getElementById('maLhp').value,
+            thu: parseInt(document.getElementById('thu').value),
+            tietBatDau: parseInt(document.getElementById('tietBatDau').value),
+            soTiet: parseInt(document.getElementById('soTiet').value),
+            maPhong: document.getElementById('maPhong').value
+        };
+
+        try {
+            const response = await fetch(`${API_BASE}/lichhoc/check-conflicts`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(scheduleData)
+            });
+
+            const result = await response.json();
+            showConflictWarning(result);
+        } catch (error) {
+            console.error('Error checking conflicts:', error);
+            showNotification('Lỗi khi kiểm tra trùng lịch', 'error');
+        }
+    }
+
+    function checkConflictsOnFieldChange() {
+        const form = document.getElementById('scheduleForm');
+        const requiredFields = ['maLhp', 'thu', 'tietBatDau', 'soTiet', 'maPhong'];
+
+        const allFilled = requiredFields.every(field => {
+            const value = document.getElementById(field).value;
+            return value && value.trim() !== '';
+        });
+
+        if (allFilled) {
+            setTimeout(checkConflictsBeforeSave, 500); // Debounce
+        }
+    }
+
+    function showConflictWarning(result) {
+        const conflictSection = document.getElementById('conflictCheckSection');
+        const conflictDetails = document.getElementById('conflictDetails');
+
+        if (result.hasConflict) {
+            let detailsHtml = '<ul class="mb-0">';
+            result.conflicts.forEach(conflict => {
+                detailsHtml += `<li>${conflict}</li>`;
+            });
+            detailsHtml += '</ul>';
+
+            if (result.roomConflicts && result.roomConflicts.length > 0) {
+                detailsHtml += '<strong>Lịch trùng phòng:</strong><br>';
+                result.roomConflicts.forEach(schedule => {
+                    detailsHtml += `• ${schedule.tenMonHoc} - ${schedule.tenGiangVien} (Tiết ${schedule.tietBatDau})<br>`;
+                });
+            }
+
+            conflictDetails.innerHTML = detailsHtml;
+            conflictSection.style.display = 'block';
+        } else {
+            conflictSection.style.display = 'none';
+            showNotification('Không có trùng lịch!', 'success');
+        }
+    }
+
+    async function checkAllConflicts() {
+        try {
+            showLoading(true);
+
+            const conflicts = [];
+            scheduleData.forEach(schedule => {
+                if (checkScheduleConflict(schedule)) {
+                    conflicts.push(schedule);
+                }
+            });
+
+            if (conflicts.length === 0) {
+                showNotification('Không phát hiện trùng lịch nào!', 'success');
+            } else {
+                showNotification(`Phát hiện ${conflicts.length} lịch học bị trùng. Vui lòng kiểm tra.`, 'warning');
+                // Enable conflicts filter to show only conflicting schedules
+                document.getElementById('showConflictsOnly').checked = true;
+                filterData();
+            }
+        } catch (error) {
+            console.error('Error checking all conflicts:', error);
+            showNotification('Lỗi khi kiểm tra trùng lịch', 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Detail Modal Functions
+    function showScheduleDetail(maLich) {
+        const schedule = scheduleData.find(s => s.maLich === maLich);
+        if (!schedule) return;
+
+        const lhp = lopHocPhanData.find(l => l.maLhp === schedule.maLhp);
+        const room = phongHocData.find(r => r.maPhong === schedule.maPhong);
+        const timeSlot = TIME_SLOTS.find(t => t.tiet === schedule.tietBatDau);
+        const endTiet = schedule.tietBatDau + schedule.soTiet - 1;
+        const hasConflict = checkScheduleConflict(schedule);
+
+        document.getElementById('scheduleDetailContent').innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="fas fa-id-badge me-2"></i>Thông tin cơ bản</h6>
+                    <table class="table table-borderless table-sm">
+                        <tr><td><strong>Mã lịch:</strong></td><td>${schedule.maLich}</td></tr>
+                        <tr><td><strong>Lớp học phần:</strong></td><td>${schedule.maLhp}</td></tr>
+                        <tr><td><strong>Môn học:</strong></td><td>${schedule.tenMonHoc || 'N/A'}</td></tr>
+                        <tr><td><strong>Nhóm:</strong></td><td>${schedule.nhom || 'N/A'}</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6><i class="fas fa-clock me-2"></i>Thời gian & Địa điểm</h6>
+                    <table class="table table-borderless table-sm">
+                        <tr><td><strong>Thứ:</strong></td><td>${getDayName(schedule.thu)}</td></tr>
+                        <tr><td><strong>Tiết:</strong></td><td>${schedule.tietBatDau} - ${endTiet}</td></tr>
+                        <tr><td><strong>Thời gian:</strong></td><td>${timeSlot ? timeSlot.time : 'N/A'}</td></tr>
+                        <tr><td><strong>Phòng học:</strong></td><td>${room ? room.tenPhong : schedule.maPhong}</td></tr>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <h6><i class="fas fa-user me-2"></i>Giảng viên</h6>
+                    <p>${schedule.tenGiangVien || 'N/A'} (${schedule.maGv || 'N/A'})</p>
+
+                    ${hasConflict ? `
+                        <div class="alert alert-danger">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Cảnh báo trùng lịch</h6>
+                            <p class="mb-0">Lịch học này có xung đột với các lịch khác. Vui lòng kiểm tra và điều chỉnh.</p>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+
+        currentScheduleId = maLich;
+        const modal = new bootstrap.Modal(document.getElementById('scheduleDetailModal'));
+        modal.show();
+    }
+
+    function editFromDetail() {
+        bootstrap.Modal.getInstance(document.getElementById('scheduleDetailModal')).hide();
+        setTimeout(() => editSchedule(currentScheduleId), 300);
+    }
+
+    // Utility Functions
+    async function refreshData() {
+        await initializePage();
+        showNotification('Dữ liệu đã được làm mới!', 'success');
+    }
+
+    function showLoading(show) {
+        // Implement loading indicator
+        console.log('Loading:', show);
+    }
+
+    function showNotification(message, type = 'info') {
+        const container = document.getElementById('notificationContainer');
+        const alertClass = type === 'error' ? 'danger' : type;
+        const iconClass = {
+            success: 'check-circle',
+            error: 'exclamation-triangle',
+            warning: 'exclamation-circle',
+            info: 'info-circle'
+        }[type] || 'info-circle';
+
+        const alertHtml = `
+            <div class="alert alert-${alertClass} alert-dismissible fade show" role="alert">
+                <i class="fas fa-${iconClass} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+
+        container.insertAdjacentHTML('beforeend', alertHtml);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            const alerts = container.querySelectorAll('.alert');
+            if (alerts.length > 0) {
+                alerts[0].remove();
+            }
+        }, 5000);
+    }
+
+    function toggleSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        const mainContent = document.querySelector('.main-content');
+
+        if (sidebar && mainContent) {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+        }
+    }
+</script>
+</body>
+</html>

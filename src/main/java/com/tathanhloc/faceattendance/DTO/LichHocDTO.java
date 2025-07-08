@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.time.*;
 
 @Data
 @NoArgsConstructor
@@ -18,4 +17,19 @@ public class LichHocDTO {
     private String maLhp;
     private String maPhong;
     private Boolean isActive;
+
+    // Thông tin mở rộng để hiển thị
+    private String tenMonHoc;
+    private String tenGiangVien;
+    private String tenPhong;
+    private Integer nhom;
+    private String maMh;
+    private String maGv;
+    private String hocKy;
+    private String namHoc;
+
+    // Tính toán thời gian
+    private String thoiGianBatDau; // Ví dụ: "07:00"
+    private String thoiGianKetThuc; // Ví dụ: "09:30"
+    private String tenThu; // Ví dụ: "Thứ 2"
 }

@@ -220,16 +220,10 @@ class SidebarManager {
                     icon: "fas fa-graduation-cap",
                     children: [
                         {
-                            title: "Năm học",
+                            title: "Cấu hình Học kỳ - Năm học",
                             icon: "fas fa-calendar-alt",
-                            url: "/admin/namhoc",
+                            url: "/admin/cauhinh-hocky",
                             active: window.location.pathname === "/admin/namhoc",
-                        },
-                        {
-                            title: "Học kỳ",
-                            icon: "fas fa-calendar",
-                            url: "/admin/hocky",
-                            active: window.location.pathname === "/admin/hocky",
                         },
                         {
                             title: "Lớp học phần",
