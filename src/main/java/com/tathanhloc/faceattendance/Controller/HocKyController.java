@@ -169,4 +169,23 @@ public class HocKyController {
 
         return ResponseEntity.ok(stats);
     }
+
+    /**
+     * Xóa vĩnh viễn học kỳ (hard delete)
+     */
+    @DeleteMapping("/{id}/permanent")
+    public ResponseEntity<Void> hardDelete(@PathVariable String id) {
+        log.info("Xóa vĩnh viễn học kỳ với ID: {}", id);
+        hocKyService.hardDelete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Lấy danh sách học kỳ đã xóa mềm
+     */
+    @GetMapping("/deleted")
+    public ResponseEntity<List<HocKyDTO>> getDeletedSemesters() {
+        log.info("Lấy danh sách học kỳ đã xóa mềm");
+        return ResponseEntity.ok(hocKyService.getDeletedSemesters());
+    }
 }

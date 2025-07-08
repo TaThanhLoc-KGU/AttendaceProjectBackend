@@ -2,6 +2,7 @@ package com.tathanhloc.faceattendance.Repository;
 
 import com.tathanhloc.faceattendance.Model.HocKyNamHoc;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -107,4 +108,29 @@ public interface HocKyNamHocRepository extends JpaRepository<HocKyNamHoc, Intege
     // Tìm tất cả học kỳ có sắp xếp theo thứ tự
     @Query("SELECT h FROM HocKyNamHoc h WHERE h.namHoc.maNamHoc = :maNamHoc AND h.isActive = true ORDER BY h.thuTu")
     List<HocKyNamHoc> findByNamHocOrderByThuTu(@Param("maNamHoc") String maNamHoc);
+
+    /**
+     * Đếm số relationships theo học kỳ
+     */
+    long countByHocKy_MaHocKyAndIsActive(String maHocKy, Boolean isActive);
+
+    /**
+     * Khôi phục relationships theo học kỳ
+     */
+    @Modifying
+    @Query("UPDATE HocKyNamHoc h SET h.isActive = true WHERE h.hocKy.maHocKy = :maHocKy")
+    void restoreBySemester(@Param("maHocKy") String maHocKy);
+
+    /**
+     * Tìm relationships theo trạng thái hoạt động của năm học
+     */
+    @Query("SELECT h FROM HocKyNamHoc h JOIN h.namHoc nh WHERE nh.isActive = :isActive")
+    List<HocKyNamHoc> findByNamHocIsActive(@Param("isActive") Boolean isActive);
+
+    /**
+     * Tìm relationships theo trạng thái hoạt động của học kỳ
+     */
+    @Query("SELECT h FROM HocKyNamHoc h JOIN h.hocKy hk WHERE hk.isActive = :isActive")
+    List<HocKyNamHoc> findByHocKyIsActive(@Param("isActive") Boolean isActive);
+
 }

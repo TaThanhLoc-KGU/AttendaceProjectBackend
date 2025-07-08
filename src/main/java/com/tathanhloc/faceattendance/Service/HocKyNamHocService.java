@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -121,7 +123,7 @@ public class HocKyNamHocService {
     }
 
     /**
-     * Tạo học kỳ mặc định cho năm học
+     * Tạo học kỳ mặc định cho năm học (3 học kỳ)
      */
     @Transactional
     public List<HocKyNamHocDTO> createDefaultSemestersForNamHoc(String maNamHoc) {
@@ -131,10 +133,15 @@ public class HocKyNamHocService {
         LocalDate startDate = namHoc.getNgayBatDau();
         LocalDate endDate = namHoc.getNgayKetThuc();
 
-        // Tính toán thời gian cho 2 học kỳ
+        // Tính toán thời gian cho 3 học kỳ
         long totalDays = ChronoUnit.DAYS.between(startDate, endDate);
-        long semester1Days = totalDays * 45 / 100; // 45% cho học kỳ 1
-        long breakDays = totalDays * 10 / 100;     // 10% nghỉ giữa kỳ
+
+        // Phân bổ thời gian: HK1 (35%), HK2 (40%), Hè (20%), nghỉ (5%)
+        long semester1Days = totalDays * 35 / 100;    // 35% cho học kỳ 1
+        long breakDays1 = totalDays * 2 / 100;        // 2% nghỉ giữa HK1 và HK2
+        long semester2Days = totalDays * 40 / 100;    // 40% cho học kỳ 2
+        long breakDays2 = totalDays * 3 / 100;        // 3% nghỉ giữa HK2 và Hè
+        // Học kỳ hè sẽ từ sau break2 đến hết năm học (20%)
 
         // Học kỳ 1
         LocalDate sem1Start = startDate;
@@ -150,8 +157,8 @@ public class HocKyNamHocService {
                 .build();
 
         // Học kỳ 2
-        LocalDate sem2Start = sem1End.plusDays(breakDays + 1);
-        LocalDate sem2End = endDate;
+        LocalDate sem2Start = sem1End.plusDays(breakDays1 + 1);
+        LocalDate sem2End = sem2Start.plusDays(semester2Days);
 
         HocKyDTO semester2 = HocKyDTO.builder()
                 .maHocKy(maNamHoc + "_HK2")
@@ -162,9 +169,23 @@ public class HocKyNamHocService {
                 .thuTu(2)
                 .build();
 
+        // Học kỳ hè
+        LocalDate sem3Start = sem2End.plusDays(breakDays2 + 1);
+        LocalDate sem3End = endDate;
+
+        HocKyDTO semester3 = HocKyDTO.builder()
+                .maHocKy(maNamHoc + "_HKH")
+                .tenHocKy("Học kỳ hè - " + namHoc.getTenNamHoc())
+                .ngayBatDau(sem3Start)
+                .ngayKetThuc(sem3End)
+                .moTa("Học kỳ hè của " + namHoc.getTenNamHoc())
+                .thuTu(3)
+                .build();
+
         List<HocKyNamHocDTO> result = List.of(
                 createHocKyInNamHoc(maNamHoc, semester1),
-                createHocKyInNamHoc(maNamHoc, semester2)
+                createHocKyInNamHoc(maNamHoc, semester2),
+                createHocKyInNamHoc(maNamHoc, semester3)
         );
 
         log.info("✅ Đã tạo {} học kỳ mặc định cho năm học {}", result.size(), maNamHoc);
@@ -248,5 +269,53 @@ public class HocKyNamHocService {
                 .tongSoNgay(tongSoNgay)
                 .tiLePhanTram(tiLePhanTram)
                 .build();
+    }
+
+    /**
+     * Xóa mềm học kỳ khỏi năm học
+     */
+    @Transactional
+    public void removeSemesterFromYear(String maNamHoc, String maHocKy) {
+        log.info("Removing semester {} from academic year {}", maHocKy, maNamHoc);
+
+        Optional<HocKyNamHoc> relation = hocKyNamHocRepository
+                .findByHocKy_MaHocKyAndNamHoc_MaNamHoc(maHocKy, maNamHoc);
+
+        if (relation.isPresent()) {
+            HocKyNamHoc hknh = relation.get();
+            hknh.setIsActive(false);
+            hocKyNamHocRepository.save(hknh);
+
+            // Cập nhật lại thứ tự các học kỳ còn lại
+            reorderSemestersInYear(maNamHoc);
+
+            log.info("✅ Đã xóa học kỳ {} khỏi năm học {}", maHocKy, maNamHoc);
+        }
+    }
+
+    /**
+     * Cập nhật lại thứ tự học kỳ sau khi xóa
+     */
+    @Transactional
+    public void reorderSemestersInYear(String maNamHoc) {
+        List<HocKyNamHoc> relations = hocKyNamHocRepository
+                .findByNamHocOrderByThuTu(maNamHoc)
+                .stream()
+                .filter(hknh -> hknh.getIsActive())
+                .collect(Collectors.toList());
+
+        // Sắp xếp lại theo ngày bắt đầu
+        relations.sort((a, b) -> a.getHocKy().getNgayBatDau()
+                .compareTo(b.getHocKy().getNgayBatDau()));
+
+        // Cập nhật lại thứ tự
+        int thuTu = 1;
+        for (HocKyNamHoc relation : relations) {
+            relation.setThuTu(thuTu++);
+            hocKyNamHocRepository.save(relation);
+        }
+
+        log.info("✅ Đã cập nhật lại thứ tự cho {} học kỳ trong năm học {}",
+                relations.size(), maNamHoc);
     }
 }

@@ -2,6 +2,7 @@ package com.tathanhloc.faceattendance.Controller;
 
 import com.tathanhloc.faceattendance.DTO.HocKyDTO;
 import com.tathanhloc.faceattendance.DTO.NamHocDTO;
+import com.tathanhloc.faceattendance.Service.HocKyNamHocService;
 import com.tathanhloc.faceattendance.Service.NamHocService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.util.*;
 public class NamHocController {
 
     private final NamHocService namHocService;
+    private final HocKyNamHocService hocKyNamHocService;
 
     /**
      * Lấy tất cả năm học đang hoạt động
@@ -277,6 +279,58 @@ public class NamHocController {
             errorResponse.put("error", e.getMessage());
             errorResponse.put("maNamHoc", maNamHoc);
             errorResponse.put("hasSemesters", false);
+
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+    /**
+     * Xóa vĩnh viễn năm học (hard delete)
+     */
+    @DeleteMapping("/{id}/permanent")
+    public ResponseEntity<Void> hardDelete(@PathVariable String id) {
+        log.info("Xóa vĩnh viễn năm học với ID: {}", id);
+        namHocService.hardDelete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Lấy danh sách năm học đã xóa mềm
+     */
+    @GetMapping("/deleted")
+    public ResponseEntity<List<NamHocDTO>> getDeletedAcademicYears() {
+        log.info("Lấy danh sách năm học đã xóa mềm");
+        return ResponseEntity.ok(namHocService.getDeletedAcademicYears());
+    }
+
+    /**
+     * Xóa một học kỳ cụ thể khỏi năm học
+     */
+    @DeleteMapping("/{maNamHoc}/semesters/{maHocKy}")
+    public ResponseEntity<Map<String, Object>> removeSemesterFromYear(
+            @PathVariable String maNamHoc,
+            @PathVariable String maHocKy) {
+
+        log.info("API call: Remove semester {} from academic year {}", maHocKy, maNamHoc);
+
+        try {
+            hocKyNamHocService.removeSemesterFromYear(maNamHoc, maHocKy);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "Đã xóa học kỳ " + maHocKy + " khỏi năm học " + maNamHoc);
+            result.put("maNamHoc", maNamHoc);
+            result.put("maHocKy", maHocKy);
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            log.error("❌ Error removing semester from year: {}", e.getMessage());
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Lỗi: " + e.getMessage());
+            errorResponse.put("maNamHoc", maNamHoc);
+            errorResponse.put("maHocKy", maHocKy);
 
             return ResponseEntity.badRequest().body(errorResponse);
         }

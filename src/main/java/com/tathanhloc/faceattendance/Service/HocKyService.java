@@ -2,6 +2,8 @@ package com.tathanhloc.faceattendance.Service;
 
 import com.tathanhloc.faceattendance.DTO.HocKyDTO;
 import com.tathanhloc.faceattendance.Model.HocKy;
+import com.tathanhloc.faceattendance.Model.HocKyNamHoc;
+import com.tathanhloc.faceattendance.Repository.HocKyNamHocRepository;
 import com.tathanhloc.faceattendance.Repository.HocKyRepository;
 import com.tathanhloc.faceattendance.Exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +23,7 @@ import java.util.Optional;
 public class HocKyService {
 
     private final HocKyRepository hocKyRepository;
+    private final HocKyNamHocRepository hocKyNamHocRepository;
 
     public List<HocKyDTO> getAll() {
         try {
@@ -82,40 +86,6 @@ public class HocKyService {
             log.error("Error updating HocKy: ", e);
             throw new RuntimeException("Không thể cập nhật học kỳ: " + e.getMessage());
         }
-    }
-
-    @Transactional
-    public void softDelete(String id) {
-        try {
-            HocKy hocKy = hocKyRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("HocKy", "maHocKy", id));
-
-            hocKy.setIsActive(false);
-            hocKy.setIsCurrent(false);
-            hocKyRepository.save(hocKy);
-        } catch (Exception e) {
-            log.error("Error soft deleting HocKy: ", e);
-            throw new RuntimeException("Không thể xóa học kỳ: " + e.getMessage());
-        }
-    }
-
-    @Transactional
-    public HocKyDTO restore(String id) {
-        try {
-            HocKy hocKy = hocKyRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("HocKy", "maHocKy", id));
-
-            hocKy.setIsActive(true);
-            HocKy restored = hocKyRepository.save(hocKy);
-            return toDTO(restored);
-        } catch (Exception e) {
-            log.error("Error restoring HocKy: ", e);
-            throw new RuntimeException("Không thể khôi phục học kỳ: " + e.getMessage());
-        }
-    }
-
-    public void delete(String id) {
-        softDelete(id);
     }
 
     // ============ SPECIAL QUERIES ============
@@ -314,4 +284,84 @@ public class HocKyService {
                 .isCurrent(dto.getIsCurrent() != null ? dto.getIsCurrent() : false)
                 .build();
     }
+
+    /**
+     * Xóa mềm học kỳ
+     */
+    @Transactional
+    public void softDelete(String maHocKy) {
+        log.info("Soft deleting semester: {}", maHocKy);
+
+        HocKy hocKy = hocKyRepository.findById(maHocKy)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy học kỳ: " + maHocKy));
+
+        // Xóa mềm học kỳ
+        hocKy.setIsActive(false);
+        hocKy.setIsCurrent(false); // Bỏ current nếu đang là current
+        hocKyRepository.save(hocKy);
+
+        // Xóa mềm tất cả relationships
+        hocKyNamHocRepository.softDeleteBySemester(maHocKy);
+
+        log.info("✅ Đã xóa mềm học kỳ: {}", maHocKy);
+    }
+
+    /**
+     * Khôi phục học kỳ đã xóa mềm
+     */
+    @Transactional
+    public HocKyDTO restore(String maHocKy) {
+        log.info("Restoring semester: {}", maHocKy);
+
+        HocKy hocKy = hocKyRepository.findById(maHocKy)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy học kỳ: " + maHocKy));
+
+        // Khôi phục học kỳ
+        hocKy.setIsActive(true);
+        HocKy restored = hocKyRepository.save(hocKy);
+
+        // Khôi phục relationships (cần implement trong repository)
+        // hocKyNamHocRepository.restoreBySemester(maHocKy);
+
+        log.info("✅ Đã khôi phục học kỳ: {}", maHocKy);
+        return toDTO(restored);
+    }
+
+    /**
+     * Xóa vĩnh viễn học kỳ (hard delete)
+     */
+    @Transactional
+    public void hardDelete(String maHocKy) {
+        log.info("Hard deleting semester: {}", maHocKy);
+
+        // Xóa tất cả relationships trước
+        List<HocKyNamHoc> relations = hocKyNamHocRepository.findByHocKy_MaHocKy(maHocKy);
+        hocKyNamHocRepository.deleteAll(relations);
+
+        // Xóa học kỳ
+        hocKyRepository.deleteById(maHocKy);
+
+        log.info("✅ Đã xóa vĩnh viễn học kỳ: {}", maHocKy);
+    }
+
+    /**
+     * Lấy danh sách học kỳ đã xóa mềm
+     */
+    public List<HocKyDTO> getDeletedSemesters() {
+        log.debug("Getting deleted semesters");
+        return hocKyRepository.findByIsActive(false).stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Kiểm tra học kỳ có đang được sử dụng không
+     */
+    public boolean isSemesterInUse(String maHocKy) {
+        // Kiểm tra trong các bảng liên quan (lop_hoc_phan, diem_danh, etc.)
+        // TODO: Implement check với các bảng khác
+        Long count = hocKyNamHocRepository.countByHocKy_MaHocKyAndIsActive(maHocKy, true);
+        return count > 0;
+    }
+
 }

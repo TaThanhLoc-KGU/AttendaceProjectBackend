@@ -45,4 +45,19 @@ public interface NamHocRepository extends JpaRepository<NamHoc, String> {
     // Tìm năm học theo năm kết thúc
     @Query("SELECT n FROM NamHoc n WHERE n.isActive = true AND YEAR(n.ngayKetThuc) = :year")
     List<NamHoc> findByEndYear(@Param("year") int year);
+
+    /**
+     * Tìm năm học theo trạng thái hoạt động
+     */
+    List<NamHoc> findByIsActive(Boolean isActive);
+
+    /**
+     * Tìm năm học theo trạng thái current
+     */
+    List<NamHoc> findByIsCurrent(Boolean isCurrent);
+
+    /**
+     * Đếm năm học theo trạng thái
+     */
+    long countByIsActive(Boolean isActive);
 }

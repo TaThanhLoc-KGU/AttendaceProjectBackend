@@ -97,35 +97,6 @@ public class NamHocService {
         }
     }
 
-    @Transactional
-    public void softDelete(String id) {
-        try {
-            NamHoc namHoc = namHocRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("NamHoc", "maNamHoc", id));
-
-            namHoc.setIsActive(false);
-            namHoc.setIsCurrent(false);
-            namHocRepository.save(namHoc);
-        } catch (Exception e) {
-            log.error("Error soft deleting NamHoc: ", e);
-            throw new RuntimeException("Không thể xóa năm học: " + e.getMessage());
-        }
-    }
-
-    @Transactional
-    public NamHocDTO restore(String id) {
-        try {
-            NamHoc namHoc = namHocRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("NamHoc", "maNamHoc", id));
-
-            namHoc.setIsActive(true);
-            NamHoc restored = namHocRepository.save(namHoc);
-            return toDTO(restored);
-        } catch (Exception e) {
-            log.error("Error restoring NamHoc: ", e);
-            throw new RuntimeException("Không thể khôi phục năm học: " + e.getMessage());
-        }
-    }
 
     public void delete(String id) {
         softDelete(id);
@@ -357,38 +328,51 @@ public class NamHocService {
             List<HocKy> createdSemesters = new ArrayList<>();
             List<HocKyNamHoc> createdRelations = new ArrayList<>();
 
-            // Tạo Học kỳ 1 (Tháng 9 - Tháng 1)
+            // Tạo Học kỳ 1 (Tháng 9 - Tháng 12)
             HocKy semester1 = createSemester(
                     "HK1_" + maNamHoc,
                     "Học kỳ 1 - " + maNamHoc,
                     LocalDate.of(startYear, 9, 1),
-                    LocalDate.of(startYear + 1, 1, 31),
+                    LocalDate.of(startYear, 12, 31),
                     "Học kỳ 1 của năm học " + maNamHoc
             );
             createdSemesters.add(semester1);
 
-            // Tạo Học kỳ 2 (Tháng 2 - Tháng 6)
+            // Tạo Học kỳ 2 (Tháng 1 - Tháng 5)
             HocKy semester2 = createSemester(
                     "HK2_" + maNamHoc,
                     "Học kỳ 2 - " + maNamHoc,
-                    LocalDate.of(endYear, 2, 1),
-                    LocalDate.of(endYear, 6, 30),
+                    LocalDate.of(endYear, 1, 15),
+                    LocalDate.of(endYear, 5, 15),
                     "Học kỳ 2 của năm học " + maNamHoc
             );
             createdSemesters.add(semester2);
 
-            // Tạo relationships trong bảng hoc_ky_nam_hoc
+            // Tạo Học kỳ hè (Tháng 6 - Tháng 8)
+            HocKy semester3 = createSemester(
+                    "HKH_" + maNamHoc,
+                    "Học kỳ hè - " + maNamHoc,
+                    LocalDate.of(endYear, 6, 1),
+                    LocalDate.of(endYear, 8, 31),
+                    "Học kỳ hè của năm học " + maNamHoc
+            );
+            createdSemesters.add(semester3);
+
+            // Tạo relationships trong bảng hoc_ky_nam_hoc với thứ tự
+            int thuTu = 1;
             for (HocKy semester : createdSemesters) {
                 HocKyNamHoc relation = HocKyNamHoc.builder()
                         .hocKy(semester)
                         .namHoc(namHoc)
+                        .thuTu(thuTu++)
                         .isActive(true)
                         .build();
 
                 HocKyNamHoc savedRelation = hocKyNamHocRepository.save(relation);
                 createdRelations.add(savedRelation);
 
-                log.debug("✅ Created relationship: {} - {}", semester.getMaHocKy(), maNamHoc);
+                log.debug("✅ Created relationship: {} - {} (thứ tự: {})",
+                        semester.getMaHocKy(), maNamHoc, relation.getThuTu());
             }
 
             // Chuẩn bị response
@@ -503,4 +487,121 @@ public class NamHocService {
                 .isCurrent(hocKy.getIsCurrent())
                 .build();
     }
+    /**
+     * Xóa mềm năm học
+     */
+    @Transactional
+    public void softDelete(String maNamHoc) {
+        log.info("Soft deleting academic year: {}", maNamHoc);
+
+        NamHoc namHoc = namHocRepository.findById(maNamHoc)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy năm học: " + maNamHoc));
+
+        // Xóa mềm năm học
+        namHoc.setIsActive(false);
+        namHoc.setIsCurrent(false); // Bỏ current nếu đang là current
+        namHocRepository.save(namHoc);
+
+        // Xóa mềm tất cả học kỳ của năm học này
+        deleteSemestersOfYear(maNamHoc);
+
+        log.info("✅ Đã xóa mềm năm học và tất cả học kỳ: {}", maNamHoc);
+    }
+
+    /**
+     * Khôi phục năm học đã xóa mềm
+     */
+    @Transactional
+    public NamHocDTO restore(String maNamHoc) {
+        log.info("Restoring academic year: {}", maNamHoc);
+
+        NamHoc namHoc = namHocRepository.findById(maNamHoc)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy năm học: " + maNamHoc));
+
+        // Khôi phục năm học
+        namHoc.setIsActive(true);
+        NamHoc restored = namHocRepository.save(namHoc);
+
+        // Khôi phục tất cả relationships của năm học
+        hocKyNamHocRepository.restoreByYear(maNamHoc);
+
+        // Khôi phục tất cả học kỳ của năm học
+        List<HocKyNamHoc> relations = hocKyNamHocRepository.findByNamHoc_MaNamHoc(maNamHoc);
+        for (HocKyNamHoc relation : relations) {
+            HocKy hocKy = relation.getHocKy();
+            if (!hocKy.getIsActive()) {
+                hocKy.setIsActive(true);
+                hocKyRepository.save(hocKy);
+            }
+        }
+
+        log.info("✅ Đã khôi phục năm học và tất cả học kỳ: {}", maNamHoc);
+        return toDTO(restored);
+    }
+
+    /**
+     * Xóa vĩnh viễn năm học (hard delete)
+     */
+    @Transactional
+    public void hardDelete(String maNamHoc) {
+        log.info("Hard deleting academic year: {}", maNamHoc);
+
+        // Xóa tất cả relationships trước
+        List<HocKyNamHoc> relations = hocKyNamHocRepository.findByNamHoc_MaNamHoc(maNamHoc);
+
+        // Xóa tất cả học kỳ của năm học
+        for (HocKyNamHoc relation : relations) {
+            hocKyRepository.deleteById(relation.getHocKy().getMaHocKy());
+        }
+
+        // Xóa tất cả relationships
+        hocKyNamHocRepository.deleteAll(relations);
+
+        // Xóa năm học
+        namHocRepository.deleteById(maNamHoc);
+
+        log.info("✅ Đã xóa vĩnh viễn năm học và tất cả học kỳ: {}", maNamHoc);
+    }
+
+    /**
+     * Lấy danh sách năm học đã xóa mềm
+     */
+    public List<NamHocDTO> getDeletedAcademicYears() {
+        log.debug("Getting deleted academic years");
+        return namHocRepository.findByIsActive(false).stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Kiểm tra năm học có đang được sử dụng không
+     */
+    public boolean isAcademicYearInUse(String maNamHoc) {
+        // Kiểm tra có học kỳ đang hoạt động không
+        Long semesterCount = hocKyNamHocRepository.countByNamHoc(maNamHoc);
+        return semesterCount > 0;
+    }
+
+    /**
+     * Lấy thống kê năm học
+     */
+    public Map<String, Object> getAcademicYearStats(String maNamHoc) {
+        Map<String, Object> stats = new HashMap<>();
+
+        // Đếm số học kỳ
+        Long totalSemesters = hocKyNamHocRepository.countByNamHoc(maNamHoc);
+        Long activeSemesters = hocKyNamHocRepository.countActiveSemestersByYear(maNamHoc);
+
+        stats.put("totalSemesters", totalSemesters);
+        stats.put("activeSemesters", activeSemesters);
+        stats.put("deletedSemesters", totalSemesters - activeSemesters);
+
+        // Lấy danh sách học kỳ
+        List<HocKyDTO> semesters = getSemestersByYear(maNamHoc);
+        stats.put("semesters", semesters);
+
+        return stats;
+    }
+
+
 }

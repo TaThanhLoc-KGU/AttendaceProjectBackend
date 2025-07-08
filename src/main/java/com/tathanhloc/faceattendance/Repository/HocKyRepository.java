@@ -38,4 +38,20 @@ public interface HocKyRepository extends JpaRepository<HocKy, String> {
             "NOT (h.ngayKetThuc < :startDate OR h.ngayBatDau > :endDate)")
     List<HocKy> findByDateRangeOverlap(@Param("startDate") LocalDate startDate,
                                        @Param("endDate") LocalDate endDate);
+
+    /**
+     * Tìm học kỳ theo trạng thái hoạt động
+     */
+    List<HocKy> findByIsActive(Boolean isActive);
+
+    /**
+     * Tìm học kỳ theo trạng thái current
+     */
+    List<HocKy> findByIsCurrent(Boolean isCurrent);
+
+    /**
+     * Đếm học kỳ theo trạng thái
+     */
+    long countByIsActive(Boolean isActive);
+
 }
