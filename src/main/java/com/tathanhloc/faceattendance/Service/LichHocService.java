@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -56,40 +57,93 @@ public class LichHocService {
             throw new RuntimeException("Trùng lịch: " + conflictCheck.get("conflictDetails"));
         }
 
+
         LichHoc lh = toEntity(dto);
         lh.setActive(true);
 
+        lh.setCreatedAt(LocalDateTime.now());
+        lh.setUpdatedAt(LocalDateTime.now());
         LichHoc saved = lichHocRepository.save(lh);
         log.info("Schedule created successfully: {}", saved.getMaLich());
         return toDTO(saved);
     }
 
+    /**
+     * Update method đã sửa
+     */
     @Transactional
     public LichHocDTO update(String id, LichHocDTO dto) {
-        log.info("Updating schedule: {} with data: {}", id, dto);
+        log.info("Updating schedule with ID {}: {}", id, dto);
 
         LichHoc existing = lichHocRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("LichHoc not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Lịch học", "ID", id));
 
-        // Validate data
-        validateScheduleData(dto);
+        // Chỉ kiểm tra trùng lịch nếu có thay đổi về thời gian, phòng hoặc giảng viên
+        boolean needConflictCheck = hasSignificantChanges(existing, dto);
 
-        // Check for conflicts (excluding current schedule)
-        Map<String, Object> conflictCheck = checkConflictsForUpdate(id, dto);
-        if ((Boolean) conflictCheck.get("hasConflict")) {
-            throw new RuntimeException("Trùng lịch: " + conflictCheck.get("conflictDetails"));
+        if (needConflictCheck) {
+            Map<String, Object> conflictResult = checkConflictsForUpdate(id, dto);
+            if ((Boolean) conflictResult.get("hasConflict")) {
+                @SuppressWarnings("unchecked")
+                List<String> conflicts = (List<String>) conflictResult.get("conflictDetails");
+                throw new IllegalArgumentException("Trùng lịch: " + conflicts);
+            }
         }
 
         // Update fields
-        existing.setThu(dto.getThu());
-        existing.setTietBatDau(dto.getTietBatDau());
-        existing.setSoTiet(dto.getSoTiet());
-        existing.setPhongHoc(phongHocRepository.findById(dto.getMaPhong()).orElseThrow());
-        existing.setLopHocPhan(lopHocPhanRepository.findById(dto.getMaLhp()).orElseThrow());
+        updateEntityFromDTO(existing, dto);
 
-        LichHoc updated = lichHocRepository.save(existing);
-        log.info("Schedule updated successfully: {}", updated.getMaLich());
-        return toDTO(updated);
+        existing.setUpdatedAt(LocalDateTime.now());
+
+        LichHoc saved = lichHocRepository.save(existing);
+        return toDTO(saved);
+    }
+    /**
+     * Update entity từ DTO
+     */
+    private void updateEntityFromDTO(LichHoc entity, LichHocDTO dto) {
+        if (dto.getMaLhp() != null && !dto.getMaLhp().equals(entity.getLopHocPhan().getMaLhp())) {
+            LopHocPhan lopHocPhan = lopHocPhanRepository.findById(dto.getMaLhp())
+                    .orElseThrow(() -> new ResourceNotFoundException("Lớp học phần", "mã LHP", dto.getMaLhp()));
+            entity.setLopHocPhan(lopHocPhan);
+        }
+
+        if (dto.getMaPhong() != null && !dto.getMaPhong().equals(entity.getPhongHoc().getMaPhong())) {
+            PhongHoc phongHoc = phongHocRepository.findById(dto.getMaPhong())
+                    .orElseThrow(() -> new ResourceNotFoundException("Phòng học", "mã phòng", dto.getMaPhong()));
+            entity.setPhongHoc(phongHoc);
+        }
+
+        if (dto.getThu() != null) {
+            entity.setThu(dto.getThu());
+        }
+
+        if (dto.getTietBatDau() != null) {
+            entity.setTietBatDau(dto.getTietBatDau());
+        }
+
+        if (dto.getSoTiet() != null) {
+            entity.setSoTiet(dto.getSoTiet());
+        }
+
+        // Luôn luôn set updated timestamp
+        entity.setUpdatedAt(LocalDateTime.now());
+    }
+    /**
+     * Kiểm tra xem có thay đổi đáng kể không
+     */
+    private boolean hasSignificantChanges(LichHoc existing, LichHocDTO dto) {
+        boolean timeChanged = !Objects.equals(existing.getThu(), dto.getThu()) ||
+                !Objects.equals(existing.getTietBatDau(), dto.getTietBatDau()) ||
+                !Objects.equals(existing.getSoTiet(), dto.getSoTiet());
+
+        boolean roomChanged = dto.getMaPhong() != null &&
+                !Objects.equals(existing.getPhongHoc().getMaPhong(), dto.getMaPhong());
+
+        boolean classChanged = dto.getMaLhp() != null &&
+                !Objects.equals(existing.getLopHocPhan().getMaLhp(), dto.getMaLhp());
+
+        return timeChanged || roomChanged || classChanged;
     }
 
     @Transactional
@@ -315,21 +369,83 @@ public class LichHocService {
     }
 
     /**
-     * Kiểm tra trùng lịch khi cập nhật (loại trừ chính lịch đang update)
+     * Kiểm tra trùng lịch khi update
      */
-    public Map<String, Object> checkConflictsForUpdate(String excludeScheduleId, LichHocDTO dto) {
-        Map<String, Object> result = checkConflicts(dto);
+    public Map<String, Object> checkConflictsForUpdate(String scheduleId, LichHocDTO dto) {
+        log.info("Checking conflicts for update - Schedule ID: {}, DTO: {}", scheduleId, dto);
 
-        // If there are conflicts, filter out the current schedule being updated
-        if ((Boolean) result.get("hasConflict")) {
-            List<String> conflicts = (List<String>) result.get("conflictDetails");
-            // Re-check excluding the current schedule
-            // This is a simplified version - in a real implementation you'd need more detailed conflict detection
+        Map<String, Object> result = new HashMap<>();
+        List<String> conflicts = new ArrayList<>();
+        boolean hasConflict = false;
+
+        try {
+            // Lấy tất cả lịch học NGOẠI TRỪ lịch đang update
+            List<LichHocDTO> allSchedules = getAll().stream()
+                    .filter(s -> !s.getMaLich().equals(scheduleId)) // Loại trừ chính nó
+                    .filter(s -> s.getIsActive() == null || s.getIsActive()) // Chỉ lấy lịch active
+                    .collect(Collectors.toList());
+
+            // Kiểm tra trùng giảng viên
+            if (dto.getMaGv() != null && dto.getThu() != null &&
+                    dto.getTietBatDau() != null && dto.getSoTiet() != null) {
+
+                for (LichHocDTO other : allSchedules) {
+                    if (other.getMaGv() != null && other.getMaGv().equals(dto.getMaGv()) &&
+                            other.getThu() != null && other.getThu().equals(dto.getThu()) &&
+                            isTimeOverlap(dto.getTietBatDau(), dto.getSoTiet(),
+                                    other.getTietBatDau(), other.getSoTiet())) {
+
+                        conflicts.add("Giảng viên đã có lịch dạy trong thời gian này");
+                        hasConflict = true;
+                        break;
+                    }
+                }
+            }
+
+            // Kiểm tra trùng phòng học
+            if (dto.getMaPhong() != null && dto.getThu() != null &&
+                    dto.getTietBatDau() != null && dto.getSoTiet() != null) {
+
+                for (LichHocDTO other : allSchedules) {
+                    if (other.getMaPhong() != null && other.getMaPhong().equals(dto.getMaPhong()) &&
+                            other.getThu() != null && other.getThu().equals(dto.getThu()) &&
+                            isTimeOverlap(dto.getTietBatDau(), dto.getSoTiet(),
+                                    other.getTietBatDau(), other.getSoTiet())) {
+
+                        conflicts.add("Phòng học đã được sử dụng trong thời gian này");
+                        hasConflict = true;
+                        break;
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("Error checking conflicts for update: {}", e.getMessage());
+            conflicts.add("Lỗi khi kiểm tra trùng lịch: " + e.getMessage());
+            hasConflict = true;
         }
 
+        result.put("hasConflict", hasConflict);
+        result.put("conflictDetails", conflicts);
+        result.put("scheduleId", scheduleId);
+
+        log.info("Conflict check result for update: hasConflict={}, conflicts={}", hasConflict, conflicts);
         return result;
     }
 
+    /**
+     * Kiểm tra overlap thời gian
+     */
+    private boolean isTimeOverlap(Integer start1, Integer duration1, Integer start2, Integer duration2) {
+        if (start1 == null || duration1 == null || start2 == null || duration2 == null) {
+            return false;
+        }
+
+        int end1 = start1 + duration1 - 1;
+        int end2 = start2 + duration2 - 1;
+
+        return !(end1 < start2 || end2 < start1);
+    }
     /**
      * Kiểm tra trùng lịch trong học kỳ
      */

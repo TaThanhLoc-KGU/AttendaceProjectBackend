@@ -5,6 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "lichhoc")
@@ -37,5 +41,12 @@ public class LichHoc {
     @Column(name = "is_active")
     private boolean isActive;
 
+    @Column(name = "created_at")
+    @CreationTimestamp  // Tự động set khi tạo
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    @UpdateTimestamp   // Tự động set khi update
+    private LocalDateTime updatedAt;
 
 }

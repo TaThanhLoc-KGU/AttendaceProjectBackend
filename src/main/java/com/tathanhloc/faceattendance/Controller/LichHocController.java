@@ -2,10 +2,15 @@ package com.tathanhloc.faceattendance.Controller;
 
 import com.tathanhloc.faceattendance.DTO.*;
 import com.tathanhloc.faceattendance.Service.*;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 public class LichHocController {
 
     private final LichHocService lichHocService;
+    private final ExcelService excelService;
 
     // ============ BASIC CRUD OPERATIONS ============
 
@@ -404,6 +410,143 @@ public class LichHocController {
         } catch (Exception e) {
             log.error("Error getting available academic years: {}", e.getMessage());
             return ResponseEntity.ok(java.util.Collections.emptyList());
+        }
+    }
+    /**
+     * Export lịch học ra Excel
+     */
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportToExcel(
+            @RequestParam(required = false) String semester,
+            @RequestParam(required = false) String year,
+            @RequestParam(required = false) String teacher,
+            @RequestParam(required = false) String room,
+            @RequestParam(required = false) String subject,
+            HttpServletResponse response) {
+        try {
+            log.info("Exporting schedules to Excel with filters - semester: {}, year: {}, teacher: {}, room: {}, subject: {}",
+                    semester, year, teacher, room, subject);
+
+            byte[] excelData = excelService.exportSchedulesToExcel(semester, year, teacher, room, subject);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+
+            String filename = String.format("lich-hoc-%s-%s.xlsx",
+                    semester != null ? semester : "all",
+                    year != null ? year : "all");
+            headers.setContentDispositionFormData("attachment", filename);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(excelData);
+
+        } catch (Exception e) {
+            log.error("Error exporting schedules to Excel: ", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Export lịch học dạng POST (với filter phức tạp)
+     */
+    @PostMapping("/export")
+    public ResponseEntity<byte[]> exportToExcelPost(@RequestBody Map<String, Object> filters) {
+        try {
+            log.info("Exporting schedules to Excel with POST filters: {}", filters);
+
+            String semester = (String) filters.get("semester");
+            String year = (String) filters.get("year");
+            String teacher = (String) filters.get("teacher");
+            String room = (String) filters.get("room");
+            String subject = (String) filters.get("subject");
+
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> schedules = (List<Map<String, Object>>) filters.get("schedules");
+
+            byte[] excelData = excelService.exportSchedulesToExcelFromData(schedules, semester, year);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+
+            String filename = String.format("lich-hoc-%s-%s.xlsx",
+                    semester != null ? semester : "all",
+                    year != null ? year : "all");
+            headers.setContentDispositionFormData("attachment", filename);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(excelData);
+
+        } catch (Exception e) {
+            log.error("Error exporting schedules to Excel via POST: ", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    /**
+     * Chuyển phòng học cho nhiều lịch học
+     */
+    @PutMapping("/move-room")
+    public ResponseEntity<?> moveRoom(@RequestBody Map<String, Object> request) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<String> scheduleIds = (List<String>) request.get("scheduleIds");
+            String newRoomId = (String) request.get("newRoomId");
+
+            if (scheduleIds == null || scheduleIds.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "Danh sách lịch học không được rỗng"
+                ));
+            }
+
+            if (newRoomId == null || newRoomId.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "Phòng học mới không được rỗng"
+                ));
+            }
+
+            log.info("API: Chuyển {} lịch học sang phòng {}", scheduleIds.size(), newRoomId);
+
+            int successCount = 0;
+            int failedCount = 0;
+            List<String> errors = new ArrayList<>();
+
+            for (String scheduleId : scheduleIds) {
+                try {
+                    LichHocDTO schedule = lichHocService.getById(scheduleId);
+                    schedule.setMaPhong(newRoomId);
+                    lichHocService.update(scheduleId, schedule);
+                    successCount++;
+                } catch (Exception e) {
+                    failedCount++;
+                    errors.add("Lỗi khi chuyển lịch " + scheduleId + ": " + e.getMessage());
+                }
+            }
+
+            if (failedCount == 0) {
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "message", String.format("Đã chuyển %d lịch học sang phòng %s thành công!", successCount, newRoomId),
+                        "successCount", successCount
+                ));
+            } else {
+                return ResponseEntity.ok(Map.of(
+                        "success", false,
+                        "message", String.format("Chuyển phòng hoàn tất với %d thành công, %d thất bại", successCount, failedCount),
+                        "successCount", successCount,
+                        "failedCount", failedCount,
+                        "errors", errors
+                ));
+            }
+
+        } catch (Exception e) {
+            log.error("Error moving rooms: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Lỗi khi chuyển phòng: " + e.getMessage()
+            ));
         }
     }
 }

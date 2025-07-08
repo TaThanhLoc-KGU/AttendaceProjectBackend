@@ -17,6 +17,57 @@
         <link th:href="@{/css/admin.css}" rel="stylesheet">
 
         <style>
+            /* Đảm bảo modal chi tiết luôn có z-index cao nhất */
+            #scheduleDetailModal.show {
+                z-index: 1065 !important;
+            }
+
+            #scheduleDetailModal.show .modal-backdrop {
+                z-index: 1064 !important;
+            }
+
+            /* Ẩn tất cả dropdown khi modal chi tiết hiển thị */
+            body.modal-open #scheduleDetailModal.show ~ .select2-container .select2-dropdown {
+                display: none !important;
+            }
+
+            body.modal-open #scheduleDetailModal.show ~ .select2-dropdown {
+                display: none !important;
+            }
+
+            /* ===== Z-INDEX MANAGEMENT ===== */
+            /* Modal Sắp lịch học kỳ */
+            #semesterScheduleModal {
+                z-index: 1055 !important;
+            }
+
+            #semesterScheduleModal .modal-backdrop {
+                z-index: 1054 !important;
+            }
+
+            #semesterScheduleModal .modal-dialog {
+                z-index: 1056 !important;
+            }
+
+            /* Select2 dropdowns */
+            .select2-container {
+                z-index: 1070 !important;
+            }
+
+            .select2-dropdown {
+                z-index: 1070 !important;
+            }
+
+            /* Select2 trong semester modal */
+            #semesterScheduleModal .select2-container {
+                z-index: 1057 !important;
+            }
+
+            #semesterScheduleModal .select2-dropdown {
+                z-index: 1058 !important;
+            }
+
+            /* ===== LAYOUT STYLES ===== */
             .schedule-calendar {
                 background: white;
                 border-radius: 15px;
@@ -26,7 +77,7 @@
             }
 
             .calendar-header {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Thêm lại gradient */
                 color: white;
                 padding: 1.5rem;
                 text-align: center;
@@ -43,7 +94,7 @@
             .time-column {
                 background: #f8f9fa;
                 border-right: 2px solid #e9ecef;
-                min-width: 100px;
+                min-width: 120px; /* Tăng width cho đẹp hơn */
             }
 
             .time-slot {
@@ -55,6 +106,7 @@
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
+                font-weight: 500; /* Làm đậm chữ */
             }
 
             .day-column {
@@ -62,25 +114,258 @@
                 min-height: 720px;
                 position: relative;
                 flex: 1;
+                min-width: 140px; /* Đảm bảo width tối thiểu */
             }
 
+            /* Hoặc nếu muốn responsive */
             .day-header {
                 background: #495057;
                 color: white;
-                padding: 1rem;
+                padding: 1.5rem 1rem;
                 text-align: center;
                 font-weight: 600;
                 font-size: 1rem;
+                border-bottom: 2px solid #dee2e6;
+                position: relative;
+                min-height: 100px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+
+            /* Responsive cho mobile */
+            @media (max-width: 768px) {
+                .day-header {
+                    padding: 1.2rem 0.5rem;
+                    min-height: 70px;
+                    font-size: 0.9rem;
+                }
             }
 
             .day-content {
                 position: relative;
                 height: 720px;
+                background: #fafafa; /* Màu nền nhẹ */
             }
 
+            /* ===== SCHEDULE ITEMS ===== */
             .schedule-item {
                 position: absolute;
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border-radius: 10px; /* Bo góc đẹp hơn */
+                padding: 10px 14px; /* Tăng padding */
+                margin: 3px; /* Tăng margin */
+                cursor: pointer;
+                transition: all 0.3s ease;
+                font-size: 0.85rem; /* Tăng font size */
+                box-shadow: 0 3px 12px rgba(0,0,0,0.2); /* Shadow đậm hơn */
+                z-index: 10;
+                left: 6px; /* Tăng margin */
+                right: 6px;
+                overflow: hidden;
+                border: 1px solid rgba(255,255,255,0.2); /* Viền mỏng */
+            }
+
+            .schedule-item:hover {
+                transform: translateY(-3px) scale(1.02); /* Hiệu ứng hover đẹp hơn */
+                box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+                z-index: 20;
+            }
+
+            .schedule-item.conflict {
+                background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+                animation: pulse 2s infinite;
+                border-color: rgba(255,255,255,0.4);
+            }
+
+            .schedule-item.selected {
+                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                transform: scale(1.05);
+                border-color: rgba(255,255,255,0.5);
+            }
+
+            .schedule-item .title {
+                font-weight: 700; /* Đậm hơn */
+                margin-bottom: 4px; /* Tăng spacing */
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                font-size: 0.9rem; /* Title lớn hơn */
+            }
+
+            .schedule-item .info {
+                font-size: 0.75rem;
+                opacity: 0.95; /* Tăng opacity */
+                line-height: 1.3; /* Tăng line height */
+            }
+
+            .schedule-item .info div {
+                margin-bottom: 2px; /* Spacing giữa các dòng */
+            }
+
+            /* ===== GRID VIEW IMPROVEMENTS ===== */
+            .schedule-grid {
+                display: grid;
+                grid-template-columns: 120px repeat(7, 1fr); /* Tăng width cột đầu */
+                gap: 2px; /* Tăng gap */
+                background: #dee2e6; /* Màu nền tối hơn */
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            }
+
+            .grid-cell {
+                background: white;
+                min-height: 70px; /* Tăng height */
+                position: relative;
+                transition: background-color 0.2s ease;
+            }
+
+            .grid-cell:hover {
+                background: #f8f9fa;
+            }
+
+            .time-grid-slot {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 600;
+                background: #e9ecef;
+                font-size: 0.85rem;
+                padding: 0.5rem;
+            }
+
+            .day-grid-header {
+                background: #495057;
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 600;
+                font-size: 1rem;
+                padding: 1rem;
+            }
+
+            /* ===== RESPONSIVE IMPROVEMENTS ===== */
+            @media (max-width: 1200px) {
+                .day-column {
+                    min-width: 120px;
+                }
+
+                .schedule-item {
+                    font-size: 0.8rem;
+                    padding: 8px 10px;
+                }
+
+                .schedule-item .title {
+                    font-size: 0.85rem;
+                }
+            }
+
+            @media (max-width: 768px) {
+                .time-column {
+                    min-width: 100px;
+                }
+
+                .day-column {
+                    min-width: 100px;
+                }
+
+                .schedule-item {
+                    font-size: 0.75rem;
+                    padding: 6px 8px;
+                    left: 4px;
+                    right: 4px;
+                }
+
+                .schedule-item .title {
+                    font-size: 0.8rem;
+                }
+
+                .schedule-item .info {
+                    font-size: 0.7rem;
+                }
+            }
+
+            /* ===== CALENDAR DATE DISPLAY ===== */
+            .day-date {
+                font-size: 0.85rem;
+                font-weight: 500;
+                opacity: 0.9;
+                margin-top: 4px;
+            }
+
+            .day-date.today {
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 50%;
+                width: 28px;
+                height: 28px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 4px auto 0;
+                font-weight: bold;
+                border: 2px solid rgba(255,255,255,0.5);
+            }
+
+            /* ===== SEMESTER SELECTOR IMPROVEMENTS ===== */
+            .semester-selector {
+                background: linear-gradient(135deg, #0c5460 0%, #17a2b8 100%) !important; /* Gradient đẹp hơn */
+                color: white;
+                border-radius: 15px;
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+                box-shadow: 0 4px 15px rgba(12, 84, 96, 0.3); /* Shadow theo màu */
+            }
+
+            .semester-selector h5 {
+                color: white !important; /* Đảm bảo chữ trắng */
+                font-weight: 600;
+            }
+
+            .semester-selector .form-select {
+                background: rgba(255,255,255,0.15);
+                border: 1px solid rgba(255,255,255,0.4);
+                color: white;
+                border-radius: 10px;
+                font-weight: 500;
+            }
+
+            .semester-selector .form-select:focus {
+                background: rgba(255,255,255,0.2);
+                border-color: rgba(255,255,255,0.6);
+                box-shadow: 0 0 0 0.2rem rgba(255,255,255,0.25);
+            }
+
+            .semester-selector .form-select option {
+                background: #495057;
+                color: white;
+            }
+
+            /* ===== TABLE IMPROVEMENTS ===== */
+            .list-view-table .schedule-row {
+                cursor: pointer;
+                transition: all 0.3s ease;
+                border-left: 3px solid transparent;
+            }
+
+            .list-view-table .schedule-row:hover {
+                background-color: rgba(102, 126, 234, 0.08);
+                transform: translateX(3px);
+                border-left-color: #667eea;
+            }
+
+            .list-view-table .schedule-row.table-primary {
+                background-color: rgba(102, 126, 234, 0.15);
+                border-left-color: #667eea;
+            }
+
+            /* ===== SCHEDULE ITEMS ===== */
+            .schedule-item {
+                position: absolute;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 color: white;
                 border-radius: 8px;
                 padding: 8px 12px;
@@ -111,12 +396,6 @@
                 transform: scale(1.02);
             }
 
-            @keyframes pulse {
-                0% { box-shadow: 0 2px 8px rgba(255, 65, 108, 0.3); }
-                50% { box-shadow: 0 4px 20px rgba(255, 65, 108, 0.6); }
-                100% { box-shadow: 0 2px 8px rgba(255, 65, 108, 0.3); }
-            }
-
             .schedule-item .title {
                 font-weight: 600;
                 margin-bottom: 2px;
@@ -131,6 +410,42 @@
                 line-height: 1.2;
             }
 
+            .schedule-item.week-pattern {
+                border-left: 4px solid #28a745;
+            }
+
+            .schedule-item.month-pattern {
+                border-left: 4px solid #17a2b8;
+            }
+
+            .schedule-item.semester-pattern {
+                border-left: 4px solid #6f42c1;
+            }
+
+            /* ===== ANIMATIONS ===== */
+            @keyframes pulse {
+                0% { box-shadow: 0 2px 8px rgba(255, 65, 108, 0.3); }
+                50% { box-shadow: 0 4px 20px rgba(255, 65, 108, 0.6); }
+                100% { box-shadow: 0 2px 8px rgba(255, 65, 108, 0.3); }
+            }
+
+            @keyframes blink {
+                0%, 50% { opacity: 1; }
+                51%, 100% { opacity: 0.5; }
+            }
+
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            /* ===== UI COMPONENTS ===== */
             .conflict-badge {
                 background: #dc3545;
                 color: white;
@@ -139,11 +454,6 @@
                 border-radius: 10px;
                 margin-left: 5px;
                 animation: blink 1s infinite;
-            }
-
-            @keyframes blink {
-                0%, 50% { opacity: 1; }
-                51%, 100% { opacity: 0.5; }
             }
 
             .filter-section {
@@ -214,6 +524,7 @@
                 color: #dc3545;
             }
 
+            /* ===== TABLE STYLES ===== */
             .list-view-table .schedule-row {
                 cursor: pointer;
                 transition: all 0.3s ease;
@@ -235,8 +546,9 @@
                 animation: pulse 2s infinite;
             }
 
+            /* ===== SEMESTER COMPONENTS ===== */
             .semester-selector {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: #0c5460 !important  ;
                 color: white;
                 border-radius: 15px;
                 padding: 1.5rem;
@@ -255,6 +567,15 @@
                 color: white;
             }
 
+            .semester-info {
+                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                color: white;
+                border-radius: 10px;
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            /* ===== ACTION COMPONENTS ===== */
             .bulk-actions {
                 background: white;
                 border-radius: 15px;
@@ -301,6 +622,7 @@
                 box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             }
 
+            /* ===== MODAL STYLES ===== */
             .modal-lg {
                 max-width: 900px;
             }
@@ -313,73 +635,90 @@
                 margin: 1rem 0;
             }
 
-            .loading-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 9999;
-            }
-
-            .loading-spinner {
-                background: white;
-                padding: 2rem;
-                border-radius: 15px;
-                text-align: center;
-            }
-
-            .select2-container--default .select2-selection--single {
-                height: 38px;
-                border: 1px solid #ced4da;
-                border-radius: 0.375rem;
-            }
-
-            .select2-container--default .select2-selection--single .select2-selection__rendered {
-                line-height: 36px;
-                padding-left: 12px;
-            }
-
-            .select2-container--default .select2-selection--single .select2-selection__arrow {
-                height: 36px;
-            }
-
-            .schedule-grid {
-                display: grid;
-                grid-template-columns: 100px repeat(7, 1fr);
-                gap: 1px;
-                background: #e9ecef;
+            .conflict-summary {
+                background: #fff3cd;
+                border: 1px solid #ffeaa7;
                 border-radius: 10px;
-                overflow: hidden;
+                padding: 1rem;
+                margin: 1rem 0;
             }
 
-            .grid-cell {
+            .schedule-summary {
+                background: #d1ecf1;
+                border: 1px solid #bee5eb;
+                border-radius: 10px;
+                padding: 1rem;
+                margin: 1rem 0;
+            }
+
+            /* Hoặc sử dụng CSS spinner thay vì icon */
+            .loading-spinner-circle {
+                width: 40px;
+                height: 40px;
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid #667eea;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 1rem;
+            }
+
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+
+            /* Alternative loading design */
+            .loading-content {
                 background: white;
-                min-height: 60px;
-                position: relative;
+                padding: 2.5rem;
+                border-radius: 20px;
+                text-align: center;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                max-width: 300px;
+                animation: fadeInScale 0.3s ease-out;
             }
 
-            .time-grid-slot {
+            @keyframes fadeInScale {
+                from {
+                    opacity: 0;
+                    transform: scale(0.8);
+                }
+                to {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+            }
+
+            .loading-dots {
                 display: flex;
-                align-items: center;
                 justify-content: center;
-                font-weight: 600;
-                background: #f8f9fa;
+                align-items: center;
+                gap: 0.5rem;
+                margin: 1rem 0;
             }
 
-            .day-grid-header {
-                background: #495057;
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 600;
+            .loading-dot {
+                width: 8px;
+                height: 8px;
+                background: #667eea;
+                border-radius: 50%;
+                animation: loadingDots 1.4s infinite ease-in-out both;
             }
 
+            .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+            .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+            .loading-dot:nth-child(3) { animation-delay: 0s; }
+
+            @keyframes loadingDots {
+                0%, 80%, 100% {
+                    transform: scale(0);
+                    opacity: 0.5;
+                }
+                40% {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
             .notification-container {
                 position: fixed;
                 top: 20px;
@@ -414,41 +753,56 @@
                 border-left-color: #17a2b8;
             }
 
-            @keyframes slideIn {
-                from {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
+            /* ===== SELECT2 CUSTOMIZATION ===== */
+            .select2-container--default .select2-selection--single {
+                height: 38px;
+                border: 1px solid #ced4da;
+                border-radius: 0.375rem;
             }
 
-            .semester-info {
-                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            .select2-container--default .select2-selection--single .select2-selection__rendered {
+                line-height: 36px;
+                padding-left: 12px;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: 36px;
+            }
+
+            /* ===== GRID VIEW ===== */
+            .schedule-grid {
+                display: grid;
+                grid-template-columns: 100px repeat(7, 1fr);
+                gap: 1px;
+                background: #e9ecef;
+                border-radius: 10px;
+                overflow: hidden;
+            }
+
+            .grid-cell {
+                background: white;
+                min-height: 60px;
+                position: relative;
+            }
+
+            .time-grid-slot {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 600;
+                background: #f8f9fa;
+            }
+
+            .day-grid-header {
+                background: #495057;
                 color: white;
-                border-radius: 10px;
-                padding: 1rem;
-                margin-bottom: 1rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 600;
             }
 
-            .conflict-summary {
-                background: #fff3cd;
-                border: 1px solid #ffeaa7;
-                border-radius: 10px;
-                padding: 1rem;
-                margin: 1rem 0;
-            }
-
-            .schedule-summary {
-                background: #d1ecf1;
-                border: 1px solid #bee5eb;
-                border-radius: 10px;
-                padding: 1rem;
-                margin: 1rem 0;
-            }
-
+            /* ===== CALENDAR NAVIGATION ===== */
             .day-date {
                 font-size: 0.8rem;
                 font-weight: normal;
@@ -471,18 +825,6 @@
                 background-color: rgba(255, 255, 255, 0.3);
                 border-color: rgba(255, 255, 255, 0.5);
             }
-
-            .schedule-item.week-pattern {
-                border-left: 4px solid #28a745;
-            }
-
-            .schedule-item.month-pattern {
-                border-left: 4px solid #17a2b8;
-            }
-
-            .schedule-item.semester-pattern {
-                border-left: 4px solid #6f42c1;
-            }
         </style>
     </head>
     <body>
@@ -496,9 +838,6 @@
             <div class="header">
                 <div class="header-content">
                     <div class="header-left">
-                        <button class="sidebar-toggle" id="sidebarToggle">
-                            <i class="fas fa-bars"></i>
-                        </button>
                         <h1 class="page-title">
                             <i class="fas fa-calendar-alt me-2"></i>Quản lý Lịch học
                         </h1>
@@ -526,7 +865,7 @@
                 <div class="semester-selector">
                     <div class="row align-items-center">
                         <div class="col-md-3">
-                            <h5 class="mb-0">
+                            <h5 class="mb-0 text-white">
                                 <i class="fas fa-graduation-cap me-2"></i>Chọn học kỳ
                             </h5>
                         </div>
@@ -552,7 +891,7 @@
                 <div id="semesterInfo" class="semester-info" style="display: none;">
                     <div class="row align-items-center">
                         <div class="col-md-8">
-                            <h6 class="mb-1">
+                            <h6 class="mb-1 text-white">
                                 <i class="fas fa-info-circle me-2"></i>Thông tin học kỳ hiện tại
                             </h6>
                             <div id="semesterDetails"></div>
@@ -1241,11 +1580,16 @@
 
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay d-none">
-        <div class="loading-spinner">
-            <div class="spinner-border text-primary mb-3" role="status">
-                <span class="visually-hidden">Đang tải...</span>
+        <div class="loading-content">
+            <div class="loading-spinner-circle"></div>
+            <h5 style="color: #495057; margin-bottom: 0.5rem;">Đang xử lý...</h5>
+            <p style="color: #6c757d; margin: 0; font-size: 0.9rem;">Vui lòng đợi trong giây lát</p>
+            <!-- Hoặc sử dụng loading dots -->
+            <div class="loading-dots">
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
             </div>
-            <div>Đang xử lý...</div>
         </div>
     </div>
 
@@ -1347,6 +1691,9 @@
                     loadMonHocData()
                 ]);
 
+                // Enrich data after all loaded
+                await enrichLopHocPhanData();
+
                 // Initialize UI components
                 initializeUI();
 
@@ -1371,6 +1718,21 @@
         }
 
         function setupEventListeners() {
+            // Ẩn tất cả dropdown khi mở modal chi tiết
+            $(document).on('show.bs.modal', '#scheduleDetailModal', function() {
+                // Đóng tất cả Select2 dropdown
+                $('.select2-dropdown').hide();
+                $('.select2-container--open').removeClass('select2-container--open');
+
+                // Đặt z-index cao
+                $(this).css('z-index', 1065);
+            });
+
+            // Reset z-index khi đóng modal chi tiết
+            $(document).on('hidden.bs.modal', '#scheduleDetailModal', function() {
+                $(this).css('z-index', '');
+            });
+
             // View mode toggle
             document.querySelectorAll('input[name="viewMode"]').forEach(radio => {
                 radio.addEventListener('change', function() {
@@ -1403,18 +1765,56 @@
                 }
             });
 
-            // Sidebar toggle
-            document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
-
             // Keyboard shortcuts
             document.addEventListener('keydown', handleKeyboardShortcuts);
         }
 
         function initializeUI() {
-            // Initialize Select2 for better dropdowns
-            $('#maLhp, #maPhong, #filterGiangVien, #filterPhongHoc, #filterMonHoc, #filterKhoa').select2({
+            // Initialize Select2 cho các dropdown thông thường
+            safeSelect2Init('#maLhp, #maPhong, #filterGiangVien, #filterPhongHoc, #filterMonHoc, #filterKhoa', {
                 theme: 'bootstrap-5',
-                width: '100%'
+                width: '100%',
+                dropdownParent: $(document.body)
+            });
+
+            // Khởi tạo Select2 cho semester modal khi modal được mở
+            $(document).on('shown.bs.modal', '#semesterScheduleModal', function() {
+                safeSelect2Init('#semesterScheduleSelect, #yearScheduleSelect', {
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    dropdownParent: $('#semesterScheduleModal')
+                });
+            });
+
+            // Destroy Select2 khi đóng modal
+            $(document).on('hidden.bs.modal', '#semesterScheduleModal', function() {
+                safeSelect2Destroy('#semesterScheduleSelect, #yearScheduleSelect');
+            });
+
+            // Khởi tạo Select2 cho semester modal khi modal được mở
+            $(document).on('shown.bs.modal', '#semesterScheduleModal', function() {
+                // Kiểm tra và destroy trước khi khởi tạo mới
+                $('#semesterScheduleSelect, #yearScheduleSelect').each(function() {
+                    if ($(this).hasClass('select2-hidden-accessible')) {
+                        $(this).select2('destroy');
+                    }
+                });
+
+                // Khởi tạo mới
+                $('#semesterScheduleSelect, #yearScheduleSelect').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    dropdownParent: $('#semesterScheduleModal')
+                });
+            });
+
+            // Destroy Select2 khi đóng modal
+            $(document).on('hidden.bs.modal', '#semesterScheduleModal', function() {
+                $('#semesterScheduleSelect, #yearScheduleSelect').each(function() {
+                    if ($(this).hasClass('select2-hidden-accessible')) {
+                        $(this).select2('destroy');
+                    }
+                });
             });
 
             // Setup time slots
@@ -1449,8 +1849,22 @@
         async function loadLopHocPhanData() {
             try {
                 const response = await apiCall('/lophocphan');
-                globalState.lopHocPhanData = Array.isArray(response) ? response : [];
-                console.log('✅ LHP data loaded:', globalState.lopHocPhanData.length);
+                let lopHocPhanData = Array.isArray(response) ? response : [];
+
+                // Load thêm thông tin số sinh viên cho từng lớp học phần
+                for (let lhp of lopHocPhanData) {
+                    try {
+                        // Gọi API để lấy số sinh viên đã đăng ký
+                        const studentResponse = await apiCall(`/lophocphan/${lhp.maLhp}/students`);
+                        lhp.soSinhVien = Array.isArray(studentResponse) ? studentResponse.length : 0;
+                    } catch (error) {
+                        console.warn(`Không thể tải số sinh viên cho LHP ${lhp.maLhp}:`, error);
+                        lhp.soSinhVien = 0;
+                    }
+                }
+
+                globalState.lopHocPhanData = lopHocPhanData;
+                console.log('✅ LHP data loaded with student count:', globalState.lopHocPhanData.length);
             } catch (error) {
                 console.error('❌ Error loading LHP:', error);
                 globalState.lopHocPhanData = [];
@@ -1641,8 +2055,15 @@
             if (element) {
                 element.innerHTML = '<option value="">Chọn lớp học phần</option>';
                 globalState.lopHocPhanData.forEach(lhp => {
-                    const teacherName = lhp.tenGiangVien || 'Chưa phân công';
-                    element.innerHTML += `<option value="${lhp.maLhp}">${lhp.maLhp} - ${lhp.tenMonHoc || 'N/A'} (${teacherName})</option>`;
+                    // Tìm tên môn học từ monHocData
+                    const monHoc = globalState.monHocData.find(m => m.maMh === lhp.maMh);
+                    const tenMonHoc = monHoc ? monHoc.tenMh : (lhp.tenMonHoc || 'N/A');
+
+                    // Tìm tên giảng viên từ giangVienData
+                    const giangVien = globalState.giangVienData.find(g => g.maGv === lhp.maGv);
+                    const tenGiangVien = giangVien ? giangVien.hoTen : (lhp.tenGiangVien || 'Chưa phân công');
+
+                    element.innerHTML += `<option value="${lhp.maLhp}">${lhp.maLhp} - ${tenMonHoc} (${tenGiangVien})</option>`;
                 });
             }
         }
@@ -2161,7 +2582,7 @@
         // FILTERING AND SEARCH
         // ========================================
         async function filterData() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
             const giangVienFilter = document.getElementById('filterGiangVien').value;
             const phongHocFilter = document.getElementById('filterPhongHoc').value;
             const thuFilter = document.getElementById('filterThu').value;
@@ -2173,14 +2594,9 @@
             globalState.filteredData = globalState.scheduleData.filter(schedule => {
                 // Search filter
                 const matchesSearch = !searchTerm || [
-                    schedule.tenMonHoc,
-                    schedule.maLhp,
-                    schedule.tenGiangVien,
-                    schedule.tenPhong,
-                    schedule.maPhong,
-                    schedule.maGv,
-                    schedule.maMh
-                ].some(field => field && field.toLowerCase().includes(searchTerm));
+                    schedule.tenMonHoc, schedule.maLhp, schedule.tenGiangVien,
+                    schedule.tenPhong, schedule.maPhong, schedule.maGv, schedule.maMh, schedule.maLich
+                ].some(field => field && field.toString().toLowerCase().includes(searchTerm));
 
                 // Dropdown filters
                 const matchesGiangVien = !giangVienFilter || schedule.maGv === giangVienFilter;
@@ -2451,6 +2867,21 @@
         }
 
         function showScheduleDetail(maLich) {
+            // Đóng tất cả Select2 dropdown trước
+            $('.select2-dropdown').hide();
+            $('.select2-container--open').removeClass('select2-container--open');
+
+            // Đóng tất cả modal khác
+            const openModals = document.querySelectorAll('.modal.show');
+            openModals.forEach(modal => {
+                if (modal.id !== 'scheduleDetailModal') {
+                    const instance = bootstrap.Modal.getInstance(modal);
+                    if (instance) {
+                        instance.hide();
+                    }
+                }
+            });
+
             const schedule = globalState.scheduleData.find(s => s.maLich === maLich);
             if (!schedule) {
                 showNotification('Không tìm thấy lịch học', 'error');
@@ -2464,74 +2895,90 @@
             const conflicts = checkScheduleConflicts(schedule);
 
             document.getElementById('scheduleDetailContent').innerHTML = `
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6><i class="fas fa-id-badge me-2"></i>Thông tin cơ bản</h6>
-                        <table class="table table-borderless table-sm">
-                            <tr><td><strong>Mã lịch:</strong></td><td>${schedule.maLich}</td></tr>
-                            <tr><td><strong>Lớp học phần:</strong></td><td>${schedule.maLhp}</td></tr>
-                            <tr><td><strong>Môn học:</strong></td><td>${schedule.tenMonHoc || 'N/A'}</td></tr>
-                            <tr><td><strong>Mã môn học:</strong></td><td>${schedule.maMh || 'N/A'}</td></tr>
-                            <tr><td><strong>Nhóm:</strong></td><td>${schedule.nhom || 'N/A'}</td></tr>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <h6><i class="fas fa-clock me-2"></i>Thời gian & Địa điểm</h6>
-                        <table class="table table-borderless table-sm">
-                            <tr><td><strong>Thứ:</strong></td><td>${getDayName(schedule.thu)}</td></tr>
-                            <tr><td><strong>Tiết:</strong></td><td>${schedule.tietBatDau} - ${endTiet}</td></tr>
-                            <tr><td><strong>Thời gian:</strong></td><td>${timeSlot ? timeSlot.time : 'N/A'}</td></tr>
-                            <tr><td><strong>Phòng học:</strong></td><td>${room ? room.tenPhong : schedule.maPhong}</td></tr>
-                            <tr><td><strong>Loại phòng:</strong></td><td>${room ? room.loaiPhong || 'Phòng học' : 'N/A'}</td></tr>
-                        </table>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6><i class="fas fa-user me-2"></i>Giảng viên</h6>
-                        <p>${schedule.tenGiangVien || 'N/A'} (${schedule.maGv || 'N/A'})</p>
-                    </div>
-                    <div class="col-md-6">
-                        <h6><i class="fas fa-graduation-cap me-2"></i>Học kỳ</h6>
-                        <p>${schedule.hocKy || 'N/A'} - ${schedule.namHoc || 'N/A'}</p>
-                    </div>
-                </div>
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-id-badge me-2"></i>Thông tin cơ bản</h6>
+                <table class="table table-borderless table-sm">
+                    <tr><td><strong>Mã lịch:</strong></td><td>${schedule.maLich}</td></tr>
+                    <tr><td><strong>Lớp học phần:</strong></td><td>${schedule.maLhp}</td></tr>
+                    <tr><td><strong>Môn học:</strong></td><td>${schedule.tenMonHoc || 'N/A'}</td></tr>
+                    <tr><td><strong>Mã môn học:</strong></td><td>${schedule.maMh || 'N/A'}</td></tr>
+                    <tr><td><strong>Nhóm:</strong></td><td>${schedule.nhom || 'N/A'}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-clock me-2"></i>Thời gian & Địa điểm</h6>
+                <table class="table table-borderless table-sm">
+                    <tr><td><strong>Thứ:</strong></td><td>${getDayName(schedule.thu)}</td></tr>
+                    <tr><td><strong>Tiết:</strong></td><td>${schedule.tietBatDau} - ${endTiet}</td></tr>
+                    <tr><td><strong>Thời gian:</strong></td><td>${timeSlot ? timeSlot.time : 'N/A'}</td></tr>
+                    <tr><td><strong>Phòng học:</strong></td><td>${room ? room.tenPhong : schedule.maPhong}</td></tr>
+                    <tr><td><strong>Loại phòng:</strong></td><td>${room ? room.loaiPhong || 'Phòng học' : 'N/A'}</td></tr>
+                </table>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-user me-2"></i>Giảng viên</h6>
+                <p>${schedule.tenGiangVien || 'N/A'} (${schedule.maGv || 'N/A'})</p>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-graduation-cap me-2"></i>Học kỳ</h6>
+                <p>${schedule.hocKy || 'N/A'} - ${schedule.namHoc || 'N/A'}</p>
+            </div>
+        </div>
 
-                ${conflicts.length > 0 ? `
-                    <div class="alert alert-danger">
-                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Cảnh báo trùng lịch</h6>
-                        <ul class="mb-0">
-                            ${conflicts.map(conflict => `<li>${conflict.message}</li>`).join('')}
-                        </ul>
-                    </div>
-                ` : ''}
+        ${conflicts.length > 0 ? `
+            <div class="alert alert-danger">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Cảnh báo trùng lịch</h6>
+                <ul class="mb-0">
+                    ${conflicts.map(conflict => `<li>${conflict.message}</li>`).join('')}
+                </ul>
+            </div>
+        ` : ''}
 
-                ${lhp ? `
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <h6><i class="fas fa-info-circle me-2"></i>Thông tin lớp học phần</h6>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <strong>Số tín chỉ:</strong> ${lhp.soTinChi || 'N/A'}
-                                </div>
-                                <div class="col-md-4">
-                                    <strong>Số sinh viên:</strong> ${lhp.soSinhVien || 'N/A'}
-                                </div>
-                                <div class="col-md-4">
-                                    <strong>Trạng thái:</strong>
-                                    <span class="badge ${lhp.isActive ? 'bg-success' : 'bg-secondary'}">
-                                        ${lhp.isActive ? 'Hoạt động' : 'Không hoạt động'}
-                                    </span>
-                                </div>
-                            </div>
+        ${lhp ? `
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6><i class="fas fa-info-circle me-2"></i>Thông tin lớp học phần</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>Số tín chỉ:</strong> ${lhp.soTinChi || 'N/A'}
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Số sinh viên:</strong> ${lhp.soSinhVien || 'N/A'}
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Trạng thái:</strong>
+                            <span class="badge ${lhp.isActive ? 'bg-success' : 'bg-secondary'}">
+                                ${lhp.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                            </span>
                         </div>
                     </div>
-                ` : ''}
-            `;
+                </div>
+            </div>
+        ` : ''}
+    `;
 
             globalState.currentScheduleId = maLich;
-            const modal = new bootstrap.Modal(document.getElementById('scheduleDetailModal'));
+
+            // Đặt z-index cao và hiển thị modal
+            const modalElement = document.getElementById('scheduleDetailModal');
+            modalElement.style.zIndex = '1065';
+
+            const modal = new bootstrap.Modal(modalElement, {
+                backdrop: 'static'
+            });
             modal.show();
+
+            // Đảm bảo modal luôn ở trên
+            setTimeout(() => {
+                modalElement.style.zIndex = '1065';
+                const backdrop = document.querySelector('.modal-backdrop:last-child');
+                if (backdrop) {
+                    backdrop.style.zIndex = '1064';
+                }
+            }, 100);
         }
 
         function editFromDetail() {
@@ -2543,8 +2990,58 @@
         // SEMESTER SCHEDULE MANAGEMENT
         // ========================================
         function openSemesterScheduleModal() {
-            const modal = new bootstrap.Modal(document.getElementById('semesterScheduleModal'));
-            modal.show();
+            // Đóng tất cả modal khác trước
+            const openModals = document.querySelectorAll('.modal.show');
+            openModals.forEach(modal => {
+                const instance = bootstrap.Modal.getInstance(modal);
+                if (instance) {
+                    instance.hide();
+                }
+            });
+
+            setTimeout(() => {
+                const modal = new bootstrap.Modal(document.getElementById('semesterScheduleModal'), {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+
+                modal.show();
+
+                // Khởi tạo Select2 sau khi modal hiển thị
+                setTimeout(() => {
+                    safeSelect2Init('#semesterScheduleSelect, #yearScheduleSelect', {
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        dropdownParent: $('#semesterScheduleModal')
+                    });
+                }, 200);
+
+            }, 300);
+        }
+
+        // Helper function để xử lý Select2 an toàn
+        function safeSelect2Destroy(selector) {
+            $(selector).each(function() {
+                if ($(this).hasClass('select2-hidden-accessible')) {
+                    try {
+                        $(this).select2('destroy');
+                    } catch (error) {
+                        console.warn('Error destroying Select2:', error);
+                    }
+                }
+            });
+        }
+
+        function safeSelect2Init(selector, options) {
+            // Destroy trước nếu có
+            safeSelect2Destroy(selector);
+
+            // Khởi tạo mới
+            try {
+                $(selector).select2(options);
+            } catch (error) {
+                console.warn('Error initializing Select2:', error);
+            }
         }
 
         async function loadSemesterClasses() {
@@ -2577,18 +3074,18 @@
                 const yearInfo = globalState.yearData.find(y => y.maNamHoc === year);
 
                 document.getElementById('semesterSummary').innerHTML = `
-                    <div class="row">
-                        <div class="col-md-4">
-                            <strong>Học kỳ:</strong> ${semesterInfo ? semesterInfo.tenHocKy : semester}
-                        </div>
-                        <div class="col-md-4">
-                            <strong>Năm học:</strong> ${yearInfo ? yearInfo.tenNamHoc : year}
-                        </div>
-                        <div class="col-md-4">
-                            <strong>Số lớp HP:</strong> ${semesterClasses.length}
-                        </div>
-                    </div>
-                `;
+            <div class="row">
+                <div class="col-md-4">
+                    <strong>Học kỳ:</strong> ${semesterInfo ? semesterInfo.tenHocKy : semester}
+                </div>
+                <div class="col-md-4">
+                    <strong>Năm học:</strong> ${yearInfo ? yearInfo.tenNamHoc : year}
+                </div>
+                <div class="col-md-4">
+                    <strong>Số lớp HP:</strong> ${semesterClasses.length}
+                </div>
+            </div>
+        `;
 
                 // Populate classes table
                 const tbody = document.getElementById('semesterClassesBody');
@@ -2596,30 +3093,62 @@
                     const existingSchedules = globalState.scheduleData.filter(s => s.maLhp === lhp.maLhp);
                     const hasSchedule = existingSchedules.length > 0;
 
+                    // Tìm thông tin môn học
+                    const monHoc = globalState.monHocData.find(m => m.maMh === lhp.maMh);
+                    const tenMonHoc = monHoc ? monHoc.tenMh : 'N/A';
+
+                    // Tìm thông tin giảng viên
+                    const giangVien = globalState.giangVienData.find(g => g.maGv === lhp.maGv);
+                    const tenGiangVien = giangVien ? giangVien.hoTen : 'Chưa phân công';
+
+                    // Tính số tiết/tuần
+                    const soTietTuan = (lhp.soTietLyThuyet || 0) + (lhp.soTietThucHanh || 0);
+
                     return `
-                        <tr>
-                            <td>
-                                <input type="checkbox" class="class-checkbox" value="${lhp.maLhp}" ${!hasSchedule ? 'checked' : ''}>
-                            </td>
-                            <td>${lhp.maLhp}</td>
-                            <td>${lhp.tenMonHoc || 'N/A'}</td>
-                            <td>${lhp.tenGiangVien || 'Chưa phân công'}</td>
-                            <td>${lhp.soTietLyThuyet || 0} + ${lhp.soTietThucHanh || 0}</td>
-                            <td>${lhp.soSinhVien || 0}</td>
-                            <td>
-                                ${hasSchedule ?
+                <tr>
+                    <td>
+                        <input type="checkbox" class="class-checkbox" value="${lhp.maLhp}" ${!hasSchedule ? 'checked' : ''}>
+                    </td>
+                    <td>${lhp.maLhp}</td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <span class="fw-medium">${tenMonHoc}</span>
+                            <small class="text-muted">${lhp.maMh || 'N/A'}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <span class="fw-medium">${tenGiangVien}</span>
+                            <small class="text-muted">${lhp.maGv || 'N/A'}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-info">${soTietTuan || 0} tiết</span>
+                        <small class="d-block text-muted">
+                            LT: ${lhp.soTietLyThuyet || 0} | TH: ${lhp.soTietThucHanh || 0}
+                        </small>
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">${lhp.soSinhVien || 0} SV</span>
+                    </td>
+                    <td>
+                        ${hasSchedule ?
                         `<span class="badge bg-success">Đã có lịch (${existingSchedules.length})</span>` :
                         '<span class="badge bg-warning">Chưa có lịch</span>'
                     }
-                            </td>
-                            <td>
-                                ${hasSchedule ?
-                        `<button class="btn btn-sm btn-outline-primary" onclick="viewClassSchedule('${lhp.maLhp}')">Xem lịch</button>` :
-                        `<button class="btn btn-sm btn-outline-success" onclick="createClassSchedule('${lhp.maLhp}')">Tạo lịch</button>`
+                    </td>
+                    <td>
+                        ${hasSchedule ?
+                        `<button class="btn btn-sm btn-outline-primary" onclick="viewClassSchedule('${lhp.maLhp}')">
+                                <i class="fas fa-eye me-1"></i>Xem lịch
+                            </button>` :
+                        `<button class="btn btn-sm btn-outline-success" onclick="createClassSchedule('${lhp.maLhp}')">
+                                <i class="fas fa-plus me-1"></i>Tạo lịch
+                            </button>`
                     }
-                            </td>
-                        </tr>
-                    `;
+                    </td>
+                </tr>
+            `;
                 }).join('');
 
                 // Enable buttons
@@ -2634,6 +3163,55 @@
                 showLoading(false);
             }
         }
+
+        async function enrichLopHocPhanData() {
+            // Load thêm dữ liệu đăng ký học nếu cần
+            try {
+                const dangKyResponse = await apiCall('/dangkyhoc');
+                const dangKyData = Array.isArray(dangKyResponse) ? dangKyResponse : [];
+
+                // Làm giàu dữ liệu LHP
+                globalState.lopHocPhanData = globalState.lopHocPhanData.map(lhp => {
+                    const monHoc = globalState.monHocData.find(m => m.maMh === lhp.maMh);
+                    const giangVien = globalState.giangVienData.find(g => g.maGv === lhp.maGv);
+
+                    // Tính số sinh viên đã đăng ký
+                    const soSinhVien = dangKyData.filter(dk =>
+                        dk.maLhp === lhp.maLhp && dk.isActive !== false
+                    ).length;
+
+                    // Tính số tiết lý thuyết và thực hành từ môn học
+                    const soTietLyThuyet = monHoc ? (monHoc.soTietLyThuyet || 0) : (lhp.soTietLyThuyet || 0);
+                    const soTietThucHanh = monHoc ? (monHoc.soTietThucHanh || 0) : (lhp.soTietThucHanh || 0);
+
+                    return {
+                        ...lhp,
+                        tenMonHoc: monHoc ? monHoc.tenMh : lhp.tenMonHoc,
+                        tenGiangVien: giangVien ? giangVien.hoTen : lhp.tenGiangVien,
+                        soSinhVien: lhp.soSinhVien || soSinhVien,
+                        soTietLyThuyet: soTietLyThuyet,
+                        soTietThucHanh: soTietThucHanh
+                    };
+                });
+            } catch (error) {
+                console.warn('Không thể tải dữ liệu đăng ký học:', error);
+                // Vẫn làm giàu dữ liệu với thông tin có sẵn
+                globalState.lopHocPhanData = globalState.lopHocPhanData.map(lhp => {
+                    const monHoc = globalState.monHocData.find(m => m.maMh === lhp.maMh);
+                    const giangVien = globalState.giangVienData.find(g => g.maGv === lhp.maGv);
+
+                    return {
+                        ...lhp,
+                        tenMonHoc: monHoc ? monHoc.tenMh : lhp.tenMonHoc,
+                        tenGiangVien: giangVien ? giangVien.hoTen : lhp.tenGiangVien,
+                        soSinhVien: lhp.soSinhVien || 0,
+                        soTietLyThuyet: lhp.soTietLyThuyet || 0,
+                        soTietThucHanh: lhp.soTietThucHanh || 0
+                    };
+                });
+            }
+        }
+
 
         function toggleSelectAllClasses() {
             const selectAll = document.getElementById('selectAllClasses');
@@ -2957,19 +3535,81 @@
             try {
                 showLoading(true);
 
-                const updatePromises = Array.from(globalState.selectedSchedules).map(async maLich => {
+                // Validate và clean data trước khi gửi
+                const validScheduleIds = [];
+                const invalidSchedules = [];
+
+                for (const maLich of globalState.selectedSchedules) {
                     const schedule = globalState.scheduleData.find(s => s.maLich === maLich);
-                    if (!schedule) return;
+                    if (schedule) {
+                        // Validate dữ liệu
+                        const soTiet = parseInt(schedule.soTiet);
+                        const tietBatDau = parseInt(schedule.tietBatDau);
+                        const thu = parseInt(schedule.thu);
 
-                    return apiCall(`/lichhoc/${maLich}`, 'PUT', {
-                        ...schedule,
-                        maPhong: newRoom
-                    });
-                });
+                        if (isNaN(soTiet) || soTiet < 1 || soTiet > 6) {
+                            invalidSchedules.push(`${maLich}: Số tiết không hợp lệ (${schedule.soTiet})`);
+                            continue;
+                        }
 
-                await Promise.all(updatePromises);
+                        if (isNaN(tietBatDau) || tietBatDau < 1 || tietBatDau > 12) {
+                            invalidSchedules.push(`${maLich}: Tiết bắt đầu không hợp lệ (${schedule.tietBatDau})`);
+                            continue;
+                        }
 
-                showNotification(`Đã chuyển ${selectedCount} lịch học sang phòng ${newRoom} thành công!`, 'success');
+                        if (isNaN(thu) || thu < 2 || thu > 8) {
+                            invalidSchedules.push(`${maLich}: Thứ không hợp lệ (${schedule.thu})`);
+                            continue;
+                        }
+
+                        validScheduleIds.push(maLich);
+                    } else {
+                        invalidSchedules.push(`${maLich}: Không tìm thấy lịch học`);
+                    }
+                }
+
+                // Hiển thị lỗi validation nếu có
+                if (invalidSchedules.length > 0) {
+                    showNotification(`Có ${invalidSchedules.length} lịch học không hợp lệ:\n${invalidSchedules.join('\n')}`, 'error');
+
+                    // Hỏi có muốn tiếp tục với những lịch hợp lệ không
+                    if (validScheduleIds.length > 0) {
+                        if (!confirm(`Có ${validScheduleIds.length} lịch học hợp lệ. Bạn có muốn tiếp tục chuyển phòng cho những lịch này không?`)) {
+                            return;
+                        }
+                    } else {
+                        showNotification('Không có lịch học hợp lệ nào để chuyển phòng', 'error');
+                        return;
+                    }
+                }
+
+                if (validScheduleIds.length === 0) {
+                    showNotification('Không có lịch học hợp lệ nào để chuyển phòng', 'error');
+                    return;
+                }
+
+                const requestData = {
+                    scheduleIds: validScheduleIds,
+                    newRoomId: newRoom
+                };
+
+                const response = await apiCall('/lichhoc/move-room', 'PUT', requestData);
+
+                if (response.success) {
+                    showNotification(response.message, 'success');
+                } else {
+                    showNotification(response.message, 'warning');
+                    if (response.errors && response.errors.length > 0) {
+                        console.warn('Move errors:', response.errors);
+
+                        // Hiển thị chi tiết lỗi
+                        const errorDetails = response.errors.join('\n');
+                        setTimeout(() => {
+                            showNotification(`Chi tiết lỗi:\n${errorDetails}`, 'error');
+                        }, 1000);
+                    }
+                }
+
                 globalState.selectedSchedules.clear();
                 bootstrap.Modal.getInstance(document.getElementById('moveRoomModal')).hide();
                 await loadScheduleData();
@@ -2982,6 +3622,43 @@
                 showLoading(false);
             }
         }
+        function debugScheduleData() {
+            console.log('=== DEBUG SCHEDULE DATA ===');
+
+            for (const maLich of globalState.selectedSchedules) {
+                const schedule = globalState.scheduleData.find(s => s.maLich === maLich);
+                if (schedule) {
+                    console.log(`Schedule ${maLich}:`, {
+                        soTiet: schedule.soTiet,
+                        tietBatDau: schedule.tietBatDau,
+                        thu: schedule.thu,
+                        maPhong: schedule.maPhong,
+                        isActive: schedule.isActive
+                    });
+
+                    // Check validation
+                    const issues = [];
+                    if (!schedule.soTiet || schedule.soTiet < 1 || schedule.soTiet > 6) {
+                        issues.push(`soTiet invalid: ${schedule.soTiet}`);
+                    }
+                    if (!schedule.tietBatDau || schedule.tietBatDau < 1 || schedule.tietBatDau > 12) {
+                        issues.push(`tietBatDau invalid: ${schedule.tietBatDau}`);
+                    }
+                    if (!schedule.thu || schedule.thu < 2 || schedule.thu > 8) {
+                        issues.push(`thu invalid: ${schedule.thu}`);
+                    }
+
+                    if (issues.length > 0) {
+                        console.warn(`Issues with ${maLich}:`, issues);
+                    }
+                }
+            }
+
+            console.log('=== END DEBUG ===');
+        }
+
+        // Gọi function này trước khi chuyển phòng để debug
+        // debugScheduleData();
 
         // ========================================
         // UTILITY FUNCTIONS
@@ -3194,20 +3871,43 @@
             try {
                 showLoading(true);
 
-                const exportData = {
+                // Prepare filters
+                const filters = {
                     semester: globalState.currentSemester,
                     year: globalState.currentYear,
-                    schedules: globalState.filteredData
+                    teacher: document.getElementById('filterGiangVien').value,
+                    room: document.getElementById('filterPhongHoc').value,
+                    subject: document.getElementById('filterMonHoc').value
                 };
 
-                const response = await apiCall('/lichhoc/export', 'POST', exportData);
+                // Create URL with query parameters
+                const params = new URLSearchParams();
+                Object.entries(filters).forEach(([key, value]) => {
+                    if (value) params.append(key, value);
+                });
 
-                // Create download link
-                const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const response = await fetch(`${API_BASE}/lichhoc/export?${params.toString()}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                // Get filename from response headers or create default
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'lich-hoc.xlsx';
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                    if (filenameMatch) {
+                        filename = filenameMatch[1];
+                    }
+                }
+
+                // Create download
+                const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `lich-hoc-${globalState.currentSemester || 'all'}-${globalState.currentYear || 'all'}.xlsx`;
+                a.download = filename;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
