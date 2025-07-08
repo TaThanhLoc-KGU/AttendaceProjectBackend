@@ -18,30 +18,31 @@ public class LichHocController {
 
     private final LichHocService lichHocService;
 
+    // ============ BASIC CRUD OPERATIONS ============
+
     @GetMapping
-    public List<LichHocDTO> getAll() {
-        return lichHocService.getAll();
+    public ResponseEntity<List<LichHocDTO>> getAll() {
+        return ResponseEntity.ok(lichHocService.getAll());
     }
 
     @GetMapping("/{id}")
-    public LichHocDTO getById(@PathVariable String id) {
-        return lichHocService.getById(id);
+    public ResponseEntity<LichHocDTO> getById(@PathVariable String id) {
+        return ResponseEntity.ok(lichHocService.getById(id));
     }
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody LichHocDTO dto) {
         try {
-            // Kiểm tra trùng lịch trước khi tạo
-            Map<String, Object> conflictCheck = lichHocService.checkConflicts(dto);
-            if ((Boolean) conflictCheck.get("hasConflict")) {
-                return ResponseEntity.badRequest().body(conflictCheck);
-            }
-
             LichHocDTO created = lichHocService.create(dto);
-            return ResponseEntity.ok(created);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Tạo lịch học thành công!",
+                    "data", created
+            ));
         } catch (Exception e) {
+            log.error("Error creating schedule: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
-                    "error", true,
+                    "success", false,
                     "message", "Lỗi khi tạo lịch học: " + e.getMessage()
             ));
         }
@@ -50,29 +51,39 @@ public class LichHocController {
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable String id, @RequestBody LichHocDTO dto) {
         try {
-            // Kiểm tra trùng lịch trước khi cập nhật (trừ chính nó)
-            Map<String, Object> conflictCheck = lichHocService.checkConflictsForUpdate(id, dto);
-            if ((Boolean) conflictCheck.get("hasConflict")) {
-                return ResponseEntity.badRequest().body(conflictCheck);
-            }
-
             LichHocDTO updated = lichHocService.update(id, dto);
-            return ResponseEntity.ok(updated);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Cập nhật lịch học thành công!",
+                    "data", updated
+            ));
         } catch (Exception e) {
+            log.error("Error updating schedule: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
-                    "error", true,
+                    "success", false,
                     "message", "Lỗi khi cập nhật lịch học: " + e.getMessage()
             ));
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
-        lichHocService.delete(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> delete(@PathVariable String id) {
+        try {
+            lichHocService.delete(id);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Xóa lịch học thành công!"
+            ));
+        } catch (Exception e) {
+            log.error("Error deleting schedule: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Lỗi khi xóa lịch học: " + e.getMessage()
+            ));
+        }
     }
 
-    // ============ SCHEDULING APIs ============
+    // ============ QUERY METHODS ============
 
     /**
      * Lấy lịch học theo lớp học phần
@@ -114,14 +125,128 @@ public class LichHocController {
         return ResponseEntity.ok(lichHocService.getByThu(thu));
     }
 
+    // ============ SEMESTER-BASED METHODS ============
+
+    /**
+     * Lấy lịch học học kỳ hiện tại
+     */
+    @GetMapping("/current-semester")
+    public ResponseEntity<List<LichHocDTO>> getCurrentSemesterSchedule() {
+        log.info("API: Lấy lịch học học kỳ hiện tại");
+        return ResponseEntity.ok(lichHocService.getCurrentSemesterSchedule());
+    }
+
+    /**
+     * Lấy lịch học theo học kỳ
+     */
+    @GetMapping("/semester/{maHocKy}")
+    public ResponseEntity<List<LichHocDTO>> getScheduleBySemester(@PathVariable String maHocKy) {
+        log.info("API: Lấy lịch học theo học kỳ {}", maHocKy);
+        return ResponseEntity.ok(lichHocService.getScheduleBySemester(maHocKy));
+    }
+
+    /**
+     * Tạo lịch học cho cả học kỳ (sắp lịch)
+     */
+    @PostMapping("/semester/{maHocKy}/create-all")
+    public ResponseEntity<?> createSemesterSchedule(
+            @PathVariable String maHocKy,
+            @RequestBody List<LichHocDTO> scheduleList) {
+
+        log.info("API: Tạo lịch học cho học kỳ {} với {} lịch", maHocKy, scheduleList.size());
+
+        try {
+            Map<String, Object> result = lichHocService.createSemesterSchedule(maHocKy, scheduleList);
+
+            boolean hasConflicts = (Integer) result.get("conflictCount") > 0;
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", hasConflicts ?
+                            "Tạo lịch học hoàn tất nhưng có một số xung đột" :
+                            "Tạo lịch học cho học kỳ thành công!",
+                    "data", result,
+                    "hasConflicts", hasConflicts
+            ));
+
+        } catch (Exception e) {
+            log.error("Error creating semester schedule: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Lỗi khi tạo lịch học cho học kỳ: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Cập nhật lịch học cho cả học kỳ
+     */
+    @PutMapping("/semester/{maHocKy}/update-all")
+    public ResponseEntity<?> updateSemesterSchedule(
+            @PathVariable String maHocKy,
+            @RequestBody List<LichHocDTO> scheduleList) {
+
+        log.info("API: Cập nhật lịch học cho học kỳ {} với {} lịch", maHocKy, scheduleList.size());
+
+        try {
+            Map<String, Object> result = lichHocService.updateSemesterSchedule(maHocKy, scheduleList);
+
+            boolean hasConflicts = (Integer) result.get("conflictCount") > 0;
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", hasConflicts ?
+                            "Cập nhật lịch học hoàn tất nhưng có một số xung đột" :
+                            "Cập nhật lịch học cho học kỳ thành công!",
+                    "data", result,
+                    "hasConflicts", hasConflicts
+            ));
+
+        } catch (Exception e) {
+            log.error("Error updating semester schedule: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Lỗi khi cập nhật lịch học cho học kỳ: " + e.getMessage()
+            ));
+        }
+    }
+
+    // ============ CONFLICT CHECKING ============
+
     /**
      * Kiểm tra trùng lịch
      */
     @PostMapping("/check-conflicts")
     public ResponseEntity<Map<String, Object>> checkConflicts(@RequestBody LichHocDTO dto) {
+        log.info("API: Kiểm tra trùng lịch cho {}", dto);
         Map<String, Object> result = lichHocService.checkConflicts(dto);
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * Kiểm tra trùng lịch khi cập nhật
+     */
+    @PostMapping("/{id}/check-conflicts")
+    public ResponseEntity<Map<String, Object>> checkConflictsForUpdate(
+            @PathVariable String id,
+            @RequestBody LichHocDTO dto) {
+
+        log.info("API: Kiểm tra trùng lịch khi cập nhật {} với data {}", id, dto);
+        Map<String, Object> result = lichHocService.checkConflictsForUpdate(id, dto);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Kiểm tra xung đột lịch học trong học kỳ
+     */
+    @PostMapping("/semester/check-conflicts")
+    public ResponseEntity<Map<String, Object>> checkConflictsInSemester(@RequestBody LichHocDTO dto) {
+        log.info("API: Kiểm tra xung đột lịch học trong học kỳ {}", dto.getHocKy());
+        Map<String, Object> conflicts = lichHocService.checkConflictsInSemester(dto);
+        return ResponseEntity.ok(conflicts);
+    }
+
+    // ============ CALENDAR AND VIEW METHODS ============
 
     /**
      * Lấy lịch học dạng calendar view
@@ -134,34 +259,11 @@ public class LichHocController {
             @RequestParam(required = false) String semester,
             @RequestParam(required = false) String year) {
 
+        log.info("API: Lấy calendar view với filters - GV: {}, SV: {}, Phòng: {}, Học kỳ: {}, Năm: {}",
+                maGv, maSv, maPhong, semester, year);
+
         Map<String, Object> calendar = lichHocService.getCalendarView(maGv, maSv, maPhong, semester, year);
         return ResponseEntity.ok(calendar);
-    }
-
-    /**
-     * Lấy thống kê lịch học
-     */
-    @GetMapping("/statistics")
-    public ResponseEntity<Map<String, Object>> getStatistics() {
-        Map<String, Object> stats = lichHocService.getStatistics();
-        return ResponseEntity.ok(stats);
-    }
-    /**
-     * Lấy lịch học theo học kỳ
-     */
-    @GetMapping("/semester/{maHocKy}")
-    public ResponseEntity<List<LichHocDTO>> getScheduleBySemester(@PathVariable String maHocKy) {
-        log.info("API: Lấy lịch học theo học kỳ {}", maHocKy);
-        return ResponseEntity.ok(lichHocService.getScheduleBySemester(maHocKy));
-    }
-
-    /**
-     * Lấy lịch học học kỳ hiện tại
-     */
-    @GetMapping("/current-semester")
-    public ResponseEntity<List<LichHocDTO>> getCurrentSemesterSchedule() {
-        log.info("API: Lấy lịch học học kỳ hiện tại");
-        return ResponseEntity.ok(lichHocService.getCurrentSemesterSchedule());
     }
 
     /**
@@ -229,15 +331,16 @@ public class LichHocController {
         return ResponseEntity.ok(todaySchedule);
     }
 
-    /**
-     * Kiểm tra xung đột lịch học trong học kỳ
-     */
-    @PostMapping("/semester/check-conflicts")
-    public ResponseEntity<Map<String, Object>> checkConflictsInSemester(@RequestBody LichHocDTO dto) {
-        log.info("API: Kiểm tra xung đột lịch học trong học kỳ {}", dto.getHocKy());
+    // ============ STATISTICS METHODS ============
 
-        Map<String, Object> conflicts = lichHocService.checkConflictsInSemester(dto);
-        return ResponseEntity.ok(conflicts);
+    /**
+     * Lấy thống kê tổng quan cho tất cả học kỳ
+     */
+    @GetMapping("/statistics/overview")
+    public ResponseEntity<Map<String, Object>> getOverallStatistics() {
+        log.info("API: Lấy thống kê tổng quan lịch học");
+        Map<String, Object> stats = lichHocService.getStatistics();
+        return ResponseEntity.ok(stats);
     }
 
     /**
@@ -246,19 +349,61 @@ public class LichHocController {
     @GetMapping("/semester/{maHocKy}/statistics")
     public ResponseEntity<Map<String, Object>> getSemesterStatistics(@PathVariable String maHocKy) {
         log.info("API: Lấy thống kê lịch học theo học kỳ {}", maHocKy);
-
         Map<String, Object> stats = lichHocService.getSemesterStatistics(maHocKy);
         return ResponseEntity.ok(stats);
     }
 
     /**
-     * Lấy thống kê tổng quan cho tất cả học kỳ
+     * Lấy thống kê lịch học hiện tại
      */
-    @GetMapping("/statistics/overview")
-    public ResponseEntity<Map<String, Object>> getOverallStatistics() {
-        log.info("API: Lấy thống kê tổng quan lịch học");
-
+    @GetMapping("/statistics")
+    public ResponseEntity<Map<String, Object>> getStatistics() {
+        log.info("API: Lấy thống kê lịch học hiện tại");
         Map<String, Object> stats = lichHocService.getStatistics();
         return ResponseEntity.ok(stats);
+    }
+
+    // ============ UTILITY METHODS ============
+
+    /**
+     * Lấy danh sách học kỳ có lịch học
+     */
+    @GetMapping("/semesters")
+    public ResponseEntity<List<String>> getAvailableSemesters() {
+        log.info("API: Lấy danh sách học kỳ có lịch học");
+
+        try {
+            List<String> semesters = lichHocService.getAll().stream()
+                    .map(LichHocDTO::getHocKy)
+                    .distinct()
+                    .sorted()
+                    .collect(java.util.stream.Collectors.toList());
+
+            return ResponseEntity.ok(semesters);
+        } catch (Exception e) {
+            log.error("Error getting available semesters: {}", e.getMessage());
+            return ResponseEntity.ok(java.util.Collections.emptyList());
+        }
+    }
+
+    /**
+     * Lấy danh sách năm học có lịch học
+     */
+    @GetMapping("/academic-years")
+    public ResponseEntity<List<String>> getAvailableAcademicYears() {
+        log.info("API: Lấy danh sách năm học có lịch học");
+
+        try {
+            List<String> academicYears = lichHocService.getAll().stream()
+                    .map(LichHocDTO::getNamHoc)
+                    .distinct()
+                    .sorted()
+                    .collect(java.util.stream.Collectors.toList());
+
+            return ResponseEntity.ok(academicYears);
+        } catch (Exception e) {
+            log.error("Error getting available academic years: {}", e.getMessage());
+            return ResponseEntity.ok(java.util.Collections.emptyList());
+        }
     }
 }
