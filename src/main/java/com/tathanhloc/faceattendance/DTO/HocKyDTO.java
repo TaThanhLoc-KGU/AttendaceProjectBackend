@@ -29,9 +29,14 @@ public class HocKyDTO {
     private Boolean isActive;
     private Boolean isCurrent;
 
+    // Thông tin năm học liên quan
+    private String maNamHoc;
+    private String tenNamHoc;
+    private Integer thuTu; // Thứ tự trong năm học
+
     // Computed fields
-    private String trangThai; // "Chưa bắt đầu", "Đang diễn ra", "Đã kết thúc"
+    private String trangThai;
     private Integer soNgayConLai;
     private Integer tongSoNgay;
-    private Double tiLePhanTram; // Tiến độ học kỳ (%)
+    private Double tiLePhanTram;
 }

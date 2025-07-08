@@ -1,5 +1,6 @@
 package com.tathanhloc.faceattendance.Controller;
 
+import com.tathanhloc.faceattendance.DTO.HocKyDTO;
 import com.tathanhloc.faceattendance.DTO.HocKyNamHocDTO;
 import com.tathanhloc.faceattendance.Service.HocKyNamHocService;
 import lombok.RequiredArgsConstructor;
@@ -34,5 +35,24 @@ public class HocKyNamHocController {
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
         hocKyNamHocService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+    // Thêm vào HocKyNamHocController.java
+    @PostMapping("/namhoc/{maNamHoc}/hocky")
+    public ResponseEntity<HocKyNamHocDTO> createHocKyInNamHoc(
+            @PathVariable String maNamHoc,
+            @RequestBody HocKyDTO hocKyDTO) {
+        HocKyNamHocDTO result = hocKyNamHocService.createHocKyInNamHoc(maNamHoc, hocKyDTO);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/namhoc/{maNamHoc}/hocky")
+    public ResponseEntity<List<HocKyDTO>> getHocKyByNamHoc(@PathVariable String maNamHoc) {
+        return ResponseEntity.ok(hocKyNamHocService.getHocKyByNamHoc(maNamHoc));
+    }
+
+    @PostMapping("/namhoc/{maNamHoc}/create-default-semesters")
+    public ResponseEntity<List<HocKyNamHocDTO>> createDefaultSemesters(@PathVariable String maNamHoc) {
+        List<HocKyNamHocDTO> result = hocKyNamHocService.createDefaultSemestersForNamHoc(maNamHoc);
+        return ResponseEntity.ok(result);
     }
 }

@@ -591,10 +591,34 @@
 
     async function loadSemesters() {
         try {
-            const response = await fetch(`${API_BASE}/hocky/all`);
-            if (!response.ok) throw new Error('Failed to load semesters');
+            // Lấy tất cả học kỳ thông qua quan hệ với năm học
+            const response = await fetch(`${API_BASE}/hockynamhoc`);
+            if (!response.ok) throw new Error('Failed to load semester relationships');
 
-            semesters = await response.json();
+            const semesterRelations = await response.json();
+
+            // Lấy thông tin chi tiết học kỳ
+            const semesterPromises = semesterRelations.map(async (rel) => {
+                try {
+                    const hocKyResponse = await fetch(`${API_BASE}/hocky/${rel.maHocKy}`);
+                    if (hocKyResponse.ok) {
+                        const hocKy = await hocKyResponse.json();
+                        return {
+                            ...hocKy,
+                            maNamHoc: rel.maNamHoc,
+                            tenNamHoc: rel.tenNamHoc,
+                            thuTu: rel.thuTu
+                        };
+                    }
+                } catch (error) {
+                    console.warn(`Could not load semester ${rel.maHocKy}:`, error);
+                }
+                return null;
+            });
+
+            const semesterResults = await Promise.all(semesterPromises);
+            semesters = semesterResults.filter(s => s !== null);
+
             console.log('✅ Semesters loaded:', semesters.length);
         } catch (error) {
             console.error('❌ Error loading semesters:', error);
@@ -670,36 +694,38 @@
 
         if (!semester) {
             container.innerHTML = `
-               <div class="text-center py-4">
-                   <i class="fas fa-exclamation-triangle fa-2x text-warning mb-3"></i>
-                   <h6>Chưa có học kỳ hiện tại</h6>
-                   <p class="text-muted mb-3">Vui lòng thiết lập học kỳ hiện tại</p>
-                   <button class="btn btn-success btn-sm" onclick="openCreateSemesterModal()">
-                       <i class="fas fa-plus me-2"></i>Tạo học kỳ
-                   </button>
-               </div>
-           `;
+            <div class="text-center py-4">
+                <i class="fas fa-exclamation-triangle fa-2x text-warning mb-3"></i>
+                <h6>Chưa có học kỳ hiện tại</h6>
+                <p class="text-muted mb-3">Vui lòng thiết lập học kỳ hiện tại</p>
+                <button class="btn btn-success btn-sm" onclick="openCreateSemesterModal()">
+                    <i class="fas fa-plus me-2"></i>Tạo học kỳ
+                </button>
+            </div>
+        `;
             return;
         }
 
         const progressAngle = semester.tiLePhanTram ? (semester.tiLePhanTram / 100) * 360 : 0;
 
         container.innerHTML = `
-           <div class="row align-items-center">
-               <div class="col-md-4 text-center">
-                   <div class="progress-circle" style="--progress-angle: ${progressAngle}deg;">
-                       <div class="progress-text">${Math.round(semester.tiLePhanTram || 0)}%</div>
-                   </div>
-               </div>
-               <div class="col-md-8">
-                   <h6 class="text-success">${semester.tenHocKy}</h6>
-                   <p class="mb-2"><strong>Mã:</strong> ${semester.maHocKy}</p>
-                   <p class="mb-2"><strong>Thời gian:</strong> ${formatDate(semester.ngayBatDau)} - ${formatDate(semester.ngayKetThuc)}</p>
-                   <p class="mb-2"><strong>Trạng thái:</strong> <span class="status-badge status-${getStatusClass(semester.trangThai)}">${semester.trangThai}</span></p>
-                   ${semester.soNgayConLai !== null ? `<p class="mb-0"><strong>Còn lại:</strong> ${semester.soNgayConLai} ngày</p>` : ''}
-               </div>
-           </div>
-       `;
+        <div class="row align-items-center">
+            <div class="col-md-4 text-center">
+                <div class="progress-circle" style="--progress-angle: ${progressAngle}deg;">
+                    <div class="progress-text">${Math.round(semester.tiLePhanTram || 0)}%</div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <h6 class="text-success">${semester.tenHocKy}</h6>
+                <p class="mb-2"><strong>Mã:</strong> ${semester.maHocKy}</p>
+                <p class="mb-2"><strong>Năm học:</strong> ${semester.tenNamHoc || 'N/A'}</p>
+                ${semester.thuTu ? `<p class="mb-2"><strong>Thứ tự:</strong> ${semester.thuTu}</p>` : ''}
+                <p class="mb-2"><strong>Thời gian:</strong> ${formatDate(semester.ngayBatDau)} - ${formatDate(semester.ngayKetThuc)}</p>
+                <p class="mb-2"><strong>Trạng thái:</strong> <span class="status-badge status-${getStatusClass(semester.trangThai)}">${semester.trangThai}</span></p>
+                ${semester.soNgayConLai !== null ? `<p class="mb-0"><strong>Còn lại:</strong> ${semester.soNgayConLai} ngày</p>` : ''}
+            </div>
+        </div>
+    `;
     }
 
     function renderTimeline() {
@@ -853,54 +879,56 @@
 
         if (filteredSemesters.length === 0) {
             container.innerHTML = `
-               <div class="text-center py-5">
-                   <i class="fas fa-clock fa-3x text-muted mb-3"></i>
-                   <h5>Không có học kỳ nào</h5>
-                   <p class="text-muted">Vui lòng tạo học kỳ mới</p>
-               </div>
-           `;
+            <div class="text-center py-5">
+                <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                <h5>Không có học kỳ nào</h5>
+                <p class="text-muted">Vui lòng tạo học kỳ mới</p>
+            </div>
+        `;
             return;
         }
 
         container.innerHTML = filteredSemesters.map(semester => `
-           <div class="semester-card ${getStatusClass(semester.trangThai)}">
-               <div class="row align-items-center">
-                   <div class="col-md-8">
-                       <div class="d-flex justify-content-between align-items-start mb-2">
-                           <h6 class="text-success">
-                               ${semester.tenHocKy}
-                               ${semester.isCurrent ? '<span class="badge bg-success ms-2">Hiện tại</span>' : ''}
-                           </h6>
-                           <span class="status-badge status-${getStatusClass(semester.trangThai)}">${semester.trangThai}</span>
-                       </div>
-                       <p class="mb-1"><strong>Mã:</strong> ${semester.maHocKy}</p>
-                       <p class="mb-1"><strong>Thời gian:</strong> ${formatDate(semester.ngayBatDau)} - ${formatDate(semester.ngayKetThuc)}</p>
-                       <p class="mb-1"><strong>Tổng số ngày:</strong> ${semester.tongSoNgay || 0}</p>
-                       ${semester.moTa ? `<p class="mb-2 text-muted">${semester.moTa}</p>` : ''}
-                   </div>
-                   <div class="col-md-4 text-end">
-                       <div class="progress mb-2" style="height: 8px;">
-                           <div class="progress-bar bg-success" style="width: ${semester.tiLePhanTram || 0}%"></div>
-                       </div>
-                       <small class="text-muted d-block mb-3">Tiến độ: ${Math.round(semester.tiLePhanTram || 0)}%</small>
+        <div class="semester-card ${getStatusClass(semester.trangThai)}">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="text-success">
+                            ${semester.tenHocKy}
+                            ${semester.isCurrent ? '<span class="badge bg-success ms-2">Hiện tại</span>' : ''}
+                            ${semester.thuTu ? '<span class="badge bg-info ms-2">Thứ tự ' + semester.thuTu + '</span>' : ''}
+                        </h6>
+                        <span class="status-badge status-${getStatusClass(semester.trangThai)}">${semester.trangThai}</span>
+                    </div>
+                    <p class="mb-1"><strong>Mã:</strong> ${semester.maHocKy}</p>
+                    <p class="mb-1"><strong>Năm học:</strong> ${semester.tenNamHoc || 'N/A'} (${semester.maNamHoc || 'N/A'})</p>
+                    <p class="mb-1"><strong>Thời gian:</strong> ${formatDate(semester.ngayBatDau)} - ${formatDate(semester.ngayKetThuc)}</p>
+                    <p class="mb-1"><strong>Tổng số ngày:</strong> ${semester.tongSoNgay || 0}</p>
+                    ${semester.moTa ? `<p class="mb-2 text-muted">${semester.moTa}</p>` : ''}
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="progress mb-2" style="height: 8px;">
+                        <div class="progress-bar bg-success" style="width: ${semester.tiLePhanTram || 0}%"></div>
+                    </div>
+                    <small class="text-muted d-block mb-3">Tiến độ: ${Math.round(semester.tiLePhanTram || 0)}%</small>
 
-                       <div class="btn-group-vertical btn-group-sm">
-                           <button class="btn btn-outline-success" onclick="editSemester('${semester.maHocKy}')">
-                               <i class="fas fa-edit"></i> Sửa
-                           </button>
-                           ${!semester.isCurrent ? `
-                               <button class="btn btn-outline-warning" onclick="setAsCurrentSemester('${semester.maHocKy}')">
-                                   <i class="fas fa-star"></i> Đặt hiện tại
-                               </button>
-                           ` : ''}
-                           <button class="btn btn-outline-danger" onclick="deleteSemester('${semester.maHocKy}')">
-                               <i class="fas fa-trash"></i> Xóa
-                           </button>
-                       </div>
-                   </div>
-               </div>
-           </div>
-       `).join('');
+                    <div class="btn-group-vertical btn-group-sm">
+                        <button class="btn btn-outline-success" onclick="editSemester('${semester.maHocKy}')">
+                            <i class="fas fa-edit"></i> Sửa
+                        </button>
+                        ${!semester.isCurrent ? `
+                            <button class="btn btn-outline-warning" onclick="setAsCurrentSemester('${semester.maHocKy}')">
+                                <i class="fas fa-star"></i> Đặt hiện tại
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-outline-danger" onclick="deleteSemester('${semester.maHocKy}')">
+                            <i class="fas fa-trash"></i> Xóa
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
     }
 
     // Modal Functions
@@ -922,8 +950,72 @@
         document.getElementById('isActiveHocKy').checked = true;
         document.getElementById('isCurrentHocKy').checked = false;
 
+        // Thêm dropdown chọn năm học nếu chưa có
+        addNamHocSelectToSemesterModal();
+
         const modal = new bootstrap.Modal(document.getElementById('semesterModal'));
         modal.show();
+    }
+    function addNamHocSelectToSemesterModal() {
+        const existingSelect = document.getElementById('chonNamHocChoHocKy');
+        if (existingSelect) return; // Đã có rồi
+
+        const form = document.getElementById('semesterForm');
+        const moTaDiv = form.querySelector('#moTaHocKy').closest('.mb-3');
+
+        // Tạo div chọn năm học
+        const namHocDiv = document.createElement('div');
+        namHocDiv.className = 'mb-3';
+        namHocDiv.innerHTML = `
+        <label for="chonNamHocChoHocKy" class="form-label">Năm học <span class="text-danger">*</span></label>
+        <select class="form-select" id="chonNamHocChoHocKy" required>
+            <option value="">Chọn năm học</option>
+        </select>
+        <small class="form-text text-muted">Học kỳ sẽ được tạo trong năm học này</small>
+    `;
+
+        // Thêm vào trước phần mô tả
+        form.insertBefore(namHocDiv, moTaDiv);
+
+        // Populate năm học options
+        const select = document.getElementById('chonNamHocChoHocKy');
+        academicYears.filter(year => year.isActive).forEach(year => {
+            const option = document.createElement('option');
+            option.value = year.maNamHoc;
+            option.textContent = year.tenNamHoc;
+            if (year.isCurrent) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+    }
+
+    function addThuTuFieldToSemesterModal() {
+        const existingField = document.getElementById('thuTuHocKy');
+        if (existingField) return; // Đã có rồi
+
+        const form = document.getElementById('semesterForm');
+        const ngayKetThucDiv = form.querySelector('#ngayKetThucHocKy').closest('.col-md-6');
+
+        // Tạo field thứ tự
+        const thuTuDiv = document.createElement('div');
+        thuTuDiv.className = 'col-md-6';
+        thuTuDiv.innerHTML = `
+        <div class="mb-3">
+            <label for="thuTuHocKy" class="form-label">Thứ tự học kỳ</label>
+            <select class="form-select" id="thuTuHocKy">
+                <option value="">Tự động</option>
+                <option value="1">Học kỳ 1</option>
+                <option value="2">Học kỳ 2</option>
+                <option value="3">Học kỳ 3</option>
+                <option value="4">Học kỳ hè</option>
+            </select>
+            <small class="form-text text-muted">Để trống sẽ tự động đánh số thứ tự</small>
+        </div>
+    `;
+
+        // Thêm vào row chứa ngày kết thúc
+        ngayKetThucDiv.parentNode.appendChild(thuTuDiv);
     }
 
     async function saveAcademicYear() {
@@ -1002,7 +1094,8 @@
         };
 
         try {
-            const response = await fetch(`${API_BASE}/namhoc/with-semesters`, {
+            // Tạo năm học trước
+            const response = await fetch(`${API_BASE}/namhoc`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1011,13 +1104,23 @@
             });
 
             if (response.ok) {
-                showNotification('Tạo năm học và học kỳ thành công!', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('academicYearModal')).hide();
-                await initializePage();
+                // Sau đó tạo học kỳ mặc định
+                const createSemestersResponse = await fetch(`${API_BASE}/hockynamhoc/namhoc/${yearData.maNamHoc}/create-default-semesters`, {
+                    method: 'POST'
+                });
+
+                if (createSemestersResponse.ok) {
+                    showNotification('Tạo năm học và học kỳ mặc định thành công!', 'success');
+                } else {
+                    showNotification('Tạo năm học thành công, nhưng có lỗi khi tạo học kỳ mặc định', 'warning');
+                }
             } else {
                 const error = await response.text();
                 throw new Error(error);
             }
+
+            bootstrap.Modal.getInstance(document.getElementById('academicYearModal')).hide();
+            await initializePage();
         } catch (error) {
             console.error('Error creating with semesters:', error);
             showNotification('Lỗi khi tạo: ' + error.message, 'error');
@@ -1043,36 +1146,56 @@
             ngayBatDau: document.getElementById('ngayBatDauHocKy').value,
             ngayKetThuc: document.getElementById('ngayKetThucHocKy').value,
             moTa: document.getElementById('moTaHocKy').value,
-            isActive: document.getElementById('isActiveHocKy').checked,
-            isCurrent: document.getElementById('isCurrentHocKy').checked
+            thuTu: document.getElementById('thuTuHocKy') ? parseInt(document.getElementById('thuTuHocKy').value) : null
         };
 
         try {
             const semesterId = document.getElementById('semesterId').value;
-            const url = semesterId ?
-                `${API_BASE}/hocky/${semesterId}` :
-                `${API_BASE}/hocky`;
-            const method = semesterId ? 'PUT' : 'POST';
 
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(semesterData)
-            });
+            if (semesterId) {
+                // Cập nhật học kỳ hiện có
+                const response = await fetch(`${API_BASE}/hocky/${semesterId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ...semesterData,
+                        isActive: document.getElementById('isActiveHocKy').checked,
+                        isCurrent: document.getElementById('isCurrentHocKy').checked
+                    })
+                });
 
-            if (response.ok) {
-                showNotification(
-                    semesterId ? 'Cập nhật học kỳ thành công!' : 'Tạo học kỳ thành công!',
-                    'success'
-                );
-                bootstrap.Modal.getInstance(document.getElementById('semesterModal')).hide();
-                await initializePage();
+                if (response.ok) {
+                    showNotification('Cập nhật học kỳ thành công!', 'success');
+                } else {
+                    throw new Error(await response.text());
+                }
             } else {
-                const error = await response.text();
-                throw new Error(error);
+                // Tạo học kỳ mới - cần chọn năm học
+                const selectedNamHoc = document.getElementById('chonNamHocChoHocKy').value;
+                if (!selectedNamHoc) {
+                    showNotification('Vui lòng chọn năm học cho học kỳ!', 'warning');
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/hockynamhoc/namhoc/${selectedNamHoc}/hocky`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(semesterData)
+                });
+
+                if (response.ok) {
+                    showNotification('Tạo học kỳ thành công!', 'success');
+                } else {
+                    throw new Error(await response.text());
+                }
             }
+
+            bootstrap.Modal.getInstance(document.getElementById('semesterModal')).hide();
+            await initializePage();
         } catch (error) {
             console.error('Error saving semester:', error);
             showNotification('Lỗi khi lưu: ' + error.message, 'error');
@@ -1114,6 +1237,19 @@
         document.getElementById('moTaHocKy').value = semester.moTa || '';
         document.getElementById('isActiveHocKy').checked = semester.isActive;
         document.getElementById('isCurrentHocKy').checked = semester.isCurrent;
+
+        // Thêm các fields nếu chưa có
+        addNamHocSelectToSemesterModal();
+        addThuTuFieldToSemesterModal();
+
+        // Set values cho fields mới
+        if (semester.maNamHoc) {
+            document.getElementById('chonNamHocChoHocKy').value = semester.maNamHoc;
+            document.getElementById('chonNamHocChoHocKy').disabled = true; // Không cho đổi năm học khi edit
+        }
+        if (semester.thuTu) {
+            document.getElementById('thuTuHocKy').value = semester.thuTu;
+        }
 
         const modal = new bootstrap.Modal(document.getElementById('semesterModal'));
         modal.show();

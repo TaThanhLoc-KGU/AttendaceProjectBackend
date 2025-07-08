@@ -89,4 +89,22 @@ public interface HocKyNamHocRepository extends JpaRepository<HocKyNamHoc, Intege
      * Tìm tất cả relationship đang hoạt động
      */
     List<HocKyNamHoc> findByIsActive(Boolean isActive);
+
+
+    // Tìm học kỳ theo năm học
+    List<HocKyNamHoc> findByNamHocMaNamHocAndIsActiveTrue(String maNamHoc);
+
+    // Tìm năm học theo học kỳ
+    Optional<HocKyNamHoc> findByHocKyMaHocKyAndIsActiveTrue(String maHocKy);
+
+    // Tìm học kỳ theo thứ tự trong năm học
+    Optional<HocKyNamHoc> findByNamHocMaNamHocAndThuTuAndIsActiveTrue(String maNamHoc, Integer thuTu);
+
+    // Đếm số học kỳ trong năm học
+    @Query("SELECT COUNT(h) FROM HocKyNamHoc h WHERE h.namHoc.maNamHoc = :maNamHoc AND h.isActive = true")
+    Long countByNamHoc(@Param("maNamHoc") String maNamHoc);
+
+    // Tìm tất cả học kỳ có sắp xếp theo thứ tự
+    @Query("SELECT h FROM HocKyNamHoc h WHERE h.namHoc.maNamHoc = :maNamHoc AND h.isActive = true ORDER BY h.thuTu")
+    List<HocKyNamHoc> findByNamHocOrderByThuTu(@Param("maNamHoc") String maNamHoc);
 }

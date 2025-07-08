@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "hoc_ky")
@@ -45,34 +46,27 @@ public class HocKy {
     @Builder.Default
     private Boolean isCurrent = false;
 
-    /**
-     * Validation: Ngày kết thúc phải sau ngày bắt đầu
-     */
+    // Quan hệ với NamHoc thông qua bảng trung gian
+    @OneToMany(mappedBy = "hocKy", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<HocKyNamHoc> hocKyNamHocs;
+
     @AssertTrue(message = "Ngày kết thúc phải sau ngày bắt đầu")
     public boolean isValidDateRange() {
         return ngayKetThuc == null || ngayBatDau == null || ngayKetThuc.isAfter(ngayBatDau);
     }
 
-    /**
-     * Kiểm tra học kỳ có đang diễn ra không
-     */
+    // Helper methods...
     public boolean isOngoing() {
         if (ngayBatDau == null || ngayKetThuc == null) return false;
         LocalDate now = LocalDate.now();
         return !now.isBefore(ngayBatDau) && !now.isAfter(ngayKetThuc);
     }
 
-    /**
-     * Kiểm tra học kỳ đã kết thúc chưa
-     */
     public boolean isFinished() {
         if (ngayKetThuc == null) return false;
         return LocalDate.now().isAfter(ngayKetThuc);
     }
 
-    /**
-     * Kiểm tra học kỳ chưa bắt đầu
-     */
     public boolean isUpcoming() {
         if (ngayBatDau == null) return false;
         return LocalDate.now().isBefore(ngayBatDau);

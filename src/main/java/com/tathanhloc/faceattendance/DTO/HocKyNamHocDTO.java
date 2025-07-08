@@ -16,5 +16,10 @@ public class HocKyNamHocDTO {
     private Integer id;
     private String maHocKy;
     private String maNamHoc;
+    private Integer thuTu;
     private Boolean isActive;
+
+    // Thông tin mở rộng
+    private String tenHocKy;
+    private String tenNamHoc;
 }
