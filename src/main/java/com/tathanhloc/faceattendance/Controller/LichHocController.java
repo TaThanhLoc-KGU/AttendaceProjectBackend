@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/lichhoc")
 @RequiredArgsConstructor
@@ -141,6 +143,121 @@ public class LichHocController {
      */
     @GetMapping("/statistics")
     public ResponseEntity<Map<String, Object>> getStatistics() {
+        Map<String, Object> stats = lichHocService.getStatistics();
+        return ResponseEntity.ok(stats);
+    }
+    /**
+     * Lấy lịch học theo học kỳ
+     */
+    @GetMapping("/semester/{maHocKy}")
+    public ResponseEntity<List<LichHocDTO>> getScheduleBySemester(@PathVariable String maHocKy) {
+        log.info("API: Lấy lịch học theo học kỳ {}", maHocKy);
+        return ResponseEntity.ok(lichHocService.getScheduleBySemester(maHocKy));
+    }
+
+    /**
+     * Lấy lịch học học kỳ hiện tại
+     */
+    @GetMapping("/current-semester")
+    public ResponseEntity<List<LichHocDTO>> getCurrentSemesterSchedule() {
+        log.info("API: Lấy lịch học học kỳ hiện tại");
+        return ResponseEntity.ok(lichHocService.getCurrentSemesterSchedule());
+    }
+
+    /**
+     * Lấy lịch học dạng calendar view theo học kỳ
+     */
+    @GetMapping("/semester/{maHocKy}/calendar")
+    public ResponseEntity<Map<String, Object>> getCalendarViewBySemester(
+            @PathVariable String maHocKy,
+            @RequestParam(required = false) String maGv,
+            @RequestParam(required = false) String maSv,
+            @RequestParam(required = false) String maPhong) {
+
+        log.info("API: Lấy calendar view theo học kỳ {} với filters - GV: {}, SV: {}, Phòng: {}",
+                maHocKy, maGv, maSv, maPhong);
+
+        Map<String, Object> calendar = lichHocService.getCalendarViewBySemester(maHocKy, maGv, maSv, maPhong);
+        return ResponseEntity.ok(calendar);
+    }
+
+    /**
+     * Lấy lịch học hiện tại dạng calendar view
+     */
+    @GetMapping("/current-calendar")
+    public ResponseEntity<Map<String, Object>> getCurrentCalendarView(
+            @RequestParam(required = false) String maGv,
+            @RequestParam(required = false) String maSv,
+            @RequestParam(required = false) String maPhong) {
+
+        log.info("API: Lấy calendar view hiện tại với filters - GV: {}, SV: {}, Phòng: {}",
+                maGv, maSv, maPhong);
+
+        Map<String, Object> calendar = lichHocService.getCurrentCalendarView(maGv, maSv, maPhong);
+        return ResponseEntity.ok(calendar);
+    }
+
+    /**
+     * Lấy lịch học tuần hiện tại
+     */
+    @GetMapping("/current-week")
+    public ResponseEntity<Map<String, Object>> getCurrentWeekSchedule(
+            @RequestParam(required = false) String maGv,
+            @RequestParam(required = false) String maSv,
+            @RequestParam(required = false) String maPhong) {
+
+        log.info("API: Lấy lịch học tuần hiện tại với filters - GV: {}, SV: {}, Phòng: {}",
+                maGv, maSv, maPhong);
+
+        Map<String, Object> weekSchedule = lichHocService.getCurrentWeekSchedule(maGv, maSv, maPhong);
+        return ResponseEntity.ok(weekSchedule);
+    }
+
+    /**
+     * Lấy lịch học hôm nay
+     */
+    @GetMapping("/today")
+    public ResponseEntity<List<LichHocDTO>> getTodaySchedule(
+            @RequestParam(required = false) String maGv,
+            @RequestParam(required = false) String maSv,
+            @RequestParam(required = false) String maPhong) {
+
+        log.info("API: Lấy lịch học hôm nay với filters - GV: {}, SV: {}, Phòng: {}",
+                maGv, maSv, maPhong);
+
+        List<LichHocDTO> todaySchedule = lichHocService.getTodaySchedule(maGv, maSv, maPhong);
+        return ResponseEntity.ok(todaySchedule);
+    }
+
+    /**
+     * Kiểm tra xung đột lịch học trong học kỳ
+     */
+    @PostMapping("/semester/check-conflicts")
+    public ResponseEntity<Map<String, Object>> checkConflictsInSemester(@RequestBody LichHocDTO dto) {
+        log.info("API: Kiểm tra xung đột lịch học trong học kỳ {}", dto.getHocKy());
+
+        Map<String, Object> conflicts = lichHocService.checkConflictsInSemester(dto);
+        return ResponseEntity.ok(conflicts);
+    }
+
+    /**
+     * Lấy thống kê lịch học theo học kỳ
+     */
+    @GetMapping("/semester/{maHocKy}/statistics")
+    public ResponseEntity<Map<String, Object>> getSemesterStatistics(@PathVariable String maHocKy) {
+        log.info("API: Lấy thống kê lịch học theo học kỳ {}", maHocKy);
+
+        Map<String, Object> stats = lichHocService.getSemesterStatistics(maHocKy);
+        return ResponseEntity.ok(stats);
+    }
+
+    /**
+     * Lấy thống kê tổng quan cho tất cả học kỳ
+     */
+    @GetMapping("/statistics/overview")
+    public ResponseEntity<Map<String, Object>> getOverallStatistics() {
+        log.info("API: Lấy thống kê tổng quan lịch học");
+
         Map<String, Object> stats = lichHocService.getStatistics();
         return ResponseEntity.ok(stats);
     }
