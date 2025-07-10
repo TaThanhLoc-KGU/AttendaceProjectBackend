@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo cáo Điểm danh - Face Attendance</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Custom CSS -->
+  <link th:href="@{/css/common.css}" rel="stylesheet">
+  <link th:href="@{/css/sidebar.css}" rel="stylesheet">
+  <link th:href="@{/css/admin.css}" rel="stylesheet">
+
+  <style>
+    .attendance-card {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .attendance-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .attendance-card-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1.5rem;
+      border-bottom: none;
+    }
+
+    .attendance-card-header h5 {
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .stats-overview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-item {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      border-left: 4px solid #667eea;
+      transition: all 0.3s ease;
+    }
+
+    .stat-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-item.present {
+      border-left-color: #28a745;
+    }
+
+    .stat-item.absent {
+      border-left-color: #dc3545;
+    }
+
+    .stat-item.late {
+      border-left-color: #ffc107;
+    }
+
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      color: #6c757d;
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-percentage {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .stat-percentage.positive {
+      color: #28a745;
+    }
+
+    .stat-percentage.negative {
+      color: #dc3545;
+    }
+
+    .filter-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      align-items: end;
+    }
+
+    .attendance-table {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .table th {
+      background: #f8f9fa;
+      border: none;
+      font-weight: 600;
+      color: #495057;
+      padding: 1rem 0.75rem;
+    }
+
+    .table td {
+      border: none;
+      padding: 0.75rem;
+      vertical-align: middle;
+    }
+
+    .table tbody tr {
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .table tbody tr:hover {
+      background: #f8f9fa;
+    }
+
+    .status-badge {
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-present {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status-absent {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .status-late {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+      padding: 1rem;
+    }
+
+    .loading-spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 200px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: #6c757d;
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    @media (max-width: 768px) {
+      .stats-overview {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-row {
+        grid-template-columns: 1fr;
+      }
+
+      .attendance-card-header {
+        padding: 1rem;
+      }
+
+      .stat-number {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="main-wrapper">
+  <!-- Include Sidebar Component -->
+  <div th:replace="~{components/sidebar :: sidebar}"></div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-content">
+        <div class="header-left">
+          <button class="sidebar-toggle" id="sidebarToggle">
+            <i class="fas fa-bars"></i>
+          </button>
+          <h1 class="page-title">Báo cáo Điểm danh</h1>
+        </div>
+        <div class="header-right">
+          <div class="user-info">
+            <span th:text="'Xin chào, ' + ${session.user?.hoTen ?: 'Admin'}">Xin chào, Admin</span>
+            <div class="user-avatar">
+              <i class="fas fa-user-circle"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+      <!-- Statistics Overview -->
+      <div class="stats-overview">
+        <div class="stat-item present">
+          <div class="stat-number" id="totalPresent">0</div>
+          <div class="stat-label">Tổng số có mặt</div>
+          <div class="stat-percentage positive" id="presentPercentage">0%</div>
+        </div>
+
+        <div class="stat-item absent">
+          <div class="stat-number" id="totalAbsent">0</div>
+          <div class="stat-label">Tổng số vắng mặt</div>
+          <div class="stat-percentage negative" id="absentPercentage">0%</div>
+        </div>
+
+        <div class="stat-item late">
+          <div class="stat-number" id="totalLate">0</div>
+          <div class="stat-label">Tổng số đi trễ</div>
+          <div class="stat-percentage" id="latePercentage">0%</div>
+        </div>
+
+        <div class="stat-item">
+          <div class="stat-number" id="totalClasses">0</div>
+          <div class="stat-label">Tổng buổi học</div>
+          <div class="stat-percentage positive">Hôm nay</div>
+        </div>
+      </div>
+
+      <!-- Filter Section -->
+      <div class="filter-card">
+        <div class="row">
+          <div class="col-md-6">
+            <h6><i class="fas fa-filter me-2"></i>Bộ lọc dữ liệu</h6>
+          </div>
+          <div class="col-md-6 text-end">
+            <button class="btn btn-outline-secondary btn-sm" id="exportBtn">
+              <i class="fas fa-download me-1"></i>Xuất báo cáo
+            </button>
+          </div>
+        </div>
+        <hr>
+        <div class="filter-row">
+          <div class="form-group">
+            <label for="dateFromFilter" class="form-label">Từ ngày:</label>
+            <input type="date" class="form-control" id="dateFromFilter">
+          </div>
+          <div class="form-group">
+            <label for="dateToFilter" class="form-label">Đến ngày:</label>
+            <input type="date" class="form-control" id="dateToFilter">
+          </div>
+          <div class="form-group">
+            <label for="subjectFilter" class="form-label">Môn học:</label>
+            <select class="form-select" id="subjectFilter">
+              <option value="">Tất cả môn học</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="lecturerFilter" class="form-label">Giảng viên:</label>
+            <select class="form-select" id="lecturerFilter">
+              <option value="">Tất cả giảng viên</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="classFilter" class="form-label">Lớp học phần:</label>
+            <select class="form-select" id="classFilter">
+              <option value="">Tất cả lớp</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <button class="btn btn-primary" id="filterBtn">
+              <i class="fas fa-search me-1"></i>Lọc dữ liệu
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="row mb-4">
+        <div class="col-lg-8">
+          <div class="attendance-card">
+            <div class="attendance-card-header">
+              <h5 class="text-white"><i class="fas fa-chart-line me-2"></i>Thống kê điểm danh theo thời gian</h5>
+            </div>
+            <div class="chart-container">
+              <canvas id="attendanceChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="attendance-card">
+            <div class="attendance-card-header">
+              <h5 class="text-white"><i class="fas fa-chart-pie me-2"></i>Tỷ lệ điểm danh</h5>
+            </div>
+            <div class="chart-container">
+              <canvas id="pieChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Attendance History -->
+      <div class="attendance-card">
+        <div class="attendance-card-header">
+          <h5 class="text-white"><i class="fas fa-history me-2"></i>Lịch sử điểm danh gần nhất</h5>
+        </div>
+        <div class="card-body p-0">
+          <div id="loadingSpinner" class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Đang tải...</span>
+            </div>
+          </div>
+
+          <div id="attendanceTable" style="display: none;">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                <tr>
+                  <th>STT</th>
+                  <th>Ngày điểm danh</th>
+                  <th>Môn học</th>
+                  <th>Lớp học phần</th>
+                  <th>Giảng viên</th>
+                  <th>Phòng học</th>
+                  <th>Ca học</th>
+                  <th>Có mặt</th>
+                  <th>Vắng mặt</th>
+                  <th>Đi trễ</th>
+                  <th>Tỷ lệ (%)</th>
+                </tr>
+                </thead>
+                <tbody id="attendanceTableBody">
+                <!-- Data will be loaded here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-clipboard-list"></i>
+            <h5>Chưa có dữ liệu điểm danh</h5>
+            <p>Không tìm thấy dữ liệu điểm danh trong khoảng thời gian được chọn.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="d-flex justify-content-between align-items-center mt-4">
+        <div class="showing-info">
+          <span id="showingInfo">Hiển thị 0 - 0 của 0 kết quả</span>
+        </div>
+        <nav aria-label="Page navigation">
+          <ul class="pagination pagination-sm" id="pagination">
+            <!-- Pagination will be generated here -->
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/sidebar.js}"></script>
+<script th:src="@{/js/admin.js}"></script>
+
+<script>
+  // Attendance Report Manager - Fixed Version
+  const AttendanceReport = {
+    // Configuration
+    config: {
+      apiBaseUrl: '/api',
+      pageSize: 20,
+      currentPage: 1
+    },
+
+    // State
+    state: {
+      attendanceData: [],
+      filteredData: [],
+      isLoading: false,
+      charts: {
+        line: null,
+        pie: null
+      }
+    },
+
+    // Initialize
+    init() {
+      console.log('🚀 Initializing Attendance Report...');
+      this.bindEvents();
+      this.initializeFilters();
+      this.loadData();
+      this.initializeCharts();
+    },
+
+    // Bind events
+    bindEvents() {
+      const filterBtn = document.getElementById('filterBtn');
+      const exportBtn = document.getElementById('exportBtn');
+
+      if (filterBtn) {
+        filterBtn.addEventListener('click', () => this.applyFilters());
+      }
+
+      if (exportBtn) {
+        exportBtn.addEventListener('click', () => this.exportData());
+      }
+
+      // Filter change events
+      const filterIds = ['dateFromFilter', 'dateToFilter', 'subjectFilter', 'lecturerFilter', 'classFilter'];
+      filterIds.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.addEventListener('change', () => this.applyFilters());
+        }
+      });
+    },
+
+    // Initialize filters
+    async initializeFilters() {
+      try {
+        // Set default date range (last 30 days)
+        const today = new Date();
+        const lastMonth = new Date(today);
+        lastMonth.setDate(today.getDate() - 30);
+
+        const dateToFilter = document.getElementById('dateToFilter');
+        const dateFromFilter = document.getElementById('dateFromFilter');
+
+        if (dateToFilter) {
+          dateToFilter.value = today.toISOString().split('T')[0];
+        }
+        if (dateFromFilter) {
+          dateFromFilter.value = lastMonth.toISOString().split('T')[0];
+        }
+
+        // Load filter options
+        await this.loadFilterOptions();
+      } catch (error) {
+        console.error('Error initializing filters:', error);
+      }
+    },
+
+    // Load filter options
+    async loadFilterOptions() {
+      try {
+        // Load subjects
+        const subjects = await this.fetchData('/api/monhoc');
+        if (subjects) {
+          this.populateSelect('subjectFilter', subjects, 'maMh', 'tenMh');
+        }
+
+        // Load lecturers
+        const lecturers = await this.fetchData('/api/giangvien');
+        if (lecturers) {
+          this.populateSelect('lecturerFilter', lecturers, 'maGv', 'hoTen');
+        }
+
+        // Load classes
+        const classes = await this.fetchData('/api/lophocphan');
+        if (classes) {
+          this.populateClassSelect('classFilter', classes);
+        }
+      } catch (error) {
+        console.error('Error loading filter options:', error);
+      }
+    },
+
+
+    populateClassSelect(selectId, data) {
+      const select = document.getElementById(selectId);
+      if (!select) return;
+
+      // Keep the first option
+      select.innerHTML = '<option value="">Tất cả lớp học phần</option>';
+
+      if (Array.isArray(data)) {
+        data.forEach(item => {
+          const option = document.createElement('option');
+          option.value = item.maLhp || '';
+          // Tùy chỉnh format hiển thị
+          option.textContent = `${item.tenMonHoc} - ${item.tenGiangVien} (${item.maLhp})`;
+          select.appendChild(option);
+        });
+      }
+    },
+    // Populate select element
+    populateSelect(selectId, data, valueField, textField) {
+      const select = document.getElementById(selectId);
+      if (!select) return;
+
+      // Keep the first option (Tất cả)
+      const firstOption = select.querySelector('option[value=""]');
+      select.innerHTML = '';
+
+      if (firstOption) {
+        select.appendChild(firstOption);
+      } else {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Tất cả';
+        select.appendChild(option);
+      }
+
+      if (Array.isArray(data)) {
+        data.forEach(item => {
+          const option = document.createElement('option');
+          option.value = item[valueField] || '';
+          option.textContent = item[textField] || '';
+          select.appendChild(option);
+        });
+      }
+    },
+
+    // Load main data
+    async loadData() {
+      try {
+        this.setLoading(true);
+
+        // Load attendance statistics
+        const stats = await this.fetchData('/api/diemdanh/statistics');
+        if (stats) {
+          this.updateStatistics(stats);
+        }
+
+        // Load recent attendance history
+        const history = await this.fetchData('/api/diemdanh/recent-history?limit=50');
+        if (history) {
+          this.state.attendanceData = history;
+          this.state.filteredData = [...history];
+          this.renderTable();
+          this.updateCharts();
+        }
+
+      } catch (error) {
+        console.error('Error loading data:', error);
+        this.showError('Không thể tải dữ liệu điểm danh');
+      } finally {
+        this.setLoading(false);
+      }
+    },
+
+    // Apply filters
+    async applyFilters() {
+      try {
+        this.setLoading(true);
+
+        const filters = this.getFilterValues();
+
+        const response = await fetch('/api/diemdanh/filtered-report', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(filters)
+        });
+
+        if (!response.ok) {
+          throw new Error(`Lỗi ${response.status}: ${response.statusText}`);
+        }
+
+        const filteredData = await response.json();
+
+        this.state.filteredData = Array.isArray(filteredData) ? filteredData : [];
+        this.renderTable();
+        this.updateCharts();
+
+      } catch (error) {
+        console.error('Error applying filters:', error);
+        this.showError('Không thể lọc dữ liệu');
+      } finally {
+        this.setLoading(false);
+      }
+    },
+
+    // Get filter values
+    getFilterValues() {
+      const dateFrom = document.getElementById('dateFromFilter');
+      const dateTo = document.getElementById('dateToFilter');
+      const subject = document.getElementById('subjectFilter');
+      const lecturer = document.getElementById('lecturerFilter');
+      const classFilter = document.getElementById('classFilter');
+
+      return {
+        dateFrom: dateFrom ? dateFrom.value : '',
+        dateTo: dateTo ? dateTo.value : '',
+        subject: subject ? subject.value : '',
+        lecturer: lecturer ? lecturer.value : '',
+        class: classFilter ? classFilter.value : ''
+      };
+    },
+
+    // Update statistics
+    updateStatistics(stats) {
+      if (!stats) return;
+
+      const totalPresent = document.getElementById('totalPresent');
+      const totalAbsent = document.getElementById('totalAbsent');
+      const totalLate = document.getElementById('totalLate');
+      const totalClasses = document.getElementById('totalClasses');
+
+      if (totalPresent) totalPresent.textContent = stats.totalPresent || 0;
+      if (totalAbsent) totalAbsent.textContent = stats.totalAbsent || 0;
+      if (totalLate) totalLate.textContent = stats.totalLate || 0;
+      if (totalClasses) totalClasses.textContent = stats.todayClasses || 0;
+
+      // Calculate percentages
+      const total = (stats.totalPresent || 0) + (stats.totalAbsent || 0) + (stats.totalLate || 0);
+
+      if (total > 0) {
+        const presentPercentage = document.getElementById('presentPercentage');
+        const absentPercentage = document.getElementById('absentPercentage');
+        const latePercentage = document.getElementById('latePercentage');
+
+        if (presentPercentage) {
+          presentPercentage.textContent = `${((stats.totalPresent || 0) / total * 100).toFixed(1)}%`;
+        }
+        if (absentPercentage) {
+          absentPercentage.textContent = `${((stats.totalAbsent || 0) / total * 100).toFixed(1)}%`;
+        }
+        if (latePercentage) {
+          latePercentage.textContent = `${((stats.totalLate || 0) / total * 100).toFixed(1)}%`;
+        }
+      }
+    },
+
+    // Render table
+    renderTable() {
+      const tbody = document.getElementById('attendanceTableBody');
+      const attendanceTable = document.getElementById('attendanceTable');
+      const emptyState = document.getElementById('emptyState');
+
+      if (!tbody) return;
+
+      const data = this.state.filteredData || [];
+
+      if (data.length === 0) {
+        if (attendanceTable) attendanceTable.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'block';
+        this.updatePagination();
+        return;
+      }
+
+      if (attendanceTable) attendanceTable.style.display = 'block';
+      if (emptyState) emptyState.style.display = 'none';
+
+      const startIndex = (this.config.currentPage - 1) * this.config.pageSize;
+      const endIndex = startIndex + this.config.pageSize;
+      const pageData = data.slice(startIndex, endIndex);
+
+      tbody.innerHTML = pageData.map((item, index) => {
+        const present = item.present || 0;
+        const absent = item.absent || 0;
+        const late = item.late || 0;
+        const excused = item.excused || 0;
+        const total = present + absent + late + excused;
+        const attendanceRate = total > 0 ? ((present / total) * 100).toFixed(1) : '0.0';
+
+        return `
+                <tr>
+                    <td>${startIndex + index + 1}</td>
+                    <td>${this.formatDate(item.date)}</td>
+                    <td>${item.subjectName || 'N/A'}</td>
+                    <td>${item.className || 'N/A'}</td>
+                    <td>${item.lecturerName || 'N/A'}</td>
+                    <td>${item.roomName || 'N/A'}</td>
+                    <td>${item.session || 'N/A'}</td>
+                    <td><span class="status-badge status-present">${present}</span></td>
+                    <td><span class="status-badge status-absent">${absent}</span></td>
+                    <td><span class="status-badge status-late">${late}</span></td>
+                    <td><strong>${attendanceRate}%</strong></td>
+                </tr>
+            `;
+      }).join('');
+
+      this.updatePagination();
+    },
+
+    // Initialize charts
+    initializeCharts() {
+      this.initLineChart();
+      this.initPieChart();
+    },
+
+    // Initialize line chart
+    initLineChart() {
+      const canvas = document.getElementById('attendanceChart');
+      if (!canvas) {
+        console.warn('Line chart canvas not found');
+        return;
+      }
+
+      try {
+        const ctx = canvas.getContext('2d');
+        this.state.charts.line = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: [],
+            datasets: [{
+              label: 'Có mặt',
+              data: [],
+              borderColor: '#28a745',
+              backgroundColor: 'rgba(40, 167, 69, 0.1)',
+              tension: 0.4,
+              fill: true
+            }, {
+              label: 'Vắng mặt',
+              data: [],
+              borderColor: '#dc3545',
+              backgroundColor: 'rgba(220, 53, 69, 0.1)',
+              tension: 0.4,
+              fill: true
+            }, {
+              label: 'Đi trễ',
+              data: [],
+              borderColor: '#ffc107',
+              backgroundColor: 'rgba(255, 193, 7, 0.1)',
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'top'
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Số lượng'
+                }
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: 'Ngày'
+                }
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Error initializing line chart:', error);
+      }
+    },
+
+    // Initialize pie chart
+    initPieChart() {
+      const canvas = document.getElementById('pieChart');
+      if (!canvas) {
+        console.warn('Pie chart canvas not found');
+        return;
+      }
+
+      try {
+        const ctx = canvas.getContext('2d');
+        this.state.charts.pie = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Có mặt', 'Vắng mặt', 'Đi trễ'],
+            datasets: [{
+              data: [0, 0, 0],
+              backgroundColor: ['#28a745', '#dc3545', '#ffc107'],
+              borderWidth: 2,
+              borderColor: '#fff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom'
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Error initializing pie chart:', error);
+      }
+    },
+
+    // Update charts
+    updateCharts() {
+      const data = this.state.filteredData || [];
+      if (data.length === 0) return;
+
+      try {
+        const chartData = this.processChartData(data);
+
+        // Update line chart
+        if (this.state.charts.line) {
+          this.state.charts.line.data.labels = chartData.labels;
+          this.state.charts.line.data.datasets[0].data = chartData.present;
+          this.state.charts.line.data.datasets[1].data = chartData.absent;
+          this.state.charts.line.data.datasets[2].data = chartData.late;
+          this.state.charts.line.update('none');
+        }
+
+        // Update pie chart
+        if (this.state.charts.pie) {
+          const totals = chartData.totals;
+          this.state.charts.pie.data.datasets[0].data = [
+            totals.present, totals.absent, totals.late
+          ];
+          this.state.charts.pie.update('none');
+        }
+      } catch (error) {
+        console.error('Error updating charts:', error);
+      }
+    },
+
+    // Process chart data
+    processChartData(data) {
+      const grouped = {};
+      let totalPresent = 0, totalAbsent = 0, totalLate = 0;
+
+      data.forEach(item => {
+        const date = item.date;
+        if (!grouped[date]) {
+          grouped[date] = { present: 0, absent: 0, late: 0 };
+        }
+        grouped[date].present += item.present || 0;
+        grouped[date].absent += item.absent || 0;
+        grouped[date].late += item.late || 0;
+
+        totalPresent += item.present || 0;
+        totalAbsent += item.absent || 0;
+        totalLate += item.late || 0;
+      });
+
+      const sortedDates = Object.keys(grouped).sort();
+
+      return {
+        labels: sortedDates.map(date => this.formatDate(date)),
+        present: sortedDates.map(date => grouped[date].present),
+        absent: sortedDates.map(date => grouped[date].absent),
+        late: sortedDates.map(date => grouped[date].late),
+        totals: {
+          present: totalPresent,
+          absent: totalAbsent,
+          late: totalLate
+        }
+      };
+    },
+
+    // Update pagination
+    updatePagination() {
+      const pagination = document.getElementById('pagination');
+      const showingInfo = document.getElementById('showingInfo');
+
+      if (!pagination) return;
+
+      const total = this.state.filteredData.length;
+      const totalPages = Math.ceil(total / this.config.pageSize);
+      const startIndex = (this.config.currentPage - 1) * this.config.pageSize;
+      const endIndex = Math.min(startIndex + this.config.pageSize, total);
+
+      // Update showing info
+      if (showingInfo) {
+        showingInfo.textContent = `Hiển thị ${startIndex + 1} - ${endIndex} của ${total} kết quả`;
+      }
+
+      // Clear pagination
+      pagination.innerHTML = '';
+
+      if (totalPages <= 1) return;
+
+      // Previous button
+      const prevItem = this.createPaginationItem('Trước', this.config.currentPage - 1, this.config.currentPage === 1);
+      pagination.appendChild(prevItem);
+
+      // Page numbers
+      let startPage = Math.max(1, this.config.currentPage - 2);
+      let endPage = Math.min(totalPages, startPage + 4);
+
+      if (endPage - startPage < 4) {
+        startPage = Math.max(1, endPage - 4);
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        const pageItem = this.createPaginationItem(i, i, false, i === this.config.currentPage);
+        pagination.appendChild(pageItem);
+      }
+
+      // Next button
+      const nextItem = this.createPaginationItem('Sau', this.config.currentPage + 1, this.config.currentPage === totalPages);
+      pagination.appendChild(nextItem);
+    },
+
+    // Create pagination item
+    createPaginationItem(text, page, disabled = false, active = false) {
+      const li = document.createElement('li');
+      li.className = `page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}`;
+
+      const a = document.createElement('a');
+      a.className = 'page-link';
+      a.href = '#';
+      a.textContent = text;
+
+      if (!disabled) {
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.config.currentPage = page;
+          this.renderTable();
+        });
+      }
+
+      li.appendChild(a);
+      return li;
+    },
+
+    // Export data
+    async exportData() {
+      try {
+        const filters = this.getFilterValues();
+
+        const response = await fetch('/api/diemdanh/export', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(filters)
+        });
+
+        if (!response.ok) {
+          throw new Error(`Lỗi ${response.status}: ${response.statusText}`);
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `bao-cao-diem-danh-${filters.dateFrom}-${filters.dateTo}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        this.showSuccess('Xuất báo cáo thành công!');
+
+      } catch (error) {
+        console.error('Error exporting data:', error);
+        this.showError('Không thể xuất báo cáo');
+      }
+    },
+
+    // Utility methods
+    async fetchData(url, options = {}) {
+      try {
+        const response = await fetch(url, {
+          ...options,
+          headers: {
+            'Accept': 'application/json',
+            ...options.headers
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        return await response.json();
+      } catch (error) {
+        console.error('Fetch error:', error);
+        return null;
+      }
+    },
+
+    setLoading(isLoading) {
+      this.state.isLoading = isLoading;
+      const loadingSpinner = document.getElementById('loadingSpinner');
+      const attendanceTable = document.getElementById('attendanceTable');
+
+      if (loadingSpinner) {
+        loadingSpinner.style.display = isLoading ? 'flex' : 'none';
+      }
+      if (attendanceTable && !isLoading) {
+        attendanceTable.style.display = 'block';
+      }
+    },
+
+    formatDate(dateString) {
+      if (!dateString) return 'N/A';
+
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+      } catch (e) {
+        return dateString;
+      }
+    },
+
+    showError(message) {
+      console.error('Error:', message);
+      alert('Lỗi: ' + message);
+    },
+
+    showSuccess(message) {
+      console.log('Success:', message);
+      alert('Thành công: ' + message);
+    }
+  };
+
+  // Initialize when DOM is loaded
+  document.addEventListener('DOMContentLoaded', function() {
+    try {
+      AttendanceReport.init();
+    } catch (error) {
+      console.error('Error initializing AttendanceReport:', error);
+    }
+  });
+</script>
+
+</body>
+</html>

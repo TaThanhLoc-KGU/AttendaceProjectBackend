@@ -823,4 +823,209 @@ public class ExcelService {
         style.setAlignment(HorizontalAlignment.CENTER);
         return style;
     }
+    /**
+     * Xuất báo cáo điểm danh ra Excel
+     */
+    public byte[] exportAttendanceReport(List<Map<String, Object>> data, LocalDate fromDate, LocalDate toDate) {
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Báo cáo điểm danh");
+
+            // Tạo style cho header
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setFontHeightInPoints((short) 12);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setBorderTop(BorderStyle.THIN);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+            headerStyle.setBorderLeft(BorderStyle.THIN);
+            headerStyle.setBorderRight(BorderStyle.THIN);
+
+            // Tạo style cho data
+            CellStyle dataStyle = workbook.createCellStyle();
+            dataStyle.setBorderTop(BorderStyle.THIN);
+            dataStyle.setBorderBottom(BorderStyle.THIN);
+            dataStyle.setBorderLeft(BorderStyle.THIN);
+            dataStyle.setBorderRight(BorderStyle.THIN);
+
+            // Tạo style cho số
+            CellStyle numberStyle = workbook.createCellStyle();
+            numberStyle.cloneStyleFrom(dataStyle);
+            numberStyle.setAlignment(HorizontalAlignment.RIGHT);
+
+            // Tạo title
+            Row titleRow = sheet.createRow(0);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("BÁO CÁO ĐIỂM DANH");
+            CellStyle titleStyle = workbook.createCellStyle();
+            Font titleFont = workbook.createFont();
+            titleFont.setBold(true);
+            titleFont.setFontHeightInPoints((short) 16);
+            titleStyle.setFont(titleFont);
+            titleStyle.setAlignment(HorizontalAlignment.CENTER);
+            titleCell.setCellStyle(titleStyle);
+
+            // Merge title row
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 10));
+
+            // Tạo subtitle
+            Row subtitleRow = sheet.createRow(1);
+            Cell subtitleCell = subtitleRow.createCell(0);
+            subtitleCell.setCellValue("Từ ngày " + fromDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) +
+                    " đến ngày " + toDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+            CellStyle subtitleStyle = workbook.createCellStyle();
+            subtitleStyle.setAlignment(HorizontalAlignment.CENTER);
+            subtitleCell.setCellStyle(subtitleStyle);
+            sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 10));
+
+            // Tạo header
+            Row headerRow = sheet.createRow(3);
+            String[] headers = {
+                    "STT", "Ngày", "Môn học", "Lớp HP", "Giảng viên", "Phòng học",
+                    "Ca học", "Có mặt", "Vắng mặt", "Đi trễ", "Có phép", "Tổng SV", "Tỷ lệ (%)"
+            };
+
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Tạo data rows
+            int rowNum = 4;
+            int stt = 1;
+
+            for (Map<String, Object> record : data) {
+                Row row = sheet.createRow(rowNum++);
+
+                // STT
+                Cell cell0 = row.createCell(0);
+                cell0.setCellValue(stt++);
+                cell0.setCellStyle(numberStyle);
+
+                // Ngày
+                Cell cell1 = row.createCell(1);
+                LocalDate date = (LocalDate) record.get("date");
+                cell1.setCellValue(date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                cell1.setCellStyle(dataStyle);
+
+                // Môn học
+                Cell cell2 = row.createCell(2);
+                cell2.setCellValue((String) record.get("subjectName"));
+                cell2.setCellStyle(dataStyle);
+
+                // Lớp HP
+                Cell cell3 = row.createCell(3);
+                cell3.setCellValue((String) record.get("className"));
+                cell3.setCellStyle(dataStyle);
+
+                // Giảng viên
+                Cell cell4 = row.createCell(4);
+                cell4.setCellValue((String) record.get("lecturerName"));
+                cell4.setCellStyle(dataStyle);
+
+                // Phòng học
+                Cell cell5 = row.createCell(5);
+                cell5.setCellValue((String) record.get("roomName"));
+                cell5.setCellStyle(dataStyle);
+
+                // Ca học
+                Cell cell6 = row.createCell(6);
+                cell6.setCellValue((String) record.get("session"));
+                cell6.setCellStyle(dataStyle);
+
+                // Có mặt
+                Cell cell7 = row.createCell(7);
+                cell7.setCellValue(((Number) record.get("present")).intValue());
+                cell7.setCellStyle(numberStyle);
+
+                // Vắng mặt
+                Cell cell8 = row.createCell(8);
+                cell8.setCellValue(((Number) record.get("absent")).intValue());
+                cell8.setCellStyle(numberStyle);
+
+                // Đi trễ
+                Cell cell9 = row.createCell(9);
+                cell9.setCellValue(((Number) record.get("late")).intValue());
+                cell9.setCellStyle(numberStyle);
+
+                // Có phép
+                Cell cell10 = row.createCell(10);
+                cell10.setCellValue(((Number) record.get("excused")).intValue());
+                cell10.setCellStyle(numberStyle);
+
+                // Tổng SV
+                Cell cell11 = row.createCell(11);
+                int totalStudents = ((Number) record.get("totalStudents")).intValue();
+                cell11.setCellValue(totalStudents);
+                cell11.setCellStyle(numberStyle);
+
+                // Tỷ lệ (%)
+                Cell cell12 = row.createCell(12);
+                int present = ((Number) record.get("present")).intValue();
+                double rate = totalStudents > 0 ? (double) present / totalStudents * 100 : 0;
+                cell12.setCellValue(String.format("%.1f%%", rate));
+                cell12.setCellStyle(dataStyle);
+            }
+
+            // Auto-size columns
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+                int currentWidth = sheet.getColumnWidth(i);
+                sheet.setColumnWidth(i, Math.min(currentWidth + 1000, 6000));
+            }
+
+            // Tạo summary row
+            if (!data.isEmpty()) {
+                Row summaryRow = sheet.createRow(rowNum + 1);
+
+                Cell summaryLabelCell = summaryRow.createCell(0);
+                summaryLabelCell.setCellValue("TỔNG CỘNG");
+                summaryLabelCell.setCellStyle(headerStyle);
+                sheet.addMergedRegion(new CellRangeAddress(rowNum + 1, rowNum + 1, 0, 6));
+
+                // Tính tổng
+                int totalPresent = data.stream().mapToInt(r -> ((Number) r.get("present")).intValue()).sum();
+                int totalAbsent = data.stream().mapToInt(r -> ((Number) r.get("absent")).intValue()).sum();
+                int totalLate = data.stream().mapToInt(r -> ((Number) r.get("late")).intValue()).sum();
+                int totalExcused = data.stream().mapToInt(r -> ((Number) r.get("excused")).intValue()).sum();
+                int totalAll = data.stream().mapToInt(r -> ((Number) r.get("totalStudents")).intValue()).sum();
+
+                Cell totalPresentCell = summaryRow.createCell(7);
+                totalPresentCell.setCellValue(totalPresent);
+                totalPresentCell.setCellStyle(headerStyle);
+
+                Cell totalAbsentCell = summaryRow.createCell(8);
+                totalAbsentCell.setCellValue(totalAbsent);
+                totalAbsentCell.setCellStyle(headerStyle);
+
+                Cell totalLateCell = summaryRow.createCell(9);
+                totalLateCell.setCellValue(totalLate);
+                totalLateCell.setCellStyle(headerStyle);
+
+                Cell totalExcusedCell = summaryRow.createCell(10);
+                totalExcusedCell.setCellValue(totalExcused);
+                totalExcusedCell.setCellStyle(headerStyle);
+
+                Cell totalAllCell = summaryRow.createCell(11);
+                totalAllCell.setCellValue(totalAll);
+                totalAllCell.setCellStyle(headerStyle);
+
+                Cell avgRateCell = summaryRow.createCell(12);
+                double avgRate = totalAll > 0 ? (double) totalPresent / totalAll * 100 : 0;
+                avgRateCell.setCellValue(String.format("%.1f%%", avgRate));
+                avgRateCell.setCellStyle(headerStyle);
+            }
+
+            // Write to byte array
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            workbook.write(outputStream);
+            return outputStream.toByteArray();
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error creating Excel file", e);
+        }
+    }
 }

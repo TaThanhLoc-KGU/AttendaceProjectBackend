@@ -244,12 +244,6 @@ class SidebarManager {
                     icon: "fas fa-user-check",
                     children: [
                         {
-                            title: "Quản lý điểm danh",
-                            icon: "fas fa-check-circle",
-                            url: "/admin/diemdanh",
-                            active: window.location.pathname === "/admin/diemdanh",
-                        },
-                        {
                             title: "Báo cáo điểm danh",
                             icon: "fas fa-chart-bar",
                             url: "/admin/baocao-diemdanh",

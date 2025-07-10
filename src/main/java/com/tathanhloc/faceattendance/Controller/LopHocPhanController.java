@@ -20,7 +20,7 @@ public class LopHocPhanController {
 
     @GetMapping
     public List<LopHocPhanDTO> getAll() {
-        return lopHocPhanService.getAll();
+        return lopHocPhanService.getAllWithNames(); // SỬ DỤNG METHOD MỚI
     }
 
     @GetMapping("/{id}")
@@ -130,4 +130,10 @@ public class LopHocPhanController {
             throw new RuntimeException("Lỗi khi chuyển nhóm: " + e.getMessage());
         }
     }
+    // THÊM ENDPOINT MỚI CHỈ LẤY LỚP ACTIVE
+    @GetMapping("/active")
+    public List<LopHocPhanDTO> getAllActive() {
+        return lopHocPhanService.getAllActiveWithNames();
+    }
+
 }

@@ -23,4 +23,9 @@ public class LopHocPhanDTO {
 
     private Integer soLuongSinhVien;
 
+    // New fields for names - THÊM CÁC FIELD NÀY
+    private String tenMonHoc;        // Tên môn học
+    private String tenGiangVien;     // Tên giảng viên
+    private Integer soTinChi;        // Số tín chỉ môn học
+
 }

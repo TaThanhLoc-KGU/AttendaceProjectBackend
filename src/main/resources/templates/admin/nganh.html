@@ -23,21 +23,72 @@
     <!-- Main Content -->
     <div class="main-content">
         <!-- Header -->
-        <div class="header">
+        <header class="header">
             <div class="header-content">
                 <div class="header-left">
-                    <h1 class="page-title">Quản lý Ngành</h1>
+                    <h1 class="page-title">Quản lý Ngành học</h1>
                 </div>
+
                 <div class="header-right">
-                    <div class="user-info">
-                        <span th:text="'Xin chào, ' + ${session.user?.hoTen ?: 'Admin'}">Xin chào, Admin</span>
-                        <div class="user-avatar">
-                            <i class="fas fa-user-circle"></i>
+                    <!-- Notifications -->
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary position-relative me-3"
+                                type="button"
+                                data-bs-toggle="dropdown">
+                            <i class="fas fa-bell"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    3
+                                </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">Thông báo mới</h6></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-user-plus text-success me-2"></i>
+                                Có 5 sinh viên mới đăng ký
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                Camera phòng 101 mất kết nối
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-chart-line text-info me-2"></i>
+                                Báo cáo tuần mới đã sẵn sàng
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-center" href="#">Xem tất cả</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- User Menu -->
+                    <div class="dropdown user-dropdown">
+                        <div class="user-info" data-bs-toggle="dropdown">
+                            <div class="user-avatar">
+                                <span th:if="${currentUser != null and currentUser.username != null}"
+                                      th:text="${#strings.substring(currentUser.username, 0, 1)}">A</span>
+                                <span th:unless="${currentUser != null and currentUser.username != null}">A</span>
+                            </div>
+                            <div class="user-details">
+                                <h6 th:text="${currentUser != null ? currentUser.username : 'Admin User'}">Admin User</h6>
+                                <p>Quản trị viên</p>
+                            </div>
+                            <i class="fas fa-chevron-down ms-2"></i>
                         </div>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user me-2"></i>Hồ sơ cá nhân
+                            </a></li>
+                            <li><a class="dropdown-item" href="/settings">
+                                <i class="fas fa-cog me-2"></i>Cài đặt
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout" onclick="logout()">
+                                <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                            </a></li>
+                        </ul>
                     </div>
                 </div>
             </div>
-        </div>
+        </header>
 
         <!-- Dashboard Content -->
         <div class="admin-dashboard">

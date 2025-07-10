@@ -1,18 +1,18 @@
 package com.tathanhloc.faceattendance.Enum;
 
+import lombok.Getter;
+
+@Getter
 public enum TrangThaiDiemDanhEnum {
     CO_MAT("Có mặt"),
-    VANG("Vắng"),
-    TRE("Trễ");
+    VANG_MAT("Vắng"),
+    DI_TRE("Trễ"),
+    VANG_CO_PHEP("Vắng có phép");
 
     private final String value;
 
     TrangThaiDiemDanhEnum(String value) {
         this.value = value;
-    }
-
-    public String getValue() {
-        return value;
     }
 
     public static TrangThaiDiemDanhEnum fromValue(String value) {
