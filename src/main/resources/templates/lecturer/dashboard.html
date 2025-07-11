@@ -9,13 +9,200 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Custom CSS -->
     <link th:href="@{/css/common.css}" rel="stylesheet">
     <link th:href="@{/css/sidebar.css}" rel="stylesheet">
     <link th:href="@{/css/lecturer.css}" rel="stylesheet">
+
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #007bff;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .stats-card.primary { border-left-color: #007bff; }
+        .stats-card.success { border-left-color: #28a745; }
+        .stats-card.warning { border-left-color: #ffc107; }
+        .stats-card.info { border-left-color: #17a2b8; }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: white;
+        }
+
+        .stats-card.primary .stats-icon { background: #007bff; }
+        .stats-card.success .stats-icon { background: #28a745; }
+        .stats-card.warning .stats-icon { background: #ffc107; }
+        .stats-card.info .stats-icon { background: #17a2b8; }
+
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .stats-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .card-header h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .schedule-item, .class-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            transition: all 0.2s ease;
+        }
+
+        .schedule-item:hover, .class-item:hover {
+            background: #e3f2fd;
+            transform: translateX(5px);
+        }
+
+        .schedule-time {
+            font-weight: 600;
+            color: #007bff;
+            margin-right: 1rem;
+            min-width: 100px;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .item-details {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #495057;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: #f8f9fa;
+            border-color: #007bff;
+            color: #007bff;
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+
+        .action-btn i {
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .schedule-item, .class-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .schedule-time {
+                margin-bottom: 0.5rem;
+                margin-right: 0;
+            }
+        }
+    </style>
 </head>
 <body class="lecturer-dashboard">
 <div class="main-wrapper">
@@ -59,16 +246,12 @@
                 <div class="stats-card primary">
                     <div class="stats-header">
                         <div>
-                            <div class="stats-number" id="totalClasses" th:text="${totalClasses ?: 0}">0</div>
-                            <div class="stats-label">Tổng số lớp học</div>
+                            <h3 class="stats-number" th:text="${totalClasses ?: 0}">0</h3>
+                            <p class="stats-label">Tổng số lớp</p>
                         </div>
                         <div class="stats-icon">
                             <i class="fas fa-chalkboard"></i>
                         </div>
-                    </div>
-                    <div class="stats-change">
-                        <i class="fas fa-book me-1"></i>
-                        <span>Đang giảng dạy trong kỳ</span>
                     </div>
                 </div>
 
@@ -76,16 +259,12 @@
                 <div class="stats-card success">
                     <div class="stats-header">
                         <div>
-                            <div class="stats-number" id="totalStudents" th:text="${totalStudents ?: 0}">0</div>
-                            <div class="stats-label">Tổng sinh viên</div>
+                            <h3 class="stats-number" th:text="${totalStudents ?: 0}">0</h3>
+                            <p class="stats-label">Tổng sinh viên</p>
                         </div>
                         <div class="stats-icon">
                             <i class="fas fa-user-graduate"></i>
                         </div>
-                    </div>
-                    <div class="stats-change positive">
-                        <i class="fas fa-users me-1"></i>
-                        <span>Đã đăng ký học</span>
                     </div>
                 </div>
 
@@ -93,16 +272,12 @@
                 <div class="stats-card warning">
                     <div class="stats-header">
                         <div>
-                            <div class="stats-number" id="classesToday" th:text="${classesToday ?: 0}">0</div>
-                            <div class="stats-label">Lớp học hôm nay</div>
+                            <h3 class="stats-number" th:text="${classesToday ?: 0}">0</h3>
+                            <p class="stats-label">Lớp học hôm nay</p>
                         </div>
                         <div class="stats-icon">
                             <i class="fas fa-calendar-day"></i>
                         </div>
-                    </div>
-                    <div class="stats-change">
-                        <i class="fas fa-clock me-1"></i>
-                        <span id="todayDate">Hôm nay</span>
                     </div>
                 </div>
 
@@ -110,117 +285,101 @@
                 <div class="stats-card info">
                     <div class="stats-header">
                         <div>
-                            <div class="stats-number" id="attendanceToday" th:text="${attendanceToday ?: 0}">0</div>
-                            <div class="stats-label">Điểm danh hôm nay</div>
+                            <h3 class="stats-number" th:text="${attendanceToday ?: 0}">0</h3>
+                            <p class="stats-label">Điểm danh hôm nay</p>
                         </div>
                         <div class="stats-icon">
-                            <i class="fas fa-user-check"></i>
+                            <i class="fas fa-clipboard-check"></i>
                         </div>
-                    </div>
-                    <div class="stats-change positive">
-                        <i class="fas fa-check-circle me-1"></i>
-                        <span>Lượt điểm danh</span>
                     </div>
                 </div>
             </div>
 
             <!-- Quick Actions -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="quick-actions-card">
-                        <div class="card-header">
-                            <h5><i class="fas fa-bolt me-2"></i>Thao tác nhanh</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="quick-actions">
-                                <a href="/lecturer/diemdanh-homnay" class="quick-action-btn primary">
-                                    <i class="fas fa-camera"></i>
-                                    <span>Điểm danh ngay</span>
-                                </a>
-                                <a href="/lecturer/lophoc" class="quick-action-btn success">
-                                    <i class="fas fa-list"></i>
-                                    <span>Xem lớp học</span>
-                                </a>
-                                <a href="/lecturer/lichsu-diemdanh" class="quick-action-btn info">
-                                    <i class="fas fa-history"></i>
-                                    <span>Lịch sử điểm danh</span>
-                                </a>
-                                <a href="/lecturer/baocao-diemdanh" class="quick-action-btn warning">
-                                    <i class="fas fa-chart-line"></i>
-                                    <span>Báo cáo</span>
-                                </a>
-                                <a href="/lecturer/lich-giangday" class="quick-action-btn secondary">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    <span>Lịch giảng dạy</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="quick-actions">
+                <a href="/lecturer/diemdanh-homnay" class="action-btn">
+                    <i class="fas fa-calendar-day"></i>
+                    <span>Điểm danh hôm nay</span>
+                </a>
+                <a href="/lecturer/diemdanh-thucong" class="action-btn">
+                    <i class="fas fa-hand-pointer"></i>
+                    <span>Điểm danh thủ công</span>
+                </a>
+                <a href="/lecturer/lichhoc" class="action-btn">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Xem lịch dạy</span>
+                </a>
+                <a href="/lecturer/baocao-ngay" class="action-btn">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Báo cáo ngày</span>
+                </a>
             </div>
 
-            <!-- Today's Schedule -->
-            <div class="row mb-4">
-                <div class="col-lg-8">
-                    <div class="schedule-today-card">
-                        <div class="card-header">
-                            <h5><i class="fas fa-calendar-check me-2"></i>Lịch học hôm nay</h5>
-                            <span class="badge bg-primary" id="todayScheduleCount">0 lớp</span>
-                        </div>
-                        <div class="card-body" id="todayScheduleContainer">
-                            <div class="text-center py-4">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Đang tải...</span>
-                                </div>
-                                <p class="mt-3 text-muted">Đang tải lịch học...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Attendance Summary -->
-                <div class="col-lg-4">
-                    <div class="attendance-summary-card">
-                        <div class="card-header">
-                            <h5><i class="fas fa-chart-pie me-2"></i>Tóm tắt điểm danh</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="attendance-chart-container">
-                                <canvas id="attendanceChart" width="300" height="300"></canvas>
-                            </div>
-                            <div class="attendance-legend mt-3">
-                                <div class="legend-item">
-                                    <span class="legend-color present"></span>
-                                    <span>Có mặt</span>
-                                    <span class="legend-value" id="presentCount">0</span>
-                                </div>
-                                <div class="legend-item">
-                                    <span class="legend-color absent"></span>
-                                    <span>Vắng mặt</span>
-                                    <span class="legend-value" id="absentCount">0</span>
-                                </div>
-                                <div class="legend-item">
-                                    <span class="legend-color late"></span>
-                                    <span>Đi trễ</span>
-                                    <span class="legend-value" id="lateCount">0</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Classes -->
+            <!-- Main Content Grid -->
             <div class="row">
-                <div class="col-12">
-                    <div class="recent-classes-card">
+                <!-- Today's Schedule -->
+                <div class="col-lg-8 mb-4">
+                    <div class="content-card">
                         <div class="card-header">
-                            <h5><i class="fas fa-clock me-2"></i>Lớp học gần đây</h5>
-                            <a href="/lecturer/lophoc" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                            <h5><i class="fas fa-calendar-day me-2"></i>Lịch dạy hôm nay</h5>
                         </div>
                         <div class="card-body">
-                            <div class="schedule-grid" id="recentClassesContainer">
-                                <!-- Classes will be loaded here -->
+                            <div th:if="${todaySchedule != null and !todaySchedule.isEmpty()}">
+                                <div th:each="schedule : ${todaySchedule}" class="schedule-item">
+                                    <div class="schedule-time" th:text="'Tiết ' + ${schedule.tietBatDau} + '-' + ${schedule.tietBatDau + schedule.soTiet - 1}">
+                                        Tiết 1-3
+                                    </div>
+                                    <div class="item-info">
+                                        <div class="item-title" th:text="${schedule.tenMonHoc ?: 'Môn học'}">
+                                            Lập trình Web
+                                        </div>
+                                        <div class="item-details">
+                                            <span th:text="'Lớp: ' + ${schedule.maLhp}">Lớp: IT001.O21</span> •
+                                            <span th:text="'Phòng: ' + ${schedule.maPhong}">Phòng: H6.302</span> •
+                                            <span th:text="'Thứ ' + ${schedule.thu}">Thứ 2</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div th:if="${todaySchedule == null or todaySchedule.isEmpty()}" class="empty-state">
+                                <i class="fas fa-calendar-times"></i>
+                                <h6>Không có lịch dạy hôm nay</h6>
+                                <p>Hôm nay bạn không có lớp học nào được lên lịch.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teaching Classes -->
+                <div class="col-lg-4 mb-4">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-users me-2"></i>Lớp đang dạy</h5>
+                        </div>
+                        <div class="card-body">
+                            <div th:if="${recentClasses != null and !recentClasses.isEmpty()}">
+                                <div th:each="lhp : ${recentClasses}" class="class-item">
+                                    <div class="item-info">
+                                        <div class="item-title" th:text="${lhp.tenMonHoc ?: 'Môn học'}">
+                                            Lập trình Web
+                                        </div>
+                                        <div class="item-details">
+                                            <span th:text="'Mã lớp: ' + ${lhp.maLhp}">Mã lớp: IT001.O21</span><br>
+                                            <span th:text="${lhp.soLuongSinhVien ?: 0} + ' sinh viên'">25 sinh viên</span> •
+                                            <span th:text="${lhp.hocKy ?: 'N/A'}">HK1 2024-2025</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-center mt-3">
+                                    <a href="/lecturer/lophoc" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-list me-2"></i>Xem tất cả lớp
+                                    </a>
+                                </div>
+                            </div>
+                            <div th:if="${recentClasses == null or recentClasses.isEmpty()}" class="empty-state">
+                                <i class="fas fa-chalkboard"></i>
+                                <h6>Chưa có lớp học</h6>
+                                <p>Bạn chưa được phân công dạy lớp nào.</p>
                             </div>
                         </div>
                     </div>
@@ -239,525 +398,119 @@
     // Main Dashboard JavaScript
     document.addEventListener('DOMContentLoaded', function() {
         initializeDashboard();
-        loadTodaySchedule();
-        loadRecentClasses();
-        setupAttendanceChart();
         updateDateTime();
     });
 
     function initializeDashboard() {
-        console.log('📊 Initializing Lecturer Dashboard...');
-
-        // Update today's date
-        const today = new Date();
-        const dateStr = today.toLocaleDateString('vi-VN', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-        document.getElementById('todayDate').textContent = dateStr;
-    }
-
-    function loadTodaySchedule() {
-        const container = document.getElementById('todayScheduleContainer');
-
-        // Simulate API call - Replace with actual endpoint
-        setTimeout(() => {
-            const mockSchedule = [
-                {
-                    maLich: 'LH001',
-                    tenMonHoc: 'Lập trình cơ sở',
-                    maLhp: 'CS101-01',
-                    thoiGian: '07:30 - 09:30',
-                    phongHoc: 'A101',
-                    soSinhVien: 45,
-                    trangThai: 'upcoming'
-                },
-                {
-                    maLich: 'LH002',
-                    tenMonHoc: 'Cấu trúc dữ liệu',
-                    maLhp: 'CS102-02',
-                    thoiGian: '13:30 - 15:30',
-                    phongHoc: 'B205',
-                    soSinhVien: 38,
-                    trangThai: 'ongoing'
-                }
-            ];
-
-            displayTodaySchedule(mockSchedule);
-        }, 1000);
-    }
-
-    function displayTodaySchedule(schedules) {
-        const container = document.getElementById('todayScheduleContainer');
-        document.getElementById('todayScheduleCount').textContent = `${schedules.length} lớp`;
-
-        if (schedules.length === 0) {
-            container.innerHTML = `
-            <div class="text-center py-4">
-                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">Không có lịch học hôm nay</h5>
-                <p class="text-muted">Bạn không có lớp học nào trong ngày hôm nay.</p>
-            </div>
-        `;
-            return;
+        // Initialize sidebar - tương thích với code hiện tại
+        if (typeof SidebarManager !== 'undefined') {
+            new SidebarManager();
         }
 
-        let html = '<div class="today-schedule-list">';
+        // Auto-refresh data every 5 minutes
+        setInterval(refreshDashboardData, 5 * 60 * 1000);
 
-        schedules.forEach(schedule => {
-            const statusClass = schedule.trangThai === 'ongoing' ? 'ongoing' :
-                schedule.trangThai === 'completed' ? 'completed' : 'upcoming';
-            const statusIcon = schedule.trangThai === 'ongoing' ? 'fa-play-circle' :
-                schedule.trangThai === 'completed' ? 'fa-check-circle' : 'fa-clock';
-            const statusText = schedule.trangThai === 'ongoing' ? 'Đang diễn ra' :
-                schedule.trangThai === 'completed' ? 'Đã kết thúc' : 'Sắp diễn ra';
-
-            html += `
-            <div class="schedule-item ${statusClass}">
-                <div class="schedule-item-header">
-                    <div class="schedule-subject">
-                        <h6>${schedule.tenMonHoc}</h6>
-                        <span class="schedule-code">${schedule.maLhp}</span>
-                    </div>
-                    <div class="schedule-status">
-                        <span class="status-badge ${statusClass}">
-                            <i class="fas ${statusIcon}"></i>
-                            ${statusText}
-                        </span>
-                    </div>
-                </div>
-                <div class="schedule-item-details">
-                    <div class="detail-row">
-                        <i class="fas fa-clock"></i>
-                        <span>${schedule.thoiGian}</span>
-                    </div>
-                    <div class="detail-row">
-                        <i class="fas fa-door-open"></i>
-                        <span>Phòng ${schedule.phongHoc}</span>
-                    </div>
-                    <div class="detail-row">
-                        <i class="fas fa-users"></i>
-                        <span>${schedule.soSinhVien} sinh viên</span>
-                    </div>
-                </div>
-                <div class="schedule-item-actions">
-                    <button class="btn btn-sm btn-primary" onclick="quickAttendance('${schedule.maLhp}')">
-                        <i class="fas fa-camera"></i> Điểm danh
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="viewClassDetail('${schedule.maLhp}')">
-                        <i class="fas fa-eye"></i> Chi tiết
-                    </button>
-                </div>
-            </div>
-        `;
-        });
-
-        html += '</div>';
-        container.innerHTML = html;
-    }
-
-    function loadRecentClasses() {
-        const container = document.getElementById('recentClassesContainer');
-
-        // Use data from server or simulate
-        const myClasses = [[${myClasses}]] || [];
-
-        if (myClasses.length === 0) {
-            container.innerHTML = `
-            <div class="col-12 text-center py-4">
-                <i class="fas fa-chalkboard fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">Chưa có lớp học</h5>
-                <p class="text-muted">Bạn chưa được phân công giảng dạy lớp học nào.</p>
-            </div>
-        `;
-            return;
-        }
-
-        // Display recent classes (limit to 6)
-        const recentClasses = myClasses.slice(0, 6);
-        let html = '';
-
-        recentClasses.forEach(cls => {
-            html += `
-            <div class="schedule-card">
-                <div class="schedule-header">
-                    <div class="subject-info">
-                        <h5>${cls.tenMonHoc || 'N/A'}</h5>
-                        <span class="subject-code">${cls.maLhp}</span>
-                    </div>
-                    <div class="schedule-time">
-                        <div class="time-display">Nhóm ${cls.nhom || 1}</div>
-                        <div class="date-display">${cls.hocKy} - ${cls.namHoc}</div>
-                    </div>
-                </div>
-
-                <div class="schedule-details">
-                    <div class="detail-item">
-                        <i class="fas fa-users"></i>
-                        <span>${cls.soLuongSinhVien || 0} sinh viên</span>
-                    </div>
-                    <div class="detail-item">
-                        <i class="fas fa-book"></i>
-                        <span>${cls.soTinChi || 0} tín chỉ</span>
-                    </div>
-                    <div class="detail-item">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Tỷ lệ điểm danh: N/A</span>
-                    </div>
-                </div>
-
-                <div class="schedule-actions">
-                    <button class="btn btn-sm btn-primary" onclick="quickAttendance('${cls.maLhp}')">
-                        <i class="fas fa-camera"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="viewClassDetail('${cls.maLhp}')">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-        });
-
-        container.innerHTML = html;
-    }
-
-    function setupAttendanceChart() {
-        const ctx = document.getElementById('attendanceChart').getContext('2d');
-
-        // Mock data - replace with actual data
-        const data = {
-            labels: ['Có mặt', 'Vắng mặt', 'Đi trễ'],
-            datasets: [{
-                data: [850, 150, 50],
-                backgroundColor: [
-                    '#28a745',
-                    '#dc3545',
-                    '#ffc107'
-                ],
-                borderWidth: 0
-            }]
-        };
-
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: data,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
-
-        // Update legend
-        document.getElementById('presentCount').textContent = '850';
-        document.getElementById('absentCount').textContent = '150';
-        document.getElementById('lateCount').textContent = '50';
+        console.log('✅ Lecturer Dashboard initialized successfully');
     }
 
     function updateDateTime() {
         const now = new Date();
-        const timeStr = now.toLocaleTimeString('vi-VN');
+        const options = {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        };
 
-        // Update any time displays
-        setInterval(() => {
-            const current = new Date();
-            // Update real-time elements if needed
-        }, 60000); // Update every minute
+        const dateTimeElement = document.getElementById('currentDateTime');
+        if (dateTimeElement) {
+            dateTimeElement.textContent = now.toLocaleDateString('vi-VN', options);
+        }
+
+        // Update every minute
+        setTimeout(updateDateTime, 60000);
     }
 
-    function quickAttendance(maLhp) {
-        window.location.href = `/lecturer/diemdanh-homnay?class=${maLhp}`;
+    async function refreshDashboardData() {
+        try {
+            // Refresh today's schedule using API có sẵn
+            const scheduleResponse = await fetch('/lecturer/api/schedule/today');
+            if (scheduleResponse.ok) {
+                const scheduleData = await scheduleResponse.json();
+                updateTodaySchedule(scheduleData);
+            }
+
+            console.log('✅ Dashboard data refreshed');
+        } catch (error) {
+            console.error('❌ Error refreshing dashboard data:', error);
+        }
     }
 
-    function viewClassDetail(maLhp) {
-        window.location.href = `/lecturer/lophoc?class=${maLhp}`;
+    function updateTodaySchedule(scheduleData) {
+        // Update today's schedule display
+        const scheduleContainer = document.querySelector('.schedule-container');
+        if (scheduleContainer && scheduleData && scheduleData.length > 0) {
+            // Update schedule display logic
+            console.log('Schedule data updated:', scheduleData);
+        }
+    }
+
+    // Helper functions for quick actions
+    function quickAttendance() {
+        window.location.href = '/lecturer/diemdanh-homnay';
+    }
+
+    function manualAttendance() {
+        window.location.href = '/lecturer/diemdanh-thucong';
+    }
+
+    function viewSchedule() {
+        window.location.href = '/lecturer/lichhoc';
+    }
+
+    function generateReport() {
+        window.location.href = '/lecturer/baocao-ngay';
+    }
+
+    // Error handling
+    window.addEventListener('error', function(e) {
+        console.error('JavaScript error:', e.error);
+    });
+
+    // Show notification function
+    function showNotification(message, type = 'info') {
+        // Create toast notification
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+
+        // Add to toast container or create one
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            document.body.appendChild(toastContainer);
+        }
+
+        toastContainer.appendChild(toast);
+
+        // Show toast
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+
+        // Remove from DOM after hidden
+        toast.addEventListener('hidden.bs.toast', () => {
+            toast.remove();
+        });
     }
 </script>
-
-<style>
-    /* Additional Dashboard Styles */
-    .welcome-info {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .welcome-text {
-        color: #6c757d;
-        font-size: 0.9rem;
-    }
-
-    .user-name {
-        color: #2c3e50;
-        font-weight: 600;
-    }
-
-    .quick-actions-card,
-    .schedule-today-card,
-    .attendance-summary-card,
-    .recent-classes-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        border: 1px solid #f0f0f0;
-        overflow: hidden;
-    }
-
-    .card-header {
-        background: #f8f9fa;
-        padding: 1rem 1.5rem;
-        border-bottom: 1px solid #e9ecef;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .card-header h5 {
-        margin: 0;
-        color: #2c3e50;
-        font-weight: 600;
-    }
-
-    .card-body {
-        padding: 1.5rem;
-    }
-
-    .quick-actions {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 1rem;
-    }
-
-    .quick-action-btn {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 1.5rem 1rem;
-        background: white;
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        text-decoration: none;
-        color: #6c757d;
-        transition: all 0.3s ease;
-        text-align: center;
-    }
-
-    .quick-action-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        text-decoration: none;
-    }
-
-    .quick-action-btn.primary:hover {
-        border-color: #667eea;
-        color: #667eea;
-    }
-
-    .quick-action-btn.success:hover {
-        border-color: #28a745;
-        color: #28a745;
-    }
-
-    .quick-action-btn.info:hover {
-        border-color: #17a2b8;
-        color: #17a2b8;
-    }
-
-    .quick-action-btn.warning:hover {
-        border-color: #ffc107;
-        color: #ffc107;
-    }
-
-    .quick-action-btn.secondary:hover {
-        border-color: #6c757d;
-        color: #6c757d;
-    }
-
-    .quick-action-btn i {
-        font-size: 1.5rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .quick-action-btn span {
-        font-size: 0.9rem;
-        font-weight: 500;
-    }
-
-    .today-schedule-list {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .schedule-item {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 1rem;
-        border-left: 4px solid #667eea;
-    }
-
-    .schedule-item.ongoing {
-        border-left-color: #ffc107;
-        background: linear-gradient(135deg, #fffcf0, #f8f9fa);
-    }
-
-    .schedule-item.completed {
-        border-left-color: #28a745;
-        background: linear-gradient(135deg, #f8fff9, #f8f9fa);
-    }
-
-    .schedule-item-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 0.75rem;
-    }
-
-    .schedule-subject h6 {
-        margin: 0 0 0.25rem;
-        color: #2c3e50;
-        font-weight: 600;
-    }
-
-    .schedule-code {
-        font-size: 0.8rem;
-        color: #6c757d;
-        background: white;
-        padding: 0.2rem 0.5rem;
-        border-radius: 4px;
-    }
-
-    .status-badge {
-        padding: 0.25rem 0.75rem;
-        border-radius: 15px;
-        font-size: 0.8rem;
-        font-weight: 500;
-    }
-
-    .status-badge.upcoming {
-        background: #e3f2fd;
-        color: #1976d2;
-    }
-
-    .status-badge.ongoing {
-        background: #fff3cd;
-        color: #856404;
-    }
-
-    .status-badge.completed {
-        background: #d4edda;
-        color: #155724;
-    }
-
-    .schedule-item-details {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 0.75rem;
-        flex-wrap: wrap;
-    }
-
-    .detail-row {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.9rem;
-        color: #6c757d;
-    }
-
-    .detail-row i {
-        width: 16px;
-    }
-
-    .schedule-item-actions {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    .attendance-chart-container {
-        height: 200px;
-        position: relative;
-    }
-
-    .attendance-legend {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .legend-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .legend-color {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        margin-right: 0.5rem;
-    }
-
-    .legend-color.present {
-        background: #28a745;
-    }
-
-    .legend-color.absent {
-        background: #dc3545;
-    }
-
-    .legend-color.late {
-        background: #ffc107;
-    }
-
-    .legend-value {
-        font-weight: 600;
-        color: #2c3e50;
-    }
-
-    /* Mobile Responsive */
-    @media (max-width: 768px) {
-        .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .quick-actions {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .schedule-item-details {
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .schedule-item-actions {
-            flex-direction: column;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .stats-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .quick-actions {
-            grid-template-columns: 1fr;
-        }
-
-        .schedule-item-header {
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-    }
-</style>
 </body>
 </html>

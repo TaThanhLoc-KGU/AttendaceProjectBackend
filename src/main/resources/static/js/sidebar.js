@@ -1,47 +1,58 @@
 /**
- * Sidebar Manager - Dynamic sidebar with role-based menu
- * Compatible with Spring Boot Face Attendance System
+ * Enhanced Sidebar Component with Dynamic Menu Loading
+ * Supports role-based navigation and responsive design
  */
-
 class SidebarManager {
     constructor() {
         this.sidebar = null
         this.overlay = null
-        this.toggle = null
+        this.toggleBtn = null
+        this.closeBtn = null
         this.currentUser = null
         this.menuItems = []
-        this.isCollapsed = false
-        this.isMobile = window.innerWidth <= 768
+        this.touchStartX = 0
+        this.touchStartY = 0
+        this.isResizing = false
 
         this.init()
     }
 
-    init() {
-        this.sidebar = document.getElementById("sidebar")
-        this.overlay = document.getElementById("sidebarOverlay")
-        this.toggle = document.getElementById("sidebarToggle")
-
-        if (!this.sidebar) {
-            console.warn("Sidebar element not found")
-            return
-        }
-
+    async init() {
+        this.createElements()
         this.setupEventListeners()
-        this.loadUserInfo()
-        this.loadTheme()
+        await this.loadUserInfo()
+        this.checkActiveState()
         this.handleResize()
+    }
+
+    createElements() {
+        this.sidebar = document.getElementById("sidebar")
+        this.overlay = document.getElementById("sidebarOverlay") || this.createOverlay()
+        this.toggleBtn = document.getElementById("sidebarToggle")
+        this.closeBtn = document.getElementById("sidebarClose")
+
+        if (!this.overlay && this.sidebar) {
+            this.overlay = this.createOverlay()
+        }
+    }
+
+    createOverlay() {
+        const overlay = document.createElement("div")
+        overlay.id = "sidebarOverlay"
+        overlay.className = "sidebar-overlay"
+        document.body.appendChild(overlay)
+        return overlay
     }
 
     setupEventListeners() {
         // Toggle button
-        if (this.toggle) {
-            this.toggle.addEventListener("click", () => this.toggleSidebar())
+        if (this.toggleBtn) {
+            this.toggleBtn.addEventListener("click", () => this.toggleSidebar())
         }
 
         // Close button
-        const closeBtn = document.getElementById("sidebarClose")
-        if (closeBtn) {
-            closeBtn.addEventListener("click", () => this.closeSidebar())
+        if (this.closeBtn) {
+            this.closeBtn.addEventListener("click", () => this.closeSidebar())
         }
 
         // Overlay click
@@ -49,43 +60,39 @@ class SidebarManager {
             this.overlay.addEventListener("click", () => this.closeSidebar())
         }
 
-        // Window resize
-        window.addEventListener("resize", () => this.handleResize())
-
-        // Keyboard shortcuts
+        // Keyboard events
         document.addEventListener("keydown", (e) => {
             if (e.key === "Escape" && this.isOpen()) {
                 this.closeSidebar()
             }
         })
 
-        // Touch gestures for mobile
-        this.setupTouchGestures()
+        // Window resize
+        window.addEventListener("resize", () => this.handleResize())
+
+        // Touch events for mobile swipe
+        this.setupTouchEvents()
     }
 
-    setupTouchGestures() {
-        let startX = 0
-        let currentX = 0
-        let isDragging = false
-
+    setupTouchEvents() {
         document.addEventListener("touchstart", (e) => {
-            startX = e.touches[0].clientX
-            isDragging = true
+            this.touchStartX = e.touches[0].clientX
+            this.touchStartY = e.touches[0].clientY
         })
 
-        document.addEventListener("touchmove", (e) => {
-            if (!isDragging) return
-            currentX = e.touches[0].clientX
-        })
+        document.addEventListener("touchend", (e) => {
+            if (!e.changedTouches || !e.changedTouches[0]) return
 
-        document.addEventListener("touchend", () => {
-            if (!isDragging) return
-            isDragging = false
+            const touchEndX = e.changedTouches[0].clientX
+            const touchEndY = e.changedTouches[0].clientY
+            const deltaX = touchEndX - this.touchStartX
+            const deltaY = Math.abs(touchEndY - this.touchStartY)
 
-            const deltaX = currentX - startX
+            // Only handle horizontal swipes
+            if (deltaY > 100) return
 
             // Swipe right to open (from left edge)
-            if (startX < 50 && deltaX > 100) {
+            if (deltaX > 100 && this.touchStartX < 50 && !this.isOpen()) {
                 this.openSidebar()
             }
             // Swipe left to close
@@ -106,9 +113,9 @@ class SidebarManager {
             } else {
                 // Fallback for demo/development
                 this.currentUser = {
-                    name: "Admin User",
-                    role: "ADMIN",
-                    email: "admin@example.com",
+                    name: "Lecturer User",
+                    role: "LECTURER",
+                    email: "lecturer@example.com",
                 }
                 this.updateUserDisplay()
                 this.loadMenuItems()
@@ -116,9 +123,9 @@ class SidebarManager {
         } catch (error) {
             console.warn("Could not load user info, using fallback")
             this.currentUser = {
-                name: "Admin User",
-                role: "ADMIN",
-                email: "admin@example.com",
+                name: "Lecturer User",
+                role: "LECTURER",
+                email: "lecturer@example.com",
             }
             this.updateUserDisplay()
             this.loadMenuItems()
@@ -147,7 +154,7 @@ class SidebarManager {
     }
 
     loadMenuItems() {
-        const role = this.currentUser?.role || "ADMIN"
+        const role = this.currentUser?.role || "LECTURER"
         this.menuItems = this.getMenuItemsByRole(role)
         this.renderMenu()
     }
@@ -162,44 +169,14 @@ class SidebarManager {
                     active: window.location.pathname === "/admin/dashboard",
                 },
                 {
-                    title: "Quản lý hệ thống",
-                    icon: "fas fa-cogs",
-                    children: [
-                        {
-                            title: "Quản lý khoa",
-                            icon: "fas fa-university",
-                            url: "/admin/khoa",
-                            active: window.location.pathname === "/admin/khoa",
-                        },
-                        {
-                            title: "Quản lý ngành",
-                            icon: "fas fa-sitemap",
-                            url: "/admin/nganh",
-                            active: window.location.pathname === "/admin/nganh",
-                        },
-                        {
-                            title: "Quản lý môn học",
-                            icon: "fas fa-book",
-                            url: "/admin/monhoc",
-                            active: window.location.pathname === "/admin/monhoc",
-                        },
-                        {
-                            title: "Quản lý lớp",
-                            icon: "fas fa-users",
-                            url: "/admin/lop",
-                            active: window.location.pathname === "/admin/lop",
-                        },
-                    ],
-                },
-                {
                     title: "Quản lý người dùng",
-                    icon: "fas fa-user-friends",
+                    icon: "fas fa-users",
                     children: [
                         {
-                            title: "Giảng viên",
-                            icon: "fas fa-chalkboard-teacher",
-                            url: "/admin/giangvien",
-                            active: window.location.pathname === "/admin/giangvien",
+                            title: "Tài khoản",
+                            icon: "fas fa-user-shield",
+                            url: "/admin/taikhoan",
+                            active: window.location.pathname === "/admin/taikhoan",
                         },
                         {
                             title: "Sinh viên",
@@ -208,10 +185,10 @@ class SidebarManager {
                             active: window.location.pathname === "/admin/sinhvien",
                         },
                         {
-                            title: "Tài khoản",
-                            icon: "fas fa-user-cog",
-                            url: "/admin/taikhoan",
-                            active: window.location.pathname === "/admin/taikhoan",
+                            title: "Giảng viên",
+                            icon: "fas fa-chalkboard-teacher",
+                            url: "/admin/giangvien",
+                            active: window.location.pathname === "/admin/giangvien",
                         },
                     ],
                 },
@@ -220,29 +197,35 @@ class SidebarManager {
                     icon: "fas fa-graduation-cap",
                     children: [
                         {
-                            title: "Cấu hình Học kỳ - Năm học",
-                            icon: "fas fa-calendar-alt",
-                            url: "/admin/cauhinh-hocky",
-                            active: window.location.pathname === "/admin/namhoc",
+                            title: "Môn học",
+                            icon: "fas fa-book",
+                            url: "/admin/monhoc",
+                            active: window.location.pathname === "/admin/monhoc",
                         },
                         {
                             title: "Lớp học phần",
-                            icon: "fas fa-clipboard-list",
+                            icon: "fas fa-chalkboard",
                             url: "/admin/lophocphan",
                             active: window.location.pathname === "/admin/lophocphan",
                         },
                         {
                             title: "Lịch học",
-                            icon: "fas fa-clock",
+                            icon: "fas fa-calendar-alt",
                             url: "/admin/lichhoc",
                             active: window.location.pathname === "/admin/lichhoc",
                         },
                     ],
                 },
                 {
-                    title: "Điểm danh",
-                    icon: "fas fa-user-check",
+                    title: "Quản lý điểm danh",
+                    icon: "fas fa-clipboard-check",
                     children: [
+                        {
+                            title: "Thiết bị Camera",
+                            icon: "fas fa-camera",
+                            url: "/admin/camera",
+                            active: window.location.pathname === "/admin/camera",
+                        },
                         {
                             title: "Báo cáo điểm danh",
                             icon: "fas fa-chart-bar",
@@ -253,22 +236,16 @@ class SidebarManager {
                 },
                 {
                     title: "Hệ thống",
-                    icon: "fas fa-server",
+                    icon: "fas fa-cog",
                     children: [
                         {
-                            title: "Camera",
-                            icon: "fas fa-video",
-                            url: "/admin/camera",
-                            active: window.location.pathname === "/admin/camera",
+                            title: "Cấu hình",
+                            icon: "fas fa-sliders-h",
+                            url: "/admin/config",
+                            active: window.location.pathname === "/admin/config",
                         },
                         {
-                            title: "Phòng học",
-                            icon: "fas fa-door-open",
-                            url: "/admin/phonghoc",
-                            active: window.location.pathname === "/admin/phonghoc",
-                        },
-                        {
-                            title: "Nhật ký hệ thống",
+                            title: "Logs",
                             icon: "fas fa-file-alt",
                             url: "/admin/logs",
                             active: window.location.pathname === "/admin/logs",
@@ -284,14 +261,20 @@ class SidebarManager {
                     active: window.location.pathname === "/lecturer/dashboard",
                 },
                 {
-                    title: "Lớp học của tôi",
+                    title: "Lịch giảng dạy",
+                    icon: "fas fa-calendar-alt",
+                    url: "/lecturer/lichhoc",
+                    active: window.location.pathname === "/lecturer/lichhoc",
+                },
+                {
+                    title: "Lớp học phần",
                     icon: "fas fa-chalkboard",
                     url: "/lecturer/lophoc",
                     active: window.location.pathname === "/lecturer/lophoc",
                 },
                 {
                     title: "Điểm danh",
-                    icon: "fas fa-user-check",
+                    icon: "fas fa-clipboard-check",
                     children: [
                         {
                             title: "Điểm danh hôm nay",
@@ -300,42 +283,48 @@ class SidebarManager {
                             active: window.location.pathname === "/lecturer/diemdanh-homnay",
                         },
                         {
+                            title: "Điểm danh thủ công",
+                            icon: "fas fa-hand-pointer",
+                            url: "/lecturer/diemdanh-thucong",
+                            active: window.location.pathname === "/lecturer/diemdanh-thucong",
+                        },
+                        {
                             title: "Lịch sử điểm danh",
                             icon: "fas fa-history",
                             url: "/lecturer/lichsu-diemdanh",
                             active: window.location.pathname === "/lecturer/lichsu-diemdanh",
                         },
-                        {
-                            title: "Báo cáo điểm danh",
-                            icon: "fas fa-chart-line",
-                            url: "/lecturer/baocao-diemdanh",
-                            active: window.location.pathname === "/lecturer/baocao-diemdanh",
-                        },
                     ],
                 },
                 {
-                    title: "Lịch giảng dạy",
-                    icon: "fas fa-calendar-alt",
-                    url: "/lecturer/lich-giangday",
-                    active: window.location.pathname === "/lecturer/lich-giangday",
-                },
-                {
-                    title: "Sinh viên",
-                    icon: "fas fa-user-graduate",
+                    title: "Báo cáo",
+                    icon: "fas fa-chart-bar",
                     children: [
                         {
-                            title: "Danh sách sinh viên",
-                            icon: "fas fa-list",
-                            url: "/lecturer/danhsach-sinhvien",
-                            active: window.location.pathname === "/lecturer/danhsach-sinhvien",
+                            title: "Báo cáo ngày học",
+                            icon: "fas fa-calendar-day",
+                            url: "/lecturer/baocao-ngay",
+                            active: window.location.pathname === "/lecturer/baocao-ngay",
                         },
                         {
-                            title: "Quản lý khuôn mặt",
-                            icon: "fas fa-user-circle",
-                            url: "/lecturer/quanly-khuonmat",
-                            active: window.location.pathname === "/lecturer/quanly-khuonmat",
+                            title: "Báo cáo học kỳ",
+                            icon: "fas fa-graduation-cap",
+                            url: "/lecturer/baocao-hocky",
+                            active: window.location.pathname === "/lecturer/baocao-hocky",
+                        },
+                        {
+                            title: "Thống kê tổng quan",
+                            icon: "fas fa-chart-pie",
+                            url: "/lecturer/thongke",
+                            active: window.location.pathname === "/lecturer/thongke",
                         },
                     ],
+                },
+                {
+                    title: "Thông tin cá nhân",
+                    icon: "fas fa-user",
+                    url: "/lecturer/thongtin-canhan",
+                    active: window.location.pathname === "/lecturer/thongtin-canhan",
                 },
             ],
             STUDENT: [
@@ -346,8 +335,20 @@ class SidebarManager {
                     active: window.location.pathname === "/student/dashboard",
                 },
                 {
-                    title: "Điểm danh của tôi",
-                    icon: "fas fa-user-check",
+                    title: "Lịch học",
+                    icon: "fas fa-calendar-alt",
+                    url: "/student/lichhoc",
+                    active: window.location.pathname === "/student/lichhoc",
+                },
+                {
+                    title: "Lớp học",
+                    icon: "fas fa-chalkboard",
+                    url: "/student/lophoc",
+                    active: window.location.pathname === "/student/lophoc",
+                },
+                {
+                    title: "Điểm danh",
+                    icon: "fas fa-clipboard-check",
                     children: [
                         {
                             title: "Lịch sử điểm danh",
@@ -357,23 +358,11 @@ class SidebarManager {
                         },
                         {
                             title: "Thống kê điểm danh",
-                            icon: "fas fa-chart-pie",
+                            icon: "fas fa-chart-bar",
                             url: "/student/thongke-diemdanh",
                             active: window.location.pathname === "/student/thongke-diemdanh",
                         },
                     ],
-                },
-                {
-                    title: "Lịch học",
-                    icon: "fas fa-calendar-alt",
-                    url: "/student/lich-hoc",
-                    active: window.location.pathname === "/student/lich-hoc",
-                },
-                {
-                    title: "Lớp học phần",
-                    icon: "fas fa-book-open",
-                    url: "/student/lophocphan",
-                    active: window.location.pathname === "/student/lophocphan",
                 },
                 {
                     title: "Khuôn mặt",
@@ -402,7 +391,7 @@ class SidebarManager {
             ],
         }
 
-        return menuConfigs[role] || menuConfigs.ADMIN
+        return menuConfigs[role] || menuConfigs.LECTURER
     }
 
     renderMenu() {
@@ -447,22 +436,12 @@ class SidebarManager {
                                     <span class="nav-subtext">${child.title}</span>
                                 </a>
                             </li>
-                        `,
+                        `
                 )
                 .join("")}
                     </ul>
                 </div>
             `
-
-            // Auto-expand if any child is active
-            if (item.children.some((child) => child.active)) {
-                setTimeout(() => {
-                    const collapse = li.querySelector(".collapse")
-                    if (collapse) {
-                        collapse.classList.add("show")
-                    }
-                }, 100)
-            }
         } else {
             // Single item
             li.innerHTML = `
@@ -479,18 +458,14 @@ class SidebarManager {
     }
 
     generateId(text) {
-        return text
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, "-")
-            .replace(/-+/g, "-")
-            .replace(/^-|-$/g, "")
+        return text.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "")
     }
 
     toggleSidebar() {
-        if (this.isMobile) {
-            this.isOpen() ? this.closeSidebar() : this.openSidebar()
+        if (this.isOpen()) {
+            this.closeSidebar()
         } else {
-            this.isCollapsed ? this.expandSidebar() : this.collapseSidebar()
+            this.openSidebar()
         }
     }
 
@@ -500,6 +475,9 @@ class SidebarManager {
         this.sidebar.classList.add("show")
         if (this.overlay) this.overlay.classList.add("show")
         document.body.classList.add("sidebar-open")
+
+        // Focus trap for accessibility
+        this.sidebar.focus()
     }
 
     closeSidebar() {
@@ -510,113 +488,71 @@ class SidebarManager {
         document.body.classList.remove("sidebar-open")
     }
 
-    collapseSidebar() {
-        if (!this.sidebar) return
-
-        this.sidebar.classList.add("collapsed")
-        this.isCollapsed = true
-        localStorage.setItem("sidebar-collapsed", "true")
-    }
-
-    expandSidebar() {
-        if (!this.sidebar) return
-
-        this.sidebar.classList.remove("collapsed")
-        this.isCollapsed = false
-        localStorage.setItem("sidebar-collapsed", "false")
-    }
-
     isOpen() {
-        return this.sidebar && this.sidebar.classList.contains("show")
+        return this.sidebar?.classList.contains("show") || false
     }
 
-    handleResize() {
-        const wasMobile = this.isMobile
-        this.isMobile = window.innerWidth <= 768
+    checkActiveState() {
+        // Update active states based on current URL
+        const currentPath = window.location.pathname
 
-        if (wasMobile !== this.isMobile) {
-            // Reset sidebar state on breakpoint change
-            this.closeSidebar()
-            this.sidebar.classList.remove("collapsed")
+        // Remove all active states
+        document.querySelectorAll('.nav-link.active, .nav-sublink.active').forEach(el => {
+            el.classList.remove('active')
+        })
 
-            if (!this.isMobile) {
-                // Restore collapsed state on desktop
-                const wasCollapsed = localStorage.getItem("sidebar-collapsed") === "true"
-                if (wasCollapsed) {
-                    this.collapseSidebar()
+        // Set active state for current page
+        const activeLink = document.querySelector(`a[href="${currentPath}"]`)
+        if (activeLink) {
+            activeLink.classList.add('active')
+
+            // If it's a submenu item, expand the parent
+            const submenu = activeLink.closest('.nav-submenu')
+            if (submenu) {
+                submenu.classList.add('show')
+                const parentToggle = document.querySelector(`[data-bs-target="#${submenu.id}"]`)
+                if (parentToggle) {
+                    parentToggle.setAttribute('aria-expanded', 'true')
                 }
             }
         }
     }
 
-    loadTheme() {
-        const savedTheme = localStorage.getItem("theme") || "light"
-        this.applyTheme(savedTheme)
-    }
+    handleResize() {
+        if (this.isResizing) return
 
-    toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute("data-theme") || "light"
-        const newTheme = currentTheme === "light" ? "dark" : "light"
-        this.applyTheme(newTheme)
-        localStorage.setItem("theme", newTheme)
-    }
+        this.isResizing = true
 
-    applyTheme(theme) {
-        document.documentElement.setAttribute("data-theme", theme)
-        const themeIcon = document.getElementById("themeIcon")
-        if (themeIcon) {
-            themeIcon.className = theme === "light" ? "fas fa-moon" : "fas fa-sun"
+        // Auto-close on mobile when resizing to larger screen
+        if (window.innerWidth >= 768 && this.isOpen()) {
+            this.closeSidebar()
         }
-    }
 
-    showSettings() {
-        // Implement settings modal or redirect
-        alert("Chức năng cài đặt đang được phát triển")
-    }
-
-    logout() {
-        if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
-            // Clear local storage
-            localStorage.clear()
-            sessionStorage.clear()
-
-            // Redirect to login
-            window.location.href = "/logout"
-        }
-    }
-
-    // Static methods for global access
-    static getInstance() {
-        if (!window.sidebarManager) {
-            window.sidebarManager = new SidebarManager()
-        }
-        return window.sidebarManager
-    }
-
-    static toggleTheme() {
-        SidebarManager.getInstance().toggleTheme()
-    }
-
-    static showSettings() {
-        SidebarManager.getInstance().showSettings()
-    }
-
-    static logout() {
-        SidebarManager.getInstance().logout()
+        setTimeout(() => {
+            this.isResizing = false
+        }, 100)
     }
 }
 
-// Initialize sidebar when DOM is ready
-document.addEventListener("DOMContentLoaded", () => {
-    // Initialize sidebar manager
+// Initialize sidebar when DOM is loaded
+document.addEventListener("DOMContentLoaded", function () {
     window.sidebarManager = new SidebarManager()
-
-    // Global functions for backward compatibility
-    window.toggleSidebar = () => window.sidebarManager.toggleSidebar()
-    window.initializeSidebar = () => window.sidebarManager.init()
 })
 
-// Export for module systems
-if (typeof module !== "undefined" && module.exports) {
+// Global functions for backward compatibility
+function toggleSidebar() {
+    if (window.sidebarManager) {
+        window.sidebarManager.toggleSidebar()
+    }
+}
+
+function closeSidebar() {
+    if (window.sidebarManager) {
+        window.sidebarManager.closeSidebar()
+    }
+}
+
+// Export for module usage
+if (typeof module !== 'undefined' && module.exports) {
     module.exports = SidebarManager
 }

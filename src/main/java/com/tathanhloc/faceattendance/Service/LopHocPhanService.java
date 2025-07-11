@@ -10,8 +10,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -158,4 +160,139 @@ public class LopHocPhanService {
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
+    /**
+     * Đếm số lượng lớp học của giảng viên
+     * @param maGv Mã giảng viên
+     * @return Số lượng lớp học
+     */
+    public long countByGiangVien(String maGv) {
+        try {
+            return lopHocPhanRepository.countByGiangVienMaGv(maGv);
+        } catch (Exception e) {
+            log.error("Error counting classes for lecturer {}: {}", maGv, e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Đếm tổng số sinh viên của các lớp do giảng viên dạy
+     * @param maGv Mã giảng viên
+     * @return Tổng số sinh viên
+     */
+    public int countStudentsByGiangVien(String maGv) {
+        try {
+            Long count = lopHocPhanRepository.countTotalStudentsByGiangVien(maGv);
+            return count != null ? count.intValue() : 0;
+        } catch (Exception e) {
+            log.error("Error counting students for lecturer {}: {}", maGv, e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Lấy danh sách môn học mà giảng viên đã/đang dạy (không trùng lặp)
+     * @param maGv Mã giảng viên
+     * @return Danh sách mã môn học
+     */
+    public Set<String> getUniqueSubjectsByGiangVien(String maGv) {
+        try {
+            List<String> subjects = lopHocPhanRepository.findDistinctMonHocByGiangVien(maGv);
+            return new HashSet<>(subjects);
+        } catch (Exception e) {
+            log.error("Error getting unique subjects for lecturer {}: {}", maGv, e.getMessage());
+            return new HashSet<>();
+        }
+    }
+/**
+ * Lấy danh sách lớp học phần theo mã giảng viên
+ * @param maGv Mã giảng viên
+ * @return Danh sách lớp học phần
+ */
+            public List<LopHocPhanDTO> getByGiangVien(String maGv) {
+                log.info("Getting classes for lecturer: {}", maGv);
+
+                try {
+                    // Sử dụng repository method với JOIN FETCH để tối ưu hiệu suất
+                    return lopHocPhanRepository.findByGiangVienWithFullInfo(maGv).stream()
+                            .map(this::toDTO)
+                            .collect(Collectors.toList());
+                } catch (Exception e) {
+                    log.error("Error getting classes for lecturer {}: {}", maGv, e.getMessage());
+                    return new ArrayList<>();
+                }
+            }
+
+/**
+ * Lấy danh sách lớp học phần đang hoạt động theo mã giảng viên
+ * @param maGv Mã giảng viên
+ * @return Danh sách lớp học phần đang hoạt động
+ */
+            public List<LopHocPhanDTO> getActiveByGiangVien(String maGv) {
+                log.info("Getting active classes for lecturer: {}", maGv);
+
+                try {
+                    return lopHocPhanRepository.findByGiangVienMaGvAndIsActive(maGv, true).stream()
+                            .map(this::toDTO)
+                            .collect(Collectors.toList());
+                } catch (Exception e) {
+                    log.error("Error getting active classes for lecturer {}: {}", maGv, e.getMessage());
+                    return new ArrayList<>();
+                }
+            }
+
+/**
+ * Lấy danh sách lớp học phần theo giảng viên và học kỳ
+ * @param maGv Mã giảng viên
+ * @param hocKy Học kỳ
+ * @param namHoc Năm học
+ * @return Danh sách lớp học phần
+ */
+            public List<LopHocPhanDTO> getByGiangVienAndSemester(String maGv, String hocKy, String namHoc) {
+                log.info("Getting classes for lecturer {} in semester {} - {}", maGv, hocKy, namHoc);
+
+                try {
+                    List<LopHocPhan> result;
+
+                    if (hocKy != null && namHoc != null) {
+                        result = lopHocPhanRepository.findByGiangVienMaGvAndHocKyAndNamHoc(maGv, hocKy, namHoc);
+                    } else if (hocKy != null) {
+                        result = lopHocPhanRepository.findByGiangVienMaGvAndHocKy(maGv, hocKy);
+                    } else if (namHoc != null) {
+                        result = lopHocPhanRepository.findByGiangVienMaGvAndNamHoc(maGv, namHoc);
+                    } else {
+                        result = lopHocPhanRepository.findByGiangVienMaGv(maGv);
+                    }
+
+                    return result.stream()
+                            .map(this::toDTO)
+                            .collect(Collectors.toList());
+                } catch (Exception e) {
+                    log.error("Error getting classes for lecturer {} in semester: {}", maGv, e.getMessage());
+                    return new ArrayList<>();
+                }
+            }
+
+/**
+ * Tìm kiếm lớp học phần theo giảng viên và từ khóa
+ * @param maGv Mã giảng viên
+ * @param keyword Từ khóa tìm kiếm
+ * @return Danh sách lớp học phần phù hợp
+ */
+            public List<LopHocPhanDTO> searchByGiangVienAndKeyword(String maGv, String keyword) {
+                log.info("Searching classes for lecturer {} with keyword: {}", maGv, keyword);
+
+                try {
+                    if (keyword == null || keyword.trim().isEmpty()) {
+                        return getByGiangVien(maGv);
+                    }
+
+                    return lopHocPhanRepository.searchByGiangVienAndKeyword(maGv, keyword.trim()).stream()
+                            .map(this::toDTO)
+                            .collect(Collectors.toList());
+                } catch (Exception e) {
+                    log.error("Error searching classes for lecturer {} with keyword {}: {}", maGv, keyword, e.getMessage());
+                    return new ArrayList<>();
+                }
+            }
+
 }

@@ -9,190 +9,334 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
+    <!-- Custom CSS -->
     <!-- Custom CSS -->
     <link th:href="@{/css/common.css}" rel="stylesheet">
     <link th:href="@{/css/sidebar.css}" rel="stylesheet">
     <link th:href="@{/css/lecturer.css}" rel="stylesheet">
+
+    <style>
+        .lecturer-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 15px;
+        }
+
+        .class-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .class-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .class-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea20, #764ba220);
+            border-radius: 0 15px 0 50px;
+        }
+
+        .class-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .class-header {
+            margin-bottom: 1rem;
+        }
+
+        .class-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+
+        .class-subtitle {
+            color: #6c757d;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .class-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #495057;
+        }
+
+        .info-item i {
+            width: 20px;
+            color: #6c757d;
+            margin-right: 0.5rem;
+        }
+
+        .class-stats {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .filter-section {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #dee2e6;
+        }
+
+        .semester-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 0.8rem;
+            border-radius: 15px;
+            padding: 0.3rem 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-top: 3px solid #667eea;
+        }
+
+        .summary-card h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-card p {
+            color: #6c757d;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body>
-<div class="main-wrapper">
-    <!-- Include Sidebar Component -->
-    <div th:replace="~{components/sidebar :: sidebar}"></div>
+<!-- Sidebar -->
+<div th:replace="~{components/sidebar :: sidebar}"></div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Header -->
-        <div class="header">
-            <div class="header-content">
-                <div class="header-left">
-                    <button class="sidebar-toggle" id="sidebarToggle">
+<!-- Main Content -->
+<div class="main-content">
+    <!-- Top Header -->
+    <div class="top-header">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-link sidebar-toggle p-0 me-3">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <h1 class="page-title">
-                        <i class="fas fa-chalkboard me-2"></i>Lớp học của tôi
-                    </h1>
+                    <h4 class="mb-0">Lớp học của tôi</h4>
                 </div>
-                <div class="header-right">
-                    <div class="semester-info">
-                        <select class="form-select" id="semesterSelect">
-                            <option value="2024-2025-1" selected>Học kỳ 1 - Năm học 2024-2025</option>
-                            <option value="2024-2025-2">Học kỳ 2 - Năm học 2024-2025</option>
-                        </select>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-muted" th:text="${currentUser?.giangVien?.hoTen ?: 'Giảng viên'}">Giảng viên</span>
+                    <a href="/logout" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i>Đăng xuất
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Content -->
+    <div class="container-fluid">
+        <!-- Header Section -->
+        <div class="lecturer-header">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="mb-2">
+                            <i class="fas fa-chalkboard me-2"></i>
+                            Lớp học của tôi
+                        </h2>
+                        <p class="mb-0 opacity-75">
+                            Quản lý và theo dõi các lớp học phần mà bạn đang giảng dạy
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="d-flex flex-column align-items-md-end">
+                            <div class="d-flex gap-2 mb-2">
+                                <button class="btn btn-outline-light btn-sm" onclick="refreshData()" id="refreshBtn">
+                                    <i class="fas fa-sync-alt me-1"></i>Làm mới
+                                </button>
+                                <button class="btn btn-outline-light btn-sm" onclick="exportClassesData()">
+                                    <i class="fas fa-download me-1"></i>Xuất Excel
+                                </button>
+                            </div>
+                            <span class="badge semester-badge mb-2">
+                                    Học kỳ <span id="currentSemester">I</span> - Năm học <span id="currentYear">2024-2025</span>
+                                </span>
+                            <small class="opacity-75">
+                                Cập nhật: <span id="lastUpdate"></span>
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Content -->
-        <div class="content">
-            <!-- Summary Stats -->
-            <div class="row mb-4">
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="stats-card primary">
-                        <div class="stats-header">
-                            <div class="stats-icon">
-                                <i class="fas fa-chalkboard"></i>
-                            </div>
-                        </div>
-                        <div class="stats-body">
-                            <h3 class="stats-number" id="totalClasses">0</h3>
-                            <p class="stats-label">Tổng số lớp</p>
-                        </div>
-                    </div>
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card">
+                <h3 id="totalClasses">0</h3>
+                <p>Tổng số lớp</p>
+            </div>
+            <div class="summary-card">
+                <h3 id="totalStudents">0</h3>
+                <p>Tổng sinh viên</p>
+            </div>
+            <div class="summary-card">
+                <h3 id="activeClasses">0</h3>
+                <p>Lớp đang hoạt động</p>
+            </div>
+            <div class="summary-card">
+                <h3 id="totalSubjects">0</h3>
+                <p>Môn học</p>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Học kỳ:</label>
+                    <select class="form-select" id="semesterFilter">
+                        <option value="">Tất cả học kỳ</option>
+                        <option value="1">Học kỳ I</option>
+                        <option value="2">Học kỳ II</option>
+                        <option value="3">Học kỳ hè</option>
+                    </select>
                 </div>
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="stats-card success">
-                        <div class="stats-header">
-                            <div class="stats-icon">
-                                <i class="fas fa-user-graduate"></i>
-                            </div>
-                        </div>
-                        <div class="stats-body">
-                            <h3 class="stats-number" id="totalStudents">0</h3>
-                            <p class="stats-label">Tổng sinh viên</p>
-                        </div>
-                    </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Năm học:</label>
+                    <select class="form-select" id="yearFilter">
+                        <option value="">Tất cả năm học</option>
+                        <option value="2024-2025">2024-2025</option>
+                        <option value="2023-2024">2023-2024</option>
+                        <option value="2022-2023">2022-2023</option>
+                    </select>
                 </div>
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="stats-card warning">
-                        <div class="stats-header">
-                            <div class="stats-icon">
-                                <i class="fas fa-calendar-check"></i>
-                            </div>
-                        </div>
-                        <div class="stats-body">
-                            <h3 class="stats-number" id="classesToday">0</h3>
-                            <p class="stats-label">Lớp hôm nay</p>
-                        </div>
-                    </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Trạng thái:</label>
+                    <select class="form-select" id="statusFilter">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="true">Đang hoạt động</option>
+                        <option value="false">Tạm dừng</option>
+                    </select>
                 </div>
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="stats-card info">
-                        <div class="stats-header">
-                            <div class="stats-icon">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                        </div>
-                        <div class="stats-body">
-                            <h3 class="stats-number" id="avgAttendance">0%</h3>
-                            <p class="stats-label">Tỷ lệ điểm danh TB</p>
-                        </div>
-                    </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Tìm kiếm:</label>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Tên môn học, mã lớp...">
                 </div>
             </div>
-
-            <!-- Filter Section -->
-            <div class="row mb-4">
+            <div class="row mt-3">
                 <div class="col-12">
-                    <div class="filter-card">
-                        <div class="filter-header">
-                            <h5><i class="fas fa-filter me-2"></i>Bộ lọc</h5>
-                        </div>
-                        <div class="filter-body">
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <label for="statusFilter" class="form-label">Trạng thái:</label>
-                                    <select class="form-select" id="statusFilter">
-                                        <option value="">Tất cả</option>
-                                        <option value="active" selected>Đang hoạt động</option>
-                                        <option value="inactive">Tạm dừng</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="subjectFilter" class="form-label">Môn học:</label>
-                                    <select class="form-select" id="subjectFilter">
-                                        <option value="">Tất cả môn học</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="dayFilter" class="form-label">Ngày học:</label>
-                                    <select class="form-select" id="dayFilter">
-                                        <option value="">Tất cả</option>
-                                        <option value="2">Thứ 2</option>
-                                        <option value="3">Thứ 3</option>
-                                        <option value="4">Thứ 4</option>
-                                        <option value="5">Thứ 5</option>
-                                        <option value="6">Thứ 6</option>
-                                        <option value="7">Thứ 7</option>
-                                        <option value="8">Chủ nhật</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="searchInput" class="form-label">Tìm kiếm:</label>
-                                    <input type="text" class="form-control" id="searchInput" placeholder="Tìm theo tên môn, mã lớp...">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <button class="btn btn-primary me-2" onclick="applyFilters()">
+                        <i class="fas fa-search me-1"></i>Lọc kết quả
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                        <i class="fas fa-times me-1"></i>Xóa bộ lọc
+                    </button>
                 </div>
             </div>
+        </div>
 
-            <!-- Classes Grid -->
-            <div class="row" id="classesContainer">
-                <!-- Classes will be loaded here -->
-                <div class="col-12 text-center py-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Đang tải...</span>
-                    </div>
-                    <p class="mt-3 text-muted">Đang tải dữ liệu lớp học...</p>
-                </div>
-            </div>
+        <!-- Classes Grid -->
+        <div class="class-grid" id="classesGrid">
+            <!-- Classes will be loaded here -->
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <i class="fas fa-chalkboard"></i>
+            <h4>Không có lớp học nào</h4>
+            <p>Hiện tại bạn chưa được phân công giảng dạy lớp học nào hoặc không có lớp nào phù hợp với bộ lọc.</p>
         </div>
     </div>
 </div>
 
-<!-- Class Detail Modal -->
-<div class="modal fade" id="classDetailModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-info-circle me-2"></i>Thông tin chi tiết lớp học
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="classDetailContent">
-                <!-- Detail content will be loaded here -->
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Attendance Modal -->
-<div class="modal fade" id="attendanceModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-user-check me-2"></i>Điểm danh nhanh
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="attendanceContent">
-                <!-- Attendance content will be loaded here -->
-            </div>
-        </div>
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Đang tải...</span>
     </div>
 </div>
 
@@ -200,456 +344,717 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Custom JS -->
 <script th:src="@{/js/sidebar.js}"></script>
-<script th:src="@{/js/lecturer/lophoc.js}"></script>
-
 <script>
-    // Main JavaScript for Classes Management
+
+// Global variables
+    let allClasses = [];
+    let filteredClasses = [];
+    let currentUser = null;
+
+    // Configuration
+    const CONFIG = {
+        API_ENDPOINTS: {
+            CLASSES: '/api/lecturer/lophoc',
+            STATISTICS: '/api/lecturer/statistics'
+        },
+        DEBOUNCE_DELAY: 300,
+        NOTIFICATION_DURATION: 5000,
+        REFRESH_INTERVAL: 5 * 60 * 1000 // 5 minutes
+    };
+
+    // Initialize page when DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize page
         initializePage();
-
-        // Load classes data
-        loadClasses();
-
-        // Setup event listeners
-        setupEventListeners();
     });
 
+    /**
+     * Initialize page components
+     */
     function initializePage() {
-        console.log('📚 Initializing Classes Management page...');
-    }
-
-    function setupEventListeners() {
-        // Filter changes
-        document.getElementById('semesterSelect').addEventListener('change', loadClasses);
-        document.getElementById('statusFilter').addEventListener('change', loadClasses);
-        document.getElementById('subjectFilter').addEventListener('change', loadClasses);
-        document.getElementById('dayFilter').addEventListener('change', loadClasses);
-
-        // Search input
-        let searchTimeout;
-        document.getElementById('searchInput').addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(loadClasses, 500);
-        });
-    }
-
-    function loadClasses() {
-        const container = document.getElementById('classesContainer');
-
-        // Show loading
-        container.innerHTML = `
-        <div class="col-12 text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Đang tải...</span>
-            </div>
-            <p class="mt-3 text-muted">Đang tải dữ liệu lớp học...</p>
-        </div>
-    `;
-
-        // Simulate API call - Replace with actual API endpoint
-        setTimeout(() => {
-            const mockClasses = generateMockClasses();
-            displayClasses(mockClasses);
-            updateStats(mockClasses);
-        }, 1000);
-    }
-
-    function generateMockClasses() {
-        return [
-            {
-                maLhp: 'CS101-01',
-                tenMonHoc: 'Lập trình cơ sở',
-                maMonHoc: 'CS101',
-                nhom: 1,
-                soSinhVien: 45,
-                soTinChi: 3,
-                phongHoc: 'A101',
-                thoiGian: '07:30 - 09:30',
-                thu: 'Thứ 2, Thứ 4',
-                trangThai: 'active',
-                tyLeDiemDanh: 85.5
-            },
-            {
-                maLhp: 'CS102-02',
-                tenMonHoc: 'Cấu trúc dữ liệu',
-                maMonHoc: 'CS102',
-                nhom: 2,
-                soSinhVien: 38,
-                soTinChi: 3,
-                phongHoc: 'B205',
-                thoiGian: '09:30 - 11:30',
-                thu: 'Thứ 3, Thứ 5',
-                trangThai: 'active',
-                tyLeDiemDanh: 92.1
-            },
-            {
-                maLhp: 'CS201-01',
-                tenMonHoc: 'Cơ sở dữ liệu',
-                maMonHoc: 'CS201',
-                nhom: 1,
-                soSinhVien: 42,
-                soTinChi: 3,
-                phongHoc: 'C301',
-                thoiGian: '13:30 - 15:30',
-                thu: 'Thứ 2, Thứ 4',
-                trangThai: 'active',
-                tyLeDiemDanh: 78.3
-            },
-            {
-                maLhp: 'CS301-01',
-                tenMonHoc: 'Trí tuệ nhân tạo',
-                maMonHoc: 'CS301',
-                nhom: 1,
-                soSinhVien: 35,
-                soTinChi: 3,
-                phongHoc: 'D401',
-                thoiGian: '15:30 - 17:30',
-                thu: 'Thứ 3, Thứ 5',
-                trangThai: 'active',
-                tyLeDiemDanh: 88.7
+        try {
+            // Initialize sidebar with lecturer role
+            if (typeof initializeSidebar === 'function') {
+                initializeSidebar('LECTURER');
             }
-        ];
+
+            // Setup event listeners
+            setupEventListeners();
+
+            // Update current semester/year
+            updateCurrentSemesterYear();
+
+            // Load initial data
+            loadClasses();
+            loadStatistics();
+
+            // Update current date time
+            updateCurrentDateTime();
+
+            // Setup auto refresh
+            setupAutoRefresh();
+
+            console.log('✅ Page initialized successfully');
+
+        } catch (error) {
+            console.error('❌ Error initializing page:', error);
+            showNotification('Lỗi khởi tạo trang: ' + error.message, 'error');
+        }
     }
 
-    function displayClasses(classes) {
-        const container = document.getElementById('classesContainer');
+    /**
+     * Setup event listeners
+     */
+    function setupEventListeners() {
+        // Search input with debounce
+        let searchTimeout;
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    applyFilters();
+                }, CONFIG.DEBOUNCE_DELAY);
+            });
 
-        if (classes.length === 0) {
-            container.innerHTML = `
-            <div class="col-12 text-center py-5">
-                <i class="fas fa-chalkboard fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">Không có lớp học nào</h5>
-                <p class="text-muted">Hiện tại bạn chưa được phân công giảng dạy lớp học nào.</p>
-            </div>
-        `;
+            // Enter key on search
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    applyFilters();
+                }
+            });
+        }
+
+        // Filter dropdowns
+        ['semesterFilter', 'yearFilter', 'statusFilter'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('change', applyFilters);
+            }
+        });
+
+        // Refresh button (if exists)
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                refreshData();
+            });
+        }
+    }
+
+    /**
+     * Load classes data from API
+     */
+    async function loadClasses() {
+        showLoading(true);
+
+        try {
+            console.log('🔄 Loading classes...');
+
+            const response = await fetch(CONFIG.API_ENDPOINTS.CLASSES, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            allClasses = Array.isArray(data) ? data : [];
+            filteredClasses = [...allClasses];
+
+            renderClasses();
+            updateSummaryCards();
+            populateFilterOptions();
+
+            console.log('✅ Loaded classes successfully:', allClasses.length);
+
+        } catch (error) {
+            console.error('❌ Error loading classes:', error);
+            showNotification('Không thể tải danh sách lớp học: ' + error.message, 'error');
+            allClasses = [];
+            filteredClasses = [];
+            renderClasses();
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    /**
+     * Load statistics data from API
+     */
+    async function loadStatistics() {
+        try {
+            console.log('🔄 Loading statistics...');
+
+            const response = await fetch(CONFIG.API_ENDPOINTS.STATISTICS, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const stats = await response.json();
+                updateStatisticsCards(stats);
+                console.log('✅ Statistics loaded successfully');
+            }
+
+        } catch (error) {
+            console.error('❌ Error loading statistics:', error);
+            // Don't show error notification for statistics as it's not critical
+        }
+    }
+
+    /**
+     * Update statistics cards with real data
+     */
+    function updateStatisticsCards(stats) {
+        if (!stats) return;
+
+        const elements = {
+            totalClasses: document.getElementById('totalClasses'),
+            totalStudents: document.getElementById('totalStudents'),
+            activeClasses: document.getElementById('activeClasses'),
+            totalSubjects: document.getElementById('totalSubjects')
+        };
+
+        if (elements.totalClasses) elements.totalClasses.textContent = stats.totalClasses || 0;
+        if (elements.totalStudents) elements.totalStudents.textContent = stats.totalStudents || 0;
+        if (elements.activeClasses) elements.activeClasses.textContent = stats.activeClasses || 0;
+        if (elements.totalSubjects) elements.totalSubjects.textContent = stats.uniqueSubjects || 0;
+    }
+
+    /**
+     * Populate filter options based on loaded data
+     */
+    function populateFilterOptions() {
+        if (allClasses.length === 0) return;
+
+        // Populate semester options
+        const semesters = [...new Set(allClasses.map(cls => cls.hocKy).filter(Boolean))].sort();
+        const semesterFilter = document.getElementById('semesterFilter');
+        if (semesterFilter) {
+            const currentOptions = Array.from(semesterFilter.options).map(opt => opt.value);
+            semesters.forEach(semester => {
+                if (!currentOptions.includes(semester)) {
+                    const option = document.createElement('option');
+                    option.value = semester;
+                    option.textContent = `Học kỳ ${semester}`;
+                    semesterFilter.appendChild(option);
+                }
+            });
+        }
+
+        // Populate year options
+        const years = [...new Set(allClasses.map(cls => cls.namHoc).filter(Boolean))].sort().reverse();
+        const yearFilter = document.getElementById('yearFilter');
+        if (yearFilter) {
+            const currentOptions = Array.from(yearFilter.options).map(opt => opt.value);
+            years.forEach(year => {
+                if (!currentOptions.includes(year)) {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    yearFilter.appendChild(option);
+                }
+            });
+        }
+    }
+
+    /**
+     * Render classes grid
+     */
+    function renderClasses() {
+        const grid = document.getElementById('classesGrid');
+        const emptyState = document.getElementById('emptyState');
+
+        if (!grid || !emptyState) return;
+
+        if (filteredClasses.length === 0) {
+            grid.style.display = 'none';
+            emptyState.style.display = 'block';
             return;
         }
 
-        let html = '';
-        classes.forEach(cls => {
-            const attendanceClass = getAttendanceClass(cls.tyLeDiemDanh);
-            const statusBadge = cls.trangThai === 'active' ?
-                '<span class="badge bg-success">Đang hoạt động</span>' :
-                '<span class="badge bg-secondary">Tạm dừng</span>';
+        grid.style.display = 'grid';
+        emptyState.style.display = 'none';
 
-            html += `
-            <div class="col-lg-6 col-xl-4 mb-4">
-                <div class="class-info-card">
-                    <div class="class-header">
-                        <div class="class-title">${cls.tenMonHoc}</div>
-                        <div class="class-subtitle">${cls.maLhp} - Nhóm ${cls.nhom}</div>
-                    </div>
+        grid.innerHTML = filteredClasses.map(cls => createClassCard(cls)).join('');
 
-                    <div class="card-body p-3">
-                        <div class="class-details mb-3">
-                            <div class="detail-item">
-                                <i class="fas fa-code me-2"></i>
-                                <span>Mã môn: ${cls.maMonHoc}</span>
-                            </div>
-                            <div class="detail-item">
-                                <i class="fas fa-users me-2"></i>
-                                <span>${cls.soSinhVien} sinh viên</span>
-                            </div>
-                            <div class="detail-item">
-                                <i class="fas fa-clock me-2"></i>
-                                <span>${cls.thoiGian}</span>
-                            </div>
-                            <div class="detail-item">
-                                <i class="fas fa-calendar me-2"></i>
-                                <span>${cls.thu}</span>
-                            </div>
-                            <div class="detail-item">
-                                <i class="fas fa-door-open me-2"></i>
-                                <span>Phòng ${cls.phongHoc}</span>
-                            </div>
-                        </div>
+        // Add click events to class cards
+        grid.querySelectorAll('.class-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const classId = this.dataset.classId;
+                viewClassDetails(classId);
+            });
+        });
+    }
 
-                        <div class="class-stats">
-                            <div class="row g-2 mb-3">
-                                <div class="col-6">
-                                    <div class="class-stat">
-                                        <div class="stat-value">${cls.soTinChi}</div>
-                                        <div class="stat-description">Số tín chỉ</div>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="class-stat">
-                                        <div class="stat-value attendance-rate ${attendanceClass}">
-                                            ${cls.tyLeDiemDanh}%
-                                        </div>
-                                        <div class="stat-description">Tỷ lệ điểm danh</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+    /**
+     * Create HTML for a class card
+     */
+    function createClassCard(cls) {
+        const statusClass = cls.isActive ? 'bg-success' : 'bg-secondary';
+        const statusText = cls.isActive ? 'Hoạt động' : 'Tạm dừng';
+        const statusColor = cls.isActive ? 'text-success' : 'text-secondary';
+        const statusLabel = cls.isActive ? 'Đang giảng dạy' : 'Đã kết thúc';
 
-                        <div class="d-flex justify-content-between align-items-center">
-                            ${statusBadge}
-                            <div class="class-actions">
-                                <button class="btn btn-sm btn-outline-primary me-1"
-                                        onclick="viewClassDetail('${cls.maLhp}')"
-                                        title="Xem chi tiết">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-primary me-1"
-                                        onclick="quickAttendance('${cls.maLhp}')"
-                                        title="Điểm danh nhanh">
-                                    <i class="fas fa-user-check"></i>
-                                </button>
-                                <div class="btn-group">
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                                            data-bs-toggle="dropdown">
-                                        <i class="fas fa-ellipsis-v"></i>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="/lecturer/danhsach-sinhvien?class=${cls.maLhp}">
-                                            <i class="fas fa-list me-2"></i>Danh sách SV
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="/lecturer/lichsu-diemdanh?class=${cls.maLhp}">
-                                            <i class="fas fa-history me-2"></i>Lịch sử điểm danh
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="/lecturer/baocao-diemdanh?class=${cls.maLhp}">
-                                            <i class="fas fa-chart-line me-2"></i>Báo cáo
-                                        </a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        return `
+        <div class="class-card" data-class-id="${cls.maLhp}">
+            <div class="class-header">
+                <div class="class-title">${cls.tenMonHoc || 'Tên môn học'}</div>
+                <div class="class-subtitle">
+                    ${cls.maLhp} - Nhóm ${cls.nhom || 1}
+                    <span class="status-badge ms-2 ${statusClass}">
+                        ${statusText}
+                    </span>
                 </div>
             </div>
-        `;
+
+            <div class="class-info">
+                <div class="info-item">
+                    <i class="fas fa-code"></i>
+                    <span>Mã môn: <strong>${cls.maMh || 'N/A'}</strong></span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-users"></i>
+                    <span>Sinh viên: <strong>${cls.soLuongSinhVien || 0}</strong></span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Số tín chỉ: <strong>${cls.soTinChi || 0}</strong></span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-calendar"></i>
+                    <span>Học kỳ ${cls.hocKy || 'N/A'} - ${cls.namHoc || 'N/A'}</span>
+                </div>
+            </div>
+
+            <div class="class-stats">
+                <div class="stat-row">
+                    <span class="stat-label">Mã lớp học phần:</span>
+                    <span class="stat-value">${cls.maLhp}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Trạng thái:</span>
+                    <span class="stat-value ${statusColor}">
+                        ${statusLabel}
+                    </span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Nhóm lớp:</span>
+                    <span class="stat-value">Nhóm ${cls.nhom || 1}</span>
+                </div>
+            </div>
+        </div>
+    `;
+    }
+
+    /**
+     * Apply filters to classes
+     */
+    function applyFilters() {
+        const semester = document.getElementById('semesterFilter')?.value || '';
+        const year = document.getElementById('yearFilter')?.value || '';
+        const status = document.getElementById('statusFilter')?.value || '';
+        const search = document.getElementById('searchInput')?.value.toLowerCase().trim() || '';
+
+        filteredClasses = allClasses.filter(cls => {
+            // Semester filter
+            if (semester && cls.hocKy !== semester) return false;
+
+            // Year filter
+            if (year && cls.namHoc !== year) return false;
+
+            // Status filter
+            if (status !== '' && cls.isActive.toString() !== status) return false;
+
+            // Search filter
+            if (search) {
+                const searchableText = [
+                    cls.tenMonHoc,
+                    cls.maMh,
+                    cls.maLhp
+                ].filter(Boolean).join(' ').toLowerCase();
+
+                if (!searchableText.includes(search)) return false;
+            }
+
+            return true;
         });
 
-        container.innerHTML = html;
+        renderClasses();
+        updateSummaryCards();
+
+        console.log(`🔍 Filtered ${filteredClasses.length}/${allClasses.length} classes`);
     }
 
-    function getAttendanceClass(rate) {
-        if (rate >= 90) return 'rate-excellent';
-        if (rate >= 80) return 'rate-good';
-        if (rate >= 70) return 'rate-average';
-        return 'rate-poor';
+    /**
+     * Clear all filters
+     */
+    function clearFilters() {
+        const filterElements = [
+            'semesterFilter',
+            'yearFilter',
+            'statusFilter',
+            'searchInput'
+        ];
+
+        filterElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.value = '';
+            }
+        });
+
+        filteredClasses = [...allClasses];
+        renderClasses();
+        updateSummaryCards();
+
+        console.log('🗑️ Filters cleared');
     }
 
-    function updateStats(classes) {
-        const totalClasses = classes.length;
-        const totalStudents = classes.reduce((sum, cls) => sum + cls.soSinhVien, 0);
-        const classesToday = classes.filter(cls => isToday(cls.thu)).length;
-        const avgAttendance = classes.length > 0 ?
-            (classes.reduce((sum, cls) => sum + cls.tyLeDiemDanh, 0) / classes.length).toFixed(1) : 0;
+    /**
+     * Update summary cards based on filtered data
+     */
+    function updateSummaryCards() {
+        const totalClasses = filteredClasses.length;
+        const totalStudents = filteredClasses.reduce((sum, cls) => sum + (cls.soLuongSinhVien || 0), 0);
+        const activeClasses = filteredClasses.filter(cls => cls.isActive).length;
+        const uniqueSubjects = new Set(filteredClasses.map(cls => cls.maMh)).size;
 
-        document.getElementById('totalClasses').textContent = totalClasses;
-        document.getElementById('totalStudents').textContent = totalStudents;
-        document.getElementById('classesToday').textContent = classesToday;
-        document.getElementById('avgAttendance').textContent = avgAttendance + '%';
-    }
-
-    function isToday(thuHoc) {
-        const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
-        const todayMap = {
-            1: 'Thứ 2', 2: 'Thứ 3', 3: 'Thứ 4', 4: 'Thứ 5',
-            5: 'Thứ 6', 6: 'Thứ 7', 0: 'Chủ nhật'
+        const elements = {
+            totalClasses: document.getElementById('totalClasses'),
+            totalStudents: document.getElementById('totalStudents'),
+            activeClasses: document.getElementById('activeClasses'),
+            totalSubjects: document.getElementById('totalSubjects')
         };
-        return thuHoc.includes(todayMap[today]);
+
+        if (elements.totalClasses) elements.totalClasses.textContent = totalClasses;
+        if (elements.totalStudents) elements.totalStudents.textContent = totalStudents;
+        if (elements.activeClasses) elements.activeClasses.textContent = activeClasses;
+        if (elements.totalSubjects) elements.totalSubjects.textContent = uniqueSubjects;
     }
 
-    function viewClassDetail(maLhp) {
-        const modal = new bootstrap.Modal(document.getElementById('classDetailModal'));
-        const content = document.getElementById('classDetailContent');
+    /**
+     * View class details
+     */
+    function viewClassDetails(classId) {
+        if (!classId) return;
 
-        content.innerHTML = `
-        <div class="text-center py-4">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Đang tải...</span>
-            </div>
-            <p class="mt-3">Đang tải thông tin chi tiết...</p>
+        console.log('📋 Viewing details for class:', classId);
+
+        // Navigate to class details page or show modal
+        // For now, we'll navigate to the class management page
+        window.location.href = `/lecturer/lophoc/${classId}`;
+    }
+
+    /**
+     * Refresh all data
+     */
+    async function refreshData() {
+        console.log('🔄 Refreshing data...');
+
+        showNotification('Đang cập nhật dữ liệu...', 'info');
+
+        try {
+            await Promise.all([
+                loadClasses(),
+                loadStatistics()
+            ]);
+
+            updateCurrentDateTime();
+            showNotification('Dữ liệu đã được cập nhật!', 'success');
+
+        } catch (error) {
+            console.error('❌ Error refreshing data:', error);
+            showNotification('Lỗi khi cập nhật dữ liệu: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Update current semester and year based on current date
+     */
+    function updateCurrentSemesterYear() {
+        const now = new Date();
+        const month = now.getMonth() + 1; // 1-12
+        const year = now.getFullYear();
+
+        let semester, academicYear;
+
+        // Determine semester based on month
+        if (month >= 8 && month <= 12) {
+            semester = "I";
+            academicYear = `${year}-${year + 1}`;
+        } else if (month >= 1 && month <= 5) {
+            semester = "II";
+            academicYear = `${year - 1}-${year}`;
+        } else {
+            semester = "Hè";
+            academicYear = `${year - 1}-${year}`;
+        }
+
+        const semesterElement = document.getElementById('currentSemester');
+        const yearElement = document.getElementById('currentYear');
+
+        if (semesterElement) semesterElement.textContent = semester;
+        if (yearElement) yearElement.textContent = academicYear;
+    }
+
+    /**
+     * Update current date time display
+     */
+    function updateCurrentDateTime() {
+        const now = new Date();
+        const dateStr = now.toLocaleString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        const lastUpdateElement = document.getElementById('lastUpdate');
+        if (lastUpdateElement) {
+            lastUpdateElement.textContent = dateStr;
+        }
+    }
+
+    /**
+     * Setup auto refresh functionality
+     */
+    function setupAutoRefresh() {
+        // Refresh data every 5 minutes
+        setInterval(() => {
+            console.log('🔄 Auto refresh triggered');
+            loadClasses();
+            loadStatistics();
+            updateCurrentDateTime();
+        }, CONFIG.REFRESH_INTERVAL);
+
+        // Update time every minute
+        setInterval(updateCurrentDateTime, 60000);
+    }
+
+    /**
+     * Show/hide loading overlay
+     */
+    function showLoading(show) {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            overlay.style.display = show ? 'flex' : 'none';
+        }
+    }
+
+    /**
+     * Show notification to user
+     */
+    function showNotification(message, type = 'info') {
+        // Remove existing notifications
+        const existingNotifications = document.querySelectorAll('.notification-toast');
+        existingNotifications.forEach(notification => notification.remove());
+
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification-toast alert alert-${getBootstrapClass(type)} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px; max-width: 500px;';
+
+        notification.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-${getIconClass(type)} me-2"></i>
+            <span>${message}</span>
         </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
 
-        modal.show();
+        document.body.appendChild(notification);
 
-        // Simulate API call
+        // Auto remove after specified duration
         setTimeout(() => {
-            content.innerHTML = `
-            <div class="class-detail-content">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6>Thông tin cơ bản</h6>
-                        <table class="table table-sm">
-                            <tr><td><strong>Mã lớp học phần:</strong></td><td>${maLhp}</td></tr>
-                            <tr><td><strong>Môn học:</strong></td><td>Lập trình cơ sở</td></tr>
-                            <tr><td><strong>Nhóm:</strong></td><td>1</td></tr>
-                            <tr><td><strong>Số tín chỉ:</strong></td><td>3</td></tr>
-                            <tr><td><strong>Số sinh viên:</strong></td><td>45</td></tr>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Lịch học</h6>
-                        <table class="table table-sm">
-                            <tr><td><strong>Thời gian:</strong></td><td>07:30 - 09:30</td></tr>
-                            <tr><td><strong>Ngày học:</strong></td><td>Thứ 2, Thứ 4</td></tr>
-                            <tr><td><strong>Phòng học:</strong></td><td>A101</td></tr>
-                            <tr><td><strong>Tỷ lệ điểm danh:</strong></td><td>85.5%</td></tr>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        `;
-        }, 800);
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, CONFIG.NOTIFICATION_DURATION);
     }
 
-    function quickAttendance(maLhp) {
-        const modal = new bootstrap.Modal(document.getElementById('attendanceModal'));
-        const content = document.getElementById('attendanceContent');
-
-        content.innerHTML = `
-        <div class="text-center py-4">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Đang tải...</span>
-            </div>
-            <p class="mt-3">Đang chuẩn bị điểm danh...</p>
-        </div>
-    `;
-
-        modal.show();
-
-        // Simulate loading
-        setTimeout(() => {
-            content.innerHTML = `
-            <div class="quick-attendance-content">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Điểm danh nhanh cho lớp <strong>${maLhp}</strong>
-                </div>
-                <div class="text-center">
-                    <a href="/lecturer/diemdanh-homnay?class=${maLhp}" class="btn btn-primary btn-lg">
-                        <i class="fas fa-camera me-2"></i>Bắt đầu điểm danh
-                    </a>
-                </div>
-            </div>
-        `;
-        }, 800);
+    /**
+     * Get Bootstrap class for notification type
+     */
+    function getBootstrapClass(type) {
+        const typeMap = {
+            'error': 'danger',
+            'success': 'success',
+            'warning': 'warning',
+            'info': 'info'
+        };
+        return typeMap[type] || 'info';
     }
+
+    /**
+     * Get icon class for notification type
+     */
+    function getIconClass(type) {
+        const iconMap = {
+            'error': 'exclamation-triangle',
+            'success': 'check-circle',
+            'warning': 'exclamation-circle',
+            'info': 'info-circle'
+        };
+        return iconMap[type] || 'info-circle';
+    }
+
+    /**
+     * Handle keyboard shortcuts
+     */
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + R for refresh
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+            e.preventDefault();
+            refreshData();
+        }
+
+        // Escape to clear search
+        if (e.key === 'Escape') {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput && searchInput === document.activeElement) {
+                searchInput.value = '';
+                applyFilters();
+            }
+        }
+
+        // Ctrl/Cmd + F to focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            e.preventDefault();
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
+            }
+        }
+    });
+
+    /**
+     * Handle window focus/blur for auto refresh
+     */
+    let isWindowFocused = true;
+
+    window.addEventListener('focus', function() {
+        if (!isWindowFocused) {
+            console.log('🔄 Window focused, refreshing data');
+            refreshData();
+            isWindowFocused = true;
+        }
+    });
+
+    window.addEventListener('blur', function() {
+        isWindowFocused = false;
+    });
+
+    /**
+     * Handle network status changes
+     */
+    window.addEventListener('online', function() {
+        console.log('🌐 Network restored, refreshing data');
+        showNotification('Kết nối mạng đã được khôi phục', 'success');
+        refreshData();
+    });
+
+    window.addEventListener('offline', function() {
+        console.log('📵 Network lost');
+        showNotification('Mất kết nối mạng. Một số tính năng có thể không hoạt động.', 'warning');
+    });
+
+    /**
+     * Utility function to format numbers
+     */
+    function formatNumber(num) {
+        if (num >= 1000000) {
+            return (num / 1000000).toFixed(1) + 'M';
+        } else if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'K';
+        }
+        return num.toString();
+    }
+
+    /**
+     * Utility function to sanitize HTML
+     */
+    function sanitizeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    /**
+     * Export data functionality (optional)
+     */
+    function exportClassesData() {
+        if (filteredClasses.length === 0) {
+            showNotification('Không có dữ liệu để xuất', 'warning');
+            return;
+        }
+
+        try {
+            const csvContent = generateCsvContent(filteredClasses);
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `lop-hoc-${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showNotification('Xuất dữ liệu thành công!', 'success');
+        } catch (error) {
+            console.error('❌ Error exporting data:', error);
+            showNotification('Lỗi khi xuất dữ liệu: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Generate CSV content from classes data
+     */
+    function generateCsvContent(classes) {
+        const headers = [
+            'Mã LHP',
+            'Tên môn học',
+            'Mã môn học',
+            'Nhóm',
+            'Học kỳ',
+            'Năm học',
+            'Số sinh viên',
+            'Số tín chỉ',
+            'Trạng thái'
+        ];
+
+        const rows = classes.map(cls => [
+            cls.maLhp || '',
+            cls.tenMonHoc || '',
+            cls.maMh || '',
+            cls.nhom || '',
+            cls.hocKy || '',
+            cls.namHoc || '',
+            cls.soLuongSinhVien || 0,
+            cls.soTinChi || 0,
+            cls.isActive ? 'Hoạt động' : 'Tạm dừng'
+        ]);
+
+        return [headers, ...rows]
+            .map(row => row.map(field => `"${field}"`).join(','))
+            .join('\n');
+    }
+
+    // Global functions that can be called from HTML
+    window.applyFilters = applyFilters;
+    window.clearFilters = clearFilters;
+    window.refreshData = refreshData;
+    window.exportClassesData = exportClassesData;
+    window.viewClassDetails = viewClassDetails;
 </script>
-
-<style>
-    /* Additional custom styles */
-    .class-info-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .class-info-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    }
-
-    .filter-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        border: 1px solid #f0f0f0;
-    }
-
-    .filter-header {
-        background: #f8f9fa;
-        padding: 1rem 1.5rem;
-        border-bottom: 1px solid #e9ecef;
-        border-radius: 12px 12px 0 0;
-    }
-
-    .filter-body {
-        padding: 1.5rem;
-    }
-
-    .class-details .detail-item {
-        margin-bottom: 0.5rem;
-        font-size: 0.9rem;
-        color: #6c757d;
-    }
-
-    .class-actions .btn {
-        margin-right: 0.25rem;
-    }
-
-    .stats-card {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        border: 1px solid #f0f0f0;
-        transition: transform 0.3s ease;
-    }
-
-    .stats-card:hover {
-        transform: translateY(-3px);
-    }
-
-    .stats-card.primary {
-        border-left: 4px solid #667eea;
-    }
-
-    .stats-card.success {
-        border-left: 4px solid #28a745;
-    }
-
-    .stats-card.warning {
-        border-left: 4px solid #ffc107;
-    }
-
-    .stats-card.info {
-        border-left: 4px solid #17a2b8;
-    }
-
-    .stats-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        color: white;
-        margin-bottom: 1rem;
-    }
-
-    .stats-card.primary .stats-icon {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-    }
-
-    .stats-card.success .stats-icon {
-        background: linear-gradient(135deg, #28a745, #20c997);
-    }
-
-    .stats-card.warning .stats-icon {
-        background: linear-gradient(135deg, #ffc107, #fd7e14);
-    }
-
-    .stats-card.info .stats-icon {
-        background: linear-gradient(135deg, #17a2b8, #6f42c1);
-    }
-
-    .stats-number {
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: #2c3e50;
-        margin: 0;
-    }
-
-    .stats-label {
-        color: #6c757d;
-        font-size: 0.9rem;
-        margin: 0;
-        font-weight: 500;
-    }
-
-    .semester-info .form-select {
-        border: none;
-        background: white;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-    }
-</style>
 </body>
 </html>
