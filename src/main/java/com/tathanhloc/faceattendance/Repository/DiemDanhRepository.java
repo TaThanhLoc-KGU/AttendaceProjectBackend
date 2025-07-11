@@ -168,4 +168,35 @@ public interface DiemDanhRepository extends JpaRepository<DiemDanh, Long> {
         ORDER BY lhp.ma_lhp
         """, nativeQuery = true)
     List<Object[]> findAttendanceStatsByClass(@Param("semesterCode") String semesterCode, @Param("yearCode") String yearCode);
+
+    /**
+     * Tìm điểm danh theo danh sách mã lịch và khoảng thời gian
+     */
+    @Query("SELECT dd FROM DiemDanh dd WHERE dd.lichHoc.maLich IN :maLichList " +
+            "AND (:fromDate IS NULL OR dd.ngayDiemDanh >= :fromDate) " +
+            "AND (:toDate IS NULL OR dd.ngayDiemDanh <= :toDate) " +
+            "ORDER BY dd.ngayDiemDanh DESC, dd.thoiGianVao DESC")
+    List<DiemDanh> findByLichHocMaLichInAndDateRange(@Param("maLichList") List<String> maLichList,
+                                                     @Param("fromDate") LocalDate fromDate,
+                                                     @Param("toDate") LocalDate toDate);
+
+    /**
+     * Tìm điểm danh hôm nay theo mã lịch
+     */
+    @Query("SELECT dd FROM DiemDanh dd WHERE dd.lichHoc.maLich IN :maLichList " +
+            "AND dd.ngayDiemDanh = :today")
+    List<DiemDanh> findTodayAttendanceBySchedules(@Param("maLichList") List<String> maLichList,
+                                                  @Param("today") LocalDate today);
+
+    /**
+     * Đếm điểm danh theo trạng thái trong khoảng thời gian
+     */
+    @Query("SELECT dd.trangThai, COUNT(dd) FROM DiemDanh dd " +
+            "WHERE dd.lichHoc.maLich IN :maLichList " +
+            "AND (:fromDate IS NULL OR dd.ngayDiemDanh >= :fromDate) " +
+            "AND (:toDate IS NULL OR dd.ngayDiemDanh <= :toDate) " +
+            "GROUP BY dd.trangThai")
+    List<Object[]> countAttendanceByStatusAndDateRange(@Param("maLichList") List<String> maLichList,
+                                                       @Param("fromDate") LocalDate fromDate,
+                                                       @Param("toDate") LocalDate toDate);
 }

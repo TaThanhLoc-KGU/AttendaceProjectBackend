@@ -1,19 +1,19 @@
 package com.tathanhloc.faceattendance.Controller;
 
-import com.tathanhloc.faceattendance.DTO.LopHocPhanDTO;
-import com.tathanhloc.faceattendance.Repository.LopHocPhanRepository;
+import com.tathanhloc.faceattendance.DTO.*;
 import com.tathanhloc.faceattendance.Security.CustomUserDetails;
-import com.tathanhloc.faceattendance.Service.LopHocPhanService;
+import com.tathanhloc.faceattendance.Service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -27,7 +27,10 @@ import java.util.stream.Collectors;
 public class LecturerApiController {
 
     private final LopHocPhanService lopHocPhanService;
-    private final LopHocPhanRepository lopHocPhanRepository;
+    private final DangKyHocService dangKyHocService;
+    private final SinhVienService sinhVienService;
+    private final LichHocService lichHocService;
+    private final DiemDanhService diemDanhService;
 
     /**
      * API lấy danh sách lớp học của giảng viên đang đăng nhập
@@ -61,20 +64,45 @@ public class LecturerApiController {
             String maGv = userDetails.getTaiKhoan().getGiangVien().getMaGv();
             log.info("Loading classes for lecturer: {}", maGv);
 
-            List<LopHocPhanDTO> lecturerClasses;
+            // Lấy danh sách lớp học phần - sử dụng method có sẵn
+            List<LopHocPhanDTO> allClasses = lopHocPhanService.getAllWithNames();
 
-            // Sử dụng search nếu có từ khóa
-            if (search != null && !search.trim().isEmpty()) {
-                lecturerClasses = lopHocPhanService.searchByGiangVienAndKeyword(maGv, search);
-            } else {
-                // Sử dụng method tối ưu với semester/year
-                lecturerClasses = lopHocPhanService.getByGiangVienAndSemester(maGv, semester, year);
+            // Lọc theo giảng viên
+            List<LopHocPhanDTO> lecturerClasses = allClasses.stream()
+                    .filter(lhp -> maGv.equals(lhp.getMaGv()))
+                    .collect(Collectors.toList());
+
+            // Áp dụng filter nếu có
+            if (semester != null && !semester.isEmpty()) {
+                lecturerClasses = lecturerClasses.stream()
+                        .filter(lhp -> semester.equals(lhp.getHocKy()))
+                        .collect(Collectors.toList());
             }
 
-            // Áp dụng filter active status nếu có
+            if (year != null && !year.isEmpty()) {
+                lecturerClasses = lecturerClasses.stream()
+                        .filter(lhp -> year.equals(lhp.getNamHoc()))
+                        .collect(Collectors.toList());
+            }
+
             if (isActive != null) {
                 lecturerClasses = lecturerClasses.stream()
                         .filter(lhp -> isActive.equals(lhp.getIsActive()))
+                        .collect(Collectors.toList());
+            }
+
+            // Search filter
+            if (search != null && !search.trim().isEmpty()) {
+                String searchLower = search.toLowerCase().trim();
+                lecturerClasses = lecturerClasses.stream()
+                        .filter(lhp -> {
+                            String searchableText = String.join(" ",
+                                    lhp.getTenMonHoc() != null ? lhp.getTenMonHoc() : "",
+                                    lhp.getMaMh() != null ? lhp.getMaMh() : "",
+                                    lhp.getMaLhp() != null ? lhp.getMaLhp() : ""
+                            ).toLowerCase();
+                            return searchableText.contains(searchLower);
+                        })
                         .collect(Collectors.toList());
             }
 
@@ -104,15 +132,27 @@ public class LecturerApiController {
 
             String maGv = userDetails.getTaiKhoan().getGiangVien().getMaGv();
 
-            // Sử dụng các method service được tối ưu
-            long totalClasses = lopHocPhanService.countByGiangVien(maGv);
-            long activeClasses = lopHocPhanRepository.countByGiangVienMaGvAndIsActive(maGv, true);
-            int totalStudents = lopHocPhanService.countStudentsByGiangVien(maGv);
-            int uniqueSubjects = lopHocPhanService.getUniqueSubjectsByGiangVien(maGv).size();
+            // Lấy danh sách lớp của giảng viên
+            List<LopHocPhanDTO> lecturerClasses = lopHocPhanService.getAllWithNames().stream()
+                    .filter(lhp -> maGv.equals(lhp.getMaGv()))
+                    .collect(Collectors.toList());
+
+            // Tính toán thống kê
+            int totalClasses = lecturerClasses.size();
+            int activeClasses = (int) lecturerClasses.stream()
+                    .filter(lhp -> Boolean.TRUE.equals(lhp.getIsActive()))
+                    .count();
+            int totalStudents = lecturerClasses.stream()
+                    .mapToInt(lhp -> lhp.getSoLuongSinhVien() != null ? lhp.getSoLuongSinhVien() : 0)
+                    .sum();
+            int uniqueSubjects = (int) lecturerClasses.stream()
+                    .map(LopHocPhanDTO::getMaMh)
+                    .distinct()
+                    .count();
 
             LecturerStatisticsDTO statistics = LecturerStatisticsDTO.builder()
-                    .totalClasses((int) totalClasses)
-                    .activeClasses((int) activeClasses)
+                    .totalClasses(totalClasses)
+                    .activeClasses(activeClasses)
                     .totalStudents(totalStudents)
                     .uniqueSubjects(uniqueSubjects)
                     .lecturerName(userDetails.getTaiKhoan().getGiangVien().getHoTen())
@@ -214,5 +254,134 @@ public class LecturerApiController {
 
         public String getLecturerCode() { return lecturerCode; }
         public void setLecturerCode(String lecturerCode) { this.lecturerCode = lecturerCode; }
+    }
+    /**
+     * Trang chi tiết lớp học cụ thể
+     */
+    @GetMapping("/lophoc/{maLhp}")
+    public String chiTietLopHoc(@PathVariable String maLhp,
+                                @AuthenticationPrincipal CustomUserDetails userDetails,
+                                Model model) {
+        if (userDetails == null || !userDetails.isCredentialsNonExpired()) {
+            return "redirect:/?error=not_authenticated";
+        }
+
+        try {
+            // Kiểm tra thông tin giảng viên
+            if (userDetails.getTaiKhoan().getGiangVien() == null) {
+                log.error("User has no lecturer profile: {}", userDetails.getUsername());
+                model.addAttribute("error", "Tài khoản không có thông tin giảng viên");
+                return "lecturer/chitiet-lophoc";
+            }
+
+            String maGv = userDetails.getTaiKhoan().getGiangVien().getMaGv();
+            log.info("Loading class details for lecturer {} and class {}", maGv, maLhp);
+
+            // Lấy thông tin lớp học phần
+            LopHocPhanDTO lopHocPhan = lopHocPhanService.getByMaLhp(maLhp);
+
+            // Kiểm tra quyền truy cập (chỉ giảng viên của lớp mới được xem)
+            if (!maGv.equals(lopHocPhan.getMaGv())) {
+                log.warn("Lecturer {} tried to access class {} which is not theirs", maGv, maLhp);
+                model.addAttribute("error", "Bạn không có quyền truy cập lớp học này");
+                return "lecturer/chitiet-lophoc";
+            }
+
+            // Lấy danh sách sinh viên trong lớp
+            List<DangKyHocDTO> danhSachDangKy = dangKyHocService.getByMaLhp(maLhp);
+            List<SinhVienDTO> danhSachSinhVien = danhSachDangKy.stream()
+                    .map(dk -> sinhVienService.getByMaSv(dk.getMaSv()))
+                    .collect(Collectors.toList());
+
+            // Lấy lịch học của lớp này
+            List<LichHocDTO> lichHocList = lichHocService.getByLopHocPhan(maLhp);
+
+            // Lấy thống kê điểm danh
+            // TODO: Implement thống kê điểm danh theo lớp
+
+            // Thêm vào model
+            model.addAttribute("currentUser", userDetails.getTaiKhoan());
+            model.addAttribute("lopHocPhan", lopHocPhan);
+            model.addAttribute("danhSachSinhVien", danhSachSinhVien);
+            model.addAttribute("lichHocList", lichHocList);
+            model.addAttribute("soLuongSinhVien", danhSachSinhVien.size());
+
+            log.info("✅ Class details loaded for {}: {} students", maLhp, danhSachSinhVien.size());
+            return "lecturer/chitiet-lophoc";
+
+        } catch (Exception e) {
+            log.error("❌ Error loading class details for {}", maLhp, e);
+            model.addAttribute("error", "Không thể tải thông tin lớp học: " + e.getMessage());
+            return "lecturer/chitiet-lophoc";
+        }
+    }
+    /**
+     * API lấy điểm danh theo lớp học phần
+     */
+    @GetMapping("/api/diemdanh/{maLhp}")
+    @ResponseBody
+    public ResponseEntity<List<DiemDanhDTO>> getDiemDanhByClass(
+            @PathVariable String maLhp,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        if (userDetails == null || userDetails.getTaiKhoan().getGiangVien() == null) {
+            return ResponseEntity.status(403).build();
+        }
+
+        try {
+            String maGv = userDetails.getTaiKhoan().getGiangVien().getMaGv();
+
+            // Kiểm tra quyền truy cập
+            LopHocPhanDTO lopHocPhan = lopHocPhanService.getByMaLhp(maLhp);
+            if (!maGv.equals(lopHocPhan.getMaGv())) {
+                return ResponseEntity.status(403).build();
+            }
+
+            // Lấy điểm danh theo khoảng thời gian
+            List<DiemDanhDTO> diemDanhList = diemDanhService.getByLopHocPhanAndDateRange(maLhp, fromDate, toDate);
+
+            return ResponseEntity.ok(diemDanhList);
+
+        } catch (Exception e) {
+            log.error("Error getting attendance for class {}: {}", maLhp, e.getMessage());
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    /**
+     * API lấy thống kê điểm danh theo lớp
+     */
+    @GetMapping("/api/diemdanh/{maLhp}/stats")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getAttendanceStats(
+            @PathVariable String maLhp,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        if (userDetails == null || userDetails.getTaiKhoan().getGiangVien() == null) {
+            return ResponseEntity.status(403).build();
+        }
+
+        try {
+            String maGv = userDetails.getTaiKhoan().getGiangVien().getMaGv();
+
+            // Kiểm tra quyền truy cập
+            LopHocPhanDTO lopHocPhan = lopHocPhanService.getByMaLhp(maLhp);
+            if (!maGv.equals(lopHocPhan.getMaGv())) {
+                return ResponseEntity.status(403).build();
+            }
+
+            // Lấy thống kê điểm danh
+            Map<String, Object> stats = diemDanhService.getAttendanceStatsByClass(maLhp, fromDate, toDate);
+
+            return ResponseEntity.ok(stats);
+
+        } catch (Exception e) {
+            log.error("Error getting attendance stats for class {}: {}", maLhp, e.getMessage());
+            return ResponseEntity.status(500).build();
+        }
     }
 }

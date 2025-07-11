@@ -10,183 +10,536 @@
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Custom CSS -->
-    <!-- Custom CSS -->
-    <link th:href="@{/css/common.css}" rel="stylesheet">
     <link th:href="@{/css/sidebar.css}" rel="stylesheet">
     <link th:href="@{/css/lecturer.css}" rel="stylesheet">
 
     <style>
-        .lecturer-header {
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            --card-shadow-hover: 0 20px 60px rgba(0, 0, 0, 0.15);
+            --border-radius: 20px;
+            --text-primary: #2d3748;
+            --text-secondary: #718096;
+            --bg-light: #f7fafc;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .main-content {
+            padding: 0;
+            background: transparent;
+        }
+
+        .modern-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
             padding: 2rem 0;
-            margin-bottom: 2rem;
-            border-radius: 15px;
+            margin: 2rem 2rem 0 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
         }
 
-        .class-grid {
+        .header-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .header-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: white !important;
+        }
+
+        .header-subtitle {
+            font-size: 1rem;
+            font-weight: 400;
+            margin-bottom: 0;
+            color: white !important;
+        }
+
+        .header-actions {
+            justify-content: flex-end;
+        }
+
+        .btn-modern {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white !important;
+            padding: 0.6rem 1.2rem;
+            border-radius: 25px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-modern:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white !important;
+            transform: translateY(-2px);
+        }
+
+        .semester-info {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.75rem 1.25rem;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .semester-info * {
+            color: white !important;
+        }
+
+        @media (max-width: 768px) {
+            .modern-header {
+                margin: 1rem;
+                padding: 1.5rem 0;
+            }
+
+            .header-actions {
+                justify-content: center !important;
+            }
+
+            .d-flex.flex-column.align-items-end {
+                align-items: center !important;
+            }
+
+            .header-title, .header-subtitle {
+                text-align: center;
+            }
+        }
+        /* Stats Cards */
+        .stats-container {
+            margin: 2rem;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1.5rem;
-            margin-top: 1.5rem;
         }
 
-        .class-card {
+        .stat-card {
             background: white;
-            border-radius: 15px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            border-left: 4px solid #667eea;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            box-shadow: var(--card-shadow);
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
         }
 
-        .class-card::before {
+        .stat-card::before {
             content: '';
             position: absolute;
             top: 0;
+            left: 0;
             right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+        }
+
+        .stat-card:nth-child(2)::before {
+            background: var(--secondary-gradient);
+        }
+
+        .stat-card:nth-child(3)::before {
+            background: var(--success-gradient);
+        }
+
+        .stat-card:nth-child(4)::before {
+            background: var(--warning-gradient);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .stat-icon {
             width: 60px;
             height: 60px;
-            background: linear-gradient(135deg, #667eea20, #764ba220);
-            border-radius: 0 15px 0 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 1rem;
+            background: var(--primary-gradient);
+        }
+
+        .stat-card:nth-child(2) .stat-icon {
+            background: var(--secondary-gradient);
+        }
+
+        .stat-card:nth-child(3) .stat-icon {
+            background: var(--success-gradient);
+        }
+
+        .stat-card:nth-child(4) .stat-icon {
+            background: var(--warning-gradient);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        /* Filter Section */
+        .filter-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin: 2rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .filter-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-filter {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-filter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+
+        .btn-clear {
+            background: #f1f5f9;
+            border: 2px solid #e2e8f0;
+            color: var(--text-secondary);
+            padding: 0.75rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-clear:hover {
+            background: #e2e8f0;
+            border-color: #cbd5e0;
+            color: var(--text-primary);
+        }
+
+        /* Classes Grid */
+        .classes-container {
+            margin: 2rem;
+        }
+
+        .classes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 2rem;
+        }
+
+        .class-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 0;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+            position: relative;
         }
 
         .class-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            transform: translateY(-8px);
+            box-shadow: var(--card-shadow-hover);
         }
 
-        .class-header {
-            margin-bottom: 1rem;
+        .class-card-header {
+            padding: 1.5rem;
+            background: var(--primary-gradient);
+            color: white;
+            position: relative;
+        }
+
+        .class-card-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .class-title {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 600;
-            color: #2c3e50;
             margin-bottom: 0.5rem;
-            line-height: 1.3;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
-        .class-subtitle {
-            color: #6c757d;
-            font-size: 0.9rem;
+        .class-code {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
             font-weight: 500;
+            display: inline-block;
         }
 
-        .class-info {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
+        .class-card-body {
+            padding: 1.5rem;
+        }
+
+        .class-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .info-item {
             display: flex;
             align-items: center;
-            font-size: 0.9rem;
-            color: #495057;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-light);
+            border-radius: 12px;
         }
 
-        .info-item i {
-            width: 20px;
-            color: #6c757d;
-            margin-right: 0.5rem;
-        }
-
-        .class-stats {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-
-        .stat-row {
+        .info-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem;
+            justify-content: center;
+            background: var(--primary-gradient);
+            color: white;
+            font-size: 0.9rem;
         }
 
-        .stat-row:last-child {
-            margin-bottom: 0;
+        .info-content {
+            flex: 1;
         }
 
-        .stat-label {
-            font-size: 0.85rem;
-            color: #6c757d;
+        .info-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 0.2rem;
         }
 
-        .stat-value {
+        .info-value {
             font-weight: 600;
-            color: #2c3e50;
+            color: var(--text-primary);
+            font-size: 0.95rem;
         }
 
-        .filter-section {
-            background: white;
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        .class-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
         }
 
+        .status-active {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+        }
+
+        .status-inactive {
+            background: #f1f5f9;
+            color: var(--text-secondary);
+            border: 2px solid #e2e8f0;
+        }
+
+        /* Empty State */
         .empty-state {
             text-align: center;
-            padding: 3rem;
-            color: #6c757d;
-        }
-
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: #dee2e6;
-        }
-
-        .semester-badge {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            font-size: 0.8rem;
-            border-radius: 15px;
-            padding: 0.3rem 0.8rem;
-            font-weight: 500;
-        }
-
-        .status-badge {
-            font-size: 0.75rem;
-            padding: 0.3rem 0.6rem;
-            border-radius: 10px;
-            font-weight: 500;
-        }
-
-        .summary-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .summary-card {
+            padding: 4rem 2rem;
+            margin: 2rem;
             background: white;
-            border-radius: 10px;
-            padding: 1.5rem;
-            text-align: center;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+        }
+
+        .empty-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--bg-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            font-size: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .empty-description {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Top Header Override */
+        .top-header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 0;
+            margin: 0 2rem 0 2rem;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            border-top: 3px solid #667eea;
         }
 
-        .summary-card h3 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #667eea;
-            margin-bottom: 0.5rem;
+        .top-header h4 {
+            color: var(--text-primary);
+            font-weight: 600;
         }
 
-        .summary-card p {
-            color: #6c757d;
-            margin: 0;
-            font-size: 0.9rem;
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .modern-header {
+                margin: 1rem;
+                padding: 1.5rem 0;
+            }
+
+            .header-title {
+                font-size: 1.5rem;
+                text-align: center;
+            }
+
+            .header-subtitle {
+                text-align: center;
+                margin-bottom: 1rem;
+            }
+
+            .header-actions {
+                justify-content: center;
+                margin-bottom: 1rem !important;
+            }
+
+            .semester-info {
+                margin-top: 0 !important;
+            }
+
+            .stats-container,
+            .filter-card,
+            .classes-container {
+                margin: 1rem;
+            }
+
+            .classes-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .class-info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .text-md-end {
+                text-align: center !important;
+            }
+        }
+
+        /* Animation */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
@@ -204,11 +557,14 @@
                     <button class="btn btn-link sidebar-toggle p-0 me-3">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <h4 class="mb-0">Lớp học của tôi</h4>
+                    <h4 class="mb-0">
+                        <i class="fas fa-graduation-cap me-2" style="color: #667eea;"></i>
+                        Lớp học của tôi
+                    </h4>
                 </div>
                 <div class="d-flex align-items-center gap-3">
                     <span class="text-muted" th:text="${currentUser?.giangVien?.hoTen ?: 'Giảng viên'}">Giảng viên</span>
-                    <a href="/logout" class="btn btn-outline-danger btn-sm">
+                    <a href="/logout" class="btn btn-outline-danger btn-sm" style="border-radius: 20px;">
                         <i class="fas fa-sign-out-alt me-1"></i>Đăng xuất
                     </a>
                 </div>
@@ -216,131 +572,158 @@
         </div>
     </div>
 
-    <!-- Page Content -->
-    <div class="container-fluid">
-        <!-- Header Section -->
-        <div class="lecturer-header">
-            <div class="container-fluid">
+    <!-- Modern Header -->
+    <div class="modern-header fade-in">
+        <div class="container-fluid">
+            <div class="header-content">
                 <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h2 class="mb-2">
-                            <i class="fas fa-chalkboard me-2"></i>
+                    <div class="col-md-6">
+                        <h1 class="header-title text-white">
+                            <i class="fas fa-chalkboard-teacher me-2"></i>
                             Lớp học của tôi
-                        </h2>
-                        <p class="mb-0 opacity-75">
+                        </h1>
+                        <p class="header-subtitle text-white">
                             Quản lý và theo dõi các lớp học phần mà bạn đang giảng dạy
                         </p>
                     </div>
-                    <div class="col-md-4 text-md-end">
-                        <div class="d-flex flex-column align-items-md-end">
-                            <div class="d-flex gap-2 mb-2">
-                                <button class="btn btn-outline-light btn-sm" onclick="refreshData()" id="refreshBtn">
-                                    <i class="fas fa-sync-alt me-1"></i>Làm mới
+                    <div class="col-md-6">
+                        <div class="d-flex flex-column align-items-end">
+                            <div class="header-actions mb-3 d-flex gap-2">
+                                <button class="btn btn-modern text-white" onclick="refreshData()" id="refreshBtn">
+                                    <i class="fas fa-sync-alt me-2"></i>Làm mới
                                 </button>
-                                <button class="btn btn-outline-light btn-sm" onclick="exportClassesData()">
-                                    <i class="fas fa-download me-1"></i>Xuất Excel
+                                <button class="btn btn-modern text-white" onclick="exportClassesData()">
+                                    <i class="fas fa-download me-2"></i>Xuất dữ liệu
                                 </button>
                             </div>
-                            <span class="badge semester-badge mb-2">
-                                    Học kỳ <span id="currentSemester">I</span> - Năm học <span id="currentYear">2024-2025</span>
-                                </span>
-                            <small class="opacity-75">
-                                Cập nhật: <span id="lastUpdate"></span>
-                            </small>
+                            <div class="semester-info text-white text-center">
+                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                    <i class="fas fa-calendar-alt text-white"></i>
+                                    <span class="text-white">Học kỳ <span id="currentSemester" class="text-white">I</span> - <span id="currentYear" class="text-white">2024-2025</span></span>
+                                </div>
+                                <small class="d-block mt-1 text-white" style="opacity: 0.8;">
+                                    Cập nhật: <span id="lastUpdate" class="text-white">--:--</span>
+                                </small>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Summary Cards -->
-        <div class="summary-cards">
-            <div class="summary-card">
-                <h3 id="totalClasses">0</h3>
-                <p>Tổng số lớp</p>
+    <!-- Statistics Cards -->
+    <div class="stats-container fade-in">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chalkboard"></i>
             </div>
-            <div class="summary-card">
-                <h3 id="totalStudents">0</h3>
-                <p>Tổng sinh viên</p>
+            <div class="stat-number" id="totalClasses">0</div>
+            <div class="stat-label">Tổng số lớp</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-user-graduate"></i>
             </div>
-            <div class="summary-card">
-                <h3 id="activeClasses">0</h3>
-                <p>Lớp đang hoạt động</p>
+            <div class="stat-number" id="totalStudents">0</div>
+            <div class="stat-label">Tổng sinh viên</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-play-circle"></i>
             </div>
-            <div class="summary-card">
-                <h3 id="totalSubjects">0</h3>
-                <p>Môn học</p>
+            <div class="stat-number" id="activeClasses">0</div>
+            <div class="stat-label">Lớp đang hoạt động</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-book"></i>
+            </div>
+            <div class="stat-number" id="totalSubjects">0</div>
+            <div class="stat-label">Môn học</div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-card fade-in">
+        <h3 class="filter-title">
+            <i class="fas fa-filter"></i>
+            Bộ lọc và tìm kiếm
+        </h3>
+
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Học kỳ</label>
+                <select class="form-select" id="semesterFilter">
+                    <option value="">Tất cả học kỳ</option>
+                    <option value="1">Học kỳ I</option>
+                    <option value="2">Học kỳ II</option>
+                    <option value="3">Học kỳ hè</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Năm học</label>
+                <select class="form-select" id="yearFilter">
+                    <option value="">Tất cả năm học</option>
+                    <option value="2024-2025">2024-2025</option>
+                    <option value="2023-2024">2023-2024</option>
+                    <option value="2022-2023">2022-2023</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Trạng thái</label>
+                <select class="form-select" id="statusFilter">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="true">Đang hoạt động</option>
+                    <option value="false">Tạm dừng</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Tìm kiếm</label>
+                <input type="text" class="form-control" id="searchInput"
+                       placeholder="Tên môn học, mã lớp...">
             </div>
         </div>
 
-        <!-- Filter Section -->
-        <div class="filter-section">
-            <div class="row">
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Học kỳ:</label>
-                    <select class="form-select" id="semesterFilter">
-                        <option value="">Tất cả học kỳ</option>
-                        <option value="1">Học kỳ I</option>
-                        <option value="2">Học kỳ II</option>
-                        <option value="3">Học kỳ hè</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Năm học:</label>
-                    <select class="form-select" id="yearFilter">
-                        <option value="">Tất cả năm học</option>
-                        <option value="2024-2025">2024-2025</option>
-                        <option value="2023-2024">2023-2024</option>
-                        <option value="2022-2023">2022-2023</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Trạng thái:</label>
-                    <select class="form-select" id="statusFilter">
-                        <option value="">Tất cả trạng thái</option>
-                        <option value="true">Đang hoạt động</option>
-                        <option value="false">Tạm dừng</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Tìm kiếm:</label>
-                    <input type="text" class="form-control" id="searchInput" placeholder="Tên môn học, mã lớp...">
-                </div>
-            </div>
-            <div class="row mt-3">
-                <div class="col-12">
-                    <button class="btn btn-primary me-2" onclick="applyFilters()">
-                        <i class="fas fa-search me-1"></i>Lọc kết quả
-                    </button>
-                    <button class="btn btn-outline-secondary" onclick="clearFilters()">
-                        <i class="fas fa-times me-1"></i>Xóa bộ lọc
-                    </button>
-                </div>
+        <div class="row mt-4">
+            <div class="col-12">
+                <button class="btn btn-filter me-3" onclick="applyFilters()">
+                    <i class="fas fa-search me-2"></i>Áp dụng bộ lọc
+                </button>
+                <button class="btn btn-clear" onclick="clearFilters()">
+                    <i class="fas fa-times me-2"></i>Xóa bộ lọc
+                </button>
             </div>
         </div>
+    </div>
 
-        <!-- Classes Grid -->
-        <div class="class-grid" id="classesGrid">
-            <!-- Classes will be loaded here -->
+    <!-- Classes Grid -->
+    <div class="classes-container">
+        <div class="classes-grid fade-in" id="classesGrid">
+            <!-- Classes will be loaded here dynamically -->
         </div>
 
         <!-- Empty State -->
-        <div class="empty-state" id="emptyState" style="display: none;">
-            <i class="fas fa-chalkboard"></i>
-            <h4>Không có lớp học nào</h4>
-            <p>Hiện tại bạn chưa được phân công giảng dạy lớp học nào hoặc không có lớp nào phù hợp với bộ lọc.</p>
+        <div class="empty-state fade-in" id="emptyState" style="display: none;">
+            <div class="empty-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <h3 class="empty-title">Chưa có lớp học nào</h3>
+            <p class="empty-description">
+                Hiện tại bạn chưa được phân công giảng dạy lớp học nào hoặc không có lớp nào phù hợp với bộ lọc đã chọn.
+            </p>
         </div>
     </div>
 </div>
 
 <!-- Loading Overlay -->
 <div class="loading-overlay" id="loadingOverlay">
-    <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Đang tải...</span>
-    </div>
+    <div class="loading-spinner"></div>
 </div>
 
-<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Custom JS -->
 <script th:src="@{/js/sidebar.js}"></script>
@@ -742,15 +1125,51 @@
     /**
      * View class details
      */
+    // Cập nhật function viewClassDetails trong lophoc.html
     function viewClassDetails(classId) {
         if (!classId) return;
 
         console.log('📋 Viewing details for class:', classId);
 
-        // Navigate to class details page or show modal
-        // For now, we'll navigate to the class management page
+        // Navigate to class details page
         window.location.href = `/lecturer/lophoc/${classId}`;
     }
+
+// Đảm bảo click event được gán đúng
+function renderClasses() {
+    const grid = document.getElementById('classesGrid');
+    const emptyState = document.getElementById('emptyState');
+
+    if (filteredClasses.length === 0) {
+        grid.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+    }
+
+    grid.style.display = 'grid';
+    emptyState.style.display = 'none';
+
+    grid.innerHTML = filteredClasses.map(cls => `
+        <div class="class-card fade-in" data-class-id="${cls.maLhp}" onclick="viewClassDetails('${cls.maLhp}')" style="cursor: pointer;">
+            <!-- Nội dung card giữ nguyên -->
+            <div class="class-card-header">
+                <div class="class-title">${cls.tenMonHoc || 'Tên môn học'}</div>
+                <div class="class-code">${cls.maLhp} - Nhóm ${cls.nhom || 1}</div>
+            </div>
+
+            <div class="class-card-body">
+                <div class="class-info-grid">
+                    <!-- Các info items giữ nguyên -->
+                </div>
+
+                <div class="class-status ${cls.isActive ? 'status-active' : 'status-inactive'}">
+                    <i class="fas fa-${cls.isActive ? 'play-circle' : 'pause-circle'}"></i>
+                    <span>${cls.isActive ? 'Đang hoạt động' : 'Tạm dừng'}</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
 
     /**
      * Refresh all data
@@ -1055,6 +1474,89 @@
     window.refreshData = refreshData;
     window.exportClassesData = exportClassesData;
     window.viewClassDetails = viewClassDetails;
+</script>
+<!-- Enhanced JavaScript for the new design -->
+<script>
+    // Override the renderClasses function for the new design
+    function renderClasses() {
+        const grid = document.getElementById('classesGrid');
+        const emptyState = document.getElementById('emptyState');
+
+        if (filteredClasses.length === 0) {
+            grid.style.display = 'none';
+            emptyState.style.display = 'block';
+            return;
+        }
+
+        grid.style.display = 'grid';
+        emptyState.style.display = 'none';
+
+        grid.innerHTML = filteredClasses.map(cls => `
+            <div class="class-card fade-in" data-class-id="${cls.maLhp}" onclick="viewClassDetails('${cls.maLhp}')">
+                <div class="class-card-header">
+                    <div class="class-title">${cls.tenMonHoc || 'Tên môn học'}</div>
+                    <div class="class-code">${cls.maLhp} - Nhóm ${cls.nhom || 1}</div>
+                </div>
+
+                <div class="class-card-body">
+                    <div class="class-info-grid">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-code"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Mã môn học</div>
+                                <div class="info-value">${cls.maMh || 'N/A'}</div>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Sinh viên</div>
+                                <div class="info-value">${cls.soLuongSinhVien || 0} người</div>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Số tín chỉ</div>
+                                <div class="info-value">${cls.soTinChi || 0} tín chỉ</div>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Học kỳ</div>
+                                <div class="info-value">HK${cls.hocKy || 'N/A'} - ${cls.namHoc || 'N/A'}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="class-status ${cls.isActive ? 'status-active' : 'status-inactive'}">
+                        <i class="fas fa-${cls.isActive ? 'play-circle' : 'pause-circle'}"></i>
+                        <span>${cls.isActive ? 'Đang hoạt động' : 'Tạm dừng'}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Add entrance animations
+    document.addEventListener('DOMContentLoaded', function() {
+        const elements = document.querySelectorAll('.fade-in');
+        elements.forEach((el, index) => {
+            el.style.animationDelay = `${index * 0.1}s`;
+        });
+    });
 </script>
 </body>
 </html>

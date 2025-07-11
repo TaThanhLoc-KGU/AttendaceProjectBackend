@@ -491,5 +491,83 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
 
         return excelService.exportAttendanceReport(data, fromDate, toDate);
     }
+    /**
+     * Lấy điểm danh theo lớp học phần và khoảng thời gian
+     * @param maLhp Mã lớp học phần
+     * @param fromDate Từ ngày (nullable)
+     * @param toDate Đến ngày (nullable)
+     * @return Danh sách điểm danh
+     */
+    public List<DiemDanhDTO> getByLopHocPhanAndDateRange(String maLhp, LocalDate fromDate, LocalDate toDate) {
+        log.info("Getting attendance for class {} from {} to {}", maLhp, fromDate, toDate);
 
+        try {
+            // Lấy tất cả lịch học của lớp học phần này
+            List<LichHoc> lichHocList = lichHocRepository.findByLopHocPhanMaLhp(maLhp);
+
+            if (lichHocList.isEmpty()) {
+                log.warn("No schedule found for class {}", maLhp);
+                return new ArrayList<>();
+            }
+
+            // Lấy các mã lịch học
+            List<String> maLichList = lichHocList.stream()
+                    .map(LichHoc::getMaLich)
+                    .collect(Collectors.toList());
+
+            // Lấy điểm danh theo danh sách mã lịch và khoảng thời gian
+            List<DiemDanh> diemDanhList = diemDanhRepository.findByLichHocMaLichInAndDateRange(
+                    maLichList, fromDate, toDate);
+
+            return diemDanhList.stream()
+                    .map(this::toDTO)
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            log.error("Error getting attendance for class {} in date range: {}", maLhp, e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Lấy điểm danh hôm nay theo lớp học phần
+     * @param maLhp Mã lớp học phần
+     * @return Danh sách điểm danh hôm nay
+     */
+    public List<DiemDanhDTO> getTodayAttendanceByClass(String maLhp) {
+        LocalDate today = LocalDate.now();
+        return getByLopHocPhanAndDateRange(maLhp, today, today);
+    }
+
+    /**
+     * Thống kê điểm danh theo lớp học phần
+     * @param maLhp Mã lớp học phần
+     * @param fromDate Từ ngày
+     * @param toDate Đến ngày
+     * @return Map chứa thống kê
+     */
+    public Map<String, Object> getAttendanceStatsByClass(String maLhp, LocalDate fromDate, LocalDate toDate) {
+        List<DiemDanhDTO> attendanceList = getByLopHocPhanAndDateRange(maLhp, fromDate, toDate);
+
+        Map<String, Object> stats = new HashMap<>();
+
+        long presentCount = attendanceList.stream()
+                .filter(dd -> "PRESENT".equals(dd.getTrangThai()) || "CO_MAT".equals(dd.getTrangThai()))
+                .count();
+
+        long absentCount = attendanceList.stream()
+                .filter(dd -> "ABSENT".equals(dd.getTrangThai()) || "VANG_MAT".equals(dd.getTrangThai()))
+                .count();
+
+        long lateCount = attendanceList.stream()
+                .filter(dd -> "LATE".equals(dd.getTrangThai()) || "DI_MUON".equals(dd.getTrangThai()))
+                .count();
+
+        stats.put("total", attendanceList.size());
+        stats.put("present", presentCount);
+        stats.put("absent", absentCount);
+        stats.put("late", lateCount);
+
+        return stats;
+    }
 }

@@ -662,3 +662,30 @@
     z-index: 1001;
     box-shadow: var(--sidebar-shadow);
 }
+/* Thêm vào sidebar.css */
+.nav-submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, display 0.3s ease;
+}
+
+.nav-submenu.show {
+    max-height: 500px;
+}
+
+.nav-arrow i {
+    transition: transform 0.3s ease;
+}
+
+/* Active states */
+.nav-link.active {
+    background: var(--sidebar-active-bg);
+    color: var(--sidebar-active);
+    font-weight: 600;
+}
+
+.nav-sublink.active {
+    background: var(--sidebar-active-bg);
+    color: var(--sidebar-active);
+    font-weight: 500;
+}
