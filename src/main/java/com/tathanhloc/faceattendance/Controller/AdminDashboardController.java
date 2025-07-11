@@ -245,4 +245,14 @@ public class AdminDashboardController {
         return "admin/cauhinh-hocky";
 
     }
+
+    @GetMapping("/logs")
+    public String logManagement(Authentication authentication, Model model) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/?error=not_authenticated";
+        }
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        model.addAttribute("currentUser", userDetails.getTaiKhoan());
+        return "admin/logs";
+    }
 }

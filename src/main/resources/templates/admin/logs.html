@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Logs - Face Attendance</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/sidebar.css}" rel="stylesheet">
+    <link th:href="@{/css/admin.css}" rel="stylesheet">
+
+    <style>
+        .log-card {
+            border-left: 4px solid var(--gray-300);
+            transition: var(--transition);
+            margin-bottom: 0.5rem;
+        }
+
+        .log-card.log-info { border-left-color: var(--info-color); }
+        .log-card.log-warn { border-left-color: var(--warning-color); }
+        .log-card.log-error { border-left-color: var(--danger-color); }
+        .log-card.log-debug { border-left-color: var(--gray-500); }
+        .log-card.log-trace { border-left-color: var(--gray-300); }
+
+        .log-level-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            text-transform: uppercase;
+        }
+
+        .log-module {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .log-time {
+            color: var(--gray-500);
+            font-size: 0.75rem;
+        }
+
+        .log-message {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .log-details {
+            background: var(--gray-50);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+        }
+
+        .stats-card {
+            background: var(--white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 1.5rem;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: block;
+        }
+
+        .stats-label {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .filter-section {
+            background: var(--white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .real-time-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            background: var(--success-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            display: none;
+        }
+
+        .real-time-indicator.active {
+            display: block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .log-search-highlight {
+            background-color: yellow;
+            padding: 0.1rem 0.2rem;
+            border-radius: 0.2rem;
+        }
+
+        .error-trace {
+            background: #fff2f2;
+            border: 1px solid #fecaca;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .performance-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+        }
+
+        .performance-fast { color: var(--success-color); }
+        .performance-medium { color: var(--warning-color); }
+        .performance-slow { color: var(--danger-color); }
+
+        .log-actions {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .log-card:hover .log-actions {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .filter-section .row > div {
+                margin-bottom: 1rem;
+            }
+
+            .stats-card {
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="main-wrapper">
+    <!-- Include Sidebar Component -->
+    <div th:replace="~{components/sidebar :: sidebar}"></div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">System Logs</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <span th:text="'Xin chào, ' + ${session.user?.hoTen ?: 'Admin'}">Xin chào, Admin</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="page-content">
+            <div class="container-fluid">
+                <!-- Real-time Indicator -->
+                <div class="real-time-indicator" id="realTimeIndicator">
+                    <i class="fas fa-circle me-1"></i>
+                    Real-time Monitoring
+                </div>
+
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h2 class="page-title mb-0">
+                                <i class="fas fa-file-alt me-2 text-primary"></i>
+                                System Logs
+                            </h2>
+                            <p class="text-muted mb-0">Monitor system activities and troubleshoot issues</p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="btn-group">
+                                <button class="btn btn-outline-primary" onclick="logsManager.toggleRealTime()">
+                                    <i class="fas fa-sync-alt me-2"></i>
+                                    <span id="realTimeToggleText">Start Real-time</span>
+                                </button>
+                                <button class="btn btn-outline-success" onclick="logsManager.exportLogs()">
+                                    <i class="fas fa-download me-2"></i>
+                                    Export
+                                </button>
+                                <button class="btn btn-outline-warning" onclick="logsManager.cleanupLogs()">
+                                    <i class="fas fa-trash-alt me-2"></i>
+                                    Cleanup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="row mb-4" id="statsContainer">
+                    <!-- Stats will be populated here -->
+                </div>
+
+                <!-- Filter Section -->
+                <div class="filter-section">
+                    <div class="row align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label">Module</label>
+                            <select class="form-select" id="moduleFilter">
+                                <option value="">All Modules</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Log Level</label>
+                            <select class="form-select" id="levelFilter">
+                                <option value="">All Levels</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Status</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Start Time</label>
+                            <input type="datetime-local" class="form-control" id="startTimeFilter">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">End Time</label>
+                            <input type="datetime-local" class="form-control" id="endTimeFilter">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Search</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchInput" placeholder="Search logs...">
+                                <button class="btn btn-primary" onclick="logsManager.applyFilters()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alert Messages -->
+                <div id="alertContainer"></div>
+
+                <!-- Logs Container -->
+                <div class="admin-table-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">System Logs</h5>
+                        <div class="d-flex gap-2">
+                            <select class="form-select form-select-sm" id="pageSizeSelect" style="width: auto;">
+                                <option value="10">10 per page</option>
+                                <option value="20" selected>20 per page</option>
+                                <option value="50">50 per page</option>
+                                <option value="100">100 per page</option>
+                            </select>
+                            <button class="btn btn-sm btn-outline-primary" onclick="logsManager.refreshLogs()">
+                                <i class="fas fa-refresh"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="logsContainer">
+                            <!-- Logs will be populated here -->
+                        </div>
+
+                        <!-- Loading State -->
+                        <div id="loadingState" class="text-center py-4 d-none">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div class="mt-2">Loading logs...</div>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div id="emptyState" class="text-center py-5 d-none">
+                            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                            <h5>No logs found</h5>
+                            <p class="text-muted">Try adjusting your filters or check back later</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <nav id="paginationContainer" class="mt-3">
+                    <ul class="pagination justify-content-center" id="pagination">
+                        <!-- Pagination will be populated here -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Detail Modal -->
+<div class="modal fade" id="logDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Log Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="logDetailContent">
+                <!-- Log details will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Common JS -->
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/sidebar.js}"></script>
+
+<script>
+    class LogsManager {
+        constructor() {
+            this.logs = [];
+            this.currentPage = 0;
+            this.pageSize = 20;
+            this.totalPages = 0;
+            this.totalElements = 0;
+            this.isRealTime = false;
+            this.realTimeInterval = null;
+            this.filters = {
+                module: '',
+                logLevel: '',
+                status: '',
+                startTime: '',
+                endTime: '',
+                keyword: ''
+            };
+
+            this.init();
+        }
+
+        async init() {
+            await this.loadFilterOptions();
+            await this.loadStatistics();
+            await this.loadLogs();
+            this.setupEventListeners();
+        }
+
+        setupEventListeners() {
+            // Page size change
+            document.getElementById('pageSizeSelect').addEventListener('change', (e) => {
+                this.pageSize = parseInt(e.target.value);
+                this.currentPage = 0;
+                this.loadLogs();
+            });
+
+            // Search on Enter
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.applyFilters();
+                }
+            });
+
+            // Filter changes
+            ['moduleFilter', 'levelFilter', 'statusFilter', 'startTimeFilter', 'endTimeFilter'].forEach(id => {
+                document.getElementById(id).addEventListener('change', () => {
+                    this.applyFilters();
+                });
+            });
+
+            // Sidebar toggle
+            if (typeof Common !== 'undefined' && Common.sidebar) {
+                Common.sidebar.init();
+            }
+        }
+
+        async loadFilterOptions() {
+            try {
+                // Load modules
+                const modulesResponse = await fetch('/api/logs/modules');
+                const modules = await modulesResponse.json();
+                this.populateSelect('moduleFilter', modules);
+
+                // Load levels
+                const levelsResponse = await fetch('/api/logs/levels');
+                const levels = await levelsResponse.json();
+                this.populateSelect('levelFilter', levels);
+
+                // Load statuses
+                const statusesResponse = await fetch('/api/logs/statuses');
+                const statuses = await statusesResponse.json();
+                this.populateSelect('statusFilter', statuses);
+
+            } catch (error) {
+                console.error('Error loading filter options:', error);
+            }
+        }
+
+        populateSelect(selectId, options) {
+            const select = document.getElementById(selectId);
+            options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option;
+                optionElement.textContent = option;
+                select.appendChild(optionElement);
+            });
+        }
+
+        async loadStatistics() {
+            try {
+                const response = await fetch('/api/logs/statistics');
+                const stats = await response.json();
+                this.renderStatistics(stats);
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        renderStatistics(stats) {
+            const container = document.getElementById('statsContainer');
+
+            const statsCards = [
+                { label: 'Total Logs', value: stats.totalLogs || 0, icon: 'fas fa-file-alt', color: 'primary' },
+                { label: 'Last 24h', value: stats.logsLast24h || 0, icon: 'fas fa-clock', color: 'info' },
+                { label: 'Errors (24h)', value: stats.errorsLast24h || 0, icon: 'fas fa-exclamation-triangle', color: 'danger' },
+                { label: 'Last Week', value: stats.logsLastWeek || 0, icon: 'fas fa-calendar-week', color: 'success' }
+            ];
+
+            container.innerHTML = statsCards.map(stat => `
+                    <div class="col-md-3">
+                        <div class="stats-card">
+                            <i class="${stat.icon} fa-2x text-${stat.color} mb-2"></i>
+                            <span class="stats-number text-${stat.color}">${stat.value.toLocaleString()}</span>
+                            <div class="stats-label">${stat.label}</div>
+                        </div>
+                    </div>
+                `).join('');
+        }
+
+        async loadLogs() {
+            this.showLoading(true);
+
+            try {
+                const params = new URLSearchParams({
+                    page: this.currentPage,
+                    size: this.pageSize,
+                    sortBy: 'createdAt',
+                    sortDir: 'desc'
+                });
+
+                // Add filters
+                Object.keys(this.filters).forEach(key => {
+                    if (this.filters[key]) {
+                        params.append(key, this.filters[key]);
+                    }
+                });
+
+                const endpoint = Object.values(this.filters).some(v => v) ? '/api/logs/search' : '/api/logs';
+                const response = await fetch(`${endpoint}?${params}`);
+                const data = await response.json();
+
+                this.logs = data.content || [];
+                this.totalPages = data.totalPages || 0;
+                this.totalElements = data.totalElements || 0;
+                this.currentPage = data.number || 0;
+
+                this.renderLogs();
+                this.renderPagination();
+
+            } catch (error) {
+                console.error('Error loading logs:', error);
+                this.showAlert('Error loading logs: ' + error.message, 'danger');
+            } finally {
+                this.showLoading(false);
+            }
+        }
+
+        renderLogs() {
+            const container = document.getElementById('logsContainer');
+
+            if (this.logs.length === 0) {
+                this.showEmptyState(true);
+                return;
+            }
+
+            this.showEmptyState(false);
+
+            container.innerHTML = this.logs.map(log => this.createLogCard(log)).join('');
+        }
+
+        createLogCard(log) {
+            const levelClass = `log-${log.logLevel.toLowerCase()}`;
+            const levelColor = this.getLogLevelColor(log.logLevel);
+            const statusColor = this.getStatusColor(log.status);
+            const moduleIcon = this.getModuleIcon(log.module);
+
+            return `
+                    <div class="log-card ${levelClass}" data-log-id="${log.id}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <i class="${moduleIcon}"></i>
+                                        <span class="log-module">${log.module}</span>
+                                        <span class="log-level-badge bg-${levelColor} text-white">${log.logLevel}</span>
+                                        ${log.status ? `<span class="badge bg-${statusColor}">${log.status}</span>` : ''}
+                                        ${log.durationMs ? `<span class="performance-indicator ${this.getPerformanceClass(log.durationMs)}">
+                                            <i class="fas fa-stopwatch"></i> ${this.formatDuration(log.durationMs)}
+                                        </span>` : ''}
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <strong class="text-dark">${log.action}</strong>
+                                        <div class="log-time">
+                                            ${new Date(log.createdAt).toLocaleString('vi-VN')}
+                                            ${log.timeAgo ? `(${log.timeAgo})` : ''}
+                                        </div>
+                                    </div>
+
+                                    <div class="log-message">${this.highlightSearch(log.shortMessage || log.message)}</div>
+
+                                    ${log.userName || log.userId ? `
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-user"></i>
+                                                ${log.userName || log.userId}
+                                                ${log.ipAddress ? ` from ${log.ipAddress}` : ''}
+                                            </small>
+                                        </div>
+                                    ` : ''}
+                                </div>
+
+                                <div class="log-actions">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="logsManager.showLogDetail(${log.id})" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            ${log.errorDetails ? `
+                                <div class="error-trace">
+                                    <strong>Error Details:</strong><br>
+                                    ${log.errorDetails.split('\n').slice(0, 3).join('\n')}
+                                    ${log.errorDetails.split('\n').length > 3 ? '...' : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+        }
+
+        async showLogDetail(logId) {
+            try {
+                const response = await fetch(`/api/logs/${logId}`);
+                const log = await response.json();
+
+                const modalContent = document.getElementById('logDetailContent');
+                modalContent.innerHTML = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Basic Information</h6>
+                                <table class="table table-sm">
+                                    <tr><td><strong>ID:</strong></td><td>${log.id}</td></tr>
+                                    <tr><td><strong>Level:</strong></td><td><span class="badge bg-${this.getLogLevelColor(log.logLevel)}">${log.logLevel}</span></td></tr>
+                                    <tr><td><strong>Module:</strong></td><td>${log.module}</td></tr>
+                                    <tr><td><strong>Action:</strong></td><td>${log.action}</td></tr>
+                                    <tr><td><strong>Status:</strong></td><td>${log.status ? `<span class="badge bg-${this.getStatusColor(log.status)}">${log.status}</span>` : 'N/A'}</td></tr>
+                                    <tr><td><strong>Time:</strong></td><td>${new Date(log.createdAt).toLocaleString('vi-VN')}</td></tr>
+                                    ${log.durationMs ? `<tr><td><strong>Duration:</strong></td><td>${this.formatDuration(log.durationMs)}</td></tr>` : ''}
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>User & Request Info</h6>
+                                <table class="table table-sm">
+                                    <tr><td><strong>User ID:</strong></td><td>${log.userId || 'N/A'}</td></tr>
+                                    <tr><td><strong>User Name:</strong></td><td>${log.userName || 'N/A'}</td></tr>
+                                    <tr><td><strong>IP Address:</strong></td><td>${log.ipAddress || 'N/A'}</td></tr>
+                                    <tr><td><strong>Request URL:</strong></td><td>${log.requestUrl || 'N/A'}</td></tr>
+                                    <tr><td><strong>Method:</strong></td><td>${log.requestMethod || 'N/A'}</td></tr>
+                                    <tr><td><strong>Session:</strong></td><td>${log.sessionId || 'N/A'}</td></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <h6>Message</h6>
+                            <div class="log-details">${log.message}</div>
+                        </div>
+
+                        ${log.entityType ? `
+                            <div class="mt-3">
+                                <h6>Entity Information</h6>
+                                <table class="table table-sm">
+                                    <tr><td><strong>Entity Type:</strong></td><td>${log.entityType}</td></tr>
+                                    <tr><td><strong>Entity ID:</strong></td><td>${log.entityId}</td></tr>
+                                    ${log.oldValue ? `<tr><td><strong>Old Value:</strong></td><td><pre class="small">${log.oldValue}</pre></td></tr>` : ''}
+                                    ${log.newValue ? `<tr><td><strong>New Value:</strong></td><td><pre class="small">${log.newValue}</pre></td></tr>` : ''}
+                                </table>
+                            </div>
+                        ` : ''}
+
+                        ${log.errorDetails ? `
+                            <div class="mt-3">
+                                <h6>Error Details</h6>
+                                <div class="error-trace" style="max-height: 300px;">${log.errorDetails}</div>
+                            </div>
+                        ` : ''}
+
+                        ${log.userAgent ? `
+                            <div class="mt-3">
+                                <h6>User Agent</h6>
+                                <div class="log-details">${log.userAgent}</div>
+                            </div>
+                        ` : ''}
+                    `;
+
+                new bootstrap.Modal(document.getElementById('logDetailModal')).show();
+
+            } catch (error) {
+                console.error('Error loading log details:', error);
+                this.showAlert('Error loading log details: ' + error.message, 'danger');
+            }
+        }
+
+        renderPagination() {
+            const container = document.getElementById('pagination');
+
+            if (this.totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+
+            // Previous button
+            paginationHTML += `
+                    <li class="page-item ${this.currentPage === 0 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="logsManager.changePage(${this.currentPage - 1})">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                `;
+
+            // Page numbers
+            const startPage = Math.max(0, this.currentPage - 2);
+            const endPage = Math.min(this.totalPages - 1, this.currentPage + 2);
+
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `
+                        <li class="page-item ${i === this.currentPage ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="logsManager.changePage(${i})">${i + 1}</a>
+                        </li>
+                    `;
+            }
+
+            // Next button
+            paginationHTML += `
+                    <li class="page-item ${this.currentPage === this.totalPages - 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="logsManager.changePage(${this.currentPage + 1})">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                `;
+
+            container.innerHTML = paginationHTML;
+
+            // Show info
+            const info = document.querySelector('.pagination-info') || document.createElement('div');
+            info.className = 'pagination-info text-muted small mt-2 text-center';
+            info.textContent = `Showing ${this.currentPage * this.pageSize + 1} to ${Math.min((this.currentPage + 1) * this.pageSize, this.totalElements)} of ${this.totalElements} logs`;
+
+            if (!document.querySelector('.pagination-info')) {
+                document.getElementById('paginationContainer').appendChild(info);
+            }
+        }
+
+        changePage(page) {
+            if (page >= 0 && page < this.totalPages) {
+                this.currentPage = page;
+                this.loadLogs();
+            }
+        }
+
+        applyFilters() {
+            this.filters = {
+                module: document.getElementById('moduleFilter').value,
+                logLevel: document.getElementById('levelFilter').value,
+                status: document.getElementById('statusFilter').value,
+                startTime: document.getElementById('startTimeFilter').value,
+                endTime: document.getElementById('endTimeFilter').value,
+                keyword: document.getElementById('searchInput').value
+            };
+
+            this.currentPage = 0;
+            this.loadLogs();
+        }
+
+        toggleRealTime() {
+            this.isRealTime = !this.isRealTime;
+            const indicator = document.getElementById('realTimeIndicator');
+            const toggleText = document.getElementById('realTimeToggleText');
+
+            if (this.isRealTime) {
+                this.realTimeInterval = setInterval(() => {
+                    this.loadLogs();
+                    this.loadStatistics();
+                }, 5000); // Refresh every 5 seconds
+
+                indicator.classList.add('active');
+                toggleText.textContent = 'Stop Real-time';
+            } else {
+                if (this.realTimeInterval) {
+                    clearInterval(this.realTimeInterval);
+                    this.realTimeInterval = null;
+                }
+
+                indicator.classList.remove('active');
+                toggleText.textContent = 'Start Real-time';
+            }
+        }
+
+        async refreshLogs() {
+            await this.loadLogs();
+            await this.loadStatistics();
+            this.showAlert('Logs refreshed successfully', 'success');
+        }
+
+        async exportLogs() {
+            try {
+                const params = new URLSearchParams(this.filters);
+                const response = await fetch(`/api/logs/export?${params}`);
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `system-logs-${new Date().toISOString().split('T')[0]}.csv`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+
+                    this.showAlert('Logs exported successfully', 'success');
+                } else {
+                    throw new Error('Export failed');
+                }
+            } catch (error) {
+                console.error('Error exporting logs:', error);
+                this.showAlert('Error exporting logs: ' + error.message, 'danger');
+            }
+        }
+
+        async cleanupLogs() {
+            const days = prompt('How many days of logs to keep?', '30');
+            if (days && !isNaN(days)) {
+                try {
+                    const response = await fetch(`/api/logs/cleanup?daysToKeep=${days}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        this.showAlert(`Old logs cleaned up successfully (kept ${days} days)`, 'success');
+                        this.loadLogs();
+                        this.loadStatistics();
+                    } else {
+                        throw new Error('Cleanup failed');
+                    }
+                } catch (error) {
+                    console.error('Error cleaning up logs:', error);
+                    this.showAlert('Error cleaning up logs: ' + error.message, 'danger');
+                }
+            }
+        }
+
+        // Helper Methods
+        getLogLevelColor(level) {
+            const colors = {
+                'TRACE': 'secondary',
+                'DEBUG': 'info',
+                'INFO': 'primary',
+                'WARN': 'warning',
+                'ERROR': 'danger',
+                'FATAL': 'dark'
+            };
+            return colors[level] || 'secondary';
+        }
+
+        getStatusColor(status) {
+            const colors = {
+                'SUCCESS': 'success',
+                'FAILED': 'danger',
+                'WARNING': 'warning'
+            };
+            return colors[status] || 'secondary';
+        }
+
+        getModuleIcon(module) {
+            const icons = {
+                'AUTHENTICATION': 'fas fa-sign-in-alt',
+                'USER': 'fas fa-user',
+                'STUDENT': 'fas fa-user-graduate',
+                'TEACHER': 'fas fa-chalkboard-teacher',
+                'ATTENDANCE': 'fas fa-check-circle',
+                'CAMERA': 'fas fa-video',
+                'SYSTEM': 'fas fa-server',
+                'DATABASE': 'fas fa-database',
+                'API': 'fas fa-plug'
+            };
+            return icons[module] || 'fas fa-cog';
+        }
+
+        getPerformanceClass(durationMs) {
+            if (durationMs < 1000) return 'performance-fast';
+            if (durationMs < 5000) return 'performance-medium';
+            return 'performance-slow';
+        }
+
+        formatDuration(durationMs) {
+            if (durationMs < 1000) {
+                return durationMs + 'ms';
+            } else if (durationMs < 60000) {
+                return (durationMs / 1000).toFixed(2) + 's';
+            } else {
+                return (durationMs / 60000).toFixed(2) + 'm';
+            }
+        }
+
+        highlightSearch(text) {
+            if (!this.filters.keyword) return text;
+
+            const regex = new RegExp(`(${this.filters.keyword})`, 'gi');
+            return text.replace(regex, '<span class="log-search-highlight">$1</span>');
+        }
+
+        showLoading(show) {
+            document.getElementById('loadingState').classList.toggle('d-none', !show);
+        }
+
+        showEmptyState(show) {
+            document.getElementById('emptyState').classList.toggle('d-none', !show);
+        }
+
+        showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertId = 'alert_' + Date.now();
+
+            const alertHTML = `
+                    <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+
+            alertContainer.insertAdjacentHTML('beforeend', alertHTML);
+
+            setTimeout(() => {
+                const alertElement = document.getElementById(alertId);
+                if (alertElement) {
+                    bootstrap.Alert.getOrCreateInstance(alertElement).close();
+                }
+            }, 5000);
+        }
+    }
+
+    // Initialize when DOM is loaded
+    let logsManager;
+    document.addEventListener('DOMContentLoaded', function() {
+        logsManager = new LogsManager();
+    });
+</script>
+</body>
+</html>
