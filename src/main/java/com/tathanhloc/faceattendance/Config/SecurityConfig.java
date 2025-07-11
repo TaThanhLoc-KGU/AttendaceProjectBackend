@@ -107,6 +107,8 @@ public class SecurityConfig {
                         .requestMatchers("/lecturer/**").hasRole("GIANGVIEN")
                         .requestMatchers("/student/**").hasRole("SINHVIEN")
                         .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/api/stream/**").authenticated()
+                        .requestMatchers("/stream/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

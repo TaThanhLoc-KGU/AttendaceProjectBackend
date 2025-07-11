@@ -1,10 +1,1436 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Phòng học - Face Attendance</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/sidebar.css}" rel="stylesheet">
+    <link th:href="@{/css/admin.css}" rel="stylesheet">
+
+    <style>
+        /* Custom styles for phonghoc */
+        .room-status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .room-status-indicator.available {
+            background: #27ae60;
+            box-shadow: 0 0 4px rgba(39, 174, 96, 0.5);
+        }
+
+        .room-status-indicator.occupied {
+            background: #e74c3c;
+            box-shadow: 0 0 4px rgba(231, 76, 60, 0.5);
+        }
+
+        .room-status-indicator.maintenance {
+            background: #f39c12;
+            box-shadow: 0 0 4px rgba(243, 156, 18, 0.5);
+        }
+
+        .room-capacity-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .room-type-badge {
+            background: rgba(28, 102, 129, 0.1);
+            color: #1c6681;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .stats-card-room {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-card-room:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .stats-card-room::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+        }
+
+        .stats-card-room.total::before {
+            background: #1c6681;
+        }
+
+        .stats-card-room.available::before {
+            background: #27ae60;
+        }
+
+        .stats-card-room.occupied::before {
+            background: #e74c3c;
+        }
+
+        .stats-card-room.maintenance::before {
+            background: #f39c12;
+        }
+
+        .filter-pills {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .filter-pill {
+            padding: 0.5rem 1rem;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #495057;
+        }
+
+        .filter-pill.active {
+            background: #1c6681;
+            color: white;
+            border-color: #1c6681;
+        }
+
+        .filter-pill:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .filter-pill.active:hover {
+            background: #154c5e;
+            color: white;
+        }
+
+        .equipment-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+
+        .equipment-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 0.125rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+    </style>
 </head>
 <body>
+<div class="main-wrapper">
+    <!-- Include Sidebar Component -->
+    <div th:replace="~{components/sidebar :: sidebar}"></div>
 
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Quản lý Phòng học</h1>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-primary" onclick="openCreateModal()">
+                        <i class="fas fa-plus me-2"></i>Thêm phòng học
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card-room total">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h3 class="h4 mb-1" id="totalRooms">0</h3>
+                                <p class="text-muted mb-0">Tổng phòng học</p>
+                            </div>
+                            <div class="bg-primary bg-gradient rounded-3 p-3">
+                                <i class="fas fa-door-open text-white fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card-room available">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h3 class="h4 mb-1" id="availableRooms">0</h3>
+                                <p class="text-muted mb-0">Phòng trống</p>
+                            </div>
+                            <div class="bg-success bg-gradient rounded-3 p-3">
+                                <i class="fas fa-check-circle text-white fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card-room occupied">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h3 class="h4 mb-1" id="occupiedRooms">0</h3>
+                                <p class="text-muted mb-0">Đang sử dụng</p>
+                            </div>
+                            <div class="bg-danger bg-gradient rounded-3 p-3">
+                                <i class="fas fa-users text-white fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card-room maintenance">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h3 class="h4 mb-1" id="maintenanceRooms">0</h3>
+                                <p class="text-muted mb-0">Bảo trì</p>
+                            </div>
+                            <div class="bg-warning bg-gradient rounded-3 p-3">
+                                <i class="fas fa-tools text-white fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter and Action Bar -->
+            <div class="admin-table-wrapper">
+                <div class="admin-table-header">
+                    <h5 class="admin-table-title">Danh sách phòng học</h5>
+                    <div class="table-actions">
+                        <div class="input-group me-3" style="width: 300px;">
+                            <input type="text" class="form-control" id="searchInput" placeholder="Tìm kiếm phòng học...">
+                            <button class="btn btn-outline-secondary" type="button" onclick="searchRooms()">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <button class="btn btn-success btn-sm me-2" onclick="refreshData()">
+                            <i class="fas fa-sync-alt me-1"></i>Làm mới
+                        </button>
+                        <button class="btn btn-info btn-sm" onclick="exportData()">
+                            <i class="fas fa-download me-1"></i>Xuất Excel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter Pills -->
+                <div class="px-4 py-3 border-bottom">
+                    <div class="filter-pills">
+                        <div class="filter-pill active" data-filter="all">
+                            <i class="fas fa-list me-1"></i>Tất cả
+                        </div>
+                        <div class="filter-pill" data-filter="available">
+                            <i class="fas fa-check-circle me-1"></i>Phòng trống
+                        </div>
+                        <div class="filter-pill" data-filter="occupied">
+                            <i class="fas fa-users me-1"></i>Đang sử dụng
+                        </div>
+                        <div class="filter-pill" data-filter="maintenance">
+                            <i class="fas fa-tools me-1"></i>Bảo trì
+                        </div>
+                        <div class="filter-pill" data-filter="lecture">
+                            <i class="fas fa-chalkboard-teacher me-1"></i>Phòng giảng
+                        </div>
+                        <div class="filter-pill" data-filter="lab">
+                            <i class="fas fa-flask me-1"></i>Phòng thí nghiệm
+                        </div>
+                        <div class="filter-pill" data-filter="computer">
+                            <i class="fas fa-desktop me-1"></i>Phòng máy tính
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Table -->
+                <div class="table-responsive">
+                    <table class="table admin-table" id="roomsTable">
+                        <thead>
+                        <tr>
+                            <th style="width: 60px;">
+                                <input type="checkbox" class="form-check-input" id="selectAll">
+                            </th>
+                            <th>Mã phòng</th>
+                            <th>Tên phòng</th>
+                            <th>Loại phòng</th>
+                            <th>Sức chứa</th>
+                            <th>Tòa nhà</th>
+                            <th>Tầng</th>
+                            <th>Trạng thái</th>
+                            <th>Thiết bị</th>
+                            <th style="width: 120px;">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody id="roomsTableBody">
+                        <!-- Data will be loaded here -->
+                        <tr>
+                            <td colspan="10" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Đang tải...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Đang tải dữ liệu phòng học...</p>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                    <div class="text-muted">
+                        Hiển thị <span id="showingStart">0</span> đến <span id="showingEnd">0</span>
+                        trong tổng số <span id="totalRecords">0</span> bản ghi
+                    </div>
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination mb-0" id="pagination">
+                            <!-- Pagination will be generated here -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Room Modal -->
+<div class="modal fade" id="roomModal" tabindex="-1" aria-labelledby="roomModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="roomModalLabel">
+                    <i class="fas fa-door-open me-2"></i>Thêm phòng học mới
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="roomForm" novalidate>
+                    <input type="hidden" id="roomId" name="id">
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="maPhong" class="form-label">
+                                <i class="fas fa-hashtag me-1"></i>Mã phòng <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="maPhong" name="maPhong" required maxlength="20">
+                            <div class="invalid-feedback">Vui lòng nhập mã phòng (2-20 ký tự, chữ hoa và số)</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="tenPhong" class="form-label">
+                                <i class="fas fa-door-open me-1"></i>Tên phòng <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="tenPhong" name="tenPhong" required maxlength="255">
+                            <div class="invalid-feedback">Vui lòng nhập tên phòng</div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="loaiPhong" class="form-label">
+                                <i class="fas fa-tag me-1"></i>Loại phòng <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="loaiPhong" name="loaiPhong" required>
+                                <option value="">Chọn loại phòng</option>
+                                <option value="LECTURE">Phòng giảng dạy</option>
+                                <option value="LAB">Phòng thí nghiệm</option>
+                                <option value="COMPUTER">Phòng máy tính</option>
+                                <option value="CONFERENCE">Phòng hội thảo</option>
+                                <option value="LIBRARY">Thư viện</option>
+                                <option value="OTHER">Khác</option>
+                            </select>
+                            <div class="invalid-feedback">Vui lòng chọn loại phòng</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="sucChua" class="form-label">
+                                <i class="fas fa-users me-1"></i>Sức chứa <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="sucChua" name="sucChua" min="1" max="1000" required>
+                            <div class="invalid-feedback">Vui lòng nhập sức chứa (1-1000)</div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="toaNha" class="form-label">
+                                <i class="fas fa-building me-1"></i>Tòa nhà <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="toaNha" name="toaNha" required maxlength="100">
+                            <div class="invalid-feedback">Vui lòng nhập tòa nhà</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="tang" class="form-label">
+                                <i class="fas fa-layer-group me-1"></i>Tầng <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="tang" name="tang" min="1" max="50" required>
+                            <div class="invalid-feedback">Vui lòng nhập tầng (1-50)</div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="trangThai" class="form-label">
+                                <i class="fas fa-info-circle me-1"></i>Trạng thái
+                            </label>
+                            <select class="form-select" id="trangThai" name="trangThai">
+                                <option value="AVAILABLE">Sẵn sàng</option>
+                                <option value="OCCUPIED">Đang sử dụng</option>
+                                <option value="MAINTENANCE">Bảo trì</option>
+                                <option value="INACTIVE">Không hoạt động</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="viTri" class="form-label">
+                                <i class="fas fa-map-marker-alt me-1"></i>Vị trí chi tiết
+                            </label>
+                            <input type="text" class="form-control" id="viTri" name="viTri" maxlength="255" placeholder="Ví dụ: Cuối hành lang bên trái">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-laptop me-1"></i>Thiết bị
+                        </label>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="projector" name="thietBi" value="PROJECTOR">
+                                    <label class="form-check-label" for="projector">
+                                        <i class="fas fa-video me-1"></i>Máy chiếu
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="computer" name="thietBi" value="COMPUTER">
+                                    <label class="form-check-label" for="computer">
+                                        <i class="fas fa-desktop me-1"></i>Máy tính
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="ac" name="thietBi" value="AC">
+                                    <label class="form-check-label" for="ac">
+                                        <i class="fas fa-snowflake me-1"></i>Điều hòa
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="mic" name="thietBi" value="MICROPHONE">
+                                    <label class="form-check-label" for="mic">
+                                        <i class="fas fa-microphone me-1"></i>Micro
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="speaker" name="thietBi" value="SPEAKER">
+                                    <label class="form-check-label" for="speaker">
+                                        <i class="fas fa-volume-up me-1"></i>Loa
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="wifi" name="thietBi" value="WIFI">
+                                    <label class="form-check-label" for="wifi">
+                                        <i class="fas fa-wifi me-1"></i>Wifi
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="moTa" class="form-label">
+                            <i class="fas fa-comment me-1"></i>Mô tả
+                        </label>
+                        <textarea class="form-control" id="moTa" name="moTa" rows="3" placeholder="Mô tả chi tiết về phòng học..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Hủy
+                </button>
+                <button type="button" class="btn btn-primary" id="saveButton" onclick="saveRoom()">
+                    <i class="fas fa-save me-1"></i>Lưu lại
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Room Details Modal -->
+<div class="modal fade" id="viewRoomModal" tabindex="-1" aria-labelledby="viewRoomModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="viewRoomModalLabel">
+                    <i class="fas fa-eye me-2"></i>Chi tiết phòng học
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="viewRoomContent">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Đóng
+                </button>
+                <button type="button" class="btn btn-warning" onclick="editRoomFromView()">
+                    <i class="fas fa-edit me-1"></i>Chỉnh sửa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Xác nhận xóa
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="deleteMessage">Bạn có chắc chắn muốn xóa phòng học này không?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Hành động này không thể hoàn tác! Phòng học sẽ bị xóa khỏi hệ thống.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Hủy
+                </button>
+                <button type="button" class="btn btn-danger" id="deleteButton" onclick="confirmDelete()">
+                    <i class="fas fa-trash me-1"></i>Xóa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Custom JS -->
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/sidebar.js}"></script>
+
+<script>
+    // ===== GLOBAL VARIABLES =====
+    let currentPage = 0;
+    let pageSize = 10;
+    let totalPages = 0;
+    let totalElements = 0;
+    let currentSortBy = 'maPhong';
+    let currentSortDir = 'asc';
+    let currentFilter = 'all';
+    let currentSearchKeyword = '';
+    let roomToDelete = null;
+    let isEditMode = false;
+
+    // ===== INITIALIZATION =====
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🏢 Phòng học management system initialized');
+
+        // Initialize event listeners
+        initializeEventListeners();
+
+        // Load initial data
+        loadRoomStatistics();
+        loadRoomsData();
+
+        // Setup periodic refresh (every 5 minutes)
+        setInterval(() => {
+            loadRoomStatistics();
+            if (currentFilter === 'all' && !currentSearchKeyword) {
+                loadRoomsData();
+            }
+        }, 300000);
+    });
+
+    // ===== EVENT LISTENERS =====
+    function initializeEventListeners() {
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchRooms();
+            }
+        });
+
+        // Filter pills
+        document.querySelectorAll('.filter-pill').forEach(pill => {
+            pill.addEventListener('click', function() {
+                setActiveFilter(this.dataset.filter);
+            });
+        });
+
+        // Select all checkbox
+        document.getElementById('selectAll').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('#roomsTableBody input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+        });
+
+        // Form validation
+        const roomForm = document.getElementById('roomForm');
+        roomForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (validateForm()) {
+                saveRoom();
+            }
+        });
+
+        // Modal events
+        const roomModal = document.getElementById('roomModal');
+        roomModal.addEventListener('hidden.bs.modal', function() {
+            resetForm();
+        });
+    }
+
+    // ===== DATA LOADING FUNCTIONS =====
+    async function loadRoomStatistics() {
+        try {
+            const response = await fetch('/api/phonghoc/statistics');
+            if (!response.ok) throw new Error('Failed to load statistics');
+
+            const stats = await response.json();
+            updateStatisticsDisplay(stats);
+        } catch (error) {
+            console.error('❌ Error loading statistics:', error);
+            showNotification('Lỗi khi tải thống kê', 'error');
+        }
+    }
+
+    async function loadRoomsData() {
+        try {
+            showLoading(true);
+
+            let url = `/api/phonghoc?page=${currentPage}&size=${pageSize}&sortBy=${currentSortBy}&sortDir=${currentSortDir}`;
+
+            // Add search or filter parameters
+            if (currentSearchKeyword) {
+                url = `/api/phonghoc/search?keyword=${encodeURIComponent(currentSearchKeyword)}&page=${currentPage}&size=${pageSize}`;
+            } else if (currentFilter !== 'all') {
+                url = getFilterUrl();
+            }
+
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Failed to load rooms');
+
+            const data = await response.json();
+
+            totalPages = data.totalPages;
+            totalElements = data.totalElements;
+
+            updateRoomsTable(data.content);
+            updatePagination();
+
+        } catch (error) {
+            console.error('❌ Error loading rooms:', error);
+            showNotification('Lỗi khi tải dữ liệu phòng học', 'error');
+            showErrorState();
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    function getFilterUrl() {
+        const filterMap = {
+            'available': '/api/phonghoc/filter/status?trangThai=AVAILABLE',
+            'occupied': '/api/phonghoc/filter/status?trangThai=OCCUPIED',
+            'maintenance': '/api/phonghoc/filter/status?trangThai=MAINTENANCE',
+            'lecture': '/api/phonghoc/filter/type?loaiPhong=LECTURE',
+            'lab': '/api/phonghoc/filter/type?loaiPhong=LAB',
+            'computer': '/api/phonghoc/filter/type?loaiPhong=COMPUTER'
+        };
+
+        const baseUrl = filterMap[currentFilter] || '/api/phonghoc';
+        return `${baseUrl}&page=${currentPage}&size=${pageSize}`;
+    }
+
+    // ===== DISPLAY UPDATE FUNCTIONS =====
+    function updateStatisticsDisplay(stats) {
+        document.getElementById('totalRooms').textContent = stats.total || 0;
+        document.getElementById('availableRooms').textContent = stats.available || 0;
+        document.getElementById('occupiedRooms').textContent = stats.occupied || 0;
+        document.getElementById('maintenanceRooms').textContent = stats.maintenance || 0;
+    }
+
+    function updateRoomsTable(rooms) {
+        const tbody = document.getElementById('roomsTableBody');
+
+        if (!rooms || rooms.length === 0) {
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="10" class="text-center py-4">
+                    <i class="fas fa-search text-muted fs-1 mb-3"></i>
+                    <p class="text-muted">Không tìm thấy phòng học nào</p>
+                </td>
+            </tr>
+        `;
+            return;
+        }
+
+        tbody.innerHTML = rooms.map(room => `
+        <tr>
+            <td>
+                <input type="checkbox" class="form-check-input" data-room-id="${room.maPhong}">
+            </td>
+            <td><strong>${room.maPhong}</strong></td>
+            <td>${room.tenPhong}</td>
+            <td>
+                <span class="room-type-badge">${room.loaiPhongDisplay || room.loaiPhong}</span>
+            </td>
+            <td>
+                <span class="room-capacity-badge">${room.sucChua} người</span>
+            </td>
+            <td>${room.toaNha}</td>
+            <td><span class="badge bg-secondary">Tầng ${room.tang}</span></td>
+            <td>${getStatusBadge(room.trangThai)}</td>
+            <td>${getEquipmentDisplay(room.thietBiDisplay || room.thietBi)}</td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn btn-sm btn-outline-info" onclick="viewRoom('${room.maPhong}')" title="Xem chi tiết">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="editRoom('${room.maPhong}')" title="Chỉnh sửa">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteRoom('${room.maPhong}')" title="Xóa">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+    }
+
+    function getStatusBadge(trangThai) {
+        const statusMap = {
+            'AVAILABLE': '<span class="status-badge status-active"><i class="room-status-indicator available"></i>Sẵn sàng</span>',
+            'OCCUPIED': '<span class="status-badge status-inactive"><i class="room-status-indicator occupied"></i>Đang sử dụng</span>',
+            'MAINTENANCE': '<span class="status-badge status-pending"><i class="room-status-indicator maintenance"></i>Bảo trì</span>',
+            'INACTIVE': '<span class="status-badge status-inactive">Không hoạt động</span>'
+        };
+        return statusMap[trangThai] || '<span class="status-badge">Không xác định</span>';
+    }
+
+    function getEquipmentDisplay(thietBi) {
+        if (!thietBi) return '<span class="text-muted">Không có</span>';
+
+        // Handle both display format and raw format
+        let equipmentText = thietBi;
+        if (thietBi.includes(',') && !thietBi.includes('Máy')) {
+            // Raw format: PROJECTOR,COMPUTER,AC
+            const equipments = thietBi.split(',').map(eq => getEquipmentName(eq.trim()));
+            equipmentText = equipments.join(', ');
+        }
+
+        const equipments = equipmentText.split(', ');
+        const displayCount = 2;
+
+        if (equipments.length <= displayCount) {
+            return `<div class="equipment-list">${equipments.map(eq => `<span class="equipment-badge">${eq}</span>`).join('')}</div>`;
+        }
+
+        const visible = equipments.slice(0, displayCount);
+        const remaining = equipments.length - displayCount;
+        return `
+        <div class="equipment-list">
+            ${visible.map(eq => `<span class="equipment-badge">${eq}</span>`).join('')}
+            <span class="badge bg-primary">+${remaining}</span>
+        </div>
+    `;
+    }
+
+    function updatePagination() {
+        const pagination = document.getElementById('pagination');
+        const showingStart = document.getElementById('showingStart');
+        const showingEnd = document.getElementById('showingEnd');
+        const totalRecords = document.getElementById('totalRecords');
+
+        // Update showing info
+        const start = totalElements > 0 ? currentPage * pageSize + 1 : 0;
+        const end = Math.min((currentPage + 1) * pageSize, totalElements);
+
+        showingStart.textContent = start;
+        showingEnd.textContent = end;
+        totalRecords.textContent = totalElements;
+
+        // Generate pagination
+        let paginationHTML = '';
+
+        if (totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
+        }
+
+        // Previous button
+        paginationHTML += `
+        <li class="page-item ${currentPage === 0 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage - 1})" ${currentPage === 0 ? 'tabindex="-1"' : ''}>
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        </li>
+    `;
+
+        // Page numbers
+        const startPage = Math.max(0, currentPage - 2);
+        const endPage = Math.min(totalPages - 1, currentPage + 2);
+
+        if (startPage > 0) {
+            paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(0)">1</a></li>`;
+            if (startPage > 1) {
+                paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHTML += `
+            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${i})">${i + 1}</a>
+            </li>
+        `;
+        }
+
+        if (endPage < totalPages - 1) {
+            if (endPage < totalPages - 2) {
+                paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+            paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${totalPages - 1})">${totalPages}</a></li>`;
+        }
+
+        // Next button
+        paginationHTML += `
+        <li class="page-item ${currentPage >= totalPages - 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage + 1})" ${currentPage >= totalPages - 1 ? 'tabindex="-1"' : ''}>
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>
+    `;
+
+        pagination.innerHTML = paginationHTML;
+    }
+
+    // ===== FILTER AND SEARCH FUNCTIONS =====
+    function setActiveFilter(filter) {
+        // Update UI
+        document.querySelectorAll('.filter-pill').forEach(pill => {
+            pill.classList.remove('active');
+        });
+        document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+
+        // Update filter and reload
+        currentFilter = filter;
+        currentPage = 0;
+        currentSearchKeyword = '';
+        document.getElementById('searchInput').value = '';
+
+        loadRoomsData();
+    }
+
+    function searchRooms() {
+        const keyword = document.getElementById('searchInput').value.trim();
+
+        if (keyword === currentSearchKeyword) return;
+
+        currentSearchKeyword = keyword;
+        currentPage = 0;
+        currentFilter = 'all';
+
+        // Update filter UI
+        document.querySelectorAll('.filter-pill').forEach(pill => {
+            pill.classList.remove('active');
+        });
+        document.querySelector('[data-filter="all"]').classList.add('active');
+
+        loadRoomsData();
+    }
+
+    function changePage(newPage) {
+        if (newPage < 0 || newPage >= totalPages) return;
+        currentPage = newPage;
+        loadRoomsData();
+    }
+
+    // ===== CRUD OPERATIONS =====
+    function openCreateModal() {
+        isEditMode = false;
+        document.getElementById('roomModalLabel').innerHTML = '<i class="fas fa-door-open me-2"></i>Thêm phòng học mới';
+        document.getElementById('roomModal').querySelector('.modal-header').className = 'modal-header bg-primary text-white';
+        resetForm();
+
+        const modal = new bootstrap.Modal(document.getElementById('roomModal'));
+        modal.show();
+    }
+
+    async function saveRoom() {
+        if (!validateForm()) return;
+
+        try {
+            const formData = collectFormData();
+            const url = isEditMode ? `/api/phonghoc/${formData.maPhong}` : '/api/phonghoc';
+            const method = isEditMode ? 'PUT' : 'POST';
+
+            showButtonLoading('saveButton', true);
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Có lỗi xảy ra khi lưu dữ liệu');
+            }
+
+            const result = await response.json();
+
+            // Close modal and refresh data
+            bootstrap.Modal.getInstance(document.getElementById('roomModal')).hide();
+
+            showNotification(
+                isEditMode ? 'Cập nhật phòng học thành công!' : 'Thêm phòng học thành công!',
+                'success'
+            );
+
+            loadRoomStatistics();
+            loadRoomsData();
+
+        } catch (error) {
+            console.error('❌ Error saving room:', error);
+            showNotification(error.message || 'Có lỗi xảy ra khi lưu dữ liệu', 'error');
+        } finally {
+            showButtonLoading('saveButton', false);
+        }
+    }
+
+    async function viewRoom(maPhong) {
+        try {
+            const response = await fetch(`/api/phonghoc/${maPhong}`);
+            if (!response.ok) throw new Error('Không thể tải thông tin phòng học');
+
+            const room = await response.json();
+            displayRoomDetails(room);
+
+            const modal = new bootstrap.Modal(document.getElementById('viewRoomModal'));
+            modal.show();
+
+        } catch (error) {
+            console.error('❌ Error viewing room:', error);
+            showNotification('Không thể tải thông tin phòng học', 'error');
+        }
+    }
+
+    async function editRoom(maPhong) {
+        try {
+            const response = await fetch(`/api/phonghoc/${maPhong}`);
+            if (!response.ok) throw new Error('Không thể tải thông tin phòng học');
+
+            const room = await response.json();
+
+            isEditMode = true;
+            document.getElementById('roomModalLabel').innerHTML = '<i class="fas fa-edit me-2"></i>Chỉnh sửa phòng học';
+            document.getElementById('roomModal').querySelector('.modal-header').className = 'modal-header bg-warning text-white';
+
+            populateForm(room);
+
+            const modal = new bootstrap.Modal(document.getElementById('roomModal'));
+            modal.show();
+
+        } catch (error) {
+            console.error('❌ Error loading room for edit:', error);
+            showNotification('Không thể tải thông tin phòng học', 'error');
+        }
+    }
+
+    function deleteRoom(maPhong) {
+        roomToDelete = maPhong;
+
+        // Update delete modal content
+        document.getElementById('deleteMessage').textContent =
+            `Bạn có chắc chắn muốn xóa phòng học "${maPhong}" không?`;
+
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+    }
+
+    async function confirmDelete() {
+        if (!roomToDelete) return;
+
+        try {
+            showButtonLoading('deleteButton', true);
+
+            const response = await fetch(`/api/phonghoc/${roomToDelete}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Không thể xóa phòng học');
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+
+            showNotification('Xóa phòng học thành công!', 'success');
+
+            loadRoomStatistics();
+            loadRoomsData();
+
+        } catch (error) {
+            console.error('❌ Error deleting room:', error);
+            showNotification('Không thể xóa phòng học', 'error');
+        } finally {
+            showButtonLoading('deleteButton', false);
+            roomToDelete = null;
+        }
+    }
+
+    // ===== FORM HANDLING =====
+    function collectFormData() {
+        const form = document.getElementById('roomForm');
+        const formData = new FormData(form);
+
+        // Collect equipment
+        const thietBi = [];
+        form.querySelectorAll('input[name="thietBi"]:checked').forEach(cb => {
+            thietBi.push(cb.value);
+        });
+
+        return {
+            maPhong: formData.get('maPhong').trim().toUpperCase(),
+            tenPhong: formData.get('tenPhong').trim(),
+            loaiPhong: formData.get('loaiPhong'),
+            sucChua: parseInt(formData.get('sucChua')),
+            toaNha: formData.get('toaNha').trim(),
+            tang: parseInt(formData.get('tang')),
+            trangThai: formData.get('trangThai'),
+            viTri: formData.get('viTri') ? formData.get('viTri').trim() : null,
+            moTa: formData.get('moTa') ? formData.get('moTa').trim() : null,
+            thietBi: thietBi.join(','), // Convert to comma-separated string
+            isActive: true
+        };
+    }
+
+    function populateForm(room) {
+        document.getElementById('roomId').value = room.maPhong;
+        document.getElementById('maPhong').value = room.maPhong;
+        document.getElementById('tenPhong').value = room.tenPhong;
+        document.getElementById('loaiPhong').value = room.loaiPhong;
+        document.getElementById('sucChua').value = room.sucChua;
+        document.getElementById('toaNha').value = room.toaNha;
+        document.getElementById('tang').value = room.tang;
+        document.getElementById('trangThai').value = room.trangThai;
+        document.getElementById('viTri').value = room.viTri || '';
+        document.getElementById('moTa').value = room.moTa || '';
+
+        // Set equipment checkboxes
+        const thietBiArray = room.thietBi ? room.thietBi.split(',') : [];
+        document.querySelectorAll('input[name="thietBi"]').forEach(cb => {
+            cb.checked = thietBiArray.includes(cb.value);
+        });
+
+        // Disable room code editing in edit mode
+        document.getElementById('maPhong').readOnly = true;
+    }
+
+    function resetForm() {
+        const form = document.getElementById('roomForm');
+        form.reset();
+        form.classList.remove('was-validated');
+
+        // Clear validation states
+        form.querySelectorAll('.is-invalid').forEach(el => {
+            el.classList.remove('is-invalid');
+        });
+
+        // Enable room code editing
+        document.getElementById('maPhong').readOnly = false;
+
+        // Reset hidden fields
+        document.getElementById('roomId').value = '';
+
+        // Set default values
+        document.getElementById('trangThai').value = 'AVAILABLE';
+    }
+
+    function validateForm() {
+        const form = document.getElementById('roomForm');
+        let isValid = form.checkValidity();
+
+        form.classList.add('was-validated');
+
+        // Custom validations
+        const maPhong = document.getElementById('maPhong').value.trim();
+        const sucChua = parseInt(document.getElementById('sucChua').value);
+        const tang = parseInt(document.getElementById('tang').value);
+
+        if (!maPhong.match(/^[A-Z0-9]{2,20}$/)) {
+            setFieldError('maPhong', 'Mã phòng phải từ 2-20 ký tự, chỉ gồm chữ hoa và số');
+            isValid = false;
+        }
+
+        if (isNaN(sucChua) || sucChua < 1 || sucChua > 1000) {
+            setFieldError('sucChua', 'Sức chứa phải từ 1 đến 1000 người');
+            isValid = false;
+        }
+
+        if (isNaN(tang) || tang < 1 || tang > 50) {
+            setFieldError('tang', 'Tầng phải từ 1 đến 50');
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    function setFieldError(fieldId, message) {
+        const field = document.getElementById(fieldId);
+        field.classList.add('is-invalid');
+
+        let feedback = field.parentNode.querySelector('.invalid-feedback');
+        if (feedback) {
+            feedback.textContent = message;
+        }
+    }
+
+    function displayRoomDetails(room) {
+        const content = document.getElementById('viewRoomContent');
+
+        const equipmentList = room.thietBi && room.thietBi.length > 0
+            ? room.thietBi.split(',').map(tb => `<span class="badge bg-info me-1 mb-1">${getEquipmentName(tb.trim())}</span>`).join('')
+            : '<span class="text-muted">Không có thiết bị</span>';
+
+        content.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Thông tin cơ bản</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless table-sm">
+                            <tr>
+                                <td class="fw-bold">Mã phòng:</td>
+                                <td><strong>${room.maPhong}</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Tên phòng:</td>
+                                <td>${room.tenPhong}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Loại phòng:</td>
+                                <td><span class="room-type-badge">${room.loaiPhongDisplay || room.loaiPhong}</span></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Sức chứa:</td>
+                                <td><span class="room-capacity-badge">${room.sucChua} người</span></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Trạng thái:</td>
+                                <td>${getStatusBadge(room.trangThai)}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Vị trí</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless table-sm">
+                            <tr>
+                                <td class="fw-bold">Tòa nhà:</td>
+                                <td><strong>${room.toaNha}</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Tầng:</td>
+                                <td><span class="badge bg-secondary">Tầng ${room.tang}</span></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Vị trí:</td>
+                                <td>${room.viTri || '<span class="text-muted">Chưa có thông tin</span>'}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-laptop me-2"></i>Thiết bị</h6>
+                    </div>
+                    <div class="card-body">
+                        ${equipmentList}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        ${room.moTa ? `
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-comment me-2"></i>Mô tả</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0">${room.moTa}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        ` : ''}
+    `;
+
+        // Store current room for editing
+        document.getElementById('viewRoomModal').setAttribute('data-room-id', room.maPhong);
+    }
+
+    function editRoomFromView() {
+        const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewRoomModal'));
+        const maPhong = document.getElementById('viewRoomModal').getAttribute('data-room-id');
+
+        viewModal.hide();
+        setTimeout(() => editRoom(maPhong), 300);
+    }
+
+    // ===== UTILITY FUNCTIONS =====
+    function getEquipmentName(thietBi) {
+        const equipmentMap = {
+            'PROJECTOR': 'Máy chiếu',
+            'COMPUTER': 'Máy tính',
+            'AC': 'Điều hòa',
+            'MICROPHONE': 'Micro',
+            'SPEAKER': 'Loa',
+            'WIFI': 'Wifi',
+            'WHITEBOARD': 'Bảng trắng',
+            'SMARTBOARD': 'Bảng thông minh'
+        };
+        return equipmentMap[thietBi] || thietBi;
+    }
+
+    function showLoading(show) {
+        const tbody = document.getElementById('roomsTableBody');
+        if (show) {
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="10" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Đang tải...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+                </td>
+            </tr>
+        `;
+        }
+    }
+
+    function showErrorState() {
+        const tbody = document.getElementById('roomsTableBody');
+        tbody.innerHTML = `
+        <tr>
+            <td colspan="10" class="text-center py-4">
+                <i class="fas fa-exclamation-triangle text-warning fs-1 mb-3"></i>
+                <p class="text-muted">Có lỗi xảy ra khi tải dữ liệu</p>
+                <button class="btn btn-primary btn-sm" onclick="loadRoomsData()">
+                    <i class="fas fa-refresh me-1"></i>Thử lại
+                </button>
+            </td>
+        </tr>
+    `;
+    }
+
+    function showButtonLoading(buttonId, loading) {
+        const button = document.getElementById(buttonId);
+        if (!button) return;
+
+        if (loading) {
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang xử lý...';
+        } else {
+            button.disabled = false;
+            // Restore original text
+            if (buttonId === 'saveButton') {
+                button.innerHTML = '<i class="fas fa-save me-1"></i>Lưu lại';
+            } else if (buttonId === 'deleteButton') {
+                button.innerHTML = '<i class="fas fa-trash me-1"></i>Xóa';
+            }
+        }
+    }
+
+    function showNotification(message, type = 'info') {
+        const iconMap = {
+            'success': 'success',
+            'error': 'error',
+            'warning': 'warning',
+            'info': 'info'
+        };
+
+        Swal.fire({
+            title: type === 'error' ? 'Lỗi!' : 'Thông báo',
+            text: message,
+            icon: iconMap[type] || 'info',
+            confirmButtonText: 'Đóng',
+            confirmButtonColor: '#1c6681',
+            timer: type === 'success' ? 3000 : undefined,
+            timerProgressBar: type === 'success'
+        });
+    }
+
+    // ===== EXPORT AND REFRESH FUNCTIONS =====
+    function refreshData() {
+        showNotification('Đang làm mới dữ liệu...', 'info');
+
+        loadRoomStatistics();
+        loadRoomsData();
+
+        // Reset search and filters
+        currentSearchKeyword = '';
+        currentFilter = 'all';
+        currentPage = 0;
+
+        document.getElementById('searchInput').value = '';
+        document.querySelectorAll('.filter-pill').forEach(pill => {
+            pill.classList.remove('active');
+        });
+        document.querySelector('[data-filter="all"]').classList.add('active');
+    }
+
+    async function exportData() {
+        try {
+            showNotification('Đang chuẩn bị file xuất...', 'info');
+
+            const response = await fetch('/api/phonghoc/all');
+            if (!response.ok) throw new Error('Failed to fetch data for export');
+
+            const rooms = await response.json();
+            exportToCSV(rooms);
+
+            showNotification('Xuất file thành công!', 'success');
+
+        } catch (error) {
+            console.error('❌ Export error:', error);
+            showNotification('Lỗi khi xuất file', 'error');
+        }
+    }
+
+    function exportToCSV(rooms) {
+        const headers = [
+            'Mã phòng', 'Tên phòng', 'Loại phòng', 'Sức chứa',
+            'Tòa nhà', 'Tầng', 'Trạng thái', 'Vị trí', 'Thiết bị', 'Mô tả'
+        ];
+
+        const csvContent = [
+            headers.join(','),
+            ...rooms.map(room => [
+                room.maPhong,
+                `"${room.tenPhong}"`,
+                `"${room.loaiPhongDisplay || room.loaiPhong}"`,
+                room.sucChua,
+                `"${room.toaNha}"`,
+                room.tang,
+                `"${room.trangThaiDisplay || room.trangThai}"`,
+                `"${room.viTri || ''}"`,
+                `"${room.thietBiDisplay || room.thietBi || ''}"`,
+                `"${room.moTa || ''}"`
+            ].join(','))
+        ].join('\n');
+
+        // Create and download file
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `danh-sach-phong-hoc-${new Date().toISOString().split('T')[0]}.csv`;
+        link.style.display = 'none';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // ===== KEYBOARD SHORTCUTS =====
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + K for search focus
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            document.getElementById('searchInput').focus();
+        }
+
+        // Escape to close modals
+        if (e.key === 'Escape') {
+            const modals = document.querySelectorAll('.modal.show');
+            modals.forEach(modal => {
+                bootstrap.Modal.getInstance(modal)?.hide();
+            });
+        }
+
+        // Ctrl/Cmd + N for new room
+        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+            e.preventDefault();
+            openCreateModal();
+        }
+    });
+
+    // ===== SIDEBAR TOGGLE =====
+    document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+        const sidebar = document.querySelector('.sidebar');
+        sidebar?.classList.toggle('collapsed');
+    });
+
+    console.log('🏢 Phòng học management system fully loaded with all features!');
+</script>
 </body>
 </html>
