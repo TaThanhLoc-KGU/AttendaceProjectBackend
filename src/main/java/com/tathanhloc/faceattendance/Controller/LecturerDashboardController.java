@@ -37,7 +37,7 @@ public class LecturerDashboardController {
     /**
      * Trang dashboard chính của giảng viên
      */
-    @GetMapping(value = {"/dashboard", "/dashboard.html"})
+    @GetMapping(value = {"/dashboard", ""})
     public String dashboard(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         log.info("=== LECTURER DASHBOARD ACCESS ===");
         log.info("User: {}", userDetails != null ? userDetails.getUsername() : "null");

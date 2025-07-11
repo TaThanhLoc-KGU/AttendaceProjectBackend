@@ -1,1612 +1,1585 @@
-    <!DOCTYPE html>
-    <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Quản lý Lịch học - Face Attendance</title>
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Lịch học - Face Attendance</title>
 
-        <!-- Bootstrap CSS -->
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <!-- Font Awesome -->
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-        <!-- Select2 CSS -->
-        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
-        <!-- Custom CSS -->
-        <link th:href="@{/css/common.css}" rel="stylesheet">
-        <link th:href="@{/css/sidebar.css}" rel="stylesheet">
-        <link th:href="@{/css/admin.css}" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/sidebar.css}" rel="stylesheet">
+    <link th:href="@{/css/admin.css}" rel="stylesheet">
 
-        <style>
-            /* Đảm bảo modal chi tiết luôn có z-index cao nhất */
-            #scheduleDetailModal.show {
-                z-index: 1065 !important;
+    <style>
+        /* ===== Z-INDEX MANAGEMENT - FIXED HIERARCHY ===== */
+
+        /* Base modal z-index levels */
+        .modal {
+            z-index: 1050 !important;
+        }
+
+        .modal-backdrop {
+            z-index: 1040 !important;
+        }
+
+        /* Schedule Modal (Create/Edit) - Level 1 */
+        #scheduleModal {
+            z-index: 1050 !important;
+        }
+
+        #scheduleModal .modal-backdrop {
+            z-index: 1040 !important;
+        }
+
+        /* Move Room Modal - Level 2 */
+        #moveRoomModal {
+            z-index: 1055 !important;
+        }
+
+        #moveRoomModal .modal-backdrop {
+            z-index: 1045 !important;
+        }
+
+        /* Semester Schedule Modal - Level 3 */
+        #semesterScheduleModal {
+            z-index: 1060 !important;
+        }
+
+        #semesterScheduleModal .modal-backdrop {
+            z-index: 1050 !important;
+        }
+
+        #semesterScheduleModal .modal-dialog {
+            z-index: 1061 !important;
+        }
+
+        /* Schedule Detail Modal - HIGHEST PRIORITY */
+        #scheduleDetailModal {
+            z-index: 1070 !important;
+        }
+
+        #scheduleDetailModal .modal-backdrop {
+            z-index: 1060 !important;
+        }
+
+        #scheduleDetailModal .modal-dialog {
+            z-index: 1071 !important;
+        }
+
+        /* Select2 Dropdown Management */
+        .select2-container {
+            z-index: 1080 !important;
+        }
+
+        .select2-dropdown {
+            z-index: 1080 !important;
+        }
+
+        /* Select2 trong các modal cụ thể */
+        #scheduleModal .select2-container {
+            z-index: 1052 !important;
+        }
+
+        #scheduleModal .select2-dropdown {
+            z-index: 1053 !important;
+        }
+
+        #semesterScheduleModal .select2-container {
+            z-index: 1062 !important;
+        }
+
+        #semesterScheduleModal .select2-dropdown {
+            z-index: 1063 !important;
+        }
+
+        #moveRoomModal .select2-container {
+            z-index: 1057 !important;
+        }
+
+        #moveRoomModal .select2-dropdown {
+            z-index: 1058 !important;
+        }
+
+        /* Đảm bảo Schedule Detail Modal luôn ở trên cùng */
+        #scheduleDetailModal.show {
+            z-index: 1070 !important;
+        }
+
+        #scheduleDetailModal.show .modal-backdrop {
+            z-index: 1060 !important;
+        }
+
+        /* Ẩn Select2 dropdown khi Schedule Detail Modal mở */
+        body.modal-open #scheduleDetailModal.show ~ .select2-container .select2-dropdown,
+        body.modal-open #scheduleDetailModal.show ~ .select2-dropdown {
+            display: none !important;
+        }
+
+        /* ===== FILTER SECTION SELECT2 MANAGEMENT ===== */
+        .filter-section .select2-container {
+            z-index: 1030 !important;
+        }
+
+        .filter-section .select2-dropdown {
+            z-index: 1030 !important;
+        }
+
+        /* Ẩn filter dropdowns khi có modal mở */
+        body.modal-open .filter-section .select2-container .select2-dropdown,
+        body.modal-open .filter-section .select2-dropdown {
+            display: none !important;
+        }
+
+        /* Đảm bảo filter dropdowns không hiển thị khi modal đang mở */
+        .modal.show ~ * .filter-section .select2-dropdown {
+            display: none !important;
+        }
+
+        /* Override cho các filter dropdown cụ thể */
+        #filterGiangVien + .select2-container .select2-dropdown,
+        #filterPhongHoc + .select2-container .select2-dropdown,
+        #filterMonHoc + .select2-container .select2-dropdown,
+        #filterKhoa + .select2-container .select2-dropdown {
+            z-index: 1030 !important;
+        }
+
+        /* Khi modal mở, force ẩn tất cả filter dropdowns */
+        body.modal-open #filterGiangVien + .select2-container .select2-dropdown,
+        body.modal-open #filterPhongHoc + .select2-container .select2-dropdown,
+        body.modal-open #filterMonHoc + .select2-container .select2-dropdown,
+        body.modal-open #filterKhoa + .select2-container .select2-dropdown {
+            display: none !important;
+            visibility: hidden !important;
+        }
+
+        /* Loading Overlay - Cao nhất */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999 !important;
+        }
+
+        /* Notification Container - Cao nhất */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000 !important;
+            max-width: 400px;
+        }
+
+        /* ===== LAYOUT STYLES ===== */
+        .schedule-calendar {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .calendar-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .calendar-controls {
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .time-column {
+            background: #f8f9fa;
+            border-right: 2px solid #e9ecef;
+            min-width: 120px;
+        }
+
+        .time-slot {
+            border-bottom: 1px solid #e9ecef;
+            padding: 0.75rem;
+            font-size: 0.875rem;
+            text-align: center;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            font-weight: 500;
+        }
+
+        .day-column {
+            border-right: 1px solid #e9ecef;
+            min-height: 720px;
+            position: relative;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .day-header {
+            background: #495057;
+            color: white;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1rem;
+            border-bottom: 2px solid #dee2e6;
+            position: relative;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Responsive cho mobile */
+        @media (max-width: 768px) {
+            .day-header {
+                padding: 1.2rem 0.5rem;
+                min-height: 70px;
+                font-size: 0.9rem;
+            }
+        }
+
+        .day-content {
+            position: relative;
+            height: 720px;
+            background: #fafafa;
+        }
+
+        /* ===== SCHEDULE ITEMS ===== */
+        .schedule-item {
+            position: absolute;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin: 3px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+            z-index: 10;
+            left: 6px;
+            right: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .schedule-item:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            z-index: 20;
+        }
+
+        .schedule-item.conflict {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            animation: pulse 2s infinite;
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        .schedule-item.selected {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            transform: scale(1.05);
+            border-color: rgba(255,255,255,0.5);
+        }
+
+        .schedule-item .title {
+            font-weight: 700;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.9rem;
+        }
+
+        .schedule-item .info {
+            font-size: 0.75rem;
+            opacity: 0.95;
+            line-height: 1.3;
+        }
+
+        .schedule-item .info div {
+            margin-bottom: 2px;
+        }
+
+        /* ===== GRID VIEW IMPROVEMENTS ===== */
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: 120px repeat(7, 1fr);
+            gap: 2px;
+            background: #dee2e6;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .grid-cell {
+            background: white;
+            min-height: 70px;
+            position: relative;
+            transition: background-color 0.2s ease;
+        }
+
+        .grid-cell:hover {
+            background: #f8f9fa;
+        }
+
+        .time-grid-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            background: #e9ecef;
+            font-size: 0.85rem;
+            padding: 0.5rem;
+        }
+
+        .day-grid-header {
+            background: #495057;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 1rem;
+        }
+
+        /* ===== RESPONSIVE IMPROVEMENTS ===== */
+        @media (max-width: 1200px) {
+            .day-column {
+                min-width: 120px;
             }
 
-            #scheduleDetailModal.show .modal-backdrop {
-                z-index: 1064 !important;
+            .schedule-item {
+                font-size: 0.8rem;
+                padding: 8px 10px;
             }
 
-            /* Ẩn tất cả dropdown khi modal chi tiết hiển thị */
-            body.modal-open #scheduleDetailModal.show ~ .select2-container .select2-dropdown {
-                display: none !important;
+            .schedule-item .title {
+                font-size: 0.85rem;
             }
+        }
 
-            body.modal-open #scheduleDetailModal.show ~ .select2-dropdown {
-                display: none !important;
-            }
-
-            /* ===== Z-INDEX MANAGEMENT ===== */
-            /* Modal Sắp lịch học kỳ */
-            #semesterScheduleModal {
-                z-index: 1055 !important;
-            }
-
-            #semesterScheduleModal .modal-backdrop {
-                z-index: 1054 !important;
-            }
-
-            #semesterScheduleModal .modal-dialog {
-                z-index: 1056 !important;
-            }
-
-            /* Select2 dropdowns */
-            .select2-container {
-                z-index: 1070 !important;
-            }
-
-            .select2-dropdown {
-                z-index: 1070 !important;
-            }
-
-            /* Select2 trong semester modal */
-            #semesterScheduleModal .select2-container {
-                z-index: 1057 !important;
-            }
-
-            #semesterScheduleModal .select2-dropdown {
-                z-index: 1058 !important;
-            }
-
-            /* ===== LAYOUT STYLES ===== */
-            .schedule-calendar {
-                background: white;
-                border-radius: 15px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                overflow: hidden;
-                margin-bottom: 2rem;
-            }
-
-            .calendar-header {
-                background: var(--primary-color); /* Thêm lại gradient */
-                color: white;
-                padding: 1.5rem;
-                text-align: center;
-                position: relative;
-            }
-
-            .calendar-controls {
-                position: absolute;
-                right: 1.5rem;
-                top: 50%;
-                transform: translateY(-50%);
-            }
-
+        @media (max-width: 768px) {
             .time-column {
-                background: #f8f9fa;
-                border-right: 2px solid #e9ecef;
-                min-width: 120px; /* Tăng width cho đẹp hơn */
-            }
-
-            .time-slot {
-                border-bottom: 1px solid #e9ecef;
-                padding: 0.75rem;
-                font-size: 0.875rem;
-                text-align: center;
-                height: 60px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                font-weight: 500; /* Làm đậm chữ */
+                min-width: 100px;
             }
 
             .day-column {
-                border-right: 1px solid #e9ecef;
-                min-height: 720px;
-                position: relative;
-                flex: 1;
-                min-width: 140px; /* Đảm bảo width tối thiểu */
+                min-width: 100px;
             }
 
-            /* Hoặc nếu muốn responsive */
-            .day-header {
-                background: #495057;
-                color: white;
-                padding: 1.5rem 1rem;
-                text-align: center;
-                font-weight: 600;
-                font-size: 1rem;
-                border-bottom: 2px solid #dee2e6;
-                position: relative;
-                min-height: 100px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-            }
-
-            /* Responsive cho mobile */
-            @media (max-width: 768px) {
-                .day-header {
-                    padding: 1.2rem 0.5rem;
-                    min-height: 70px;
-                    font-size: 0.9rem;
-                }
-            }
-
-            .day-content {
-                position: relative;
-                height: 720px;
-                background: #fafafa; /* Màu nền nhẹ */
-            }
-
-            /* ===== SCHEDULE ITEMS ===== */
             .schedule-item {
-                position: absolute;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                border-radius: 10px; /* Bo góc đẹp hơn */
-                padding: 10px 14px; /* Tăng padding */
-                margin: 3px; /* Tăng margin */
-                cursor: pointer;
-                transition: all 0.3s ease;
-                font-size: 0.85rem; /* Tăng font size */
-                box-shadow: 0 3px 12px rgba(0,0,0,0.2); /* Shadow đậm hơn */
-                z-index: 10;
-                left: 6px; /* Tăng margin */
-                right: 6px;
-                overflow: hidden;
-                border: 1px solid rgba(255,255,255,0.2); /* Viền mỏng */
-            }
-
-            .schedule-item:hover {
-                transform: translateY(-3px) scale(1.02); /* Hiệu ứng hover đẹp hơn */
-                box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-                z-index: 20;
-            }
-
-            .schedule-item.conflict {
-                background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
-                animation: pulse 2s infinite;
-                border-color: rgba(255,255,255,0.4);
-            }
-
-            .schedule-item.selected {
-                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-                transform: scale(1.05);
-                border-color: rgba(255,255,255,0.5);
-            }
-
-            .schedule-item .title {
-                font-weight: 700; /* Đậm hơn */
-                margin-bottom: 4px; /* Tăng spacing */
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                font-size: 0.9rem; /* Title lớn hơn */
-            }
-
-            .schedule-item .info {
                 font-size: 0.75rem;
-                opacity: 0.95; /* Tăng opacity */
-                line-height: 1.3; /* Tăng line height */
-            }
-
-            .schedule-item .info div {
-                margin-bottom: 2px; /* Spacing giữa các dòng */
-            }
-
-            /* ===== GRID VIEW IMPROVEMENTS ===== */
-            .schedule-grid {
-                display: grid;
-                grid-template-columns: 120px repeat(7, 1fr); /* Tăng width cột đầu */
-                gap: 2px; /* Tăng gap */
-                background: #dee2e6; /* Màu nền tối hơn */
-                border-radius: 12px;
-                overflow: hidden;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            }
-
-            .grid-cell {
-                background: white;
-                min-height: 70px; /* Tăng height */
-                position: relative;
-                transition: background-color 0.2s ease;
-            }
-
-            .grid-cell:hover {
-                background: #f8f9fa;
-            }
-
-            .time-grid-slot {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 600;
-                background: #e9ecef;
-                font-size: 0.85rem;
-                padding: 0.5rem;
-            }
-
-            .day-grid-header {
-                background: #495057;
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 600;
-                font-size: 1rem;
-                padding: 1rem;
-            }
-
-            /* ===== RESPONSIVE IMPROVEMENTS ===== */
-            @media (max-width: 1200px) {
-                .day-column {
-                    min-width: 120px;
-                }
-
-                .schedule-item {
-                    font-size: 0.8rem;
-                    padding: 8px 10px;
-                }
-
-                .schedule-item .title {
-                    font-size: 0.85rem;
-                }
-            }
-
-            @media (max-width: 768px) {
-                .time-column {
-                    min-width: 100px;
-                }
-
-                .day-column {
-                    min-width: 100px;
-                }
-
-                .schedule-item {
-                    font-size: 0.75rem;
-                    padding: 6px 8px;
-                    left: 4px;
-                    right: 4px;
-                }
-
-                .schedule-item .title {
-                    font-size: 0.8rem;
-                }
-
-                .schedule-item .info {
-                    font-size: 0.7rem;
-                }
-            }
-
-            /* ===== CALENDAR DATE DISPLAY ===== */
-            .day-date {
-                font-size: 0.85rem;
-                font-weight: 500;
-                opacity: 0.9;
-                margin-top: 4px;
-            }
-
-            .day-date.today {
-                background: rgba(255, 255, 255, 0.3);
-                border-radius: 50%;
-                width: 28px;
-                height: 28px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin: 4px auto 0;
-                font-weight: bold;
-                border: 2px solid rgba(255,255,255,0.5);
-            }
-
-            /* ===== SEMESTER SELECTOR IMPROVEMENTS ===== */
-            .semester-selector {
-                background: linear-gradient(135deg, #0c5460 0%, #17a2b8 100%) !important; /* Gradient đẹp hơn */
-                color: white;
-                border-radius: 15px;
-                padding: 1.5rem;
-                margin-bottom: 2rem;
-                box-shadow: 0 4px 15px rgba(12, 84, 96, 0.3); /* Shadow theo màu */
-            }
-
-            .semester-selector h5 {
-                color: white !important; /* Đảm bảo chữ trắng */
-                font-weight: 600;
-            }
-
-            .semester-selector .form-select {
-                background: rgba(255,255,255,0.15);
-                border: 1px solid rgba(255,255,255,0.4);
-                color: white;
-                border-radius: 10px;
-                font-weight: 500;
-            }
-
-            .semester-selector .form-select:focus {
-                background: rgba(255,255,255,0.2);
-                border-color: rgba(255,255,255,0.6);
-                box-shadow: 0 0 0 0.2rem rgba(255,255,255,0.25);
-            }
-
-            .semester-selector .form-select option {
-                background: #495057;
-                color: white;
-            }
-
-            /* ===== TABLE IMPROVEMENTS ===== */
-            .list-view-table .schedule-row {
-                cursor: pointer;
-                transition: all 0.3s ease;
-                border-left: 3px solid transparent;
-            }
-
-            .list-view-table .schedule-row:hover {
-                background-color: rgba(102, 126, 234, 0.08);
-                transform: translateX(3px);
-                border-left-color: #667eea;
-            }
-
-            .list-view-table .schedule-row.table-primary {
-                background-color: rgba(102, 126, 234, 0.15);
-                border-left-color: #667eea;
-            }
-
-            /* ===== SCHEDULE ITEMS ===== */
-            .schedule-item {
-                position: absolute;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                border-radius: 8px;
-                padding: 8px 12px;
-                margin: 2px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                font-size: 0.8rem;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-                z-index: 10;
+                padding: 6px 8px;
                 left: 4px;
                 right: 4px;
-                overflow: hidden;
-            }
-
-            .schedule-item:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 15px rgba(0,0,0,0.25);
-                z-index: 20;
-            }
-
-            .schedule-item.conflict {
-                background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
-                animation: pulse 2s infinite;
-            }
-
-            .schedule-item.selected {
-                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-                transform: scale(1.02);
             }
 
             .schedule-item .title {
-                font-weight: 600;
-                margin-bottom: 2px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                font-size: 0.8rem;
             }
 
             .schedule-item .info {
                 font-size: 0.7rem;
-                opacity: 0.9;
-                line-height: 1.2;
             }
+        }
 
-            .schedule-item.week-pattern {
-                border-left: 4px solid #28a745;
+        /* ===== CALENDAR DATE DISPLAY ===== */
+        .day-date {
+            font-size: 0.85rem;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        .day-date.today {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 4px auto 0;
+            font-weight: bold;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+
+        /* ===== SEMESTER SELECTOR IMPROVEMENTS ===== */
+        .semester-selector {
+            background: linear-gradient(135deg, #0c5460 0%, #17a2b8 100%) !important;
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(12, 84, 96, 0.3);
+        }
+
+        .semester-selector h5 {
+            color: white !important;
+            font-weight: 600;
+        }
+
+        .semester-selector .form-select {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .semester-selector .form-select:focus {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.6);
+            box-shadow: 0 0 0 0.2rem rgba(255,255,255,0.25);
+        }
+
+        .semester-selector .form-select option {
+            background: #495057;
+            color: white;
+        }
+
+        /* ===== TABLE IMPROVEMENTS ===== */
+        .list-view-table .schedule-row {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .list-view-table .schedule-row:hover {
+            background-color: rgba(102, 126, 234, 0.08);
+            transform: translateX(3px);
+            border-left-color: #667eea;
+        }
+
+        .list-view-table .schedule-row.table-primary {
+            background-color: rgba(102, 126, 234, 0.15);
+            border-left-color: #667eea;
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes pulse {
+            0% { box-shadow: 0 2px 8px rgba(255, 65, 108, 0.3); }
+            50% { box-shadow: 0 4px 20px rgba(255, 65, 108, 0.6); }
+            100% { box-shadow: 0 2px 8px rgba(255, 65, 108, 0.3); }
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.5; }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
             }
-
-            .schedule-item.month-pattern {
-                border-left: 4px solid #17a2b8;
+            to {
+                transform: translateX(0);
+                opacity: 1;
             }
+        }
 
-            .schedule-item.semester-pattern {
-                border-left: 4px solid #6f42c1;
+        /* ===== UI COMPONENTS ===== */
+        .conflict-badge {
+            background: #dc3545;
+            color: white;
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 5px;
+            animation: blink 1s infinite;
+        }
+
+        .filter-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .view-toggle {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .view-toggle .btn-group .btn {
+            border-radius: 25px;
+            margin: 0 3px;
+            padding: 0.5rem 1.5rem;
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+            height: 100%;
+            justify-content: center;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        }
+
+        .stats-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+            background: white;
+            justify-content: center;
+        }
+
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-change {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .stats-change.positive {
+            color: #28a745;
+        }
+
+        .stats-change.negative {
+            color: #dc3545;
+        }
+
+        /* ===== TABLE STYLES ===== */
+        .time-cell {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .conflict-indicator {
+            color: #dc3545;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        /* ===== SEMESTER COMPONENTS ===== */
+        .semester-info {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* ===== ACTION COMPONENTS ===== */
+        .bulk-actions {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .btn-action {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .btn-view {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-edit {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-action:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* ===== MODAL STYLES ===== */
+        .modal-lg {
+            max-width: 900px;
+        }
+
+        .conflict-warning {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .conflict-summary {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .schedule-summary {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner-circle {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-content {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 300px;
+            animation: fadeInScale 0.3s ease-out;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
             }
-
-            /* ===== ANIMATIONS ===== */
-            @keyframes pulse {
-                0% { box-shadow: 0 2px 8px rgba(255, 65, 108, 0.3); }
-                50% { box-shadow: 0 4px 20px rgba(255, 65, 108, 0.6); }
-                100% { box-shadow: 0 2px 8px rgba(255, 65, 108, 0.3); }
+            to {
+                opacity: 1;
+                transform: scale(1);
             }
+        }
 
-            @keyframes blink {
-                0%, 50% { opacity: 1; }
-                51%, 100% { opacity: 0.5; }
+        .loading-dots {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: loadingDots 1.4s infinite ease-in-out both;
+        }
+
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+        .loading-dot:nth-child(3) { animation-delay: 0s; }
+
+        @keyframes loadingDots {
+            0%, 80%, 100% {
+                transform: scale(0);
+                opacity: 0.5;
             }
-
-            @keyframes slideIn {
-                from {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
+            40% {
+                transform: scale(1);
+                opacity: 1;
             }
+        }
 
-            /* ===== UI COMPONENTS ===== */
-            .conflict-badge {
-                background: #dc3545;
-                color: white;
-                font-size: 0.6rem;
-                padding: 2px 6px;
-                border-radius: 10px;
-                margin-left: 5px;
-                animation: blink 1s infinite;
-            }
+        .notification {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border-left: 4px solid;
+            animation: slideIn 0.3s ease;
+        }
 
-            .filter-section {
-                background: white;
-                padding: 2rem;
-                border-radius: 15px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                margin-bottom: 2rem;
-            }
+        .notification.success {
+            border-left-color: #28a745;
+        }
 
-            .view-toggle {
-                background: white;
-                border-radius: 15px;
-                padding: 1.5rem;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                margin-bottom: 2rem;
-            }
+        .notification.error {
+            border-left-color: #dc3545;
+        }
 
-            .view-toggle .btn-group .btn {
-                border-radius: 25px;
-                margin: 0 3px;
-                padding: 0.5rem 1.5rem;
-            }
+        .notification.warning {
+            border-left-color: #ffc107;
+        }
 
-            .stats-card {
-                background: white;
-                border-radius: 15px;
-                padding: 2rem;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                text-align: center;
-                transition: all 0.3s ease;
-                height: 100%;
-                justify-content: center;
-            }
+        .notification.info {
+            border-left-color: #17a2b8;
+        }
 
-            .stats-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-            }
+        /* ===== SELECT2 CUSTOMIZATION ===== */
+        .select2-container--default .select2-selection--single {
+            height: 38px;
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+        }
 
-            .stats-icon {
-                font-size: 3rem;
-                margin-bottom: 1rem;
-                display: block;
-                background: white;
-                justify-content: center;
-            }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 36px;
+            padding-left: 12px;
+        }
 
-            .stats-number {
-                font-size: 2.5rem;
-                font-weight: 700;
-                margin-bottom: 0.5rem;
-            }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+        }
 
-            .stats-label {
-                color: #6c757d;
-                font-size: 0.9rem;
-                margin-bottom: 0.5rem;
-            }
+        /* ===== CALENDAR NAVIGATION ===== */
+        .calendar-controls .btn-group .btn.active {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
 
-            .stats-change {
-                font-size: 0.8rem;
-                font-weight: 600;
-            }
+        /* Filter dropdown specific styling */
+        .filter-dropdown {
+            z-index: 1030 !important;
+        }
 
-            .stats-change.positive {
-                color: #28a745;
-            }
+        .select2-container--bootstrap-5 .filter-dropdown {
+            z-index: 1030 !important;
+        }
+    </style>
+</head>
+<body>
+<div class="main-wrapper">
+    <!-- Include Sidebar Component -->
+    <div th:replace="~{components/sidebar :: sidebar}"></div>
 
-            .stats-change.negative {
-                color: #dc3545;
-            }
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 class="page-title">
+                        <i class="fas fa-calendar-alt me-2"></i>Quản lý Lịch học
+                    </h1>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-success me-2" onclick="openSemesterScheduleModal()">
+                        <i class="fas fa-calendar-plus me-2"></i>Sắp lịch học kỳ
+                    </button>
+                    <button class="btn btn-primary me-2" onclick="openCreateModal()">
+                        <i class="fas fa-plus me-2"></i>Tạo lịch học
+                    </button>
+                    <button class="btn btn-warning me-2" onclick="checkAllConflicts()">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Kiểm tra trùng lịch
+                    </button>
+                    <button class="btn btn-info" onclick="exportSchedule()">
+                        <i class="fas fa-download me-2"></i>Xuất lịch
+                    </button>
+                </div>
+            </div>
+        </div>
 
-            /* ===== TABLE STYLES ===== */
-            .list-view-table .schedule-row {
-                cursor: pointer;
-                transition: all 0.3s ease;
-            }
-
-            .list-view-table .schedule-row:hover {
-                background-color: rgba(102, 126, 234, 0.1);
-                transform: translateX(5px);
-            }
-
-            .time-cell {
-                font-weight: 600;
-                color: #495057;
-            }
-
-            .conflict-indicator {
-                color: #dc3545;
-                font-weight: bold;
-                animation: pulse 2s infinite;
-            }
-
-            /* ===== SEMESTER COMPONENTS ===== */
-            .semester-selector {
-                background: #0c5460 !important  ;
-                color: white;
-                border-radius: 15px;
-                padding: 1.5rem;
-                margin-bottom: 2rem;
-            }
-
-            .semester-selector .form-select {
-                background: rgba(255,255,255,0.1);
-                border: 1px solid rgba(255,255,255,0.3);
-                color: white;
-                border-radius: 10px;
-            }
-
-            .semester-selector .form-select option {
-                background: #495057;
-                color: white;
-            }
-
-            .semester-info {
-                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-                color: white;
-                border-radius: 10px;
-                padding: 1rem;
-                margin-bottom: 1rem;
-            }
-
-            /* ===== ACTION COMPONENTS ===== */
-            .bulk-actions {
-                background: white;
-                border-radius: 15px;
-                padding: 1.5rem;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                margin-bottom: 2rem;
-            }
-
-            .action-buttons {
-                display: flex;
-                gap: 0.5rem;
-                justify-content: center;
-            }
-
-            .btn-action {
-                width: 35px;
-                height: 35px;
-                border-radius: 50%;
-                border: none;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.3s ease;
-                font-size: 0.875rem;
-            }
-
-            .btn-view {
-                background: #17a2b8;
-                color: white;
-            }
-
-            .btn-edit {
-                background: #ffc107;
-                color: #212529;
-            }
-
-            .btn-delete {
-                background: #dc3545;
-                color: white;
-            }
-
-            .btn-action:hover {
-                transform: scale(1.1);
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            }
-
-            /* ===== MODAL STYLES ===== */
-            .modal-lg {
-                max-width: 900px;
-            }
-
-            .conflict-warning {
-                background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
-                color: white;
-                border-radius: 10px;
-                padding: 1rem;
-                margin: 1rem 0;
-            }
-
-            .conflict-summary {
-                background: #fff3cd;
-                border: 1px solid #ffeaa7;
-                border-radius: 10px;
-                padding: 1rem;
-                margin: 1rem 0;
-            }
-
-            .schedule-summary {
-                background: #d1ecf1;
-                border: 1px solid #bee5eb;
-                border-radius: 10px;
-                padding: 1rem;
-                margin: 1rem 0;
-            }
-
-            /* Hoặc sử dụng CSS spinner thay vì icon */
-            .loading-spinner-circle {
-                width: 40px;
-                height: 40px;
-                border: 4px solid #f3f3f3;
-                border-top: 4px solid #667eea;
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-                margin: 0 auto 1rem;
-            }
-
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-
-            /* Alternative loading design */
-            .loading-content {
-                background: white;
-                padding: 2.5rem;
-                border-radius: 20px;
-                text-align: center;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-                max-width: 300px;
-                animation: fadeInScale 0.3s ease-out;
-            }
-
-            @keyframes fadeInScale {
-                from {
-                    opacity: 0;
-                    transform: scale(0.8);
-                }
-                to {
-                    opacity: 1;
-                    transform: scale(1);
-                }
-            }
-
-            .loading-dots {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                gap: 0.5rem;
-                margin: 1rem 0;
-            }
-
-            .loading-dot {
-                width: 8px;
-                height: 8px;
-                background: #667eea;
-                border-radius: 50%;
-                animation: loadingDots 1.4s infinite ease-in-out both;
-            }
-
-            .loading-dot:nth-child(1) { animation-delay: -0.32s; }
-            .loading-dot:nth-child(2) { animation-delay: -0.16s; }
-            .loading-dot:nth-child(3) { animation-delay: 0s; }
-
-            @keyframes loadingDots {
-                0%, 80%, 100% {
-                    transform: scale(0);
-                    opacity: 0.5;
-                }
-                40% {
-                    transform: scale(1);
-                    opacity: 1;
-                }
-            }
-            .notification-container {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 10000;
-                max-width: 400px;
-            }
-
-            .notification {
-                background: white;
-                border-radius: 10px;
-                padding: 1rem;
-                margin-bottom: 1rem;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-                border-left: 4px solid;
-                animation: slideIn 0.3s ease;
-            }
-
-            .notification.success {
-                border-left-color: #28a745;
-            }
-
-            .notification.error {
-                border-left-color: #dc3545;
-            }
-
-            .notification.warning {
-                border-left-color: #ffc107;
-            }
-
-            .notification.info {
-                border-left-color: #17a2b8;
-            }
-
-            /* ===== SELECT2 CUSTOMIZATION ===== */
-            .select2-container--default .select2-selection--single {
-                height: 38px;
-                border: 1px solid #ced4da;
-                border-radius: 0.375rem;
-            }
-
-            .select2-container--default .select2-selection--single .select2-selection__rendered {
-                line-height: 36px;
-                padding-left: 12px;
-            }
-
-            .select2-container--default .select2-selection--single .select2-selection__arrow {
-                height: 36px;
-            }
-
-            /* ===== GRID VIEW ===== */
-            .schedule-grid {
-                display: grid;
-                grid-template-columns: 100px repeat(7, 1fr);
-                gap: 1px;
-                background: #e9ecef;
-                border-radius: 10px;
-                overflow: hidden;
-            }
-
-            .grid-cell {
-                background: white;
-                min-height: 60px;
-                position: relative;
-            }
-
-            .time-grid-slot {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 600;
-                background: #f8f9fa;
-            }
-
-            .day-grid-header {
-                background: #495057;
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 600;
-            }
-
-            /* ===== CALENDAR NAVIGATION ===== */
-            .day-date {
-                font-size: 0.8rem;
-                font-weight: normal;
-                opacity: 0.8;
-            }
-
-            .day-date.today {
-                background: rgba(255, 255, 255, 0.2);
-                border-radius: 50%;
-                width: 24px;
-                height: 24px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin: 0 auto;
-                font-weight: bold;
-            }
-
-            .calendar-controls .btn-group .btn.active {
-                background-color: rgba(255, 255, 255, 0.3);
-                border-color: rgba(255, 255, 255, 0.5);
-            }
-        </style>
-    </head>
-    <body>
-    <div class="main-wrapper">
-        <!-- Include Sidebar Component -->
-        <div th:replace="~{components/sidebar :: sidebar}"></div>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Header -->
-            <div class="header">
-                <div class="header-content">
-                    <div class="header-left">
-                        <h1 class="page-title">
-                            <i class="fas fa-calendar-alt me-2"></i>Quản lý Lịch học
-                        </h1>
+        <!-- Content -->
+        <div class="content">
+            <!-- Semester Selector -->
+            <div class="semester-selector">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <h5 class="mb-0 text-white">
+                            <i class="fas fa-graduation-cap me-2"></i>Chọn học kỳ
+                        </h5>
                     </div>
-                    <div class="header-right">
-                        <button class="btn btn-success me-2" onclick="openSemesterScheduleModal()">
-                            <i class="fas fa-calendar-plus me-2"></i>Sắp lịch học kỳ
-                        </button>
-                        <button class="btn btn-primary me-2" onclick="openCreateModal()">
-                            <i class="fas fa-plus me-2"></i>Tạo lịch học
-                        </button>
-                        <button class="btn btn-warning me-2" onclick="checkAllConflicts()">
-                            <i class="fas fa-exclamation-triangle me-2"></i>Kiểm tra trùng lịch
-                        </button>
-                        <button class="btn btn-info" onclick="exportSchedule()">
-                            <i class="fas fa-download me-2"></i>Xuất lịch
+                    <div class="col-md-3">
+                        <select class="form-select" id="semesterSelect">
+                            <option value="">Tất cả học kỳ</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="yearSelect">
+                            <option value="">Tất cả năm học</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-light" onclick="loadCurrentSemester()">
+                            <i class="fas fa-sync-alt me-2"></i>Học kỳ hiện tại
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Content -->
-            <div class="content">
-                <!-- Semester Selector -->
-                <div class="semester-selector">
-                    <div class="row align-items-center">
-                        <div class="col-md-3">
-                            <h5 class="mb-0 text-white">
-                                <i class="fas fa-graduation-cap me-2"></i>Chọn học kỳ
-                            </h5>
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-select" id="semesterSelect">
-                                <option value="">Tất cả học kỳ</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-select" id="yearSelect">
-                                <option value="">Tất cả năm học</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-light" onclick="loadCurrentSemester()">
-                                <i class="fas fa-sync-alt me-2"></i>Học kỳ hiện tại
+            <!-- Current Semester Info -->
+            <div id="semesterInfo" class="semester-info" style="display: none;">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6 class="mb-1 text-white">
+                            <i class="fas fa-info-circle me-2"></i>Thông tin học kỳ hiện tại
+                        </h6>
+                        <div id="semesterDetails"></div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button class="btn btn-light btn-sm" onclick="manageSemesterSchedule()">
+                            <i class="fas fa-cog me-2"></i>Quản lý lịch học kỳ
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <i class="fas fa-calendar-alt stats-icon text-primary"></i>
+                        <div class="stats-number" id="totalSchedules">0</div>
+                        <div class="stats-label">Tổng lịch học</div>
+                        <div class="stats-change positive" id="scheduleChange">+0%</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <i class="fas fa-chalkboard-teacher stats-icon text-success"></i>
+                        <div class="stats-number" id="activeTeachers">0</div>
+                        <div class="stats-label">Giảng viên có lịch</div>
+                        <div class="stats-change positive" id="teacherChange">+0%</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <i class="fas fa-door-open stats-icon text-warning"></i>
+                        <div class="stats-number" id="usedRooms">0</div>
+                        <div class="stats-label">Phòng học sử dụng</div>
+                        <div class="stats-change positive" id="roomChange">+0%</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <i class="fas fa-exclamation-triangle stats-icon text-danger"></i>
+                        <div class="stats-number" id="conflicts">0</div>
+                        <div class="stats-label">Trùng lịch</div>
+                        <div class="stats-change negative" id="conflictChange">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bulk Actions -->
+            <div class="bulk-actions">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h6 class="mb-0">
+                            <i class="fas fa-tasks me-2"></i>Thao tác hàng loạt
+                        </h6>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex gap-2 justify-content-end">
+                            <button class="btn btn-outline-primary btn-sm" onclick="selectAllSchedules()">
+                                <i class="fas fa-check-square me-1"></i>Chọn tất cả
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
+                                <i class="fas fa-times me-1"></i>Bỏ chọn
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteSelectedSchedules()" disabled id="deleteSelectedBtn">
+                                <i class="fas fa-trash me-1"></i>Xóa đã chọn
+                            </button>
+                            <button class="btn btn-outline-warning btn-sm" onclick="moveSelectedSchedules()" disabled id="moveSelectedBtn">
+                                <i class="fas fa-exchange-alt me-1"></i>Chuyển phòng
                             </button>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Current Semester Info -->
-                <div id="semesterInfo" class="semester-info" style="display: none;">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h6 class="mb-1 text-white">
-                                <i class="fas fa-info-circle me-2"></i>Thông tin học kỳ hiện tại
-                            </h6>
-                            <div id="semesterDetails"></div>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <button class="btn btn-light btn-sm" onclick="manageSemesterSchedule()">
-                                <i class="fas fa-cog me-2"></i>Quản lý lịch học kỳ
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Statistics Cards -->
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="stats-card">
-                            <i class="fas fa-calendar-alt stats-icon text-primary"></i>
-                            <div class="stats-number" id="totalSchedules">0</div>
-                            <div class="stats-label">Tổng lịch học</div>
-                            <div class="stats-change positive" id="scheduleChange">+0%</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stats-card">
-                            <i class="fas fa-chalkboard-teacher stats-icon text-success"></i>
-                            <div class="stats-number" id="activeTeachers">0</div>
-                            <div class="stats-label">Giảng viên có lịch</div>
-                            <div class="stats-change positive" id="teacherChange">+0%</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stats-card">
-                            <i class="fas fa-door-open stats-icon text-warning"></i>
-                            <div class="stats-number" id="usedRooms">0</div>
-                            <div class="stats-label">Phòng học sử dụng</div>
-                            <div class="stats-change positive" id="roomChange">+0%</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stats-card">
-                            <i class="fas fa-exclamation-triangle stats-icon text-danger"></i>
-                            <div class="stats-number" id="conflicts">0</div>
-                            <div class="stats-label">Trùng lịch</div>
-                            <div class="stats-change negative" id="conflictChange">0</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Bulk Actions -->
-                <div class="bulk-actions">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <h6 class="mb-0">
-                                <i class="fas fa-tasks me-2"></i>Thao tác hàng loạt
-                            </h6>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex gap-2 justify-content-end">
-                                <button class="btn btn-outline-primary btn-sm" onclick="selectAllSchedules()">
-                                    <i class="fas fa-check-square me-1"></i>Chọn tất cả
-                                </button>
-                                <button class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
-                                    <i class="fas fa-times me-1"></i>Bỏ chọn
-                                </button>
-                                <button class="btn btn-outline-danger btn-sm" onclick="deleteSelectedSchedules()" disabled id="deleteSelectedBtn">
-                                    <i class="fas fa-trash me-1"></i>Xóa đã chọn
-                                </button>
-                                <button class="btn btn-outline-warning btn-sm" onclick="moveSelectedSchedules()" disabled id="moveSelectedBtn">
-                                    <i class="fas fa-exchange-alt me-1"></i>Chuyển phòng
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- View Toggle -->
-                <div class="view-toggle">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="fas fa-eye me-2"></i>Chế độ xem
-                        </h5>
-                        <div class="btn-group" role="group">
-                            <input type="radio" class="btn-check" name="viewMode" id="calendarView" checked>
-                            <label class="btn btn-outline-primary" for="calendarView">
-                                <i class="fas fa-calendar me-2"></i>Lịch tuần
-                            </label>
-
-                            <input type="radio" class="btn-check" name="viewMode" id="gridView">
-                            <label class="btn btn-outline-primary" for="gridView">
-                                <i class="fas fa-th me-2"></i>Lưới
-                            </label>
-
-                            <input type="radio" class="btn-check" name="viewMode" id="listView">
-                            <label class="btn btn-outline-primary" for="listView">
-                                <i class="fas fa-list me-2"></i>Danh sách
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Filter Section -->
-                <div class="filter-section">
-                    <h5 class="mb-3">
-                        <i class="fas fa-filter me-2"></i>Bộ lọc
+            <!-- View Toggle -->
+            <div class="view-toggle">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-eye me-2"></i>Chế độ xem
                     </h5>
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="viewMode" id="calendarView" checked>
+                        <label class="btn btn-outline-primary" for="calendarView">
+                            <i class="fas fa-calendar me-2"></i>Lịch tuần
+                        </label>
+
+                        <input type="radio" class="btn-check" name="viewMode" id="gridView">
+                        <label class="btn btn-outline-primary" for="gridView">
+                            <i class="fas fa-th me-2"></i>Lưới
+                        </label>
+
+                        <input type="radio" class="btn-check" name="viewMode" id="listView">
+                        <label class="btn btn-outline-primary" for="listView">
+                            <i class="fas fa-list me-2"></i>Danh sách
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <h5 class="mb-3">
+                    <i class="fas fa-filter me-2"></i>Bộ lọc
+                </h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="filterGiangVien" class="form-label">Giảng viên:</label>
+                        <select class="form-select" id="filterGiangVien">
+                            <option value="">Tất cả giảng viên</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filterPhongHoc" class="form-label">Phòng học:</label>
+                        <select class="form-select" id="filterPhongHoc">
+                            <option value="">Tất cả phòng học</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="filterThu" class="form-label">Thứ:</label>
+                        <select class="form-select" id="filterThu">
+                            <option value="">Tất cả</option>
+                            <option value="2">Thứ 2</option>
+                            <option value="3">Thứ 3</option>
+                            <option value="4">Thứ 4</option>
+                            <option value="5">Thứ 5</option>
+                            <option value="6">Thứ 6</option>
+                            <option value="7">Thứ 7</option>
+                            <option value="8">Chủ nhật</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="filterMonHoc" class="form-label">Môn học:</label>
+                        <select class="form-select" id="filterMonHoc">
+                            <option value="">Tất cả môn học</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="filterKhoa" class="form-label">Khoa:</label>
+                        <select class="form-select" id="filterKhoa">
+                            <option value="">Tất cả khoa</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Tìm kiếm theo tên môn học, mã lớp học phần, giảng viên...">
+                    </div>
+                    <div class="col-md-8">
+                        <div class="d-flex gap-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="showConflictsOnly">
+                                <label class="form-check-label" for="showConflictsOnly">
+                                    Chỉ hiển thị lịch có trùng
+                                </label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="showActiveOnly" checked>
+                                <label class="form-check-label" for="showActiveOnly">
+                                    Chỉ hiển thị lịch đang hoạt động
+                                </label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="groupByTeacher">
+                                <label class="form-check-label" for="groupByTeacher">
+                                    Nhóm theo giảng viên
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar View -->
+            <div id="calendarViewContainer" class="schedule-calendar">
+                <div class="calendar-header">
+                    <h4 class="mb-0">
+                        <span id="currentWeekTitle "><p class="text-white">Lịch học tuần</p></span>
+                        <p class="text-white"><small class="ms-2" id="weekDateRange"></small></p>
+                    </h4>
+                    <div class="calendar-controls">
+                        <div class="btn-group me-3">
+                            <button class="btn btn-light btn-sm" onclick="showSemesterView()">
+                                <i class="fas fa-calendar-alt me-1"></i>Cả học kỳ
+                            </button>
+                            <button class="btn btn-light btn-sm" onclick="showMonthView()">
+                                <i class="fas fa-calendar me-1"></i>Tháng
+                            </button>
+                            <button class="btn btn-light btn-sm active" onclick="showWeekView()">
+                                <i class="fas fa-calendar-week me-1"></i>Tuần
+                            </button>
+                        </div>
+                        <button class="btn btn-light btn-sm me-2" onclick="previousWeek()">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="btn btn-light btn-sm me-2" onclick="currentWeek()">
+                            Tuần hiện tại
+                        </button>
+                        <button class="btn btn-light btn-sm" onclick="nextWeek()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="d-flex">
+                    <!-- Time Column -->
+                    <div class="time-column">
+                        <div class="day-header">Tiết học</div>
+                        <div id="timeSlots"></div>
+                    </div>
+                    <!-- Days Columns -->
+                    <div class="flex-grow-1 d-flex">
+                        <div class="day-column" data-day="2">
+                            <div class="day-header">Thứ 2</div>
+                            <div class="day-content" id="day-2"></div>
+                        </div>
+                        <div class="day-column" data-day="3">
+                            <div class="day-header">Thứ 3</div>
+                            <div class="day-content" id="day-3"></div>
+                        </div>
+                        <div class="day-column" data-day="4">
+                            <div class="day-header">Thứ 4</div>
+                            <div class="day-content" id="day-4"></div>
+                        </div>
+                        <div class="day-column" data-day="5">
+                            <div class="day-header">Thứ 5</div>
+                            <div class="day-content" id="day-5"></div>
+                        </div>
+                        <div class="day-column" data-day="6">
+                            <div class="day-header">Thứ 6</div>
+                            <div class="day-content" id="day-6"></div>
+                        </div>
+                        <div class="day-column" data-day="7">
+                            <div class="day-header">Thứ 7</div>
+                            <div class="day-content" id="day-7"></div>
+                        </div>
+                        <div class="day-column" data-day="8">
+                            <div class="day-header">Chủ nhật</div>
+                            <div class="day-content" id="day-8"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid View -->
+            <div id="gridViewContainer" class="schedule-calendar" style="display: none;">
+                <div class="calendar-header">
+                    <h4 class="mb-1">Lưới lịch học</h4>
+                </div>
+                <div id="scheduleGrid" class="schedule-grid">
+                    <!-- Grid will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- List View -->
+            <div id="listViewContainer" class="admin-table-wrapper" style="display: none;">
+                <div class="admin-table-header">
+                    <h5 class="admin-table-title">
+                        <i class="fas fa-list me-2"></i>Danh sách lịch học
+                    </h5>
+                    <div class="table-actions">
+                        <button class="btn btn-success btn-sm me-2" onclick="refreshData()">
+                            <i class="fas fa-sync-alt me-1"></i>Làm mới
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="exportToExcel()">
+                            <i class="fas fa-file-excel me-1"></i>Xuất Excel
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table admin-table list-view-table">
+                        <thead>
+                        <tr>
+                            <th width="40">
+                                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                            </th>
+                            <th>Mã lịch</th>
+                            <th>Môn học</th>
+                            <th>Lớp HP</th>
+                            <th>Giảng viên</th>
+                            <th>Phòng học</th>
+                            <th>Thứ</th>
+                            <th>Tiết</th>
+                            <th>Thời gian</th>
+                            <th>Học kỳ</th>
+                            <th>Trạng thái</th>
+                            <th width="120">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody id="scheduleTableBody">
+                        <tr>
+                            <td colspan="12" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Đang tải...</span>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <span class="text-muted">Hiển thị <span id="showingFrom">0</span> - <span id="showingTo">0</span> trong tổng số <span id="totalRecords">0</span> bản ghi</span>
+                    </div>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0" id="pagination">
+                            <!-- Pagination will be populated by JavaScript -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tạo/Sửa Lịch học -->
+<div class="modal fade" id="scheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">
+                    <i class="fas fa-calendar-plus me-2"></i>Tạo lịch học
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="scheduleForm">
+                    <input type="hidden" id="scheduleId">
+
+                    <!-- Basic Information -->
                     <div class="row">
-                        <div class="col-md-3">
-                            <label for="filterGiangVien" class="form-label">Giảng viên:</label>
-                            <select class="form-select" id="filterGiangVien">
-                                <option value="">Tất cả giảng viên</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="filterPhongHoc" class="form-label">Phòng học:</label>
-                            <select class="form-select" id="filterPhongHoc">
-                                <option value="">Tất cả phòng học</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label for="filterThu" class="form-label">Thứ:</label>
-                            <select class="form-select" id="filterThu">
-                                <option value="">Tất cả</option>
-                                <option value="2">Thứ 2</option>
-                                <option value="3">Thứ 3</option>
-                                <option value="4">Thứ 4</option>
-                                <option value="5">Thứ 5</option>
-                                <option value="6">Thứ 6</option>
-                                <option value="7">Thứ 7</option>
-                                <option value="8">Chủ nhật</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label for="filterMonHoc" class="form-label">Môn học:</label>
-                            <select class="form-select" id="filterMonHoc">
-                                <option value="">Tất cả môn học</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label for="filterKhoa" class="form-label">Khoa:</label>
-                            <select class="form-select" id="filterKhoa">
-                                <option value="">Tất cả khoa</option>
-                            </select>
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="fas fa-info-circle me-2"></i>Thông tin cơ bản
+                            </h6>
                         </div>
                     </div>
-                    <div class="row mt-3">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="maLich" class="form-label">Mã lịch học <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="maLich" required>
+                                <div class="form-text">Mã lịch sẽ được tự động tạo nếu để trống</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="maLhp" class="form-label">Lớp học phần <span class="text-danger">*</span></label>
+                                <select class="form-select" id="maLhp" required>
+                                    <option value="">Chọn lớp học phần</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Schedule Information -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="fas fa-clock me-2"></i>Thông tin lịch học
+                            </h6>
+                        </div>
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-4">
-                            <input type="text" class="form-control" id="searchInput" placeholder="Tìm kiếm theo tên môn học, mã lớp học phần, giảng viên...">
+                            <div class="mb-3">
+                                <label for="thu" class="form-label">Thứ <span class="text-danger">*</span></label>
+                                <select class="form-select" id="thu" required>
+                                    <option value="">Chọn thứ</option>
+                                    <option value="2">Thứ 2</option>
+                                    <option value="3">Thứ 3</option>
+                                    <option value="4">Thứ 4</option>
+                                    <option value="5">Thứ 5</option>
+                                    <option value="6">Thứ 6</option>
+                                    <option value="7">Thứ 7</option>
+                                    <option value="8">Chủ nhật</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="col-md-8">
-                            <div class="d-flex gap-3">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="showConflictsOnly">
-                                    <label class="form-check-label" for="showConflictsOnly">
-                                        Chỉ hiển thị lịch có trùng
-                                    </label>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="showActiveOnly" checked>
-                                    <label class="form-check-label" for="showActiveOnly">
-                                        Chỉ hiển thị lịch đang hoạt động
-                                    </label>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="groupByTeacher">
-                                    <label class="form-check-label" for="groupByTeacher">
-                                        Nhóm theo giảng viên
-                                    </label>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="tietBatDau" class="form-label">Tiết bắt đầu <span class="text-danger">*</span></label>
+                                <select class="form-select" id="tietBatDau" required>
+                                    <option value="">Chọn tiết</option>
+                                    <option value="1">Tiết 1 (7:00-7:45)</option>
+                                    <option value="2">Tiết 2 (7:50-8:35)</option>
+                                    <option value="3">Tiết 3 (8:40-9:25)</option>
+                                    <option value="4">Tiết 4 (9:35-10:20)</option>
+                                    <option value="5">Tiết 5 (10:25-11:10)</option>
+                                    <option value="6">Tiết 6 (11:15-12:00)</option>
+                                    <option value="7">Tiết 7 (13:00-13:45)</option>
+                                    <option value="8">Tiết 8 (13:50-14:35)</option>
+                                    <option value="9">Tiết 9 (14:40-15:25)</option>
+                                    <option value="10">Tiết 10 (15:35-16:20)</option>
+                                    <option value="11">Tiết 11 (16:25-17:10)</option>
+                                    <option value="12">Tiết 12 (17:15-18:00)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="soTiet" class="form-label">Số tiết <span class="text-danger">*</span></label>
+                                <select class="form-select" id="soTiet" required>
+                                    <option value="">Chọn số tiết</option>
+                                    <option value="1">1 tiết (45 phút)</option>
+                                    <option value="2">2 tiết (90 phút)</option>
+                                    <option value="3">3 tiết (135 phút)</option>
+                                    <option value="4">4 tiết (180 phút)</option>
+                                    <option value="5">5 tiết (225 phút)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="maPhong" class="form-label">Phòng học <span class="text-danger">*</span></label>
+                                <select class="form-select" id="maPhong" required>
+                                    <option value="">Chọn phòng học</option>
+                                </select>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Phòng học sẽ được kiểm tra tự động về tình trạng trống
                                 </div>
                             </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Thời gian kết thúc</label>
+                                <input type="text" class="form-control" id="thoiGianKetThuc" readonly>
+                                <div class="form-text">Được tính tự động dựa trên tiết bắt đầu và số tiết</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Room Availability -->
+                    <div id="roomAvailability" class="mb-3" style="display: none;">
+                        <h6 class="text-info">
+                            <i class="fas fa-door-open me-2"></i>Tình trạng phòng học
+                        </h6>
+                        <div id="roomAvailabilityContent"></div>
+                    </div>
+
+                    <!-- Conflict Check Section -->
+                    <div id="conflictCheckSection" style="display: none;">
+                        <div class="conflict-warning">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Phát hiện trùng lịch!</h6>
+                            <div id="conflictDetails"></div>
+                        </div>
+                    </div>
+
+                    <!-- Auto Check -->
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="autoCheckConflicts" checked>
+                        <label class="form-check-label" for="autoCheckConflicts">
+                            Tự động kiểm tra trùng lịch khi thay đổi thông tin
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Hủy
+                </button>
+                <button type="button" class="btn btn-warning" onclick="checkConflictsBeforeSave()">
+                    <i class="fas fa-search me-2"></i>Kiểm tra trùng lịch
+                </button>
+                <button type="button" class="btn btn-info" onclick="suggestAlternativeRooms()">
+                    <i class="fas fa-lightbulb me-2"></i>Gợi ý phòng khác
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveSchedule()">
+                    <span class="btn-text">
+                        <i class="fas fa-save me-2"></i>Lưu
+                    </span>
+                    <div class="spinner-border spinner-border-sm d-none ms-2" role="status"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Sắp lịch học kỳ -->
+<div class="modal fade" id="semesterScheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-calendar-plus me-2"></i>Sắp lịch học kỳ
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Semester Selection -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <label for="semesterScheduleSelect" class="form-label">Học kỳ <span class="text-danger">*</span></label>
+                        <select class="form-select" id="semesterScheduleSelect" required>
+                            <option value="">Chọn học kỳ</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="yearScheduleSelect" class="form-label">Năm học <span class="text-danger">*</span></label>
+                        <select class="form-select" id="yearScheduleSelect" required>
+                            <option value="">Chọn năm học</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">&nbsp;</label>
+                        <div>
+                            <button type="button" class="btn btn-primary" onclick="loadSemesterClasses()">
+                                <i class="fas fa-search me-2"></i>Tải lớp học phần
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Calendar View -->
-                <div id="calendarViewContainer" class="schedule-calendar">
-                    <div class="calendar-header">
-                        <h4 class="mb-0">
-                            <span id="currentWeekTitle "><p class="text-white">Lịch học tuần</p></span>
-                            <p class="text-white"><small class="ms-2" id="weekDateRange"></small></p>
-                        </h4>
-                        <div class="calendar-controls">
-                            <div class="btn-group me-3">
-                                <button class="btn btn-light btn-sm" onclick="showSemesterView()">
-                                    <i class="fas fa-calendar-alt me-1"></i>Cả học kỳ
-                                </button>
-                                <button class="btn btn-light btn-sm" onclick="showMonthView()">
-                                    <i class="fas fa-calendar me-1"></i>Tháng
-                                </button>
-                                <button class="btn btn-light btn-sm active" onclick="showWeekView()">
-                                    <i class="fas fa-calendar-week me-1"></i>Tuần
-                                </button>
-                            </div>
-                            <button class="btn btn-light btn-sm me-2" onclick="previousWeek()">
-                                <i class="fas fa-chevron-left"></i>
-                            </button>
-                            <button class="btn btn-light btn-sm me-2" onclick="currentWeek()">
-                                Tuần hiện tại
-                            </button>
-                            <button class="btn btn-light btn-sm" onclick="nextWeek()">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
-                        </div>
+                <!-- Schedule Configuration -->
+                <div id="scheduleConfiguration" style="display: none;">
+                    <div class="schedule-summary">
+                        <h6><i class="fas fa-info-circle me-2"></i>Thông tin học kỳ</h6>
+                        <div id="semesterSummary"></div>
                     </div>
-                    <div class="d-flex">
-                        <!-- Time Column -->
-                        <div class="time-column">
-                            <div class="day-header">Tiết học</div>
-                            <div id="timeSlots"></div>
-                        </div>
-                        <!-- Days Columns -->
-                        <div class="flex-grow-1 d-flex">
-                            <div class="day-column" data-day="2">
-                                <div class="day-header">Thứ 2</div>
-                                <div class="day-content" id="day-2"></div>
-                            </div>
-                            <div class="day-column" data-day="3">
-                                <div class="day-header">Thứ 3</div>
-                                <div class="day-content" id="day-3"></div>
-                            </div>
-                            <div class="day-column" data-day="4">
-                                <div class="day-header">Thứ 4</div>
-                                <div class="day-content" id="day-4"></div>
-                            </div>
-                            <div class="day-column" data-day="5">
-                                <div class="day-header">Thứ 5</div>
-                                <div class="day-content" id="day-5"></div>
-                            </div>
-                            <div class="day-column" data-day="6">
-                                <div class="day-header">Thứ 6</div>
-                                <div class="day-content" id="day-6"></div>
-                            </div>
-                            <div class="day-column" data-day="7">
-                                <div class="day-header">Thứ 7</div>
-                                <div class="day-content" id="day-7"></div>
-                            </div>
-                            <div class="day-column" data-day="8">
-                                <div class="day-header">Chủ nhật</div>
-                                <div class="day-content" id="day-8"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Grid View -->
-                <div id="gridViewContainer" class="schedule-calendar" style="display: none;">
-                    <div class="calendar-header">
-                        <h4 class="mb-1">Lưới lịch học</h4>
-                    </div>
-                    <div id="scheduleGrid" class="schedule-grid">
-                        <!-- Grid will be populated by JavaScript -->
-                    </div>
-                </div>
-
-                <!-- List View -->
-                <div id="listViewContainer" class="admin-table-wrapper" style="display: none;">
-                    <div class="admin-table-header">
-                        <h5 class="admin-table-title">
-                            <i class="fas fa-list me-2"></i>Danh sách lịch học
-                        </h5>
-                        <div class="table-actions">
-                            <button class="btn btn-success btn-sm me-2" onclick="refreshData()">
-                                <i class="fas fa-sync-alt me-1"></i>Làm mới
-                            </button>
-                            <button class="btn btn-primary btn-sm" onclick="exportToExcel()">
-                                <i class="fas fa-file-excel me-1"></i>Xuất Excel
-                            </button>
+                    <!-- Auto Schedule Options -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6>Tùy chọn sắp lịch tự động</h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="avoidConflicts" checked>
+                                        <label class="form-check-label" for="avoidConflicts">
+                                            Tránh trùng lịch
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="optimizeRooms" checked>
+                                        <label class="form-check-label" for="optimizeRooms">
+                                            Tối ưu phòng học
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="balanceWorkload">
+                                        <label class="form-check-label" for="balanceWorkload">
+                                            Cân bằng khối lượng
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="preferMorning">
+                                        <label class="form-check-label" for="preferMorning">
+                                            Ưu tiên buổi sáng
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
+                    <!-- Classes List -->
                     <div class="table-responsive">
-                        <table class="table admin-table list-view-table">
+                        <table class="table table-striped">
                             <thead>
                             <tr>
                                 <th width="40">
-                                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                                    <input type="checkbox" id="selectAllClasses" onchange="toggleSelectAllClasses()">
                                 </th>
-                                <th>Mã lịch</th>
+                                <th>Mã LHP</th>
                                 <th>Môn học</th>
-                                <th>Lớp HP</th>
                                 <th>Giảng viên</th>
-                                <th>Phòng học</th>
-                                <th>Thứ</th>
-                                <th>Tiết</th>
-                                <th>Thời gian</th>
-                                <th>Học kỳ</th>
-                                <th>Trạng thái</th>
-                                <th width="120">Thao tác</th>
+                                <th>Số tiết/tuần</th>
+                                <th>Số SV</th>
+                                <th>Trạng thái lịch</th>
+                                <th>Thao tác</th>
                             </tr>
                             </thead>
-                            <tbody id="scheduleTableBody">
-                            <tr>
-                                <td colspan="12" class="text-center py-4">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Đang tải...</span>
-                                    </div>
-                                </td>
-                            </tr>
+                            <tbody id="semesterClassesBody">
                             </tbody>
                         </table>
                     </div>
-
-                    <!-- Pagination -->
-                    <div class="d-flex justify-content-between align-items-center mt-3">
-                        <div>
-                            <span class="text-muted">Hiển thị <span id="showingFrom">0</span> - <span id="showingTo">0</span> trong tổng số <span id="totalRecords">0</span> bản ghi</span>
-                        </div>
-                        <nav>
-                            <ul class="pagination pagination-sm mb-0" id="pagination">
-                                <!-- Pagination will be populated by JavaScript -->
-                            </ul>
-                        </nav>
-                    </div>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Đóng
+                </button>
+                <button type="button" class="btn btn-warning" onclick="previewSchedule()" disabled id="previewBtn">
+                    <i class="fas fa-eye me-2"></i>Xem trước
+                </button>
+                <button type="button" class="btn btn-success" onclick="autoGenerateSchedule()" disabled id="generateBtn">
+                    <i class="fas fa-magic me-2"></i>Tự động sắp lịch
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveSemesterSchedule()" disabled id="saveSemesterBtn">
+                    <i class="fas fa-save me-2"></i>Lưu lịch học kỳ
+                </button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Modal Tạo/Sửa Lịch học -->
-    <div class="modal fade" id="scheduleModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitle">
-                        <i class="fas fa-calendar-plus me-2"></i>Tạo lịch học
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="scheduleForm">
-                        <input type="hidden" id="scheduleId">
-
-                        <!-- Basic Information -->
-                        <div class="row">
-                            <div class="col-12">
-                                <h6 class="border-bottom pb-2 mb-3">
-                                    <i class="fas fa-info-circle me-2"></i>Thông tin cơ bản
-                                </h6>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="maLich" class="form-label">Mã lịch học <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="maLich" required>
-                                    <div class="form-text">Mã lịch sẽ được tự động tạo nếu để trống</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="maLhp" class="form-label">Lớp học phần <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="maLhp" required>
-                                        <option value="">Chọn lớp học phần</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Schedule Information -->
-                        <div class="row">
-                            <div class="col-12">
-                                <h6 class="border-bottom pb-2 mb-3">
-                                    <i class="fas fa-clock me-2"></i>Thông tin lịch học
-                                </h6>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="thu" class="form-label">Thứ <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="thu" required>
-                                        <option value="">Chọn thứ</option>
-                                        <option value="2">Thứ 2</option>
-                                        <option value="3">Thứ 3</option>
-                                        <option value="4">Thứ 4</option>
-                                        <option value="5">Thứ 5</option>
-                                        <option value="6">Thứ 6</option>
-                                        <option value="7">Thứ 7</option>
-                                        <option value="8">Chủ nhật</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="tietBatDau" class="form-label">Tiết bắt đầu <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="tietBatDau" required>
-                                        <option value="">Chọn tiết</option>
-                                        <option value="1">Tiết 1 (7:00-7:45)</option>
-                                        <option value="2">Tiết 2 (7:50-8:35)</option>
-                                        <option value="3">Tiết 3 (8:40-9:25)</option>
-                                        <option value="4">Tiết 4 (9:35-10:20)</option>
-                                        <option value="5">Tiết 5 (10:25-11:10)</option>
-                                        <option value="6">Tiết 6 (11:15-12:00)</option>
-                                        <option value="7">Tiết 7 (13:00-13:45)</option>
-                                        <option value="8">Tiết 8 (13:50-14:35)</option>
-                                        <option value="9">Tiết 9 (14:40-15:25)</option>
-                                        <option value="10">Tiết 10 (15:35-16:20)</option>
-                                        <option value="11">Tiết 11 (16:25-17:10)</option>
-                                        <option value="12">Tiết 12 (17:15-18:00)</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="soTiet" class="form-label">Số tiết <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="soTiet" required>
-                                        <option value="">Chọn số tiết</option>
-                                        <option value="1">1 tiết (45 phút)</option>
-                                        <option value="2">2 tiết (90 phút)</option>
-                                        <option value="3">3 tiết (135 phút)</option>
-                                        <option value="4">4 tiết (180 phút)</option>
-                                        <option value="5">5 tiết (225 phút)</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="maPhong" class="form-label">Phòng học <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="maPhong" required>
-                                        <option value="">Chọn phòng học</option>
-                                    </select>
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        Phòng học sẽ được kiểm tra tự động về tình trạng trống
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Thời gian kết thúc</label>
-                                    <input type="text" class="form-control" id="thoiGianKetThuc" readonly>
-                                    <div class="form-text">Được tính tự động dựa trên tiết bắt đầu và số tiết</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Room Availability -->
-                        <div id="roomAvailability" class="mb-3" style="display: none;">
-                            <h6 class="text-info">
-                                <i class="fas fa-door-open me-2"></i>Tình trạng phòng học
-                            </h6>
-                            <div id="roomAvailabilityContent"></div>
-                        </div>
-
-                        <!-- Conflict Check Section -->
-                        <div id="conflictCheckSection" style="display: none;">
-                            <div class="conflict-warning">
-                                <h6><i class="fas fa-exclamation-triangle me-2"></i>Phát hiện trùng lịch!</h6>
-                                <div id="conflictDetails"></div>
-                            </div>
-                        </div>
-
-                        <!-- Auto Check -->
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" id="autoCheckConflicts" checked>
-                            <label class="form-check-label" for="autoCheckConflicts">
-                                Tự động kiểm tra trùng lịch khi thay đổi thông tin
-                            </label>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>Hủy
-                    </button>
-                    <button type="button" class="btn btn-warning" onclick="checkConflictsBeforeSave()">
-                        <i class="fas fa-search me-2"></i>Kiểm tra trùng lịch
-                    </button>
-                    <button type="button" class="btn btn-info" onclick="suggestAlternativeRooms()">
-                        <i class="fas fa-lightbulb me-2"></i>Gợi ý phòng khác
-                    </button>
-                    <button type="button" class="btn btn-primary" onclick="saveSchedule()">
-                        <span class="btn-text">
-                            <i class="fas fa-save me-2"></i>Lưu
-                        </span>
-                        <div class="spinner-border spinner-border-sm d-none ms-2" role="status"></div>
-                    </button>
-                </div>
+<!-- Modal Chi tiết lịch học -->
+<div class="modal fade" id="scheduleDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>Chi tiết lịch học
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="scheduleDetailContent">
+                <!-- Content will be populated by JS -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Đóng
+                </button>
+                <button type="button" class="btn btn-warning" onclick="duplicateSchedule()">
+                    <i class="fas fa-copy me-2"></i>Nhân bản
+                </button>
+                <button type="button" class="btn btn-primary" onclick="editFromDetail()">
+                    <i class="fas fa-edit me-2"></i>Chỉnh sửa
+                </button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Modal Sắp lịch học kỳ -->
-    <div class="modal fade" id="semesterScheduleModal" tabindex="-1">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-calendar-plus me-2"></i>Sắp lịch học kỳ
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<!-- Modal Chuyển phòng hàng loạt -->
+<div class="modal fade" id="moveRoomModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exchange-alt me-2"></i>Chuyển phòng học
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Số lịch học được chọn: <span id="selectedCount" class="badge bg-primary">0</span></label>
                 </div>
-                <div class="modal-body">
-                    <!-- Semester Selection -->
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <label for="semesterScheduleSelect" class="form-label">Học kỳ <span class="text-danger">*</span></label>
-                            <select class="form-select" id="semesterScheduleSelect" required>
-                                <option value="">Chọn học kỳ</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="yearScheduleSelect" class="form-label">Năm học <span class="text-danger">*</span></label>
-                            <select class="form-select" id="yearScheduleSelect" required>
-                                <option value="">Chọn năm học</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">&nbsp;</label>
-                            <div>
-                                <button type="button" class="btn btn-primary" onclick="loadSemesterClasses()">
-                                    <i class="fas fa-search me-2"></i>Tải lớp học phần
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Schedule Configuration -->
-                    <div id="scheduleConfiguration" style="display: none;">
-                        <div class="schedule-summary">
-                            <h6><i class="fas fa-info-circle me-2"></i>Thông tin học kỳ</h6>
-                            <div id="semesterSummary"></div>
-                        </div>
-
-                        <!-- Auto Schedule Options -->
-                        <div class="row mb-3">
-                            <div class="col-12">
-                                <h6>Tùy chọn sắp lịch tự động</h6>
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="avoidConflicts" checked>
-                                            <label class="form-check-label" for="avoidConflicts">
-                                                Tránh trùng lịch
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="optimizeRooms" checked>
-                                            <label class="form-check-label" for="optimizeRooms">
-                                                Tối ưu phòng học
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="balanceWorkload">
-                                            <label class="form-check-label" for="balanceWorkload">
-                                                Cân bằng khối lượng
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="preferMorning">
-                                            <label class="form-check-label" for="preferMorning">
-                                                Ưu tiên buổi sáng
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Classes List -->
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                <tr>
-                                    <th width="40">
-                                        <input type="checkbox" id="selectAllClasses" onchange="toggleSelectAllClasses()">
-                                    </th>
-                                    <th>Mã LHP</th>
-                                    <th>Môn học</th>
-                                    <th>Giảng viên</th>
-                                    <th>Số tiết/tuần</th>
-                                    <th>Số SV</th>
-                                    <th>Trạng thái lịch</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                                </thead>
-                                <tbody id="semesterClassesBody">
-                                </tbody>
-                            </table>
-                        </div>
+                <div class="mb-3">
+                    <label for="newRoom" class="form-label">Phòng học mới <span class="text-danger">*</span></label>
+                    <select class="form-select" id="newRoom" required>
+                        <option value="">Chọn phòng học mới</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="checkNewRoomConflicts" checked>
+                        <label class="form-check-label" for="checkNewRoomConflicts">
+                            Kiểm tra trùng lịch với phòng mới
+                        </label>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>Đóng
-                    </button>
-                    <button type="button" class="btn btn-warning" onclick="previewSchedule()" disabled id="previewBtn">
-                        <i class="fas fa-eye me-2"></i>Xem trước
-                    </button>
-                    <button type="button" class="btn btn-success" onclick="autoGenerateSchedule()" disabled id="generateBtn">
-                        <i class="fas fa-magic me-2"></i>Tự động sắp lịch
-                    </button>
-                    <button type="button" class="btn btn-primary" onclick="saveSemesterSchedule()" disabled id="saveSemesterBtn">
-                        <i class="fas fa-save me-2"></i>Lưu lịch học kỳ
-                    </button>
+                <div id="moveConflictWarning" style="display: none;">
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Cảnh báo</h6>
+                        <div id="moveConflictDetails"></div>
+                    </div>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-warning" onclick="checkMoveConflicts()">
+                    <i class="fas fa-search me-2"></i>Kiểm tra trùng lịch
+                </button>
+                <button type="button" class="btn btn-primary" onclick="confirmMoveRooms()">
+                    <i class="fas fa-exchange-alt me-2"></i>Chuyển phòng
+                </button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Modal Chi tiết lịch học -->
-    <div class="modal fade" id="scheduleDetailModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-info-circle me-2"></i>Chi tiết lịch học
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" id="scheduleDetailContent">
-                    <!-- Content will be populated by JS -->
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>Đóng
-                    </button>
-                    <button type="button" class="btn btn-warning" onclick="duplicateSchedule()">
-                        <i class="fas fa-copy me-2"></i>Nhân bản
-                    </button>
-                    <button type="button" class="btn btn-primary" onclick="editFromDetail()">
-                        <i class="fas fa-edit me-2"></i>Chỉnh sửa
-                    </button>
-                </div>
-            </div>
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay d-none">
+    <div class="loading-content">
+        <div class="loading-spinner-circle"></div>
+        <h5 style="color: #495057; margin-bottom: 0.5rem;">Đang xử lý...</h5>
+        <p style="color: #6c757d; margin: 0; font-size: 0.9rem;">Vui lòng đợi trong giây lát</p>
+        <!-- Hoặc sử dụng loading dots -->
+        <div class="loading-dots">
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
         </div>
     </div>
+</div>
 
-    <!-- Modal Chuyển phòng hàng loạt -->
-    <div class="modal fade" id="moveRoomModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-exchange-alt me-2"></i>Chuyển phòng học
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Số lịch học được chọn: <span id="selectedCount" class="badge bg-primary">0</span></label>
-                    </div>
-                    <div class="mb-3">
-                        <label for="newRoom" class="form-label">Phòng học mới <span class="text-danger">*</span></label>
-                        <select class="form-select" id="newRoom" required>
-                            <option value="">Chọn phòng học mới</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="checkNewRoomConflicts" checked>
-                            <label class="form-check-label" for="checkNewRoomConflicts">
-                                Kiểm tra trùng lịch với phòng mới
-                            </label>
-                        </div>
-                    </div>
-                    <div id="moveConflictWarning" style="display: none;">
-                        <div class="alert alert-warning">
-                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Cảnh báo</h6>
-                            <div id="moveConflictDetails"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-warning" onclick="checkMoveConflicts()">
-                        <i class="fas fa-search me-2"></i>Kiểm tra trùng lịch
-                    </button>
-                    <button type="button" class="btn btn-primary" onclick="confirmMoveRooms()">
-                        <i class="fas fa-exchange-alt me-2"></i>Chuyển phòng
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- Notification Container -->
+<div id="notificationContainer" class="notification-container"></div>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay d-none">
-        <div class="loading-content">
-            <div class="loading-spinner-circle"></div>
-            <h5 style="color: #495057; margin-bottom: 0.5rem;">Đang xử lý...</h5>
-            <p style="color: #6c757d; margin: 0; font-size: 0.9rem;">Vui lòng đợi trong giây lát</p>
-            <!-- Hoặc sử dụng loading dots -->
-            <div class="loading-dots">
-                <div class="loading-dot"></div>
-                <div class="loading-dot"></div>
-                <div class="loading-dot"></div>
-            </div>
-        </div>
-    </div>
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/sidebar.js}"></script>
 
-    <!-- Notification Container -->
-    <div id="notificationContainer" class="notification-container"></div>
-
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script th:src="@{/js/common.js}"></script>
-    <script th:src="@{/js/sidebar.js}"></script>
-
-    <script>
+<script>
         // ========================================
         // CONSTANTS AND CONFIGURATION
         // ========================================
@@ -1669,6 +1642,7 @@
         // ========================================
         document.addEventListener('DOMContentLoaded', function() {
             initializePage();
+
         });
 
         async function initializePage() {
@@ -1773,51 +1747,19 @@
         }
 
         function initializeUI() {
-            // Initialize Select2 cho các dropdown thông thường
-            safeSelect2Init('#maLhp, #maPhong, #filterGiangVien, #filterPhongHoc, #filterMonHoc, #filterKhoa', {
+            // Initialize Select2 cho filter dropdowns với z-index thấp
+            safeSelect2Init('#filterGiangVien, #filterPhongHoc, #filterMonHoc, #filterKhoa', {
+                theme: 'bootstrap-5',
+                width: '100%',
+                dropdownParent: $(document.body),
+                dropdownCssClass: 'filter-dropdown'
+            });
+
+            // Initialize Select2 cho modal dropdowns với z-index cao hơn
+            safeSelect2Init('#maLhp, #maPhong', {
                 theme: 'bootstrap-5',
                 width: '100%',
                 dropdownParent: $(document.body)
-            });
-
-            // Khởi tạo Select2 cho semester modal khi modal được mở
-            $(document).on('shown.bs.modal', '#semesterScheduleModal', function() {
-                safeSelect2Init('#semesterScheduleSelect, #yearScheduleSelect', {
-                    theme: 'bootstrap-5',
-                    width: '100%',
-                    dropdownParent: $('#semesterScheduleModal')
-                });
-            });
-
-            // Destroy Select2 khi đóng modal
-            $(document).on('hidden.bs.modal', '#semesterScheduleModal', function() {
-                safeSelect2Destroy('#semesterScheduleSelect, #yearScheduleSelect');
-            });
-
-            // Khởi tạo Select2 cho semester modal khi modal được mở
-            $(document).on('shown.bs.modal', '#semesterScheduleModal', function() {
-                // Kiểm tra và destroy trước khi khởi tạo mới
-                $('#semesterScheduleSelect, #yearScheduleSelect').each(function() {
-                    if ($(this).hasClass('select2-hidden-accessible')) {
-                        $(this).select2('destroy');
-                    }
-                });
-
-                // Khởi tạo mới
-                $('#semesterScheduleSelect, #yearScheduleSelect').select2({
-                    theme: 'bootstrap-5',
-                    width: '100%',
-                    dropdownParent: $('#semesterScheduleModal')
-                });
-            });
-
-            // Destroy Select2 khi đóng modal
-            $(document).on('hidden.bs.modal', '#semesterScheduleModal', function() {
-                $('#semesterScheduleSelect, #yearScheduleSelect').each(function() {
-                    if ($(this).hasClass('select2-hidden-accessible')) {
-                        $(this).select2('destroy');
-                    }
-                });
             });
 
             // Setup time slots
@@ -1858,7 +1800,7 @@
                 for (let lhp of lopHocPhanData) {
                     try {
                         // Gọi API để lấy số sinh viên đã đăng ký
-                        const studentResponse = await apiCall(`/lophocphan/${lhp.maLhp}/students`);
+                        const studentResponse = await apiCall(`/lophocphan/${lhp.maLhp}/sinhvien`);
                         lhp.soSinhVien = Array.isArray(studentResponse) ? studentResponse.length : 0;
                     } catch (error) {
                         console.warn(`Không thể tải số sinh viên cho LHP ${lhp.maLhp}:`, error);
@@ -1876,13 +1818,152 @@
 
         async function loadPhongHocData() {
             try {
-                const response = await apiCall('/phonghoc');
-                globalState.phongHocData = Array.isArray(response) ? response.filter(p => p.isActive !== false) : [];
-                console.log('✅ Room data loaded:', globalState.phongHocData.length);
+                console.log('📡 Loading phòng học data...');
+
+                // Sử dụng endpoint /all để lấy tất cả phòng học active
+                const response = await apiCall('/phonghoc/all');
+
+                if (Array.isArray(response)) {
+                    // Filter chỉ lấy phòng học active và khả dụng
+                    globalState.phongHocData = response.filter(room => {
+                        return room.isActive !== false && room.trangThai !== 'INACTIVE';
+                    });
+                } else {
+                    console.warn('⚠️ API response is not an array:', response);
+                    globalState.phongHocData = [];
+                }
+
+                console.log(`✅ Phòng học data loaded: ${globalState.phongHocData.length} rooms`);
+
+                // Populate dropdown ngay sau khi load xong
+                populatePhongHocDropdowns();
+
             } catch (error) {
-                console.error('❌ Error loading rooms:', error);
+                console.error('❌ Error loading phòng học:', error);
                 globalState.phongHocData = [];
+
+                // Vẫn gọi populate để hiển thị thông báo lỗi
+                populatePhongHocDropdowns();
+
+                // Hiển thị thông báo lỗi cho user
+                if (typeof showNotification === 'function') {
+                    showNotification('Không thể tải danh sách phòng học. Vui lòng thử lại.', 'error');
+                }
             }
+        }
+
+        // Hàm alternative nếu endpoint /all không work
+        async function loadPhongHocDataAlternative() {
+            try {
+                console.log('📡 Loading phòng học data (alternative method)...');
+
+                // Thử endpoint pagination với size lớn
+                const response = await apiCall('/phonghoc?page=0&size=1000');
+
+                if (response && response.content && Array.isArray(response.content)) {
+                    globalState.phongHocData = response.content.filter(room => {
+                        return room.isActive !== false && room.trangThai !== 'INACTIVE';
+                    });
+                } else {
+                    throw new Error('Invalid response format');
+                }
+
+                console.log(`✅ Phòng học data loaded (alternative): ${globalState.phongHocData.length} rooms`);
+                populatePhongHocDropdowns();
+
+            } catch (error) {
+                console.error('❌ Error loading phòng học (alternative):', error);
+                globalState.phongHocData = [];
+                populatePhongHocDropdowns();
+            }
+        }
+
+        // Hàm khởi tạo - gọi trong DOMContentLoaded
+        async function initializePhongHocDropdown() {
+            console.log('🚀 Initializing phòng học dropdown...');
+
+            // Thử method chính trước
+            await loadPhongHocData();
+
+            // Nếu không có dữ liệu, thử method alternative
+            if (globalState.phongHocData.length === 0) {
+                console.log('🔄 Trying alternative method...');
+                await loadPhongHocDataAlternative();
+            }
+        }
+
+
+        // Hàm populate dropdown phòng học - đã sửa
+        function populatePhongHocDropdowns() {
+            const selectors = ['#maPhong', '#filterPhongHoc'];
+
+            selectors.forEach(selector => {
+                const element = document.querySelector(selector);
+                if (!element) {
+                    console.warn(`⚠️ Element not found: ${selector}`);
+                    return;
+                }
+
+                // Lưu giá trị hiện tại
+                const currentValue = element.value;
+
+                // Xác định text mặc định
+                const isFilter = selector.includes('filter');
+                const defaultText = isFilter ? 'Tất cả phòng học' : 'Chọn phòng học';
+
+                // Clear và thêm option mặc định
+                element.innerHTML = `<option value="">${defaultText}</option>`;
+
+                if (globalState.phongHocData && globalState.phongHocData.length > 0) {
+                    // Thêm các option phòng học
+                    globalState.phongHocData.forEach(room => {
+                        const option = document.createElement('option');
+                        option.value = room.maPhong;
+
+                        // Format text hiển thị: "Tên phòng (Mã phòng) - Loại phòng"
+                        let displayText = room.tenPhong || room.maPhong;
+                        if (room.maPhong && room.tenPhong !== room.maPhong) {
+                            displayText += ` (${room.maPhong})`;
+                        }
+                        if (room.loaiPhongDisplay) {
+                            displayText += ` - ${room.loaiPhongDisplay}`;
+                        } else if (room.loaiPhong) {
+                            displayText += ` - ${room.loaiPhong}`;
+                        }
+
+                        // Thêm trạng thái nếu không phải AVAILABLE
+                        if (room.trangThaiDisplay && room.trangThai !== 'AVAILABLE') {
+                            displayText += ` [${room.trangThaiDisplay}]`;
+                        }
+
+                        option.textContent = displayText;
+
+                        // Disable option nếu phòng đang bảo trì
+                        if (room.trangThai === 'MAINTENANCE') {
+                            option.disabled = true;
+                            option.style.color = '#999';
+                        }
+
+                        element.appendChild(option);
+                    });
+
+                    // Khôi phục giá trị cũ nếu còn hợp lệ
+                    if (currentValue && globalState.phongHocData.some(room => room.maPhong === currentValue)) {
+                        element.value = currentValue;
+                    }
+
+                } else {
+                    // Không có dữ liệu hoặc có lỗi
+                    const noDataOption = document.createElement('option');
+                    noDataOption.value = '';
+                    noDataOption.textContent = 'Không có phòng học khả dụng';
+                    noDataOption.disabled = true;
+                    noDataOption.style.color = '#dc3545';
+                    element.appendChild(noDataOption);
+                }
+            });
+
+            console.log(`✅ Populated ${selectors.length} phòng học dropdowns`);
         }
 
         async function loadGiangVienData() {
