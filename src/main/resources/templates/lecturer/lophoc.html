@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lớp học của tôi - Face Attendance</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/sidebar.css}" rel="stylesheet">
+    <link th:href="@{/css/lecturer.css}" rel="stylesheet">
+</head>
+<body>
+<div class="main-wrapper">
+    <!-- Include Sidebar Component -->
+    <div th:replace="~{components/sidebar :: sidebar}"></div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">
+                        <i class="fas fa-chalkboard me-2"></i>Lớp học của tôi
+                    </h1>
+                </div>
+                <div class="header-right">
+                    <div class="semester-info">
+                        <select class="form-select" id="semesterSelect">
+                            <option value="2024-2025-1" selected>Học kỳ 1 - Năm học 2024-2025</option>
+                            <option value="2024-2025-2">Học kỳ 2 - Năm học 2024-2025</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Summary Stats -->
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card primary">
+                        <div class="stats-header">
+                            <div class="stats-icon">
+                                <i class="fas fa-chalkboard"></i>
+                            </div>
+                        </div>
+                        <div class="stats-body">
+                            <h3 class="stats-number" id="totalClasses">0</h3>
+                            <p class="stats-label">Tổng số lớp</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card success">
+                        <div class="stats-header">
+                            <div class="stats-icon">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
+                        </div>
+                        <div class="stats-body">
+                            <h3 class="stats-number" id="totalStudents">0</h3>
+                            <p class="stats-label">Tổng sinh viên</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card warning">
+                        <div class="stats-header">
+                            <div class="stats-icon">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                        </div>
+                        <div class="stats-body">
+                            <h3 class="stats-number" id="classesToday">0</h3>
+                            <p class="stats-label">Lớp hôm nay</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card info">
+                        <div class="stats-header">
+                            <div class="stats-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                        <div class="stats-body">
+                            <h3 class="stats-number" id="avgAttendance">0%</h3>
+                            <p class="stats-label">Tỷ lệ điểm danh TB</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="filter-card">
+                        <div class="filter-header">
+                            <h5><i class="fas fa-filter me-2"></i>Bộ lọc</h5>
+                        </div>
+                        <div class="filter-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label for="statusFilter" class="form-label">Trạng thái:</label>
+                                    <select class="form-select" id="statusFilter">
+                                        <option value="">Tất cả</option>
+                                        <option value="active" selected>Đang hoạt động</option>
+                                        <option value="inactive">Tạm dừng</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="subjectFilter" class="form-label">Môn học:</label>
+                                    <select class="form-select" id="subjectFilter">
+                                        <option value="">Tất cả môn học</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="dayFilter" class="form-label">Ngày học:</label>
+                                    <select class="form-select" id="dayFilter">
+                                        <option value="">Tất cả</option>
+                                        <option value="2">Thứ 2</option>
+                                        <option value="3">Thứ 3</option>
+                                        <option value="4">Thứ 4</option>
+                                        <option value="5">Thứ 5</option>
+                                        <option value="6">Thứ 6</option>
+                                        <option value="7">Thứ 7</option>
+                                        <option value="8">Chủ nhật</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="searchInput" class="form-label">Tìm kiếm:</label>
+                                    <input type="text" class="form-control" id="searchInput" placeholder="Tìm theo tên môn, mã lớp...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classes Grid -->
+            <div class="row" id="classesContainer">
+                <!-- Classes will be loaded here -->
+                <div class="col-12 text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Đang tải...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Đang tải dữ liệu lớp học...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Class Detail Modal -->
+<div class="modal fade" id="classDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>Thông tin chi tiết lớp học
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="classDetailContent">
+                <!-- Detail content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attendance Modal -->
+<div class="modal fade" id="attendanceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-check me-2"></i>Điểm danh nhanh
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="attendanceContent">
+                <!-- Attendance content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom JS -->
+<script th:src="@{/js/sidebar.js}"></script>
+<script th:src="@{/js/lecturer/lophoc.js}"></script>
+
+<script>
+    // Main JavaScript for Classes Management
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize page
+        initializePage();
+
+        // Load classes data
+        loadClasses();
+
+        // Setup event listeners
+        setupEventListeners();
+    });
+
+    function initializePage() {
+        console.log('📚 Initializing Classes Management page...');
+    }
+
+    function setupEventListeners() {
+        // Filter changes
+        document.getElementById('semesterSelect').addEventListener('change', loadClasses);
+        document.getElementById('statusFilter').addEventListener('change', loadClasses);
+        document.getElementById('subjectFilter').addEventListener('change', loadClasses);
+        document.getElementById('dayFilter').addEventListener('change', loadClasses);
+
+        // Search input
+        let searchTimeout;
+        document.getElementById('searchInput').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(loadClasses, 500);
+        });
+    }
+
+    function loadClasses() {
+        const container = document.getElementById('classesContainer');
+
+        // Show loading
+        container.innerHTML = `
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+            </div>
+            <p class="mt-3 text-muted">Đang tải dữ liệu lớp học...</p>
+        </div>
+    `;
+
+        // Simulate API call - Replace with actual API endpoint
+        setTimeout(() => {
+            const mockClasses = generateMockClasses();
+            displayClasses(mockClasses);
+            updateStats(mockClasses);
+        }, 1000);
+    }
+
+    function generateMockClasses() {
+        return [
+            {
+                maLhp: 'CS101-01',
+                tenMonHoc: 'Lập trình cơ sở',
+                maMonHoc: 'CS101',
+                nhom: 1,
+                soSinhVien: 45,
+                soTinChi: 3,
+                phongHoc: 'A101',
+                thoiGian: '07:30 - 09:30',
+                thu: 'Thứ 2, Thứ 4',
+                trangThai: 'active',
+                tyLeDiemDanh: 85.5
+            },
+            {
+                maLhp: 'CS102-02',
+                tenMonHoc: 'Cấu trúc dữ liệu',
+                maMonHoc: 'CS102',
+                nhom: 2,
+                soSinhVien: 38,
+                soTinChi: 3,
+                phongHoc: 'B205',
+                thoiGian: '09:30 - 11:30',
+                thu: 'Thứ 3, Thứ 5',
+                trangThai: 'active',
+                tyLeDiemDanh: 92.1
+            },
+            {
+                maLhp: 'CS201-01',
+                tenMonHoc: 'Cơ sở dữ liệu',
+                maMonHoc: 'CS201',
+                nhom: 1,
+                soSinhVien: 42,
+                soTinChi: 3,
+                phongHoc: 'C301',
+                thoiGian: '13:30 - 15:30',
+                thu: 'Thứ 2, Thứ 4',
+                trangThai: 'active',
+                tyLeDiemDanh: 78.3
+            },
+            {
+                maLhp: 'CS301-01',
+                tenMonHoc: 'Trí tuệ nhân tạo',
+                maMonHoc: 'CS301',
+                nhom: 1,
+                soSinhVien: 35,
+                soTinChi: 3,
+                phongHoc: 'D401',
+                thoiGian: '15:30 - 17:30',
+                thu: 'Thứ 3, Thứ 5',
+                trangThai: 'active',
+                tyLeDiemDanh: 88.7
+            }
+        ];
+    }
+
+    function displayClasses(classes) {
+        const container = document.getElementById('classesContainer');
+
+        if (classes.length === 0) {
+            container.innerHTML = `
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-chalkboard fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Không có lớp học nào</h5>
+                <p class="text-muted">Hiện tại bạn chưa được phân công giảng dạy lớp học nào.</p>
+            </div>
+        `;
+            return;
+        }
+
+        let html = '';
+        classes.forEach(cls => {
+            const attendanceClass = getAttendanceClass(cls.tyLeDiemDanh);
+            const statusBadge = cls.trangThai === 'active' ?
+                '<span class="badge bg-success">Đang hoạt động</span>' :
+                '<span class="badge bg-secondary">Tạm dừng</span>';
+
+            html += `
+            <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="class-info-card">
+                    <div class="class-header">
+                        <div class="class-title">${cls.tenMonHoc}</div>
+                        <div class="class-subtitle">${cls.maLhp} - Nhóm ${cls.nhom}</div>
+                    </div>
+
+                    <div class="card-body p-3">
+                        <div class="class-details mb-3">
+                            <div class="detail-item">
+                                <i class="fas fa-code me-2"></i>
+                                <span>Mã môn: ${cls.maMonHoc}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-users me-2"></i>
+                                <span>${cls.soSinhVien} sinh viên</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-clock me-2"></i>
+                                <span>${cls.thoiGian}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-calendar me-2"></i>
+                                <span>${cls.thu}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-door-open me-2"></i>
+                                <span>Phòng ${cls.phongHoc}</span>
+                            </div>
+                        </div>
+
+                        <div class="class-stats">
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="class-stat">
+                                        <div class="stat-value">${cls.soTinChi}</div>
+                                        <div class="stat-description">Số tín chỉ</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="class-stat">
+                                        <div class="stat-value attendance-rate ${attendanceClass}">
+                                            ${cls.tyLeDiemDanh}%
+                                        </div>
+                                        <div class="stat-description">Tỷ lệ điểm danh</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            ${statusBadge}
+                            <div class="class-actions">
+                                <button class="btn btn-sm btn-outline-primary me-1"
+                                        onclick="viewClassDetail('${cls.maLhp}')"
+                                        title="Xem chi tiết">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-primary me-1"
+                                        onclick="quickAttendance('${cls.maLhp}')"
+                                        title="Điểm danh nhanh">
+                                    <i class="fas fa-user-check"></i>
+                                </button>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                            data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="/lecturer/danhsach-sinhvien?class=${cls.maLhp}">
+                                            <i class="fas fa-list me-2"></i>Danh sách SV
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="/lecturer/lichsu-diemdanh?class=${cls.maLhp}">
+                                            <i class="fas fa-history me-2"></i>Lịch sử điểm danh
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="/lecturer/baocao-diemdanh?class=${cls.maLhp}">
+                                            <i class="fas fa-chart-line me-2"></i>Báo cáo
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function getAttendanceClass(rate) {
+        if (rate >= 90) return 'rate-excellent';
+        if (rate >= 80) return 'rate-good';
+        if (rate >= 70) return 'rate-average';
+        return 'rate-poor';
+    }
+
+    function updateStats(classes) {
+        const totalClasses = classes.length;
+        const totalStudents = classes.reduce((sum, cls) => sum + cls.soSinhVien, 0);
+        const classesToday = classes.filter(cls => isToday(cls.thu)).length;
+        const avgAttendance = classes.length > 0 ?
+            (classes.reduce((sum, cls) => sum + cls.tyLeDiemDanh, 0) / classes.length).toFixed(1) : 0;
+
+        document.getElementById('totalClasses').textContent = totalClasses;
+        document.getElementById('totalStudents').textContent = totalStudents;
+        document.getElementById('classesToday').textContent = classesToday;
+        document.getElementById('avgAttendance').textContent = avgAttendance + '%';
+    }
+
+    function isToday(thuHoc) {
+        const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+        const todayMap = {
+            1: 'Thứ 2', 2: 'Thứ 3', 3: 'Thứ 4', 4: 'Thứ 5',
+            5: 'Thứ 6', 6: 'Thứ 7', 0: 'Chủ nhật'
+        };
+        return thuHoc.includes(todayMap[today]);
+    }
+
+    function viewClassDetail(maLhp) {
+        const modal = new bootstrap.Modal(document.getElementById('classDetailModal'));
+        const content = document.getElementById('classDetailContent');
+
+        content.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+            </div>
+            <p class="mt-3">Đang tải thông tin chi tiết...</p>
+        </div>
+    `;
+
+        modal.show();
+
+        // Simulate API call
+        setTimeout(() => {
+            content.innerHTML = `
+            <div class="class-detail-content">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Thông tin cơ bản</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Mã lớp học phần:</strong></td><td>${maLhp}</td></tr>
+                            <tr><td><strong>Môn học:</strong></td><td>Lập trình cơ sở</td></tr>
+                            <tr><td><strong>Nhóm:</strong></td><td>1</td></tr>
+                            <tr><td><strong>Số tín chỉ:</strong></td><td>3</td></tr>
+                            <tr><td><strong>Số sinh viên:</strong></td><td>45</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Lịch học</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Thời gian:</strong></td><td>07:30 - 09:30</td></tr>
+                            <tr><td><strong>Ngày học:</strong></td><td>Thứ 2, Thứ 4</td></tr>
+                            <tr><td><strong>Phòng học:</strong></td><td>A101</td></tr>
+                            <tr><td><strong>Tỷ lệ điểm danh:</strong></td><td>85.5%</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+        }, 800);
+    }
+
+    function quickAttendance(maLhp) {
+        const modal = new bootstrap.Modal(document.getElementById('attendanceModal'));
+        const content = document.getElementById('attendanceContent');
+
+        content.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+            </div>
+            <p class="mt-3">Đang chuẩn bị điểm danh...</p>
+        </div>
+    `;
+
+        modal.show();
+
+        // Simulate loading
+        setTimeout(() => {
+            content.innerHTML = `
+            <div class="quick-attendance-content">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Điểm danh nhanh cho lớp <strong>${maLhp}</strong>
+                </div>
+                <div class="text-center">
+                    <a href="/lecturer/diemdanh-homnay?class=${maLhp}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-camera me-2"></i>Bắt đầu điểm danh
+                    </a>
+                </div>
+            </div>
+        `;
+        }, 800);
+    }
+</script>
+
+<style>
+    /* Additional custom styles */
+    .class-info-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .class-info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .filter-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid #f0f0f0;
+    }
+
+    .filter-header {
+        background: #f8f9fa;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .filter-body {
+        padding: 1.5rem;
+    }
+
+    .class-details .detail-item {
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .class-actions .btn {
+        margin-right: 0.25rem;
+    }
+
+    .stats-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid #f0f0f0;
+        transition: transform 0.3s ease;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .stats-card.primary {
+        border-left: 4px solid #667eea;
+    }
+
+    .stats-card.success {
+        border-left: 4px solid #28a745;
+    }
+
+    .stats-card.warning {
+        border-left: 4px solid #ffc107;
+    }
+
+    .stats-card.info {
+        border-left: 4px solid #17a2b8;
+    }
+
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        margin-bottom: 1rem;
+    }
+
+    .stats-card.primary .stats-icon {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .stats-card.success .stats-icon {
+        background: linear-gradient(135deg, #28a745, #20c997);
+    }
+
+    .stats-card.warning .stats-icon {
+        background: linear-gradient(135deg, #ffc107, #fd7e14);
+    }
+
+    .stats-card.info .stats-icon {
+        background: linear-gradient(135deg, #17a2b8, #6f42c1);
+    }
+
+    .stats-number {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .stats-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin: 0;
+        font-weight: 500;
+    }
+
+    .semester-info .form-select {
+        border: none;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+    }
+</style>
+</body>
+</html>
