@@ -3,451 +3,1048 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Quản trị hệ thống</title>
+    <title>Dashboard - Face Attendance System</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Custom CSS - Sử dụng thứ tự đúng -->
+    <!-- Custom CSS -->
     <link th:href="@{/css/common.css}" rel="stylesheet">
     <link th:href="@{/css/sidebar.css}" rel="stylesheet">
     <link th:href="@{/css/admin.css}" rel="stylesheet">
+
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stats-card {
+            background: var(--white);
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid var(--primary-color);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .stats-card.primary { border-left-color: var(--primary-color); }
+        .stats-card.success { border-left-color: var(--success-color); }
+        .stats-card.warning { border-left-color: var(--warning-color); }
+        .stats-card.info { border-left-color: var(--info-color); }
+        .stats-card.danger { border-left-color: var(--danger-color); }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stats-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .stats-card.primary .stats-icon { background: var(--primary-color); }
+        .stats-card.success .stats-icon { background: var(--success-color); }
+        .stats-card.warning .stats-icon { background: var(--warning-color); }
+        .stats-card.info .stats-icon { background: var(--info-color); }
+        .stats-card.danger .stats-icon { background: var(--danger-color); }
+
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            line-height: 1;
+        }
+
+        .stats-label {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .stats-change {
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            font-weight: 500;
+        }
+
+        .stats-change.positive { color: var(--success-color); }
+        .stats-change.negative { color: var(--danger-color); }
+
+        .system-status {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: var(--border-radius);
+        }
+
+        .status-value {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .status-value.online { color: var(--success-color); }
+        .status-value.warning { color: var(--warning-color); }
+        .status-value.offline { color: var(--danger-color); }
+
+        .activity-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .activity-icon.success { background: var(--success-color); }
+        .activity-icon.warning { background: var(--warning-color); }
+        .activity-icon.info { background: var(--info-color); }
+        .activity-icon.primary { background: var(--primary-color); }
+        .activity-icon.danger { background: var(--danger-color); }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-text {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--gray-700);
+        }
+
+        .activity-time {
+            color: var(--gray-500);
+            font-size: 0.8rem;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .quick-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--white);
+            border: 2px solid var(--gray-200);
+            border-radius: var(--border-radius-lg);
+            text-decoration: none;
+            color: var(--gray-700);
+            transition: var(--transition);
+        }
+
+        .quick-action-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            text-decoration: none;
+        }
+
+        .action-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--border-radius);
+            background: var(--gray-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .quick-action-btn:hover .action-icon {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .action-text h6 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .action-text p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: var(--gray-500);
+        }
+
+        .real-time-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 10px;
+            height: 10px;
+            background: var(--success-color);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .log-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .log-item:hover {
+            background: var(--gray-50);
+        }
+
+        .log-level {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .log-level.info { background: var(--info-color); color: white; }
+        .log-level.warn { background: var(--warning-color); color: white; }
+        .log-level.error { background: var(--danger-color); color: white; }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
-<body class="admin-dashboard">
-<!-- Main Wrapper -->
+<body>
 <div class="main-wrapper">
     <!-- Include Sidebar Component -->
     <div th:replace="~{components/sidebar :: sidebar}"></div>
 
     <!-- Main Content -->
-    <main class="main-content" id="mainContent">
+    <div class="main-content">
         <!-- Header -->
-        <header class="header">
+        <div class="header">
             <div class="header-content">
                 <div class="header-left">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
                     <h1 class="page-title">Dashboard</h1>
                 </div>
 
                 <div class="header-right">
+                    <!-- Real-time Status -->
+                    <div class="me-3">
+                        <span class="badge bg-success">
+                            <i class="fas fa-circle me-1"></i>
+                            System Online
+                        </span>
+                    </div>
+
                     <!-- Notifications -->
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary position-relative me-3"
-                                type="button"
-                                data-bs-toggle="dropdown">
+                    <div class="dropdown me-3">
+                        <button class="btn btn-outline-secondary position-relative" type="button" data-bs-toggle="dropdown">
                             <i class="fas fa-bell"></i>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    3
-                                </span>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">
+                                0
+                            </span>
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
+                        <ul class="dropdown-menu dropdown-menu-end" id="notificationList">
                             <li><h6 class="dropdown-header">Thông báo mới</h6></li>
-                            <li><a class="dropdown-item" href="#">
-                                <i class="fas fa-user-plus text-success me-2"></i>
-                                Có 5 sinh viên mới đăng ký
-                            </a></li>
-                            <li><a class="dropdown-item" href="#">
-                                <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                                Camera phòng 101 mất kết nối
-                            </a></li>
-                            <li><a class="dropdown-item" href="#">
-                                <i class="fas fa-chart-line text-info me-2"></i>
-                                Báo cáo tuần mới đã sẵn sàng
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-center" href="#">Xem tất cả</a></li>
+                            <li><span class="dropdown-item-text text-muted">Đang tải...</span></li>
                         </ul>
                     </div>
 
                     <!-- User Menu -->
-                    <div class="dropdown user-dropdown">
-                        <div class="user-info" data-bs-toggle="dropdown">
-                            <div class="user-avatar">
-                                <span th:if="${currentUser != null and currentUser.username != null}"
-                                      th:text="${#strings.substring(currentUser.username, 0, 1)}">A</span>
-                                <span th:unless="${currentUser != null and currentUser.username != null}">A</span>
+                    <div class="user-info">
+                        <span th:text="'Xin chào, ' + ${session.user?.hoTen ?: 'Admin'}">Xin chào, Admin</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="page-content">
+            <div class="container-fluid">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h2 class="page-title mb-0">
+                                <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+                                Dashboard
+                            </h2>
+                            <p class="text-muted mb-0">Tổng quan hệ thống Face Attendance</p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="d-flex gap-2 justify-content-end">
+                                <button class="btn btn-outline-primary" onclick="refreshDashboard()">
+                                    <i class="fas fa-sync-alt me-2"></i>
+                                    Refresh
+                                </button>
+                                <button class="btn btn-primary" onclick="exportReport()">
+                                    <i class="fas fa-download me-2"></i>
+                                    Export Report
+                                </button>
                             </div>
-                            <div class="user-details">
-                                <h6 th:text="${currentUser != null ? currentUser.username : 'Admin User'}">Admin User</h6>
-                                <p>Quản trị viên</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <!-- Total Students -->
+                    <div class="stats-card primary">
+                        <div class="stats-header">
+                            <div>
+                                <div class="stats-number" id="totalStudents">0</div>
+                                <div class="stats-label">Tổng số sinh viên</div>
                             </div>
-                            <i class="fas fa-chevron-down ms-2"></i>
+                            <div class="stats-icon">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
                         </div>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="/profile">
-                                <i class="fas fa-user me-2"></i>Hồ sơ cá nhân
-                            </a></li>
-                            <li><a class="dropdown-item" href="/settings">
-                                <i class="fas fa-cog me-2"></i>Cài đặt
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/logout" onclick="logout()">
-                                <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
-                            </a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- Content Wrapper -->
-        <div class="content-wrapper">
-            <!-- Error Display -->
-            <div th:if="${error}" class="alert alert-danger">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <span th:text="${error}">Lỗi không xác định</span>
-            </div>
-
-            <!-- Page Header -->
-            <div class="page-header">
-                <h2 class="page-title">Tổng quan hệ thống</h2>
-                <p class="page-subtitle">Theo dõi và quản lý toàn bộ hoạt động của hệ thống điểm danh</p>
-            </div>
-
-            <!-- Stats Grid -->
-            <div class="stats-grid">
-                <!-- Total Students -->
-                <div class="stats-card primary">
-                    <div class="stats-header">
-                        <div class="stats-icon">
-                            <i class="fas fa-user-graduate"></i>
+                        <div class="stats-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span id="studentsChange">+0%</span> so với tháng trước
                         </div>
                     </div>
-                    <div class="stats-number" id="totalStudents" th:text="${totalStudents ?: 0}">0</div>
-                    <div class="stats-label">Tổng số sinh viên</div>
-                    <div class="stats-change positive">
-                        <i class="fas fa-arrow-up"></i>
-                        +12% so với tháng trước
-                    </div>
-                </div>
 
-                <!-- Total Lecturers -->
-                <div class="stats-card success">
-                    <div class="stats-header">
-                        <div class="stats-icon">
-                            <i class="fas fa-chalkboard-teacher"></i>
+                    <!-- Total Teachers -->
+                    <div class="stats-card success">
+                        <div class="stats-header">
+                            <div>
+                                <div class="stats-number" id="totalTeachers">0</div>
+                                <div class="stats-label">Tổng số giảng viên</div>
+                            </div>
+                            <div class="stats-icon">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
+                        </div>
+                        <div class="stats-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span id="teachersChange">+0%</span> so với tháng trước
                         </div>
                     </div>
-                    <div class="stats-number" id="totalLecturers" th:text="${totalLecturers ?: 0}">0</div>
-                    <div class="stats-label">Tổng số giảng viên</div>
-                    <div class="stats-change positive">
-                        <i class="fas fa-arrow-up"></i>
-                        +5% so với tháng trước
-                    </div>
-                </div>
 
-                <!-- Total Classes -->
-                <div class="stats-card warning">
-                    <div class="stats-header">
-                        <div class="stats-icon">
-                            <i class="fas fa-users"></i>
+                    <!-- Active Cameras -->
+                    <div class="stats-card info">
+                        <div class="stats-header">
+                            <div>
+                                <div class="stats-number" id="activeCameras">0</div>
+                                <div class="stats-label">Camera hoạt động</div>
+                            </div>
+                            <div class="stats-icon">
+                                <i class="fas fa-video"></i>
+                            </div>
+                        </div>
+                        <div class="stats-change" id="cameraStatus">
+                            <i class="fas fa-circle"></i>
+                            <span id="cameraStatusText">Đang kiểm tra...</span>
                         </div>
                     </div>
-                    <div class="stats-number" id="totalClasses" th:text="${totalClasses ?: 0}">0</div>
-                    <div class="stats-label">Tổng số lớp</div>
-                    <div class="stats-change positive">
-                        <i class="fas fa-arrow-up"></i>
-                        +3% so với tháng trước
-                    </div>
-                </div>
 
-                <!-- Attendance Today -->
-                <div class="stats-card info">
-                    <div class="stats-header">
-                        <div class="stats-icon">
-                            <i class="fas fa-clipboard-check"></i>
+                    <!-- Today's Attendance -->
+                    <div class="stats-card warning">
+                        <div class="stats-header">
+                            <div>
+                                <div class="stats-number" id="todayAttendance">0</div>
+                                <div class="stats-label">Điểm danh hôm nay</div>
+                            </div>
+                            <div class="stats-icon">
+                                <i class="fas fa-clipboard-check"></i>
+                            </div>
+                        </div>
+                        <div class="stats-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span id="attendanceChange">+0%</span> so với hôm qua
                         </div>
                     </div>
-                    <div class="stats-number" id="attendanceToday" th:text="${attendanceToday ?: 0}">0</div>
-                    <div class="stats-label">Điểm danh hôm nay</div>
-                    <div class="stats-change positive">
-                        <i class="fas fa-arrow-up"></i>
-                        +8% so với hôm qua
-                    </div>
-                </div>
-            </div>
 
-            <!-- Charts Section -->
-            <div class="row mt-4">
-                <!-- Attendance Chart -->
-                <div class="col-lg-8">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title">
-                                <i class="fas fa-chart-line me-2"></i>
-                                Thống kê điểm danh 7 ngày qua
-                            </h5>
+                    <!-- System Errors -->
+                    <div class="stats-card danger">
+                        <div class="stats-header">
+                            <div>
+                                <div class="stats-number" id="systemErrors">0</div>
+                                <div class="stats-label">Lỗi hệ thống (24h)</div>
+                            </div>
+                            <div class="stats-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <canvas id="attendanceChart" height="100"></canvas>
+                        <div class="stats-change" id="errorTrend">
+                            <i class="fas fa-minus"></i>
+                            <span id="errorChange">Không đổi</span>
                         </div>
+                    </div>
+
+                    <!-- Total Logs -->
+                    <div class="stats-card info">
+                        <div class="stats-header">
+                            <div>
+                                <div class="stats-number" id="totalLogs">0</div>
+                                <div class="stats-label">Logs hôm nay</div>
+                            </div>
+                            <div class="stats-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                        </div>
+                        <div class="real-time-indicator"></div>
                     </div>
                 </div>
 
-                <!-- Department Distribution -->
-                <div class="col-lg-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title">
-                                <i class="fas fa-chart-pie me-2"></i>
-                                Phân bố theo khoa
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="departmentChart"></canvas>
+                <!-- Charts Section -->
+                <div class="row">
+                    <!-- Attendance Chart -->
+                    <div class="col-lg-8">
+                        <div class="admin-table-card">
+                            <div class="card-header">
+                                <h5 class="card-title">
+                                    <i class="fas fa-chart-line me-2"></i>
+                                    Thống kê điểm danh 7 ngày qua
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="attendanceChart" height="100"></canvas>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Recent Activities -->
-            <div class="row mt-4">
-                <div class="col-lg-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title">
-                                <i class="fas fa-clock me-2"></i>
-                                Hoạt động gần đây
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="activity-list">
-                                <div class="activity-item">
-                                    <div class="activity-icon success">
-                                        <i class="fas fa-user-plus"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <p class="activity-text">Sinh viên <strong>Nguyễn Văn A</strong> đã đăng ký thành công</p>
-                                        <small class="activity-time">5 phút trước</small>
-                                    </div>
-                                </div>
-
-                                <div class="activity-item">
-                                    <div class="activity-icon warning">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <p class="activity-text">Camera phòng 101 mất kết nối</p>
-                                        <small class="activity-time">15 phút trước</small>
-                                    </div>
-                                </div>
-
-                                <div class="activity-item">
-                                    <div class="activity-icon info">
-                                        <i class="fas fa-clipboard-check"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <p class="activity-text">Lớp <strong>CNTT-K15</strong> đã hoàn thành điểm danh</p>
-                                        <small class="activity-time">30 phút trước</small>
-                                    </div>
-                                </div>
-
-                                <div class="activity-item">
-                                    <div class="activity-icon primary">
-                                        <i class="fas fa-book"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <p class="activity-text">Môn học <strong>Lập trình Java</strong> đã được thêm</p>
-                                        <small class="activity-time">1 giờ trước</small>
-                                    </div>
+                    <!-- System Status -->
+                    <div class="col-lg-4">
+                        <div class="admin-table-card">
+                            <div class="card-header">
+                                <h5 class="card-title">
+                                    <i class="fas fa-server me-2"></i>
+                                    Trạng thái hệ thống
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="system-status" id="systemStatus">
+                                    <!-- Status items will be populated here -->
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- System Status -->
-                <div class="col-lg-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title">
-                                <i class="fas fa-server me-2"></i>
-                                Trạng thái hệ thống
-                            </h5>
+                <!-- Activity and Logs -->
+                <div class="row mt-4">
+                    <!-- Recent Activities -->
+                    <div class="col-lg-6">
+                        <div class="admin-table-card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title">
+                                    <i class="fas fa-clock me-2"></i>
+                                    Hoạt động gần đây
+                                </h5>
+                                <a href="/admin/logs" class="btn btn-sm btn-outline-primary">
+                                    Xem tất cả
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                <div class="activity-list" id="recentActivities">
+                                    <!-- Activities will be populated here -->
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <div class="system-status">
-                                <div class="status-item">
-                                    <div class="status-label">
-                                        <i class="fas fa-database me-2"></i>
-                                        Cơ sở dữ liệu
-                                    </div>
-                                    <div class="status-value online">
-                                        <i class="fas fa-circle"></i>
-                                        Hoạt động
-                                    </div>
-                                </div>
+                    </div>
 
-                                <div class="status-item">
-                                    <div class="status-label">
-                                        <i class="fas fa-video me-2"></i>
-                                        Camera System
-                                    </div>
-                                    <div class="status-value warning">
-                                        <i class="fas fa-circle"></i>
-                                        1 camera offline
-                                    </div>
-                                </div>
-
-                                <div class="status-item">
-                                    <div class="status-label">
-                                        <i class="fas fa-brain me-2"></i>
-                                        AI Recognition
-                                    </div>
-                                    <div class="status-value online">
-                                        <i class="fas fa-circle"></i>
-                                        Hoạt động
-                                    </div>
-                                </div>
-
-                                <div class="status-item">
-                                    <div class="status-label">
-                                        <i class="fas fa-cloud me-2"></i>
-                                        Cloud Storage
-                                    </div>
-                                    <div class="status-value online">
-                                        <i class="fas fa-circle"></i>
-                                        Hoạt động
-                                    </div>
+                    <!-- Recent Logs -->
+                    <div class="col-lg-6">
+                        <div class="admin-table-card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title">
+                                    <i class="fas fa-list me-2"></i>
+                                    Logs gần đây
+                                </h5>
+                                <a href="/admin/logs" class="btn btn-sm btn-outline-primary">
+                                    Xem chi tiết
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                <div id="recentLogs">
+                                    <!-- Recent logs will be populated here -->
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Quick Actions -->
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title">
-                                <i class="fas fa-bolt me-2"></i>
-                                Thao tác nhanh
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="quick-actions">
-                                <a href="/admin/sinhvien" class="quick-action-btn">
-                                    <div class="action-icon">
-                                        <i class="fas fa-user-plus"></i>
-                                    </div>
-                                    <div class="action-text">
-                                        <h6>Thêm sinh viên</h6>
-                                        <p>Đăng ký sinh viên mới</p>
-                                    </div>
-                                </a>
+                <!-- Quick Actions -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="admin-table-card">
+                            <div class="card-header">
+                                <h5 class="card-title">
+                                    <i class="fas fa-bolt me-2"></i>
+                                    Thao tác nhanh
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="quick-actions">
+                                    <a href="/admin/sinhvien" class="quick-action-btn">
+                                        <div class="action-icon">
+                                            <i class="fas fa-user-plus"></i>
+                                        </div>
+                                        <div class="action-text">
+                                            <h6>Quản lý sinh viên</h6>
+                                            <p>Thêm, sửa, xóa sinh viên</p>
+                                        </div>
+                                    </a>
 
-                                <a href="/admin/giangvien" class="quick-action-btn">
-                                    <div class="action-icon">
-                                        <i class="fas fa-chalkboard-teacher"></i>
-                                    </div>
-                                    <div class="action-text">
-                                        <h6>Thêm giảng viên</h6>
-                                        <p>Đăng ký giảng viên mới</p>
-                                    </div>
-                                </a>
+                                    <a href="/admin/giangvien" class="quick-action-btn">
+                                        <div class="action-icon">
+                                            <i class="fas fa-chalkboard-teacher"></i>
+                                        </div>
+                                        <div class="action-text">
+                                            <h6>Quản lý giảng viên</h6>
+                                            <p>Thêm, sửa, xóa giảng viên</p>
+                                        </div>
+                                    </a>
 
-                                <a href="/admin/monhoc" class="quick-action-btn">
-                                    <div class="action-icon">
-                                        <i class="fas fa-book"></i>
-                                    </div>
-                                    <div class="action-text">
-                                        <h6>Thêm môn học</h6>
-                                        <p>Tạo môn học mới</p>
-                                    </div>
-                                </a>
+                                    <a href="/admin/camera" class="quick-action-btn">
+                                        <div class="action-icon">
+                                            <i class="fas fa-video"></i>
+                                        </div>
+                                        <div class="action-text">
+                                            <h6>Quản lý camera</h6>
+                                            <p>Cấu hình và giám sát camera</p>
+                                        </div>
+                                    </a>
 
-                                <a href="/admin/camera" class="quick-action-btn">
-                                    <div class="action-icon">
-                                        <i class="fas fa-video"></i>
-                                    </div>
-                                    <div class="action-text">
-                                        <h6>Quản lý camera</h6>
-                                        <p>Cấu hình camera</p>
-                                    </div>
-                                </a>
+                                    <a href="/admin/logs" class="quick-action-btn">
+                                        <div class="action-icon">
+                                            <i class="fas fa-file-alt"></i>
+                                        </div>
+                                        <div class="action-text">
+                                            <h6>System Logs</h6>
+                                            <p>Xem logs và troubleshoot</p>
+                                        </div>
+                                    </a>
+
+                                    <a href="/admin/lichhoc" class="quick-action-btn">
+                                        <div class="action-icon">
+                                            <i class="fas fa-calendar-alt"></i>
+                                        </div>
+                                        <div class="action-text">
+                                            <h6>Lịch học</h6>
+                                            <p>Quản lý lịch học</p>
+                                        </div>
+                                    </a>
+
+                                    <a href="/admin/baocao-diemdanh" class="quick-action-btn">
+                                        <div class="action-icon">
+                                            <i class="fas fa-chart-bar"></i>
+                                        </div>
+                                        <div class="action-text">
+                                            <h6>Báo cáo điểm danh</h6>
+                                            <p>Xem báo cáo và thống kê</p>
+                                        </div>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 </div>
 
-<!-- Scripts -->
+<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Common JS -->
 <script th:src="@{/js/common.js}"></script>
 <script th:src="@{/js/sidebar.js}"></script>
-<script th:src="@{/js/admin.js}"></script>
 
-<!-- Pass user data to JavaScript -->
-<script th:inline="javascript">
-    // Pass user data to JavaScript for sidebar
-    window.currentUserData = /*[[${currentUser}]]*/ null;
 
-    // Initialize charts
-    document.addEventListener('DOMContentLoaded', function() {
-        // Attendance Chart
-        const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
-        new Chart(attendanceCtx, {
-            type: 'line',
-            data: {
-                labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
-                datasets: [{
-                    label: 'Số lượt điểm danh',
-                    data: [120, 150, 180, 200, 160, 90, 30],
-                    borderColor: 'rgb(75, 192, 192)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
+<script>
+    class DashboardManager {
+        constructor() {
+            this.refreshInterval = null;
+            this.charts = {};
+            this.init();
+        }
+
+        async init() {
+            await this.loadDashboardData();
+            this.initCharts();
+            this.startAutoRefresh();
+            this.setupEventListeners();
+        }
+
+        setupEventListeners() {
+            // Sidebar toggle
+            if (typeof Common !== 'undefined' && Common.sidebar) {
+                Common.sidebar.init();
+            }
+        }
+
+        async loadDashboardData() {
+            try {
+                // Load statistics
+                await Promise.all([
+                    this.loadBasicStats(),
+                    this.loadSystemStatus(),
+                    this.loadRecentActivities(),
+                    this.loadRecentLogs()
+                ]);
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                this.showAlert('Lỗi khi tải dữ liệu dashboard: ' + error.message, 'danger');
+            }
+        }
+
+        async loadBasicStats() {
+            try {
+                // Load basic statistics from various APIs
+                const [studentsRes, teachersRes, camerasRes, logsRes] = await Promise.all([
+                    fetch('/api/sinhvien/count').catch(() => ({ json: () => ({ count: 0 }) })),
+                    fetch('/api/giangvien/count').catch(() => ({ json: () => ({ count: 0 }) })),
+                    fetch('/api/cameras').catch(() => ({ json: () => [] })),
+                    fetch('/api/logs/statistics').catch(() => ({ json: () => ({}) }))
+                ]);
+
+                const studentsData = await studentsRes.json();
+                const teachersData = await teachersRes.json();
+                const camerasData = await camerasRes.json();
+                const logsData = await logsRes.json();
+
+                // Update UI
+                document.getElementById('totalStudents').textContent = studentsData.count || studentsData.totalElements || 0;
+                document.getElementById('totalTeachers').textContent = teachersData.count || teachersData.totalElements || 0;
+
+                // Camera statistics
+                const activeCameras = Array.isArray(camerasData) ?
+                    camerasData.filter(c => c.active).length :
+                    (camerasData.content ? camerasData.content.filter(c => c.active).length : 0);
+                document.getElementById('activeCameras').textContent = activeCameras;
+
+                // Log statistics
+                document.getElementById('totalLogs').textContent = logsData.logsLast24h || 0;
+                document.getElementById('systemErrors').textContent = logsData.errorsLast24h || 0;
+
+                // Update camera status
+                this.updateCameraStatus(activeCameras);
+
+            } catch (error) {
+                console.error('Error loading basic stats:', error);
+            }
+        }
+
+        async loadSystemStatus() {
+            try {
+                const response = await fetch('/api/logs/statistics');
+                const data = await response.json();
+
+                const statusContainer = document.getElementById('systemStatus');
+                const statusItems = [
+                    {
+                        icon: 'fas fa-database',
+                        label: 'Cơ sở dữ liệu',
+                        status: 'online',
+                        text: 'Hoạt động'
+                    },
+                    {
+                        icon: 'fas fa-video',
+                        label: 'Camera System',
+                        status: data.errorsLast24h > 5 ? 'warning' : 'online',
+                        text: data.errorsLast24h > 5 ? `${data.errorsLast24h} lỗi` : 'Hoạt động'
+                    },
+                    {
+                        icon: 'fas fa-brain',
+                        label: 'AI Recognition',
+                        status: 'online',
+                        text: 'Hoạt động'
+                    },
+                    {
+                        icon: 'fas fa-server',
+                        label: 'System Logs',
+                        status: 'online',
+                        text: `${data.logsLast24h || 0} logs hôm nay`
                     }
+                ];
+
+                statusContainer.innerHTML = statusItems.map(item => `
+                    <div class="status-item">
+                        <div class="status-label">
+                            <i class="${item.icon} me-2"></i>
+                            ${item.label}
+                        </div>
+                        <div class="status-value ${item.status}">
+                            <i class="fas fa-circle"></i>
+                            ${item.text}
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error loading system status:', error);
+            }
+        }
+
+        async loadRecentActivities() {
+            try {
+                const response = await fetch('/api/logs/search?size=5&sortBy=createdAt&sortDir=desc');
+                const data = await response.json();
+
+                const container = document.getElementById('recentActivities');
+                const activities = data.content || [];
+
+                if (activities.length === 0) {
+                    container.innerHTML = '<p class="text-muted text-center">Không có hoạt động gần đây</p>';
+                    return;
+                }
+
+                container.innerHTML = activities.map(activity => `
+                    <div class="activity-item">
+                        <div class="activity-icon ${this.getActivityIconClass(activity.module)}">
+                            <i class="${this.getModuleIcon(activity.module)}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <p class="activity-text">
+                                <strong>${activity.action}</strong> - ${activity.message.substring(0, 50)}...
+                            </p>
+                            <small class="activity-time">${this.getTimeAgo(activity.createdAt)}</small>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error loading recent activities:', error);
+            }
+        }
+
+        async loadRecentLogs() {
+            try {
+                const response = await fetch('/api/logs/recent-errors?limit=5');
+                const logs = await response.json();
+
+                const container = document.getElementById('recentLogs');
+
+                if (logs.length === 0) {
+                    container.innerHTML = '<p class="text-muted text-center">Không có logs lỗi gần đây</p>';
+                    return;
+                }
+
+                container.innerHTML = logs.map(log => `
+                    <div class="log-item">
+                        <span class="log-level ${log.logLevel.toLowerCase()}">${log.logLevel}</span>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">${log.module} - ${log.action}</div>
+                            <div class="text-muted small">${this.getTimeAgo(log.createdAt)}</div>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error loading recent logs:', error);
+                document.getElementById('recentLogs').innerHTML =
+                    '<p class="text-muted text-center">Lỗi khi tải logs</p>';
+            }
+        }
+
+        initCharts() {
+            // Attendance Chart
+            const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+            this.charts.attendance = new Chart(attendanceCtx, {
+                type: 'line',
+                data: {
+                    labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
+                    datasets: [{
+                        label: 'Số lượt điểm danh',
+                        data: [120, 150, 180, 200, 160, 90, 30],
+                        borderColor: 'rgb(28, 102, 129)',
+                        backgroundColor: 'rgba(28, 102, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: 'rgb(28, 102, 129)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            borderColor: 'rgb(28, 102, 129)',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    elements: {
+                        line: {
+                            borderWidth: 3
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
 
-        // Department Chart
-        const departmentCtx = document.getElementById('departmentChart').getContext('2d');
-        new Chart(departmentCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['CNTT', 'Kinh tế', 'Ngoại ngữ', 'Khác'],
-                datasets: [{
-                    data: [45, 25, 20, 10],
-                    backgroundColor: [
-                        '#3498db',
-                        '#2ecc71',
-                        '#f39c12',
-                        '#e74c3c'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
+        updateCameraStatus(activeCameras) {
+            const statusElement = document.getElementById('cameraStatus');
+            const statusText = document.getElementById('cameraStatusText');
+
+            if (activeCameras === 0) {
+                statusElement.className = 'stats-change negative';
+                statusText.textContent = 'Tất cả camera offline';
+            } else {
+                statusElement.className = 'stats-change positive';
+                statusText.textContent = `${activeCameras} camera hoạt động`;
             }
-        });
+        }
+
+        getActivityIconClass(module) {
+            const classes = {
+                'AUTHENTICATION': 'primary',
+                'USER': 'info',
+                'STUDENT': 'success',
+                'TEACHER': 'warning',
+                'CAMERA': 'info',
+                'SYSTEM': 'secondary'
+            };
+            return classes[module] || 'primary';
+        }
+
+        getModuleIcon(module) {
+            const icons = {
+                'AUTHENTICATION': 'fas fa-sign-in-alt',
+                'USER': 'fas fa-user',
+                'STUDENT': 'fas fa-user-graduate',
+                'TEACHER': 'fas fa-chalkboard-teacher',
+                'ATTENDANCE': 'fas fa-check-circle',
+                'CAMERA': 'fas fa-video',
+                'SYSTEM': 'fas fa-server',
+                'DATABASE': 'fas fa-database',
+                'API': 'fas fa-plug'
+            };
+            return icons[module] || 'fas fa-cog';
+        }
+
+        getTimeAgo(dateString) {
+            const now = new Date();
+            const date = new Date(dateString);
+            const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+
+            if (diffInMinutes < 1) {
+                return 'Vừa xong';
+            } else if (diffInMinutes < 60) {
+                return `${diffInMinutes} phút trước`;
+            } else if (diffInMinutes < 1440) {
+                return `${Math.floor(diffInMinutes / 60)} giờ trước`;
+            } else {
+                return `${Math.floor(diffInMinutes / 1440)} ngày trước`;
+            }
+        }
+
+        startAutoRefresh() {
+            // Refresh dashboard every 30 seconds
+            this.refreshInterval = setInterval(async () => {
+                await this.loadBasicStats();
+                await this.loadSystemStatus();
+                await this.loadRecentActivities();
+                await this.loadRecentLogs();
+            }, 30000);
+        }
+
+        stopAutoRefresh() {
+            if (this.refreshInterval) {
+                clearInterval(this.refreshInterval);
+                this.refreshInterval = null;
+            }
+        }
+
+        async refreshDashboard() {
+            this.showAlert('Đang làm mới dashboard...', 'info');
+            await this.loadDashboardData();
+            this.showAlert('Dashboard đã được cập nhật', 'success');
+        }
+
+        async exportReport() {
+            try {
+                this.showAlert('Đang tạo báo cáo...', 'info');
+
+                const response = await fetch('/api/logs/export', {
+                    method: 'GET'
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `dashboard-report-${new Date().toISOString().split('T')[0]}.csv`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+
+                    this.showAlert('Báo cáo đã được tải xuống', 'success');
+                } else {
+                    throw new Error('Không thể tạo báo cáo');
+                }
+            } catch (error) {
+                console.error('Error exporting report:', error);
+                this.showAlert('Lỗi khi tạo báo cáo: ' + error.message, 'danger');
+            }
+        }
+
+        showAlert(message, type = 'info') {
+            // Create alert element
+            const alertId = 'alert_' + Date.now();
+            const alertHTML = `
+                <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show position-fixed"
+                     style="top: 20px; right: 20px; z-index: 1060; min-width: 300px;" role="alert">
+                    <i class="fas fa-${this.getAlertIcon(type)} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', alertHTML);
+
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                const alertElement = document.getElementById(alertId);
+                if (alertElement) {
+                    bootstrap.Alert.getOrCreateInstance(alertElement).close();
+                }
+            }, 5000);
+        }
+
+        getAlertIcon(type) {
+            const icons = {
+                'success': 'check-circle',
+                'danger': 'exclamation-triangle',
+                'warning': 'exclamation-circle',
+                'info': 'info-circle'
+            };
+            return icons[type] || 'info-circle';
+        }
+
+        // Cleanup when page unloads
+        destroy() {
+            this.stopAutoRefresh();
+
+            // Destroy charts
+            Object.values(this.charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+        }
+    }
+
+    // Global functions
+    let dashboardManager;
+
+    function refreshDashboard() {
+        if (dashboardManager) {
+            dashboardManager.refreshDashboard();
+        }
+    }
+
+    function exportReport() {
+        if (dashboardManager) {
+            dashboardManager.exportReport();
+        }
+    }
+
+    // Initialize dashboard when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        dashboardManager = new DashboardManager();
+
+        // Pass user data to JavaScript for sidebar
+        window.currentUserData = /*[[${currentUser}]]*/ null;
+    });
+
+    // Cleanup when leaving the page
+    window.addEventListener('beforeunload', function() {
+        if (dashboardManager) {
+            dashboardManager.destroy();
+        }
     });
 </script>
 

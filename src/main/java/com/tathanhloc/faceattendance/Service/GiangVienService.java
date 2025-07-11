@@ -183,6 +183,8 @@ public class GiangVienService {
 
     /**********************************/
 
-
+    public long count() {
+        return giangVienRepository.count();
+    }
 
 }

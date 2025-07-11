@@ -155,6 +155,8 @@ public class SinhVienService extends BaseService<SinhVien, String, SinhVienDTO> 
         return toDTO(sinhVien);
     }
 
-
+    public long count() {
+        return sinhVienRepository.count();
+    }
 
 }

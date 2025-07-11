@@ -144,5 +144,21 @@ public class GiangVienController {
         }
     }
 
+    @GetMapping("/count")
+    public ResponseEntity<Map<String, Object>> getTeacherCount() {
+        try {
+            long count = giangVienService.count();
+            Map<String, Object> response = new HashMap<>();
+            response.put("count", count);
+            response.put("status", "success");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("count", 0);
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+            return ResponseEntity.ok(response);
+        }
+    }
 
 }
