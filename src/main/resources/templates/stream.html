@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RTSP Stream</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+<h1>Live Camera Stream</h1>
+
+<div>
+    <input type="text" id="rtspUrl"
+           value="rtsp://admin:BJFEIG@192.168.101.217:554/ch1/main"
+           style="width:400px">
+    <button onclick="startStream()">Start Stream</button>
+    <button onclick="stopStream()">Stop Stream</button>
+</div>
+
+<video id="video" controls autoplay muted style="width:800px;height:600px;">
+</video>
+
+<div id="status"></div>
+
+<script>
+    let currentStreamId = null;
+    let hls = null;
+
+    async function startStream() {
+        const rtspUrl = document.getElementById('rtspUrl').value;
+        const status = document.getElementById('status');
+
+        try {
+            status.textContent = 'Starting stream...';
+
+            const response = await fetch('/api/stream/start', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({rtspUrl: rtspUrl})
+            });
+
+            const data = await response.json();
+            currentStreamId = data.streamId;
+
+            // Wait a bit for HLS segments
+            setTimeout(() => {
+                playHLS(data.hlsUrl);
+                status.textContent = 'Stream active: ' + data.streamId;
+            }, 3000);
+
+        } catch (error) {
+            status.textContent = 'Error: ' + error.message;
+        }
+    }
+
+    function playHLS(hlsUrl) {
+        const video = document.getElementById('video');
+
+        if (Hls.isSupported()) {
+            hls = new Hls();
+            hls.loadSource(hlsUrl);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                video.play();
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = hlsUrl;
+            video.addEventListener('loadedmetadata', () => {
+                video.play();
+            });
+        }
+    }
+
+    async function stopStream() {
+        if (currentStreamId) {
+            await fetch(`/api/stream/stop/${currentStreamId}`, {method: 'POST'});
+
+            if (hls) {
+                hls.destroy();
+                hls = null;
+            }
+
+            document.getElementById('video').src = '';
+            document.getElementById('status').textContent = 'Stream stopped';
+            currentStreamId = null;
+        }
+    }
+</script>
+</body>
+</html>
