@@ -219,4 +219,42 @@ public interface DiemDanhRepository extends JpaRepository<DiemDanh, Long> {
     boolean existsByLichHocMaLichAndSinhVienMaSvAndNgayDiemDanh(String maLich, String maSv, LocalDate ngayDiemDanh);
     List<DiemDanh> findByLichHocMaLichAndNgayDiemDanh(String maLich, LocalDate ngayDiemDanh);
 
+    /**
+     * Đếm số lượng điểm danh theo mã lịch
+     */
+    long countByLichHocMaLich(String maLich);
+
+    /**
+     * Tìm điểm danh theo mã lịch và mã sinh viên
+     */
+    List<DiemDanh> findByLichHocMaLichAndSinhVienMaSv(String maLich, String maSv);
+
+    /**
+     * Tìm điểm danh theo sinh viên và khoảng thời gian
+     */
+    List<DiemDanh> findBySinhVienMaSvAndNgayDiemDanhBetween(String maSv, LocalDate fromDate, LocalDate toDate);
+
+    /**
+     * Đếm điểm danh theo danh sách mã lịch
+     */
+    long countByLichHocMaLichIn(List<String> maLichList);
+
+    /**
+     * Đếm điểm danh theo danh sách mã lịch và trạng thái
+     */
+    long countByLichHocMaLichInAndTrangThai(List<String> maLichList, String trangThai);
+
+    /**
+     * Tìm điểm danh theo lớp học phần và khoảng thời gian
+     */
+    @Query("SELECT dd FROM DiemDanh dd " +
+            "JOIN dd.lichHoc lh " +
+            "JOIN lh.lopHocPhan lhp " +
+            "WHERE lhp.maLhp = :maLhp " +
+            "AND dd.ngayDiemDanh BETWEEN :fromDate AND :toDate " +
+            "ORDER BY dd.ngayDiemDanh DESC")
+    List<DiemDanh> findByLopHocPhanAndDateRange(@Param("maLhp") String maLhp,
+                                                @Param("fromDate") LocalDate fromDate,
+                                                @Param("toDate") LocalDate toDate);
+
 }

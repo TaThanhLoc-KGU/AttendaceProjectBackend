@@ -444,6 +444,7 @@
   <div class="main-content">
     <!-- Class Header -->
     <div class="class-header" th:if="${lopHocPhan}">
+        <input type="hidden" id="currentClassId" th:value="${lopHocPhan.maLhp}" />
       <div class="class-header-content">
         <div class="d-flex justify-content-between align-items-start">
           <div>
@@ -675,8 +676,43 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script th:src="@{/js/sidebar.js}"></script>
 <script>
+
+
   // Global variables
   let currentClassId = /*[[${lopHocPhan?.maLhp}]]*/ '';
+
+  // Function để lấy currentClassId từ URL hoặc từ Thymeleaf
+  function initializeCurrentClassId() {
+    // Phương pháp 1: Lấy từ URL path
+    const pathParts = window.location.pathname.split('/');
+    const classIdFromPath = pathParts[pathParts.length - 1]; // Lấy phần cuối của URL
+
+    // Phương pháp 2: Lấy từ Thymeleaf attribute (nếu có)
+    const classIdFromThymeleaf = document.querySelector('[data-class-id]')?.getAttribute('data-class-id');
+
+    // Phương pháp 3: Lấy từ lopHocPhan.maLhp trong Thymeleaf
+    const classIdFromElement = document.querySelector('.class-code')?.textContent?.trim();
+
+    // Ưu tiên sử dụng theo thứ tự
+    currentClassId = classIdFromThymeleaf || classIdFromPath || classIdFromElement || '';
+
+    console.log('🔍 Class ID initialization:', {
+      fromPath: classIdFromPath,
+      fromThymeleaf: classIdFromThymeleaf,
+      fromElement: classIdFromElement,
+      final: currentClassId
+    });
+
+    // Validation
+    if (!currentClassId || currentClassId === 'chitiet-lophoc') {
+      console.error('❌ Could not determine currentClassId');
+      showNotification('Không thể xác định mã lớp học phần', 'danger');
+      return false;
+    }
+
+    console.log('✅ Current Class ID set to:', currentClassId);
+    return true;
+  }
 
   // Notification function
   function showNotification(message, type = 'info') {
@@ -858,10 +894,24 @@
     showNotification('Đã xuất danh sách sinh viên thành công!', 'success');
   }
 
-  // Sửa lại function openManualAttendance() - đơn giản hóa
   async function openManualAttendance() {
     try {
       console.log('🔄 Opening manual attendance...');
+
+      // Đảm bảo currentClassId được khởi tạo
+      if (!currentClassId) {
+        console.log('🔄 currentClassId empty, reinitializing...');
+        if (!initializeCurrentClassId()) {
+          throw new Error('Không tìm thấy mã lớp học phần');
+        }
+      }
+
+      console.log('📋 Using currentClassId:', currentClassId);
+
+      // Kiểm tra currentClassId hợp lệ
+      if (!currentClassId || currentClassId.trim() === '') {
+        throw new Error('Không tìm thấy mã lớp học phần');
+      }
 
       // Set today's date
       const today = new Date().toISOString().split('T')[0];
@@ -870,31 +920,75 @@
         dateInput.value = today;
       }
 
-      // Load all schedules for this class (không filter theo ngày)
-      const response = await fetch(`/api/lichhoc/by-lhp/${currentClassId}`);
-      if (response.ok) {
-        const allSchedules = await response.json();
-        populateScheduleOptions(allSchedules);
-      } else {
-        throw new Error('Không thể tải lịch học');
+      // Load all schedules for this class với xử lý lỗi chi tiết
+      console.log('📡 Fetching schedules from:', `/api/lichhoc/by-lhp/${currentClassId}`);
+
+      const response = await fetch(`/api/lichhoc/by-lhp/${currentClassId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        // Xử lý chi tiết các mã lỗi khác nhau
+        let errorMessage = 'Không thể tải lịch học';
+
+        switch (response.status) {
+          case 404:
+            errorMessage = `Không tìm thấy lịch học cho lớp "${currentClassId}". Vui lòng kiểm tra lại mã lớp học phần.`;
+            break;
+          case 403:
+            errorMessage = 'Bạn không có quyền truy cập lịch học này';
+            break;
+          case 500:
+            errorMessage = 'Lỗi server khi tải lịch học';
+            break;
+          default:
+            errorMessage = `Lỗi ${response.status}: ${response.statusText}`;
+        }
+
+        throw new Error(errorMessage);
       }
+
+      const allSchedules = await response.json();
+      console.log('✅ Loaded schedules:', allSchedules);
+
+      // Kiểm tra dữ liệu trả về
+      if (!Array.isArray(allSchedules)) {
+        throw new Error('Dữ liệu lịch học không hợp lệ');
+      }
+
+      populateScheduleOptions(allSchedules);
 
       // Show modal
       const modal = new bootstrap.Modal(document.getElementById('manualAttendanceModal'));
       modal.show();
 
-      console.log('✅ Manual attendance modal opened');
+      console.log('✅ Manual attendance modal opened successfully');
 
     } catch (error) {
       console.error('❌ Error opening manual attendance:', error);
       showNotification('Không thể mở form điểm danh: ' + error.message, 'danger');
+
+      // Debug thông tin
+      console.log('🔍 Debug info:', {
+        currentClassId: currentClassId,
+        url: `/api/lichhoc/by-lhp/${currentClassId}`,
+        urlPath: window.location.pathname,
+        errorMessage: error.message
+      });
     }
   }
 
-  // Populate schedule options
+  // Cải thiện function populateScheduleOptions để xử lý dữ liệu tốt hơn
   function populateScheduleOptions(schedules) {
     const scheduleSelect = document.getElementById('attendanceSchedule');
-    if (!scheduleSelect) return;
+    if (!scheduleSelect) {
+      console.error('❌ Schedule select element not found');
+      return;
+    }
 
     scheduleSelect.innerHTML = '<option value="">-- Chọn buổi học --</option>';
 
@@ -902,7 +996,23 @@
       schedules.forEach(schedule => {
         const option = document.createElement('option');
         option.value = schedule.maLich;
-        option.textContent = `Thứ ${schedule.thu} - Tiết ${schedule.tietBatDau}-${schedule.tietBatDau + schedule.soTiet - 1} (${schedule.tenPhong || 'N/A'})`;
+
+        // Xử lý hiển thị thông tin lịch học
+        let displayText = '';
+        if (schedule.thu) {
+          displayText += `Thứ ${schedule.thu}`;
+        }
+        if (schedule.tietBatDau && schedule.soTiet) {
+          displayText += ` - Tiết ${schedule.tietBatDau}-${schedule.tietBatDau + schedule.soTiet - 1}`;
+        }
+        if (schedule.tenPhong) {
+          displayText += ` (${schedule.tenPhong})`;
+        }
+        if (schedule.ngayHoc) {
+          displayText += ` - ${schedule.ngayHoc}`;
+        }
+
+        option.textContent = displayText || `Lịch học ${schedule.maLich}`;
         scheduleSelect.appendChild(option);
       });
 
@@ -910,13 +1020,13 @@
       scheduleSelect.removeEventListener('change', loadStudentListForAttendance);
       scheduleSelect.addEventListener('change', loadStudentListForAttendance);
 
-      console.log(`📚 Loaded ${schedules.length} schedules`);
+      console.log(`📚 Loaded ${schedules.length} schedules successfully`);
     } else {
       const option = document.createElement('option');
       option.value = '';
       option.textContent = 'Không có lịch học nào';
       scheduleSelect.appendChild(option);
-      console.log('⚠️ No schedules found');
+      console.log('⚠️ No schedules found for this class');
     }
   }
   // Load student list for manual attendance
@@ -1315,6 +1425,18 @@
   document.addEventListener('DOMContentLoaded', function() {
     addLoadingAnimations();
 
+    initializeCurrentClassId();
+
+    // Load dữ liệu khác nếu có currentClassId
+    if (currentClassId) {
+      setTimeout(() => {
+        loadAttendanceStats();
+        loadStudentAttendanceData();
+      }, 500);
+    } else {
+      console.warn('⚠️ No currentClassId found, some features may not work');
+    }
+
     // Add enhanced interactivity
     document.querySelectorAll('.student-card').forEach(card => {
       card.addEventListener('click', function() {
@@ -1344,6 +1466,42 @@
   });
 
   console.log('Class details page loaded successfully');
+
+  // Thêm function để debug và test API
+  async function testApiEndpoint() {
+    if (!currentClassId) {
+      console.error('❌ No currentClassId available for testing');
+      return;
+    }
+
+    try {
+      console.log('🧪 Testing API endpoint:', `/api/lichhoc/by-lhp/${currentClassId}`);
+
+      const response = await fetch(`/api/lichhoc/by-lhp/${currentClassId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+
+      console.log('📊 Response status:', response.status);
+      console.log('📊 Response headers:', [...response.headers.entries()]);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ API Response:', data);
+      } else {
+        console.error('❌ API Error:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('❌ Error details:', errorText);
+      }
+    } catch (error) {
+      console.error('❌ Network error:', error);
+    }
+  }
+
+
 </script>
 </body>
 </html>

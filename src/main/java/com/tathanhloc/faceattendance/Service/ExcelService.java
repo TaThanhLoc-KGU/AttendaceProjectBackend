@@ -1028,4 +1028,484 @@ public class ExcelService {
             throw new RuntimeException("Error creating Excel file", e);
         }
     }
+
+    /**
+     * Tạo báo cáo điểm danh Excel chi tiết cho giảng viên
+     */
+    public byte[] generateAttendanceReport(Map<String, Object> data) throws IOException {
+        log.info("Generating detailed attendance report Excel");
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Báo cáo điểm danh");
+
+            // Lấy dữ liệu
+            LopHocPhanDTO lopHocPhan = (LopHocPhanDTO) data.get("lopHocPhan");
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> reportData = (List<Map<String, Object>>) data.get("reportData");
+            String title = (String) data.get("title");
+            String generatedDate = (String) data.get("generatedDate");
+
+            // Tạo styles
+            CellStyle headerStyle = createAttendanceReportHeaderStyle(workbook);
+            CellStyle titleStyle = createAttendanceReportTitleStyle(workbook);
+            CellStyle dataStyle = createAttendanceReportDataStyle(workbook);
+            CellStyle numberStyle = createAttendanceReportNumberStyle(workbook);
+            CellStyle percentStyle = createAttendanceReportPercentStyle(workbook);
+            CellStyle summaryStyle = createAttendanceReportSummaryStyle(workbook);
+
+            int rowNum = 0;
+
+            // Header thông tin báo cáo
+            rowNum = createAttendanceReportHeader(sheet, lopHocPhan, title, generatedDate, titleStyle, rowNum);
+
+            // Thống kê tổng quan
+            rowNum = createAttendanceReportSummary(sheet, reportData, summaryStyle, dataStyle, numberStyle, rowNum);
+
+            // Bảng chi tiết sinh viên
+            rowNum = createAttendanceReportDetailTable(sheet, reportData, headerStyle, dataStyle, numberStyle, percentStyle, rowNum);
+
+            // Ghi chú và hướng dẫn
+            createAttendanceReportNotes(sheet, dataStyle, rowNum);
+
+            // Auto-size columns
+            for (int i = 0; i < 12; i++) {
+                sheet.autoSizeColumn(i);
+                // Set minimum width cho readability
+                int currentWidth = sheet.getColumnWidth(i);
+                sheet.setColumnWidth(i, Math.max(currentWidth, 2500));
+            }
+
+            // Convert to byte array
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            workbook.write(outputStream);
+            return outputStream.toByteArray();
+
+        } catch (Exception e) {
+            log.error("Error generating attendance report Excel: {}", e.getMessage());
+            throw new IOException("Cannot generate attendance report Excel", e);
+        }
+    }
+
+    /**
+     * Tạo header thông tin báo cáo điểm danh
+     */
+    private int createAttendanceReportHeader(Sheet sheet, LopHocPhanDTO lopHocPhan, String title,
+                                             String generatedDate, CellStyle titleStyle, int startRow) {
+        int rowNum = startRow;
+
+        // Logo và tên trường (có thể customize)
+        Row schoolRow = sheet.createRow(rowNum++);
+        Cell schoolCell = schoolRow.createCell(0);
+        schoolCell.setCellValue("TRƯỜNG ĐẠI HỌC CẦN THƠ");
+        schoolCell.setCellStyle(titleStyle);
+        sheet.addMergedRegion(new CellRangeAddress(schoolRow.getRowNum(), schoolRow.getRowNum(), 0, 11));
+
+        Row systemRow = sheet.createRow(rowNum++);
+        Cell systemCell = systemRow.createCell(0);
+        systemCell.setCellValue("HỆ THỐNG ĐIỂM DANH KHUÔN MẶT");
+        systemCell.setCellStyle(titleStyle);
+        sheet.addMergedRegion(new CellRangeAddress(systemRow.getRowNum(), systemRow.getRowNum(), 0, 11));
+
+        // Tiêu đề báo cáo
+        Row reportTitleRow = sheet.createRow(rowNum++);
+        Cell reportTitleCell = reportTitleRow.createCell(0);
+        reportTitleCell.setCellValue(title.toUpperCase());
+        reportTitleCell.setCellStyle(titleStyle);
+        sheet.addMergedRegion(new CellRangeAddress(reportTitleRow.getRowNum(), reportTitleRow.getRowNum(), 0, 11));
+
+        rowNum++; // Empty row
+
+        // Thông tin lớp học
+        if (lopHocPhan != null) {
+            CellStyle infoStyle = createInfoStyle(sheet.getWorkbook());
+
+            rowNum = createInfoRow(sheet, "Môn học:", lopHocPhan.getTenMonHoc(), infoStyle, rowNum);
+            rowNum = createInfoRow(sheet, "Mã lớp học phần:", lopHocPhan.getMaLhp(), infoStyle, rowNum);
+            rowNum = createInfoRow(sheet, "Nhóm:", String.valueOf(lopHocPhan.getNhom()), infoStyle, rowNum);
+            rowNum = createInfoRow(sheet, "Học kỳ:", lopHocPhan.getHocKy() + " - " + lopHocPhan.getNamHoc(), infoStyle, rowNum);
+            rowNum = createInfoRow(sheet, "Giảng viên:", lopHocPhan.getTenGiangVien(), infoStyle, rowNum);
+            rowNum = createInfoRow(sheet, "Số tín chỉ:", String.valueOf(lopHocPhan.getSoTinChi()), infoStyle, rowNum);
+        }
+
+        rowNum = createInfoRow(sheet, "Ngày tạo báo cáo:", generatedDate, createInfoStyle(sheet.getWorkbook()), rowNum);
+
+        return rowNum + 2; // Add empty rows
+    }
+
+    /**
+     * Tạo dòng thông tin với style
+     */
+    private int createInfoRow(Sheet sheet, String label, String value, CellStyle style, int rowNum) {
+        Row row = sheet.createRow(rowNum);
+
+        Cell labelCell = row.createCell(0);
+        labelCell.setCellValue(label);
+        labelCell.setCellStyle(style);
+
+        Cell valueCell = row.createCell(2);
+        valueCell.setCellValue(value != null ? value : "");
+        valueCell.setCellStyle(style);
+
+        return rowNum + 1;
+    }
+
+    /**
+     * Tạo phần thống kê tổng quan
+     */
+    private int createAttendanceReportSummary(Sheet sheet, List<Map<String, Object>> reportData,
+                                              CellStyle summaryStyle, CellStyle dataStyle,
+                                              CellStyle numberStyle, int startRow) {
+        int rowNum = startRow;
+
+        // Tiêu đề phần thống kê
+        Row summaryTitleRow = sheet.createRow(rowNum++);
+        Cell summaryTitleCell = summaryTitleRow.createCell(0);
+        summaryTitleCell.setCellValue("THỐNG KÊ TỔNG QUAN");
+        summaryTitleCell.setCellStyle(summaryStyle);
+        sheet.addMergedRegion(new CellRangeAddress(summaryTitleRow.getRowNum(), summaryTitleRow.getRowNum(), 0, 11));
+
+        rowNum++; // Empty row
+
+        if (!reportData.isEmpty()) {
+            // Tính toán thống kê
+            int totalStudents = reportData.size();
+            int totalSessions = reportData.isEmpty() ? 0 : (Integer) reportData.get(0).get("totalSessions");
+
+            int totalPresent = reportData.stream()
+                    .mapToInt(student -> (Integer) student.get("presentCount"))
+                    .sum();
+
+            int totalAbsent = reportData.stream()
+                    .mapToInt(student -> (Integer) student.get("absentCount"))
+                    .sum();
+
+            int totalLate = reportData.stream()
+                    .mapToInt(student -> (Integer) student.get("lateCount"))
+                    .sum();
+
+            int totalExcused = reportData.stream()
+                    .mapToInt(student -> (Integer) student.get("excusedCount"))
+                    .sum();
+
+            double avgAttendanceRate = reportData.stream()
+                    .mapToDouble(student -> (Double) student.get("attendanceRate"))
+                    .average()
+                    .orElse(0.0);
+
+            // Phân loại sinh viên theo tỷ lệ điểm danh
+            long excellentStudents = reportData.stream()
+                    .filter(s -> (Double) s.get("attendanceRate") >= 90)
+                    .count();
+
+            long goodStudents = reportData.stream()
+                    .filter(s -> (Double) s.get("attendanceRate") >= 80 && (Double) s.get("attendanceRate") < 90)
+                    .count();
+
+            long warningStudents = reportData.stream()
+                    .filter(s -> (Double) s.get("attendanceRate") >= 60 && (Double) s.get("attendanceRate") < 80)
+                    .count();
+
+            long poorStudents = reportData.stream()
+                    .filter(s -> (Double) s.get("attendanceRate") < 60)
+                    .count();
+
+            // Tạo bảng thống kê 2 cột
+            String[][] summaryData = {
+                    {"Tổng số sinh viên:", String.valueOf(totalStudents)},
+                    {"Tổng số buổi học:", String.valueOf(totalSessions)},
+                    {"Tổng lượt có mặt:", String.valueOf(totalPresent)},
+                    {"Tổng lượt vắng mặt:", String.valueOf(totalAbsent)},
+                    {"Tổng lượt đi muộn:", String.valueOf(totalLate)},
+                    {"Tổng lượt vắng có phép:", String.valueOf(totalExcused)},
+                    {"Tỷ lệ điểm danh trung bình:", String.format("%.1f%%", avgAttendanceRate)},
+                    {"", ""}, // Empty row
+                    {"PHÂN LOẠI SINH VIÊN:", ""},
+                    {"Xuất sắc (≥90%):", String.valueOf(excellentStudents)},
+                    {"Tốt (80-89%):", String.valueOf(goodStudents)},
+                    {"Cảnh báo (60-79%):", String.valueOf(warningStudents)},
+                    {"Yếu kém (<60%):", String.valueOf(poorStudents)}
+            };
+
+            for (String[] rowData : summaryData) {
+                Row row = sheet.createRow(rowNum++);
+
+                Cell labelCell = row.createCell(0);
+                labelCell.setCellValue(rowData[0]);
+                labelCell.setCellStyle(dataStyle);
+
+                Cell valueCell = row.createCell(2);
+                valueCell.setCellValue(rowData[1]);
+                valueCell.setCellStyle(numberStyle);
+            }
+        }
+
+        return rowNum + 2; // Add empty rows
+    }
+
+    /**
+     * Tạo bảng chi tiết điểm danh sinh viên
+     */
+    private int createAttendanceReportDetailTable(Sheet sheet, List<Map<String, Object>> reportData,
+                                                  CellStyle headerStyle, CellStyle dataStyle,
+                                                  CellStyle numberStyle, CellStyle percentStyle, int startRow) {
+        int rowNum = startRow;
+
+        // Tiêu đề bảng chi tiết
+        Row detailTitleRow = sheet.createRow(rowNum++);
+        Cell detailTitleCell = detailTitleRow.createCell(0);
+        detailTitleCell.setCellValue("CHI TIẾT ĐIỂM DANH TỪNG SINH VIÊN");
+        detailTitleCell.setCellStyle(headerStyle);
+        sheet.addMergedRegion(new CellRangeAddress(detailTitleRow.getRowNum(), detailTitleRow.getRowNum(), 0, 11));
+
+        rowNum++; // Empty row
+
+        // Header của bảng
+        Row headerRow = sheet.createRow(rowNum++);
+        String[] headers = {
+                "STT", "Mã sinh viên", "Họ và tên", "Tổng buổi", "Có mặt",
+                "Vắng mặt", "Đi muộn", "Vắng có phép", "Tỷ lệ (%)", "Xếp loại", "Đánh giá", "Ghi chú"
+        };
+
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(headers[i]);
+            cell.setCellStyle(headerStyle);
+        }
+
+        // Dữ liệu chi tiết
+        for (int i = 0; i < reportData.size(); i++) {
+            Map<String, Object> student = reportData.get(i);
+            Row row = sheet.createRow(rowNum++);
+
+            // STT
+            Cell sttCell = row.createCell(0);
+            sttCell.setCellValue(i + 1);
+            sttCell.setCellStyle(numberStyle);
+
+            // Mã sinh viên
+            Cell maSvCell = row.createCell(1);
+            maSvCell.setCellValue((String) student.get("maSv"));
+            maSvCell.setCellStyle(dataStyle);
+
+            // Họ tên
+            Cell hoTenCell = row.createCell(2);
+            hoTenCell.setCellValue((String) student.get("hoTen"));
+            hoTenCell.setCellStyle(dataStyle);
+
+            // Tổng buổi
+            Cell totalSessionsCell = row.createCell(3);
+            totalSessionsCell.setCellValue((Integer) student.get("totalSessions"));
+            totalSessionsCell.setCellStyle(numberStyle);
+
+            // Có mặt
+            Cell presentCell = row.createCell(4);
+            presentCell.setCellValue((Integer) student.get("presentCount"));
+            presentCell.setCellStyle(numberStyle);
+
+            // Vắng mặt
+            Cell absentCell = row.createCell(5);
+            absentCell.setCellValue((Integer) student.get("absentCount"));
+            absentCell.setCellStyle(numberStyle);
+
+            // Đi muộn
+            Cell lateCell = row.createCell(6);
+            lateCell.setCellValue((Integer) student.get("lateCount"));
+            lateCell.setCellStyle(numberStyle);
+
+            // Vắng có phép
+            Cell excusedCell = row.createCell(7);
+            excusedCell.setCellValue((Integer) student.get("excusedCount"));
+            excusedCell.setCellStyle(numberStyle);
+
+            // Tỷ lệ %
+            Cell rateCell = row.createCell(8);
+            Double attendanceRate = (Double) student.get("attendanceRate");
+            rateCell.setCellValue(String.format("%.1f%%", attendanceRate));
+            rateCell.setCellStyle(percentStyle);
+
+            // Xếp loại
+            Cell classificationCell = row.createCell(9);
+            String classification = getAttendanceClassification(attendanceRate);
+            classificationCell.setCellValue(classification);
+            classificationCell.setCellStyle(dataStyle);
+
+            // Đánh giá
+            Cell evaluationCell = row.createCell(10);
+            String evaluation = getAttendanceEvaluation(attendanceRate);
+            evaluationCell.setCellValue(evaluation);
+            evaluationCell.setCellStyle(dataStyle);
+
+            // Ghi chú
+            Cell noteCell = row.createCell(11);
+            String note = getAttendanceNote(attendanceRate);
+            noteCell.setCellValue(note);
+            noteCell.setCellStyle(dataStyle);
+        }
+
+        return rowNum;
+    }
+
+    /**
+     * Tạo ghi chú và hướng dẫn
+     */
+    private void createAttendanceReportNotes(Sheet sheet, CellStyle dataStyle, int startRow) {
+        int rowNum = startRow + 3;
+
+        Row notesTitle = sheet.createRow(rowNum++);
+        Cell notesTitleCell = notesTitle.createCell(0);
+        notesTitleCell.setCellValue("GHI CHÚ VÀ HƯỚNG DẪN:");
+        notesTitleCell.setCellStyle(createBoldStyle(sheet.getWorkbook()));
+
+        String[] notes = {
+                "1. Tỷ lệ điểm danh = (Số buổi có mặt + đi muộn) / Tổng số buổi học × 100%",
+                "2. Xếp loại: Xuất sắc (≥90%), Tốt (80-89%), Khá (70-79%), Trung bình (60-69%), Yếu (50-59%), Kém (<50%)",
+                "3. Sinh viên có tỷ lệ điểm danh dưới 80% sẽ không được dự thi cuối kỳ",
+                "4. Vắng có phép: Sinh viên có đơn xin phép hợp lệ",
+                "5. Báo cáo được tạo tự động từ hệ thống điểm danh khuôn mặt"
+        };
+
+        for (String note : notes) {
+            Row noteRow = sheet.createRow(rowNum++);
+            Cell noteCell = noteRow.createCell(0);
+            noteCell.setCellValue(note);
+            noteCell.setCellStyle(dataStyle);
+            sheet.addMergedRegion(new CellRangeAddress(noteRow.getRowNum(), noteRow.getRowNum(), 0, 11));
+        }
+
+        // Footer
+        rowNum += 2;
+        Row footerRow = sheet.createRow(rowNum);
+        Cell footerCell = footerRow.createCell(8);
+        footerCell.setCellValue("Cần Thơ, ngày " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        footerCell.setCellStyle(dataStyle);
+
+        Row signatureRow = sheet.createRow(rowNum + 2);
+        Cell signatureCell = signatureRow.createCell(8);
+        signatureCell.setCellValue("Giảng viên phụ trách");
+        signatureCell.setCellStyle(createBoldStyle(sheet.getWorkbook()));
+    }
+
+    // Helper methods for creating styles
+    private CellStyle createAttendanceReportTitleStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 14);
+        font.setColor(IndexedColors.DARK_BLUE.getIndex());
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        return style;
+    }
+
+    private CellStyle createAttendanceReportHeaderStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 11);
+        font.setColor(IndexedColors.WHITE.getIndex());
+        style.setFont(font);
+
+        style.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+
+        // Borders
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+
+        return style;
+    }
+
+    private CellStyle createAttendanceReportDataStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        style.setAlignment(HorizontalAlignment.LEFT);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+
+        // Borders
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setTopBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setBottomBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setLeftBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setRightBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+
+        return style;
+    }
+
+    private CellStyle createAttendanceReportNumberStyle(Workbook workbook) {
+        CellStyle style = createAttendanceReportDataStyle(workbook);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        return style;
+    }
+
+    private CellStyle createAttendanceReportPercentStyle(Workbook workbook) {
+        CellStyle style = createAttendanceReportDataStyle(workbook);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        Font font = workbook.createFont();
+        font.setBold(true);
+        style.setFont(font);
+        return style;
+    }
+
+    private CellStyle createAttendanceReportSummaryStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 12);
+        font.setColor(IndexedColors.WHITE.getIndex());
+        style.setFont(font);
+
+        style.setFillForegroundColor(IndexedColors.DARK_GREEN.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+
+        return style;
+    }
+
+    private CellStyle createInfoStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setFontHeightInPoints((short) 10);
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.LEFT);
+        return style;
+    }
+
+    private CellStyle createBoldStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        style.setFont(font);
+        return style;
+    }
+
+    // Helper methods for classification
+    private String getAttendanceClassification(Double attendanceRate) {
+        if (attendanceRate >= 90) return "Xuất sắc";
+        else if (attendanceRate >= 80) return "Tốt";
+        else if (attendanceRate >= 70) return "Khá";
+        else if (attendanceRate >= 60) return "Trung bình";
+        else if (attendanceRate >= 50) return "Yếu";
+        else return "Kém";
+    }
+
+    private String getAttendanceEvaluation(Double attendanceRate) {
+        if (attendanceRate >= 80) return "Đủ điều kiện dự thi";
+        else if (attendanceRate >= 60) return "Cần cải thiện";
+        else return "Không đủ điều kiện dự thi";
+    }
+
+    private String getAttendanceNote(Double attendanceRate) {
+        if (attendanceRate >= 90) return "Rất tốt";
+        else if (attendanceRate >= 80) return "Đạt yêu cầu";
+        else if (attendanceRate >= 60) return "Cần theo dõi";
+        else return "Cần can thiệp";
+    }
 }
