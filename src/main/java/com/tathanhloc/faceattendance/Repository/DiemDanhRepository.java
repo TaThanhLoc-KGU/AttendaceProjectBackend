@@ -11,34 +11,6 @@ import java.util.List;
 import java.util.Map;
 
 public interface DiemDanhRepository extends JpaRepository<DiemDanh, Long> {
-    List<DiemDanh> findBySinhVienMaSv(String maSv);
-    List<DiemDanh> findByLichHocMaLich(String maLich);
-    long countByNgayDiemDanh(LocalDate ngayDiemDanh);
-
-    // Thống kê theo trạng thái
-    long countByTrangThai(TrangThaiDiemDanhEnum trangThai);
-
-    long countByNgayDiemDanhAndTrangThai(LocalDate ngayDiemDanh, TrangThaiDiemDanhEnum trangThai);
-
-    long countByNgayDiemDanhBetweenAndTrangThai(LocalDate fromDate, LocalDate toDate, TrangThaiDiemDanhEnum trangThai);
-
-    @Query("SELECT COUNT(DISTINCT dd.lichHoc) FROM DiemDanh dd WHERE dd.ngayDiemDanh = :ngayDiemDanh")
-    long countDistinctLichHocByNgayDiemDanh(@Param("ngayDiemDanh") LocalDate ngayDiemDanh);
-
-    // Thống kê theo ngày - FIXED
-    @Query(value = """
-        SELECT 
-            dd.ngay_diem_danh as date,
-            COUNT(CASE WHEN dd.trang_thai = 'CO_MAT' THEN 1 END) as present,
-            COUNT(CASE WHEN dd.trang_thai = 'VANG_MAT' THEN 1 END) as absent,
-            COUNT(CASE WHEN dd.trang_thai = 'DI_TRE' THEN 1 END) as late,
-            COUNT(CASE WHEN dd.trang_thai = 'VANG_CO_PHEP' THEN 1 END) as excused
-        FROM diem_danh dd
-        WHERE dd.ngay_diem_danh BETWEEN :fromDate AND :toDate
-        GROUP BY dd.ngay_diem_danh
-        ORDER BY dd.ngay_diem_danh DESC
-        """, nativeQuery = true)
-    List<Object[]> findDailyAttendanceStats(@Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate);
 
     // Lịch sử điểm danh gần nhất - FIXED
     @Query(value = """
@@ -220,6 +192,26 @@ public interface DiemDanhRepository extends JpaRepository<DiemDanh, Long> {
     List<DiemDanh> findByLichHocMaLichAndNgayDiemDanh(String maLich, LocalDate ngayDiemDanh);
 
     /**
+     * Đếm điểm danh theo danh sách mã lịch và trạng thái
+     */
+    long countByLichHocMaLichInAndTrangThai(List<String> maLichList, String trangThai);
+
+
+    List<DiemDanh> findBySinhVienMaSv(String maSv);
+    List<DiemDanh> findByLichHocMaLich(String maLich);
+    long countByNgayDiemDanh(LocalDate ngayDiemDanh);
+
+    // Thống kê theo trạng thái
+    long countByTrangThai(TrangThaiDiemDanhEnum trangThai);
+    long countByNgayDiemDanhAndTrangThai(LocalDate ngayDiemDanh, TrangThaiDiemDanhEnum trangThai);
+    long countByNgayDiemDanhBetweenAndTrangThai(LocalDate fromDate, LocalDate toDate, TrangThaiDiemDanhEnum trangThai);
+
+    @Query("SELECT COUNT(DISTINCT dd.lichHoc) FROM DiemDanh dd WHERE dd.ngayDiemDanh = :ngayDiemDanh")
+    long countDistinctLichHocByNgayDiemDanh(@Param("ngayDiemDanh") LocalDate ngayDiemDanh);
+
+    // ===== CÁC METHODS CHUYỂN TỪ LichHocRepository =====
+
+    /**
      * Đếm số lượng điểm danh theo mã lịch
      */
     long countByLichHocMaLich(String maLich);
@@ -242,7 +234,7 @@ public interface DiemDanhRepository extends JpaRepository<DiemDanh, Long> {
     /**
      * Đếm điểm danh theo danh sách mã lịch và trạng thái
      */
-    long countByLichHocMaLichInAndTrangThai(List<String> maLichList, String trangThai);
+    long countByLichHocMaLichInAndTrangThai(List<String> maLichList, TrangThaiDiemDanhEnum trangThai);
 
     /**
      * Tìm điểm danh theo lớp học phần và khoảng thời gian
@@ -257,4 +249,18 @@ public interface DiemDanhRepository extends JpaRepository<DiemDanh, Long> {
                                                 @Param("fromDate") LocalDate fromDate,
                                                 @Param("toDate") LocalDate toDate);
 
+    // Thống kê theo ngày - FIXED
+    @Query(value = """
+        SELECT 
+            dd.ngay_diem_danh as date,
+            COUNT(CASE WHEN dd.trang_thai = 'CO_MAT' THEN 1 END) as present,
+            COUNT(CASE WHEN dd.trang_thai = 'VANG_MAT' THEN 1 END) as absent,
+            COUNT(CASE WHEN dd.trang_thai = 'DI_TRE' THEN 1 END) as late,
+            COUNT(CASE WHEN dd.trang_thai = 'VANG_CO_PHEP' THEN 1 END) as excused
+        FROM diem_danh dd
+        WHERE dd.ngay_diem_danh BETWEEN :fromDate AND :toDate
+        GROUP BY dd.ngay_diem_danh
+        ORDER BY dd.ngay_diem_danh DESC
+        """, nativeQuery = true)
+    List<Object[]> findDailyAttendanceStats(@Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate);
 }

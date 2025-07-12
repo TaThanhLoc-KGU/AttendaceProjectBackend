@@ -15,47 +15,30 @@ public interface LichHocRepository extends JpaRepository<LichHoc, String> {
     List<LichHoc> findByPhongHocMaPhong(String maPhong);
     List<LichHoc> findByThu(Integer thu);
     List<LichHoc> findByPhongHocMaPhongAndThuAndIsActiveTrue(String maPhong, Integer thu);
-    /**
-     * Đếm số lượng điểm danh theo mã lịch
-     */
-    long countByLichHocMaLich(String maLich);
+
+    // Đếm số lịch học theo lớp học phần
     long countByLopHocPhanMaLhp(String maLhp);
 
     /**
-     * Tìm điểm danh theo mã lịch và mã sinh viên
+     * Đếm số buổi học trong tuần theo lớp học phần
      */
-    List<DiemDanh> findByLichHocMaLichAndSinhVienMaSv(String maLich, String maSv);
+    @Query("SELECT COUNT(DISTINCT lh.thu) FROM LichHoc lh WHERE lh.lopHocPhan.maLhp = :maLhp")
+    long countDistinctThuByLopHocPhanMaLhp(@Param("maLhp") String maLhp);
 
     /**
-     * Tìm điểm danh theo sinh viên và khoảng thời gian
+     * Lấy thông tin học kỳ của lớp học phần
      */
-    List<DiemDanh> findBySinhVienMaSvAndNgayDiemDanhBetween(String maSv, LocalDate fromDate, LocalDate toDate);
+    @Query("SELECT DISTINCT new map(lhp.hocKy as hocKy, lhp.namHoc as namHoc) " +
+            "FROM LichHoc lh JOIN lh.lopHocPhan lhp " +
+            "WHERE lhp.maLhp = :maLhp")
+    List<Map<String, Object>> findSemesterInfoByMaLhp(@Param("maLhp") String maLhp);
 
     /**
-     * Đếm điểm danh theo danh sách mã lịch
+     * Tìm lịch học theo lớp học phần, học kỳ và năm học
      */
-    long countByLichHocMaLichIn(List<String> maLichList);
-
-    /**
-     * Đếm điểm danh theo danh sách mã lịch và trạng thái
-     */
-    long countByLichHocMaLichInAndTrangThai(List<String> maLichList, String trangThai);
-
-    /**
-     * Tìm điểm danh theo sinh viên
-     */
-    List<DiemDanh> findBySinhVienMaSv(String maSv);
-
-    /**
-     * Tìm điểm danh theo lớp học phần và khoảng thời gian
-     */
-    @Query("SELECT dd FROM DiemDanh dd " +
-            "JOIN dd.lichHoc lh " +
-            "JOIN lh.lopHocPhan lhp " +
-            "WHERE lhp.maLhp = :maLhp " +
-            "AND dd.ngayDiemDanh BETWEEN :fromDate AND :toDate " +
-            "ORDER BY dd.ngayDiemDanh DESC")
-    List<DiemDanh> findByLopHocPhanAndDateRange(@Param("maLhp") String maLhp,
-                                                @Param("fromDate") LocalDate fromDate,
-                                                @Param("toDate") LocalDate toDate);
+    @Query("SELECT lh FROM LichHoc lh JOIN lh.lopHocPhan lhp " +
+            "WHERE lhp.maLhp = :maLhp AND lhp.hocKy = :hocKy AND lhp.namHoc = :namHoc")
+    List<LichHoc> findByLopHocPhanMaLhpAndHocKyAndNamHoc(@Param("maLhp") String maLhp,
+                                                         @Param("hocKy") String hocKy,
+                                                         @Param("namHoc") String namHoc);
 }

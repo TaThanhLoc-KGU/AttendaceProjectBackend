@@ -470,8 +470,9 @@ public class LecturerDashboardController {
 
     /**
      * Trang báo cáo điểm danh (giữ nguyên method cũ)
+     * Đổi URL để tránh xung đột với AttendanceReportController
      */
-    @GetMapping("/baocao-diemdanh")
+    @GetMapping("/baocao-diemdanh-old")
     public String baoCaoDiemDanh(Authentication authentication, Model model,
                                  @RequestParam(required = false) String classId,
                                  @RequestParam(required = false) String reportType) {
