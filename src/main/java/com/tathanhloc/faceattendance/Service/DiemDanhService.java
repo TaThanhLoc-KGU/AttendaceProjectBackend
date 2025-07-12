@@ -1,6 +1,6 @@
 package com.tathanhloc.faceattendance.Service;
 
-import com.tathanhloc.faceattendance.DTO.DiemDanhDTO;
+import com.tathanhloc.faceattendance.DTO.*;
 import com.tathanhloc.faceattendance.Enum.TrangThaiDiemDanhEnum;
 import com.tathanhloc.faceattendance.Exception.ResourceNotFoundException;
 import com.tathanhloc.faceattendance.Model.*;
@@ -30,6 +30,7 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
     private final DangKyHocRepository dangKyHocRepository;
     private final CameraRepository cameraRepository;
     private final ExcelService excelService;
+    private final DangKyHocService dangKyHocService;
 
     @Override
     protected JpaRepository<DiemDanh, Long> getRepository() {
@@ -171,12 +172,6 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
         return diemDanhRepository.findByLichHocMaLich(maLich).stream()
                 .map(this::toDTO).toList();
     }
-
-    public long countTodayDiemDanh() {
-            log.info("Đếm số lượng điểm danh trong ngày");
-            return diemDanhRepository.countByNgayDiemDanh(LocalDate.now());
-        }
-
 
 
     /**
@@ -569,5 +564,146 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
         stats.put("late", lateCount);
 
         return stats;
+    }
+
+    /**
+     * Lấy điểm danh theo lớp học phần và ngày
+     */
+    public List<DiemDanhDTO> getByClassAndDate(String maLhp, LocalDate ngay) {
+        List<DiemDanh> attendances = diemDanhRepository.findByLichHoc_LopHocPhan_MaLhpAndNgayDiemDanh(maLhp, ngay);
+        return attendances.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    /**
+     * Tạo điểm danh thủ công cho nhiều sinh viên
+     */
+    @Transactional
+    public List<DiemDanhDTO> createBulkManualAttendance(String maLich, LocalDate ngayDiemDanh,
+                                                        List<ManualAttendanceRequest> requests) {
+        log.info("Tạo điểm danh thủ công cho lịch {} ngày {}", maLich, ngayDiemDanh);
+
+        // Kiểm tra lịch học tồn tại
+        LichHoc lichHoc = lichHocRepository.findById(maLich)
+                .orElseThrow(() -> new ResourceNotFoundException("Lịch học", "mã lịch", maLich));
+
+        List<DiemDanhDTO> results = new ArrayList<>();
+
+        for (ManualAttendanceRequest request : requests) {
+            try {
+                // Kiểm tra xem đã có điểm danh chưa
+                List<DiemDanh> existing = diemDanhRepository.findByLichHocMaLichAndSinhVienMaSvAndNgayDiemDanh(
+                        maLich, request.getMaSv(), ngayDiemDanh);
+
+                DiemDanh diemDanh;
+                if (!existing.isEmpty()) {
+                    // Cập nhật điểm danh hiện có
+                    diemDanh = existing.get(0);
+                    diemDanh.setTrangThai(request.getTrangThai());
+                    diemDanh.setThoiGianVao(request.getThoiGianVao());
+                    diemDanh.setThoiGianRa(request.getThoiGianRa());
+                } else {
+                    // Tạo mới điểm danh
+                    DiemDanhDTO dto = DiemDanhDTO.builder()
+                            .maLich(maLich)
+                            .maSv(request.getMaSv())
+                            .ngayDiemDanh(ngayDiemDanh)
+                            .trangThai(request.getTrangThai())
+                            .thoiGianVao(request.getThoiGianVao())
+                            .thoiGianRa(request.getThoiGianRa())
+                            .build();
+
+                    diemDanh = toEntity(dto);
+                }
+
+                results.add(toDTO(diemDanhRepository.save(diemDanh)));
+
+            } catch (Exception e) {
+                log.error("Lỗi tạo điểm danh cho sinh viên {}: {}", request.getMaSv(), e.getMessage());
+            }
+        }
+
+        return results;
+    }
+
+    /**
+     * Tính tỷ lệ điểm danh theo lớp học phần
+     */
+    public AttendanceStatsDTO getAttendanceStatsByClass(String maLhp) {
+        log.info("Tính tỷ lệ điểm danh cho lớp {}", maLhp);
+
+        // Đếm tổng số buổi học
+        long totalSessions = lichHocRepository.countByLopHocPhanMaLhp(maLhp);
+
+        // Đếm tổng số sinh viên đăng ký
+        long totalStudents = dangKyHocRepository.countByLopHocPhanMaLhp(maLhp);
+
+        // Đếm điểm danh theo trạng thái
+        long presentCount = diemDanhRepository.countByLichHoc_LopHocPhan_MaLhpAndTrangThai(
+                maLhp, TrangThaiDiemDanhEnum.CO_MAT);
+        long absentCount = diemDanhRepository.countByLichHoc_LopHocPhan_MaLhpAndTrangThai(
+                maLhp, TrangThaiDiemDanhEnum.VANG_MAT);
+        long lateCount = diemDanhRepository.countByLichHoc_LopHocPhan_MaLhpAndTrangThai(
+                maLhp, TrangThaiDiemDanhEnum.DI_TRE);
+        long excusedCount = diemDanhRepository.countByLichHoc_LopHocPhan_MaLhpAndTrangThai(
+                maLhp, TrangThaiDiemDanhEnum.VANG_CO_PHEP);
+
+        long totalAttendanceRecords = presentCount + absentCount + lateCount + excusedCount;
+
+        double attendanceRate = totalAttendanceRecords > 0 ?
+                (double) (presentCount + lateCount) / totalAttendanceRecords * 100 : 0;
+
+        return AttendanceStatsDTO.builder()
+                .totalSessions(totalSessions)
+                .totalStudents(totalStudents)
+                .presentCount(presentCount)
+                .absentCount(absentCount)
+                .lateCount(lateCount)
+                .excusedCount(excusedCount)
+                .attendanceRate(attendanceRate)
+                .build();
+    }
+
+    /**
+     * Lấy tỷ lệ điểm danh của từng sinh viên trong lớp
+     */
+    public List<StudentAttendanceDTO> getStudentAttendanceByClass(String maLhp) {
+        // Lấy danh sách sinh viên đăng ký lớp
+        List<DangKyHocDTO> registrations = dangKyHocService.getByMaLhp(maLhp);
+
+        return registrations.stream().map(reg -> {
+            String maSv = reg.getMaSv();
+
+            // Đếm điểm danh theo trạng thái cho sinh viên này
+            long presentCount = diemDanhRepository.countBySinhVienMaSvAndLichHoc_LopHocPhan_MaLhpAndTrangThai(
+                    maSv, maLhp, TrangThaiDiemDanhEnum.CO_MAT);
+            long absentCount = diemDanhRepository.countBySinhVienMaSvAndLichHoc_LopHocPhan_MaLhpAndTrangThai(
+                    maSv, maLhp, TrangThaiDiemDanhEnum.VANG_MAT);
+            long lateCount = diemDanhRepository.countBySinhVienMaSvAndLichHoc_LopHocPhan_MaLhpAndTrangThai(
+                    maSv, maLhp, TrangThaiDiemDanhEnum.DI_TRE);
+            long excusedCount = diemDanhRepository.countBySinhVienMaSvAndLichHoc_LopHocPhan_MaLhpAndTrangThai(
+                    maSv, maLhp, TrangThaiDiemDanhEnum.VANG_CO_PHEP);
+
+            long total = presentCount + absentCount + lateCount + excusedCount;
+            double attendanceRate = total > 0 ? (double) (presentCount + lateCount) / total * 100 : 0;
+
+            return StudentAttendanceDTO.builder()
+                    .maSv(maSv)
+                    .presentCount(presentCount)
+                    .absentCount(absentCount)
+                    .lateCount(lateCount)
+                    .excusedCount(excusedCount)
+                    .attendanceRate(attendanceRate)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    public long countTodayDiemDanh() {
+        return diemDanhRepository.countByNgayDiemDanh(LocalDate.now());
+    }
+    // Thêm vào DiemDanhService.java
+
+    public List<DiemDanhDTO> getByMaLichAndDate(String maLich, LocalDate ngayDiemDanh) {
+        List<DiemDanh> attendances = diemDanhRepository.findByLichHocMaLichAndNgayDiemDanh(maLich, ngayDiemDanh);
+        return attendances.stream().map(this::toDTO).collect(Collectors.toList());
     }
 }

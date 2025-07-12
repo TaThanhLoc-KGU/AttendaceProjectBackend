@@ -199,4 +199,24 @@ public interface DiemDanhRepository extends JpaRepository<DiemDanh, Long> {
     List<Object[]> countAttendanceByStatusAndDateRange(@Param("maLichList") List<String> maLichList,
                                                        @Param("fromDate") LocalDate fromDate,
                                                        @Param("toDate") LocalDate toDate);
+
+// Thêm vào DiemDanhRepository.java
+
+    List<DiemDanh> findByLichHoc_LopHocPhan_MaLhpAndNgayDiemDanh(String maLhp, LocalDate ngayDiemDanh);
+
+    List<DiemDanh> findByLichHocMaLichAndSinhVienMaSvAndNgayDiemDanh(String maLich, String maSv, LocalDate ngayDiemDanh);
+
+    // Đếm theo lớp học phần và trạng thái
+    long countByLichHoc_LopHocPhan_MaLhpAndTrangThai(String maLhp, TrangThaiDiemDanhEnum trangThai);
+
+    // Đếm theo sinh viên, lớp và trạng thái
+    long countBySinhVienMaSvAndLichHoc_LopHocPhan_MaLhpAndTrangThai(String maSv, String maLhp, TrangThaiDiemDanhEnum trangThai);
+
+    // Lấy điểm danh theo lớp học phần
+    List<DiemDanh> findByLichHoc_LopHocPhan_MaLhp(String maLhp);
+
+    // Kiểm tra điểm danh đã tồn tại
+    boolean existsByLichHocMaLichAndSinhVienMaSvAndNgayDiemDanh(String maLich, String maSv, LocalDate ngayDiemDanh);
+    List<DiemDanh> findByLichHocMaLichAndNgayDiemDanh(String maLich, LocalDate ngayDiemDanh);
+
 }

@@ -11,5 +11,6 @@ public interface LichHocRepository extends JpaRepository<LichHoc, String> {
     List<LichHoc> findByPhongHocMaPhong(String maPhong);
     List<LichHoc> findByThu(Integer thu);
     List<LichHoc> findByPhongHocMaPhongAndThuAndIsActiveTrue(String maPhong, Integer thu);
+    long countByLopHocPhanMaLhp(String maLhp);
 
 }

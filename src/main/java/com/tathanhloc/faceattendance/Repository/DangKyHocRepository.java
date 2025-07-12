@@ -9,4 +9,6 @@ import java.util.List;
 public interface DangKyHocRepository extends JpaRepository<DangKyHoc, DangKyHocId> {
     List<DangKyHoc> findBySinhVien_MaSv(String maSv);
     List<DangKyHoc> findByLopHocPhan_MaLhp(String maLhp);
+    long countByLopHocPhanMaLhp(String maLhp);
+
 }

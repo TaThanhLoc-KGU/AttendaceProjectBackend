@@ -726,4 +726,65 @@ public class LecturerDashboardController {
             return List.of();
         }
     }
+
+    /**
+     * Trang chi tiết lớp học cụ thể
+     */
+    @GetMapping("/lophoc/{maLhp}")
+    public String chiTietLopHoc(@PathVariable String maLhp,
+                                @AuthenticationPrincipal CustomUserDetails userDetails,
+                                Model model) {
+        if (userDetails == null || !userDetails.isCredentialsNonExpired()) {
+            return "redirect:/?error=not_authenticated";
+        }
+
+        try {
+            // Kiểm tra thông tin giảng viên
+            if (userDetails.getTaiKhoan().getGiangVien() == null) {
+                log.error("User has no lecturer profile: {}", userDetails.getUsername());
+                model.addAttribute("error", "Tài khoản không có thông tin giảng viên");
+                return "lecturer/chitiet-lophoc";
+            }
+
+            String maGv = userDetails.getTaiKhoan().getGiangVien().getMaGv();
+            log.info("Loading class details for lecturer {} and class {}", maGv, maLhp);
+
+            // Lấy thông tin lớp học phần
+            LopHocPhanDTO lopHocPhan = lopHocPhanService.getByMaLhp(maLhp);
+
+            // Kiểm tra quyền truy cập (chỉ giảng viên của lớp mới được xem)
+            if (!maGv.equals(lopHocPhan.getMaGv())) {
+                log.warn("Lecturer {} tried to access class {} which is not theirs", maGv, maLhp);
+                model.addAttribute("error", "Bạn không có quyền truy cập lớp học này");
+                return "lecturer/chitiet-lophoc";
+            }
+
+            // Lấy danh sách sinh viên trong lớp
+            List<DangKyHocDTO> danhSachDangKy = dangKyHocService.getByMaLhp(maLhp);
+            List<SinhVienDTO> danhSachSinhVien = danhSachDangKy.stream()
+                    .map(dk -> sinhVienService.getByMaSv(dk.getMaSv()))
+                    .collect(Collectors.toList());
+
+            // Lấy lịch học của lớp này
+            List<LichHocDTO> lichHocList = lichHocService.getByLopHocPhan(maLhp);
+
+            // Lấy thống kê điểm danh
+            // TODO: Implement thống kê điểm danh theo lớp
+
+            // Thêm vào model
+            model.addAttribute("currentUser", userDetails.getTaiKhoan());
+            model.addAttribute("lopHocPhan", lopHocPhan);
+            model.addAttribute("danhSachSinhVien", danhSachSinhVien);
+            model.addAttribute("lichHocList", lichHocList);
+            model.addAttribute("soLuongSinhVien", danhSachSinhVien.size());
+
+            log.info("✅ Class details loaded for {}: {} students", maLhp, danhSachSinhVien.size());
+            return "lecturer/chitiet-lophoc";
+
+        } catch (Exception e) {
+            log.error("❌ Error loading class details for {}", maLhp, e);
+            model.addAttribute("error", "Không thể tải thông tin lớp học: " + e.getMessage());
+            return "lecturer/chitiet-lophoc";
+        }
+    }
 }

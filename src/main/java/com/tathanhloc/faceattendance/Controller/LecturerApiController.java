@@ -255,6 +255,7 @@ public class LecturerApiController {
         public String getLecturerCode() { return lecturerCode; }
         public void setLecturerCode(String lecturerCode) { this.lecturerCode = lecturerCode; }
     }
+
     /**
      * Trang chi tiết lớp học cụ thể
      */
@@ -295,9 +296,6 @@ public class LecturerApiController {
 
             // Lấy lịch học của lớp này
             List<LichHocDTO> lichHocList = lichHocService.getByLopHocPhan(maLhp);
-
-            // Lấy thống kê điểm danh
-            // TODO: Implement thống kê điểm danh theo lớp
 
             // Thêm vào model
             model.addAttribute("currentUser", userDetails.getTaiKhoan());

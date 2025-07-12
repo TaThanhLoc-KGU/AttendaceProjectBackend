@@ -198,5 +198,63 @@ public class DiemDanhController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+// Thêm vào DiemDanhController.java
 
+    /**
+     * API điểm danh thủ công
+     */
+    @PostMapping("/manual")
+    public ResponseEntity<List<DiemDanhDTO>> createManualAttendance(
+            @RequestParam String maLich,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ngayDiemDanh,
+            @RequestBody List<ManualAttendanceRequest> requests) {
+
+        List<DiemDanhDTO> results = diemDanhService.createBulkManualAttendance(maLich, ngayDiemDanh, requests);
+        return ResponseEntity.ok(results);
+    }
+
+    /**
+     * API lấy thống kê điểm danh theo lớp
+     */
+    @GetMapping("/stats/class/{maLhp}")
+    public ResponseEntity<AttendanceStatsDTO> getAttendanceStatsByClass(@PathVariable String maLhp) {
+        AttendanceStatsDTO stats = diemDanhService.getAttendanceStatsByClass(maLhp);
+        return ResponseEntity.ok(stats);
+    }
+
+    /**
+     * API lấy tỷ lệ điểm danh từng sinh viên
+     */
+    @GetMapping("/stats/students/{maLhp}")
+    public ResponseEntity<List<StudentAttendanceDTO>> getStudentAttendanceByClass(@PathVariable String maLhp) {
+        List<StudentAttendanceDTO> stats = diemDanhService.getStudentAttendanceByClass(maLhp);
+        return ResponseEntity.ok(stats);
+    }
+
+    /**
+     * API lấy điểm danh theo lớp và ngày
+     */
+    @GetMapping("/class/{maLhp}")
+    public ResponseEntity<List<DiemDanhDTO>> getAttendanceByClassAndDate(
+            @PathVariable String maLhp,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ngay) {
+
+        List<DiemDanhDTO> attendances = diemDanhService.getByClassAndDate(maLhp, ngay);
+        return ResponseEntity.ok(attendances);
+    }
+
+    // Thêm vào DiemDanhController.java
+
+    @GetMapping("/by-malich/{maLich}")
+    public ResponseEntity<List<DiemDanhDTO>> getByMaLichAndDate(
+            @PathVariable String maLich,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+
+        if (date != null) {
+            List<DiemDanhDTO> attendances = diemDanhService.getByMaLichAndDate(maLich, date);
+            return ResponseEntity.ok(attendances);
+        } else {
+            return ResponseEntity.ok(diemDanhService.getByMaLich(maLich));
+        }
+    }
 }
