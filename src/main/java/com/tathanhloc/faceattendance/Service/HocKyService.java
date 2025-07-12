@@ -364,4 +364,23 @@ public class HocKyService {
         return count > 0;
     }
 
+    /**
+     * Lấy học kỳ theo mã học kỳ (string)
+     */
+    public HocKyDTO getByMaHocKy(String maHocKy) {
+        return hocKyRepository.findById(maHocKy)
+                .map(this::toDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("HocKy", "maHocKy", maHocKy));
+    }
+
+    /**
+     * Tìm học kỳ theo tên (ví dụ: "1", "2", "3")
+     */
+    public Optional<HocKyDTO> findByTenHocKy(String tenHocKy) {
+        return hocKyRepository.findAll().stream()
+                .filter(hk -> tenHocKy.equals(hk.getTenHocKy()) && Boolean.TRUE.equals(hk.getIsActive()))
+                .map(this::toDTO)
+                .findFirst();
+    }
+
 }

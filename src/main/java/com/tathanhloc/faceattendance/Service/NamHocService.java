@@ -602,6 +602,24 @@ public class NamHocService {
 
         return stats;
     }
+    /**
+     * Tìm năm học theo tên (ví dụ: "2024-2025")
+     */
+    public Optional<NamHocDTO> findByTenNamHoc(String tenNamHoc) {
+        return namHocRepository.findAll().stream()
+                .filter(nh -> tenNamHoc.equals(nh.getTenNamHoc()) && Boolean.TRUE.equals(nh.getIsActive()))
+                .map(this::toDTO)
+                .findFirst();
+    }
 
+    /**
+     * Lấy năm học hiện tại
+     */
+    public Optional<NamHocDTO> getCurrentNamHoc() {
+        return namHocRepository.findAll().stream()
+                .filter(nh -> Boolean.TRUE.equals(nh.getIsCurrent()) && Boolean.TRUE.equals(nh.getIsActive()))
+                .map(this::toDTO)
+                .findFirst();
+    }
 
 }

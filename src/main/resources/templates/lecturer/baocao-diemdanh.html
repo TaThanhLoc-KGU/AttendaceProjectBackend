@@ -12,7 +12,7 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="stylesheet" th:href="@{/css/lecturer.css}">
 
     <style>
@@ -38,34 +38,31 @@
             overflow: hidden;
         }
 
-        .semester-summary {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 15px;
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
             margin-bottom: 2rem;
         }
 
-        .period-summary {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
+        .summary-card {
             background: white;
             border-radius: 10px;
-            padding: 1rem;
+            padding: 1.5rem;
             text-align: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
         }
+
+        .summary-card.success { border-left-color: #28a745; }
+        .summary-card.warning { border-left-color: #ffc107; }
+        .summary-card.danger { border-left-color: #dc3545; }
+        .summary-card.info { border-left-color: #17a2b8; }
 
         .stat-number {
             font-size: 2rem;
             font-weight: bold;
-            color: #667eea;
+            margin-bottom: 0.5rem;
         }
 
         .stat-label {
@@ -80,10 +77,10 @@
             font-weight: 500;
         }
 
-        .status-present { background: #d1ecf1; color: #0c5460; }
-        .status-absent { background: #f8d7da; color: #721c24; }
-        .status-late { background: #fff3cd; color: #856404; }
-        .status-excused { background: #d4edda; color: #155724; }
+        .status-excellent { background: #d4edda; color: #155724; }
+        .status-good { background: #d1ecf1; color: #0c5460; }
+        .status-warning { background: #fff3cd; color: #856404; }
+        .status-poor { background: #f8d7da; color: #721c24; }
 
         .progress-bar-custom {
             height: 8px;
@@ -107,9 +104,41 @@
             border-radius: 50%;
             object-fit: cover;
         }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
     </style>
 </head>
 <body>
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="text-center text-white">
+        <div class="spinner-border" role="status"></div>
+        <div class="mt-2">Đang tải dữ liệu...</div>
+    </div>
+</div>
+
 <div class="main-wrapper">
     <!-- Include Sidebar Component -->
     <div th:replace="~{components/sidebar :: sidebar}"></div>
@@ -125,7 +154,8 @@
                         <p class="mb-0" th:if="${lopHocPhan}">
                             <span th:text="${lopHocPhan.tenMonHoc}">Tên môn học</span> -
                             <span th:text="${lopHocPhan.maLhp}">Mã lớp</span> -
-                            Nhóm <span th:text="${lopHocPhan.nhom}">1</span>
+                            Nhóm <span th:text="${lopHocPhan.nhom}">1</span> -
+                            HK<span th:text="${lopHocPhan.hocKy}">1</span> <span th:text="${lopHocPhan.namHoc}">2024-2025</span>
                         </p>
                     </div>
                     <div class="col-md-4 text-end">
@@ -145,25 +175,15 @@
                     <div class="col-md-3">
                         <label class="form-label">Loại báo cáo</label>
                         <select class="form-select" id="reportType" onchange="changeReportType()">
-                            <option value="semester">Theo học kỳ</option>
+                            <option value="semester">Toàn bộ học kỳ</option>
                             <option value="period">Theo khoảng thời gian</option>
                         </select>
                     </div>
-                    <div class="col-md-3" id="semesterFilter">
-                        <label class="form-label">Học kỳ</label>
-                        <select class="form-select" id="semester" onchange="loadSemesterReport()">
-                            <option value="">Chọn học kỳ</option>
-                            <option value="2024-2025-1" selected>HK1 2024-2025</option>
-                            <option value="2024-2025-2">HK2 2024-2025</option>
-                            <option value="2023-2024-1">HK1 2023-2024</option>
-                            <option value="2023-2024-2">HK2 2023-2024</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3" id="periodFilter" style="display: none;">
+                    <div class="col-md-3" id="periodFromFilter" style="display: none;">
                         <label class="form-label">Từ ngày</label>
                         <input type="date" class="form-control" id="fromDate">
                     </div>
-                    <div class="col-md-3" id="periodFilter2" style="display: none;">
+                    <div class="col-md-3" id="periodToFilter" style="display: none;">
                         <label class="form-label">Đến ngày</label>
                         <input type="date" class="form-control" id="toDate">
                     </div>
@@ -178,87 +198,41 @@
                 </div>
             </div>
 
-            <!-- Semester Summary -->
-            <div class="semester-summary" id="semesterSummary">
-                <div class="row">
-                    <div class="col-md-8">
-                        <h4><i class="fas fa-graduation-cap me-2"></i>Tổng kết học kỳ</h4>
-                        <div class="row mt-3">
-                            <div class="col-6 col-md-3">
-                                <div class="stat-card">
-                                    <div class="stat-number" id="totalWeeks">16</div>
-                                    <div class="stat-label">Tuần học</div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="stat-card">
-                                    <div class="stat-number" id="totalSessions">32</div>
-                                    <div class="stat-label">Tổng buổi học</div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="stat-card">
-                                    <div class="stat-number" id="completedSessions">28</div>
-                                    <div class="stat-label">Buổi đã học</div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="stat-card">
-                                    <div class="stat-number" id="avgAttendanceRate">85%</div>
-                                    <div class="stat-label">Tỷ lệ điểm danh TB</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="d-flex align-items-center h-100">
-                            <div>
-                                <h6>Tiến độ học kỳ</h6>
-                                <div class="progress progress-bar-custom mb-2">
-                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 87.5%" id="semesterProgress"></div>
-                                </div>
-                                <small id="semesterProgressText">28/32 buổi học (87.5%)</small>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Summary Cards -->
+            <div class="summary-cards" id="summaryCards">
+                <div class="summary-card">
+                    <div class="stat-number text-primary" id="totalStudents">0</div>
+                    <div class="stat-label">Tổng sinh viên</div>
+                </div>
+                <div class="summary-card success">
+                    <div class="stat-number text-success" id="totalPresent">0</div>
+                    <div class="stat-label">Tổng lượt có mặt</div>
+                </div>
+                <div class="summary-card danger">
+                    <div class="stat-number text-danger" id="totalAbsent">0</div>
+                    <div class="stat-label">Tổng lượt vắng</div>
+                </div>
+                <div class="summary-card warning">
+                    <div class="stat-number text-warning" id="avgAttendanceRate">0%</div>
+                    <div class="stat-label">Tỷ lệ TB</div>
                 </div>
             </div>
 
-            <!-- Period Summary -->
-            <div class="period-summary" id="periodSummary" style="display: none;">
-                <div class="row">
-                    <div class="col-md-8">
-                        <h4><i class="fas fa-calendar-alt me-2"></i>Báo cáo khoảng thời gian</h4>
-                        <div class="row mt-3">
-                            <div class="col-6 col-md-3">
-                                <div class="stat-card">
-                                    <div class="stat-number" id="periodDays">30</div>
-                                    <div class="stat-label">Số ngày</div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="stat-card">
-                                    <div class="stat-number" id="periodSessions">12</div>
-                                    <div class="stat-label">Buổi học</div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="stat-card">
-                                    <div class="stat-number" id="periodPresent">320</div>
-                                    <div class="stat-label">Lượt có mặt</div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="stat-card">
-                                    <div class="stat-number" id="periodAbsent">55</div>
-                                    <div class="stat-label">Lượt vắng mặt</div>
-                                </div>
-                            </div>
+            <!-- Charts Row -->
+            <div class="row mb-4">
+                <div class="col-lg-8">
+                    <div class="filter-card">
+                        <h5 class="mb-3"><i class="fas fa-chart-bar me-2"></i>Phân loại sinh viên theo tỷ lệ điểm danh</h5>
+                        <div class="chart-container">
+                            <canvas id="classificationChart"></canvas>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="text-center">
-                            <canvas id="periodChart" width="200" height="200"></canvas>
+                </div>
+                <div class="col-lg-4">
+                    <div class="filter-card">
+                        <h5 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Tỷ lệ điểm danh tổng thể</h5>
+                        <div class="chart-container">
+                            <canvas id="attendanceChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -297,7 +271,12 @@
                         </tr>
                         </thead>
                         <tbody id="reportTableBody">
-                        <!-- Dữ liệu sẽ được load bằng JavaScript -->
+                        <tr>
+                            <td colspan="11" class="text-center py-4">
+                                <i class="fas fa-search fa-2x text-muted"></i>
+                                <p class="mt-2 text-muted">Chọn loại báo cáo và nhấn "Tạo báo cáo" để xem dữ liệu</p>
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
@@ -314,18 +293,20 @@
 <script th:inline="javascript">
     // Lấy thông tin lớp từ Thymeleaf
     const currentClassId = /*[[${lopHocPhan?.maLhp}]]*/ '';
-    const currentSemester = /*[[${lopHocPhan?.hocKy + '-' + lopHocPhan?.namHoc}]]*/ '2024-2025-1';
+    const currentSemester = /*[[${lopHocPhan?.hocKy}]]*/ '1';
+    const currentYear = /*[[${lopHocPhan?.namHoc}]]*/ '2024-2025';
 
     let reportData = [];
-    let semesterInfo = {};
-    let periodChart = null;
+    let classificationChart = null;
+    let attendanceChart = null;
 
     // Khởi tạo khi trang load
     document.addEventListener('DOMContentLoaded', function() {
         console.log('🚀 Report page loaded for class:', currentClassId);
 
         if (currentClassId) {
-            loadSemesterReport();
+            setDefaultPeriod();
+            generateReport(); // Tự động load báo cáo toàn bộ học kỳ
         } else {
             showNotification('Không tìm thấy thông tin lớp học', 'danger');
         }
@@ -334,26 +315,15 @@
     // Thay đổi loại báo cáo
     function changeReportType() {
         const reportType = document.getElementById('reportType').value;
-        const semesterFilter = document.getElementById('semesterFilter');
-        const periodFilter = document.getElementById('periodFilter');
-        const periodFilter2 = document.getElementById('periodFilter2');
-        const semesterSummary = document.getElementById('semesterSummary');
-        const periodSummary = document.getElementById('periodSummary');
+        const periodFromFilter = document.getElementById('periodFromFilter');
+        const periodToFilter = document.getElementById('periodToFilter');
 
-        if (reportType === 'semester') {
-            semesterFilter.style.display = 'block';
-            periodFilter.style.display = 'none';
-            periodFilter2.style.display = 'none';
-            semesterSummary.style.display = 'block';
-            periodSummary.style.display = 'none';
-            loadSemesterReport();
+        if (reportType === 'period') {
+            periodFromFilter.style.display = 'block';
+            periodToFilter.style.display = 'block';
         } else {
-            semesterFilter.style.display = 'none';
-            periodFilter.style.display = 'block';
-            periodFilter2.style.display = 'block';
-            semesterSummary.style.display = 'none';
-            periodSummary.style.display = 'block';
-            setDefaultPeriod();
+            periodFromFilter.style.display = 'none';
+            periodToFilter.style.display = 'none';
         }
     }
 
@@ -366,34 +336,43 @@
         document.getElementById('fromDate').value = lastMonth.toISOString().split('T')[0];
     }
 
-    // Load báo cáo theo học kỳ
+    // Tạo báo cáo
+    async function generateReport() {
+        const reportType = document.getElementById('reportType').value;
+
+        if (reportType === 'semester') {
+            await loadSemesterReport();
+        } else {
+            await loadPeriodReport();
+        }
+    }
+
+    // Load báo cáo toàn bộ học kỳ
     async function loadSemesterReport() {
         try {
             console.log('📊 Loading semester report...');
             showLoading();
 
-            const semester = document.getElementById('semester').value || currentSemester;
-
-            // Gọi API để lấy thông tin học kỳ
-            const semesterResponse = await fetch(`/api/lichhoc/semester-info/${currentClassId}?semester=${semester}`);
-            if (semesterResponse.ok) {
-                semesterInfo = await semesterResponse.json();
-                updateSemesterSummary(semesterInfo);
-            }
+            const semester = `${currentYear}-${currentSemester}`;
 
             // Gọi API để lấy báo cáo điểm danh
-            const reportResponse = await fetch(`/api/diemdanh/semester-report/${currentClassId}?semester=${semester}`);
-            if (reportResponse.ok) {
-                reportData = await reportResponse.json();
-                updateReportTable(reportData);
+            const response = await fetch(`/lecturer/api/diemdanh/semester-report/${currentClassId}?semester=${semester}`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
+
+            reportData = await response.json();
+            updateReportTable(reportData);
+            updateSummaryCards(reportData);
+            updateCharts(reportData);
 
             hideLoading();
             console.log('✅ Semester report loaded');
 
         } catch (error) {
             console.error('❌ Error loading semester report:', error);
-            showNotification('Không thể tải báo cáo học kỳ', 'danger');
+            showNotification('Không thể tải báo cáo học kỳ: ' + error.message, 'danger');
             hideLoading();
         }
     }
@@ -409,101 +388,61 @@
 
             if (!fromDate || !toDate) {
                 showNotification('Vui lòng chọn khoảng thời gian', 'warning');
+                hideLoading();
                 return;
             }
 
             // Gọi API để lấy báo cáo theo khoảng thời gian
-            const response = await fetch(`/api/diemdanh/period-report/${currentClassId}?fromDate=${fromDate}&toDate=${toDate}`);
-            if (response.ok) {
-                const periodData = await response.json();
-                reportData = periodData.studentReports;
-                updatePeriodSummary(periodData.summary);
-                updateReportTable(reportData);
+            const response = await fetch(`/lecturer/api/diemdanh/period-report/${currentClassId}?fromDate=${fromDate}&toDate=${toDate}`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
+
+            const periodData = await response.json();
+            reportData = periodData.studentReports || [];
+
+            updateReportTable(reportData);
+            updateSummaryCardsFromPeriod(periodData.summary);
+            updateCharts(reportData);
 
             hideLoading();
             console.log('✅ Period report loaded');
 
         } catch (error) {
             console.error('❌ Error loading period report:', error);
-            showNotification('Không thể tải báo cáo khoảng thời gian', 'danger');
+            showNotification('Không thể tải báo cáo khoảng thời gian: ' + error.message, 'danger');
             hideLoading();
         }
     }
 
-    // Tạo báo cáo
-    function generateReport() {
-        const reportType = document.getElementById('reportType').value;
+    // Cập nhật summary cards cho báo cáo học kỳ
+    function updateSummaryCards(data) {
+        if (!data || data.length === 0) return;
 
-        if (reportType === 'semester') {
-            loadSemesterReport();
-        } else {
-            loadPeriodReport();
-        }
+        const totalStudents = data.length;
+        const totalPresent = data.reduce((sum, student) => sum + (student.presentCount || 0), 0);
+        const totalAbsent = data.reduce((sum, student) => sum + (student.absentCount || 0), 0);
+        const avgRate = data.reduce((sum, student) => sum + (student.attendanceRate || 0), 0) / totalStudents;
+
+        document.getElementById('totalStudents').textContent = totalStudents;
+        document.getElementById('totalPresent').textContent = totalPresent;
+        document.getElementById('totalAbsent').textContent = totalAbsent;
+        document.getElementById('avgAttendanceRate').textContent = avgRate.toFixed(1) + '%';
     }
 
-    // Cập nhật tổng kết học kỳ
-    function updateSemesterSummary(data) {
-        document.getElementById('totalWeeks').textContent = data.totalWeeks || 16;
-        document.getElementById('totalSessions').textContent = data.totalSessions || 0;
-        document.getElementById('completedSessions').textContent = data.completedSessions || 0;
-        document.getElementById('avgAttendanceRate').textContent = (data.avgAttendanceRate || 0).toFixed(1) + '%';
+    // Cập nhật summary cards cho báo cáo khoảng thời gian
+    function updateSummaryCardsFromPeriod(summary) {
+        if (!summary) return;
 
-        // Cập nhật progress bar
-        const progress = data.totalSessions > 0 ? (data.completedSessions / data.totalSessions * 100) : 0;
-        document.getElementById('semesterProgress').style.width = progress + '%';
-        document.getElementById('semesterProgressText').textContent =
-            `${data.completedSessions}/${data.totalSessions} buổi học (${progress.toFixed(1)}%)`;
-    }
+        document.getElementById('totalStudents').textContent = reportData.length;
+        document.getElementById('totalPresent').textContent = summary.totalPresent || 0;
+        document.getElementById('totalAbsent').textContent = summary.totalAbsent || 0;
 
-    // Cập nhật tổng kết khoảng thời gian
-    function updatePeriodSummary(data) {
-        document.getElementById('periodDays').textContent = data.totalDays || 0;
-        document.getElementById('periodSessions').textContent = data.totalSessions || 0;
-        document.getElementById('periodPresent').textContent = data.totalPresent || 0;
-        document.getElementById('periodAbsent').textContent = data.totalAbsent || 0;
-
-        // Tạo biểu đồ tròn
-        createPeriodChart(data);
-    }
-
-    // Tạo biểu đồ tròn cho khoảng thời gian
-    function createPeriodChart(data) {
-        const ctx = document.getElementById('periodChart').getContext('2d');
-
-        if (periodChart) {
-            periodChart.destroy();
-        }
-
-        periodChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Có mặt', 'Vắng mặt', 'Đi muộn', 'Vắng có phép'],
-                datasets: [{
-                    data: [
-                        data.totalPresent || 0,
-                        data.totalAbsent || 0,
-                        data.totalLate || 0,
-                        data.totalExcused || 0
-                    ],
-                    backgroundColor: [
-                        '#28a745',
-                        '#dc3545',
-                        '#ffc107',
-                        '#17a2b8'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
-            }
-        });
+        const avgRate = reportData.length > 0
+            ? reportData.reduce((sum, student) => sum + (student.attendanceRate || 0), 0) / reportData.length
+            : 0;
+        document.getElementById('avgAttendanceRate').textContent = avgRate.toFixed(1) + '%';
     }
 
     // Cập nhật bảng báo cáo
@@ -524,22 +463,16 @@
         }
 
         data.forEach((student, index) => {
-            const attendanceRate = student.totalSessions > 0
-                ? (student.presentCount / student.totalSessions * 100).toFixed(1)
-                : 0;
-
-            const statusClass = attendanceRate >= 80 ? 'status-present' :
-                attendanceRate >= 60 ? 'status-late' : 'status-absent';
-
-            const statusText = attendanceRate >= 80 ? 'Đạt yêu cầu' :
-                attendanceRate >= 60 ? 'Cảnh báo' : 'Không đạt';
+            const attendanceRate = student.attendanceRate || 0;
+            const statusInfo = getStatusInfo(attendanceRate);
 
             const row = `
                     <tr>
                         <td>${index + 1}</td>
                         <td>
                             <img src="${student.avatarUrl || '/images/default-avatar.png'}"
-                                 alt="Avatar" class="student-avatar">
+                                 alt="Avatar" class="student-avatar"
+                                 onerror="this.src='/images/default-avatar.png'">
                         </td>
                         <td><strong>${student.maSv}</strong></td>
                         <td>${student.hoTen}</td>
@@ -549,13 +482,13 @@
                         <td class="text-center text-warning">${student.lateCount || 0}</td>
                         <td class="text-center text-info">${student.excusedCount || 0}</td>
                         <td class="text-center">
-                            <strong class="${attendanceRate >= 80 ? 'text-success' : attendanceRate >= 60 ? 'text-warning' : 'text-danger'}">
-                                ${attendanceRate}%
+                            <strong class="${statusInfo.colorClass}">
+                                ${attendanceRate.toFixed(1)}%
                             </strong>
                         </td>
                         <td>
-                            <span class="attendance-status ${statusClass}">
-                                ${statusText}
+                            <span class="attendance-status ${statusInfo.statusClass}">
+                                ${statusInfo.text}
                             </span>
                         </td>
                     </tr>
@@ -564,15 +497,122 @@
         });
     }
 
+    // Lấy thông tin trạng thái
+    function getStatusInfo(rate) {
+        if (rate >= 90) {
+            return { text: 'Xuất sắc', statusClass: 'status-excellent', colorClass: 'text-success' };
+        } else if (rate >= 80) {
+            return { text: 'Tốt', statusClass: 'status-good', colorClass: 'text-success' };
+        } else if (rate >= 60) {
+            return { text: 'Cảnh báo', statusClass: 'status-warning', colorClass: 'text-warning' };
+        } else {
+            return { text: 'Yếu kém', statusClass: 'status-poor', colorClass: 'text-danger' };
+        }
+    }
+
+    // Cập nhật biểu đồ
+    function updateCharts(data) {
+        updateClassificationChart(data);
+        updateAttendanceChart(data);
+    }
+
+    // Biểu đồ phân loại sinh viên
+    function updateClassificationChart(data) {
+        const ctx = document.getElementById('classificationChart').getContext('2d');
+
+        if (classificationChart) {
+            classificationChart.destroy();
+        }
+
+        // Phân loại sinh viên
+        const excellent = data.filter(s => s.attendanceRate >= 90).length;
+        const good = data.filter(s => s.attendanceRate >= 80 && s.attendanceRate < 90).length;
+        const warning = data.filter(s => s.attendanceRate >= 60 && s.attendanceRate < 80).length;
+        const poor = data.filter(s => s.attendanceRate < 60).length;
+
+        classificationChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Xuất sắc (≥90%)', 'Tốt (80-89%)', 'Cảnh báo (60-79%)', 'Yếu kém (<60%)'],
+                datasets: [{
+                    label: 'Số sinh viên',
+                    data: [excellent, good, warning, poor],
+                    backgroundColor: [
+                        '#28a745',
+                        '#17a2b8',
+                        '#ffc107',
+                        '#dc3545'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Biểu đồ tỷ lệ điểm danh
+    function updateAttendanceChart(data) {
+        const ctx = document.getElementById('attendanceChart').getContext('2d');
+
+        if (attendanceChart) {
+            attendanceChart.destroy();
+        }
+
+        const totalPresent = data.reduce((sum, s) => sum + (s.presentCount || 0), 0);
+        const totalAbsent = data.reduce((sum, s) => sum + (s.absentCount || 0), 0);
+        const totalLate = data.reduce((sum, s) => sum + (s.lateCount || 0), 0);
+        const totalExcused = data.reduce((sum, s) => sum + (s.excusedCount || 0), 0);
+
+        attendanceChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Có mặt', 'Vắng mặt', 'Đi muộn', 'Vắng có phép'],
+                datasets: [{
+                    data: [totalPresent, totalAbsent, totalLate, totalExcused],
+                    backgroundColor: [
+                        '#28a745',
+                        '#dc3545',
+                        '#ffc107',
+                        '#17a2b8'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
     // Xuất Excel
     async function exportToExcel() {
         try {
             showLoading();
             const reportType = document.getElementById('reportType').value;
-            let url = `/api/diemdanh/export/excel/${currentClassId}`;
+            let url = `/lecturer/api/diemdanh/export/excel/${currentClassId}`;
 
             if (reportType === 'semester') {
-                const semester = document.getElementById('semester').value;
+                const semester = `${currentYear}-${currentSemester}`;
                 url += `?semester=${semester}`;
             } else {
                 const fromDate = document.getElementById('fromDate').value;
@@ -599,7 +639,7 @@
             hideLoading();
         } catch (error) {
             console.error('❌ Error exporting Excel:', error);
-            showNotification('Lỗi khi xuất file Excel', 'danger');
+            showNotification('Lỗi khi xuất file Excel: ' + error.message, 'danger');
             hideLoading();
         }
     }
@@ -616,16 +656,30 @@
 
     // Utility functions
     function showLoading() {
-        // Hiển thị loading spinner
+        document.getElementById('loadingOverlay').style.display = 'flex';
     }
 
     function hideLoading() {
-        // Ẩn loading spinner
+        document.getElementById('loadingOverlay').style.display = 'none';
     }
 
     function showNotification(message, type = 'info') {
-        // Hiển thị thông báo
-        console.log(`${type.toUpperCase()}: ${message}`);
+        // Tạo toast notification
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 10000; min-width: 300px;';
+        notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 5000);
     }
 </script>
 </body>
