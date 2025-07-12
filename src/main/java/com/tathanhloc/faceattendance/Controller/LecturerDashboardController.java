@@ -513,48 +513,6 @@ public class LecturerDashboardController {
     }
 
     /**
-     * Trang lịch giảng dạy (giữ nguyên method cũ với URL cũ)
-     */
-    @GetMapping("/lich-giangday")
-    public String lichGiangDay(Authentication authentication, Model model,
-                               @RequestParam(required = false) String week,
-                               @RequestParam(required = false) String month) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return "redirect:/?error=not_authenticated";
-        }
-
-        try {
-            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-
-            if (userDetails.getTaiKhoan().getGiangVien() == null) {
-                log.error("User has no lecturer profile: {}", userDetails.getUsername());
-                model.addAttribute("error", "Tài khoản không có thông tin giảng viên");
-                return "lecturer/lich-giangday";
-            }
-
-            String maGv = userDetails.getTaiKhoan().getGiangVien().getMaGv();
-            log.info("Loading teaching schedule for lecturer: {}", maGv);
-
-            // Lấy lịch giảng dạy của giảng viên
-            List<LichHocDTO> teachingSchedules = lichHocService.getByGiangVien(maGv);
-
-            model.addAttribute("currentUser", userDetails.getTaiKhoan());
-            model.addAttribute("teachingSchedules", teachingSchedules);
-            model.addAttribute("selectedWeek", week);
-            model.addAttribute("selectedMonth", month);
-            model.addAttribute("currentDate", LocalDate.now());
-
-            log.info("✅ Teaching schedule loaded for lecturer {}", maGv);
-            return "lecturer/lich-giangday";
-
-        } catch (Exception e) {
-            log.error("❌ Error loading teaching schedule", e);
-            model.addAttribute("error", "Không thể tải lịch giảng dạy: " + e.getMessage());
-            return "lecturer/lich-giangday";
-        }
-    }
-
-    /**
      * Trang danh sách sinh viên
      */
     @GetMapping("/danhsach-sinhvien")
@@ -786,6 +744,46 @@ public class LecturerDashboardController {
             log.error("❌ Error loading class details for {}", maLhp, e);
             model.addAttribute("error", "Không thể tải thông tin lớp học: " + e.getMessage());
             return "lecturer/chitiet-lophoc";
+        }
+    }
+
+    /**
+     * Trang lịch giảng dạy
+     */
+    @GetMapping("/lich-giangday")
+    public String lichGiangDay(Authentication authentication, Model model,
+                               @RequestParam(required = false) String view,
+                               @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate selectedDate) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/?error=not_authenticated";
+        }
+
+        try {
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+            if (userDetails.getTaiKhoan().getGiangVien() == null) {
+                model.addAttribute("error", "Tài khoản không có thông tin giảng viên");
+                return "lecturer/lich-giangday";
+            }
+
+            String maGv = userDetails.getTaiKhoan().getGiangVien().getMaGv();
+            log.info("Loading teaching schedule for lecturer: {}", maGv);
+
+            // Set default view
+            view = view != null ? view : "table";
+            selectedDate = selectedDate != null ? selectedDate : LocalDate.now();
+
+            model.addAttribute("currentUser", userDetails.getTaiKhoan());
+            model.addAttribute("currentView", view);
+            model.addAttribute("selectedDate", selectedDate);
+            model.addAttribute("maGv", maGv);
+
+            return "lecturer/lich-giangday";
+
+        } catch (Exception e) {
+            log.error("Error loading teaching schedule: {}", e.getMessage());
+            model.addAttribute("error", "Không thể tải lịch giảng dạy: " + e.getMessage());
+            return "lecturer/lich-giangday";
         }
     }
 }

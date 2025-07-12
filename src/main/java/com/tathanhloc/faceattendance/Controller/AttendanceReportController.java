@@ -43,7 +43,7 @@ public class AttendanceReportController {
      */
     @GetMapping("/baocao-diemdanh")
     public String baoCaoDiemDanh(Authentication authentication, Model model,
-                                 @RequestParam(required = false) String classId) {
+                                 @RequestParam(value = "class", required = false) String classId) { // Sửa ở đây
         if (authentication == null || !authentication.isAuthenticated()) {
             return "redirect:/?error=not_authenticated";
         }
@@ -51,6 +51,8 @@ public class AttendanceReportController {
         try {
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             String maGv = userDetails.getTaiKhoan().getGiangVien().getMaGv();
+
+            log.info("🔍 Loading attendance report for lecturer: {}, class: {}", maGv, classId);
 
             // Kiểm tra quyền truy cập nếu có classId
             if (classId != null && !classId.isEmpty()) {
@@ -60,12 +62,15 @@ public class AttendanceReportController {
                     return "lecturer/baocao-diemdanh";
                 }
                 model.addAttribute("lopHocPhan", lopHocPhan);
+                log.info("✅ Found class: {}", lopHocPhan.getTenMonHoc());
             }
 
             // Lấy danh sách lớp của giảng viên
             List<LopHocPhanDTO> myClasses = lopHocPhanService.getAll().stream()
                     .filter(lhp -> maGv.equals(lhp.getMaGv()) && Boolean.TRUE.equals(lhp.getIsActive()))
                     .collect(Collectors.toList());
+
+            log.info("📚 Found {} classes for lecturer", myClasses.size());
 
             model.addAttribute("currentUser", userDetails.getTaiKhoan());
             model.addAttribute("myClasses", myClasses);
@@ -74,7 +79,7 @@ public class AttendanceReportController {
             return "lecturer/baocao-diemdanh";
 
         } catch (Exception e) {
-            log.error("Error loading attendance report: {}", e.getMessage());
+            log.error("❌ Error loading attendance report: {}", e.getMessage(), e);
             model.addAttribute("error", "Không thể tải báo cáo điểm danh: " + e.getMessage());
             return "lecturer/baocao-diemdanh";
         }

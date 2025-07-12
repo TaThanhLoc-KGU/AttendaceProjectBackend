@@ -768,6 +768,7 @@ public class LichHocService {
                 .isActive(entity.isActive())
                 // Additional fields for display
                 .tenMonHoc(lhp.getMonHoc().getTenMh())
+                .maMh(lhp.getMonHoc().getMaMh())           // THÊM DÒNG NÀY
                 .tenGiangVien(lhp.getGiangVien().getHoTen())
                 .maGv(lhp.getGiangVien().getMaGv())
                 .tenPhong(phong.getTenPhong())

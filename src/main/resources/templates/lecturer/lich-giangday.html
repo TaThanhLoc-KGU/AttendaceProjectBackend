@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch giảng dạy - Face Attendance</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link th:href="@{/css/sidebar.css}" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-color: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-color: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-color: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --danger-color: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --border-radius: 15px;
+            --box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .main-content {
+            padding: 0;
+            background: transparent;
+        }
+
+        /* ===== HEADER STYLES ===== */
+        .page-header {
+            background: var(--primary-color);
+            margin: 2rem;
+            border-radius: var(--border-radius);
+            color: white;
+            padding: 2rem;
+            box-shadow: var(--box-shadow);
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        /* ===== CONTROLS STYLES ===== */
+        .controls-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin: 0 2rem 2rem 2rem;
+            box-shadow: var(--box-shadow);
+        }
+
+        .view-mode-toggle {
+            display: inline-flex;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 0.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .view-mode-toggle button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: #6c757d;
+        }
+
+        .view-mode-toggle button.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .view-mode-toggle button:hover:not(.active) {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        /* ===== SCHEDULE CALENDAR STYLES ===== */
+        .schedule-calendar {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            margin: 0 2rem 2rem 2rem;
+        }
+
+        .calendar-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .calendar-controls {
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .calendar-nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin: 0 0.25rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .calendar-grid {
+            display: flex;
+            min-height: 720px;
+        }
+
+        .time-column {
+            background: #f8f9fa;
+            border-right: 2px solid #e9ecef;
+            min-width: 120px;
+        }
+
+        .time-slot {
+            border-bottom: 1px solid #e9ecef;
+            padding: 0.75rem;
+            font-size: 0.875rem;
+            text-align: center;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            font-weight: 500;
+        }
+
+        .day-column {
+            border-right: 1px solid #e9ecef;
+            min-height: 720px;
+            position: relative;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .day-header {
+            background: #495057;
+            color: white;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1rem;
+            border-bottom: 2px solid #dee2e6;
+            position: relative;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .day-content {
+            position: relative;
+            height: 720px;
+            background: #fafafa;
+        }
+
+        /* ===== SCHEDULE ITEMS ===== */
+        .schedule-item {
+            position: absolute;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin: 3px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+            z-index: 10;
+            left: 6px;
+            right: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+            min-height: 54px; /* Tối thiểu cho 1 tiết (60px - 6px margin) */
+        }
+
+        .schedule-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            z-index: 15;
+        }
+
+        .schedule-item .title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+
+        .schedule-item .info {
+            font-size: 0.75rem;
+            opacity: 0.9;
+            line-height: 1.1;
+        }
+
+        .schedule-item .room {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        /* ===== TABLE VIEW STYLES ===== */
+        .admin-table-wrapper {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            margin: 0 2rem 2rem 2rem;
+        }
+
+        .admin-table-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-table-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .list-view-table {
+            margin: 0;
+        }
+
+        .list-view-table thead th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            padding: 1rem;
+            border: none;
+            text-align: center;
+        }
+
+        .list-view-table tbody td {
+            padding: 1rem;
+            text-align: center;
+            border-bottom: 1px solid #f1f3f4;
+            vertical-align: middle;
+        }
+
+        .list-view-table .schedule-row {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .list-view-table .schedule-row:hover {
+            background-color: rgba(102, 126, 234, 0.08);
+            transform: translateX(3px);
+            border-left-color: #667eea;
+        }
+
+        /* ===== STATS CARDS ===== */
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 0 2rem 2rem 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        /* ===== BADGES ===== */
+        .subject-badge {
+            background: var(--success-color);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .room-badge {
+            background: var(--warning-color);
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .semester-badge {
+            background: var(--secondary-color);
+            color: white;
+            padding: 0.25rem 0.6rem;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 0.75rem;
+        }
+
+        /* ===== LOADING & EMPTY STATES ===== */
+        .loading-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            margin: 0 auto 1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .page-header,
+            .controls-section,
+            .schedule-calendar,
+            .admin-table-wrapper {
+                margin: 1rem;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .stats-overview {
+                grid-template-columns: 1fr;
+                margin: 0 1rem 1rem 1rem;
+            }
+
+            .day-header {
+                padding: 1.2rem 0.5rem;
+                min-height: 70px;
+                font-size: 0.9rem;
+            }
+
+            .schedule-item {
+                font-size: 0.75rem;
+                padding: 8px 10px;
+                left: 4px;
+                right: 4px;
+            }
+
+            .schedule-item .title {
+                font-size: 0.8rem;
+            }
+
+            .schedule-item .info {
+                font-size: 0.7rem;
+            }
+
+            .list-view-table {
+                font-size: 0.9rem;
+            }
+
+            .list-view-table thead th,
+            .list-view-table tbody td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+        /* Modal Styles */
+        .info-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 100%;
+            border: 1px solid #e9ecef;
+        }
+
+        .info-title {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .info-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: #6c757d;
+            min-width: 100px;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: #495057;
+            text-align: right;
+            background: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            min-width: 100px;
+        }
+
+        .modal-header {
+            border-radius: 0;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .info-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.25rem;
+            }
+
+            .info-label {
+                min-width: auto;
+            }
+
+            .info-value {
+                width: 100%;
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="main-wrapper">
+    <!-- Include Sidebar Component -->
+    <div th:replace="~{components/sidebar :: sidebar}"></div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="page-title">
+                        <i class="fas fa-calendar-check me-3"></i>Lịch giảng dạy
+                    </h1>
+                    <p class="page-subtitle mb-0">
+                        Xem và quản lý lịch giảng dạy của bạn theo tuần hoặc danh sách
+                    </p>
+                </div>
+                <div>
+                    <button class="btn btn-light" onclick="exportSchedule()">
+                        <i class="fas fa-download me-2"></i>Xuất lịch
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Display -->
+        <div th:if="${error}" class="alert alert-danger mx-4">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="controls-section">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Chế độ xem:</label>
+                    <div class="view-mode-toggle">
+                        <button type="button" class="active" data-view="calendar" onclick="switchView('calendar')">
+                            <i class="fas fa-calendar me-2"></i>Lịch tuần
+                        </button>
+                        <button type="button" data-view="list" onclick="switchView('list')">
+                            <i class="fas fa-list me-2"></i>Danh sách
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Học kỳ:</label>
+                    <select class="form-select" id="semesterFilter">
+                        <option value="">Tất cả</option>
+                        <option value="1">Học kỳ 1</option>
+                        <option value="2">Học kỳ 2</option>
+                        <option value="3">Học kỳ hè</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Năm học:</label>
+                    <select class="form-select" id="yearFilter">
+                        <option value="">Tất cả</option>
+                        <option value="2024-2025" selected>2024-2025</option>
+                        <option value="2023-2024">2023-2024</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Môn học:</label>
+                    <select class="form-select" id="subjectFilter">
+                        <option value="">Tất cả môn</option>
+                        <!-- Will be populated by JavaScript -->
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary" onclick="loadScheduleData()">
+                            <i class="fas fa-search me-2"></i>Lọc
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="resetFilters()">
+                            <i class="fas fa-undo me-2"></i>Reset
+                        </button>
+                        <button class="btn btn-success" onclick="refreshData()">
+                            <i class="fas fa-sync-alt me-2"></i>Làm mới
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="stats-overview" id="statsOverview">
+            <!-- Will be populated by JavaScript -->
+        </div>
+
+        <!-- Calendar View -->
+        <div id="calendarViewContainer" class="schedule-calendar">
+            <div class="calendar-header">
+                <h4 class="mb-1" id="calendarTitle">Lịch tuần hiện tại</h4>
+                <div class="calendar-controls">
+                    <button class="calendar-nav-btn" onclick="previousWeek()">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="calendar-nav-btn" onclick="currentWeek()">
+                        <i class="fas fa-home"></i>
+                    </button>
+                    <button class="calendar-nav-btn" onclick="nextWeek()">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="calendar-grid">
+                <!-- Time Column -->
+                <!-- Time Column -->
+                <div class="time-column">
+                    <div class="day-header">Tiết học</div>
+                    <div class="time-slot">Tiết 1<br><small>7:00-7:50</small></div>
+                    <div class="time-slot">Tiết 2<br><small>7:55-8:45</small></div>
+                    <div class="time-slot">Tiết 3<br><small>8:50-9:40</small></div>
+                    <div class="time-slot">Tiết 4<br><small>9:45-10:35</small></div>
+                    <div class="time-slot">Tiết 5<br><small>10:40-11:30</small></div>
+                    <div class="time-slot">Tiết 6<br><small>13:00-13:50</small></div>
+                    <div class="time-slot">Tiết 7<br><small>13:55-14:45</small></div>
+                    <div class="time-slot">Tiết 8<br><small>14:50-15:40</small></div>
+                    <div class="time-slot">Tiết 9<br><small>15:45-16:35</small></div>
+                    <div class="time-slot">Tiết 10<br><small>16:40-17:30</small></div>
+                    <div class="time-slot">Tiết 11<br><small>18:00-18:50</small></div>
+                    <div class="time-slot">Tiết 12<br><small>18:55-19:45</small></div>
+                </div>
+
+                <!-- Day Columns -->
+                <div class="day-column" data-day="2">
+                    <div class="day-header">Thứ 2</div>
+                    <div class="day-content" id="day-2"></div>
+                </div>
+                <div class="day-column" data-day="3">
+                    <div class="day-header">Thứ 3</div>
+                    <div class="day-content" id="day-3"></div>
+                </div>
+                <div class="day-column" data-day="4">
+                    <div class="day-header">Thứ 4</div>
+                    <div class="day-content" id="day-4"></div>
+                </div>
+                <div class="day-column" data-day="5">
+                    <div class="day-header">Thứ 5</div>
+                    <div class="day-content" id="day-5"></div>
+                </div>
+                <div class="day-column" data-day="6">
+                    <div class="day-header">Thứ 6</div>
+                    <div class="day-content" id="day-6"></div>
+                </div>
+                <div class="day-column" data-day="7">
+                    <div class="day-header">Thứ 7</div>
+                    <div class="day-content" id="day-7"></div>
+                </div>
+                <div class="day-column" data-day="8">
+                    <div class="day-header">Chủ nhật</div>
+                    <div class="day-content" id="day-8"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- List View -->
+        <div id="listViewContainer" class="admin-table-wrapper" style="display: none;">
+            <div class="admin-table-header">
+                <h5 class="admin-table-title">
+                    <i class="fas fa-list me-2"></i>Danh sách lịch học
+                </h5>
+                <div class="table-actions">
+                    <button class="btn btn-light btn-sm me-2" onclick="refreshData()">
+                        <i class="fas fa-sync-alt me-1"></i>Làm mới
+                    </button>
+                    <button class="btn btn-light btn-sm" onclick="exportToExcel()">
+                        <i class="fas fa-file-excel me-1"></i>Xuất Excel
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table list-view-table mb-0">
+                    <thead>
+                    <tr>
+                        <th width="80">STT</th>
+                        <th width="100">Thứ</th>
+                        <th width="120">Tiết học</th>
+                        <th>Môn học</th>
+                        <th width="100">Lớp</th>
+                        <th width="100">Phòng</th>
+                        <th width="80">Số tiết</th>
+                        <th width="120">Học kỳ</th>
+                        <th width="100">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody id="scheduleTableBody">
+                    <!-- Will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Loading States -->
+        <div id="loadingState" class="loading-state" style="display: none;">
+            <div class="spinner-border loading-spinner text-primary" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+            </div>
+            <p>Đang tải lịch giảng dạy...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-calendar-times"></i>
+            <h4>Không có lịch giảng dạy</h4>
+            <p>Không tìm thấy lịch học nào với bộ lọc hiện tại</p>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Details Modal -->
+<div class="modal fade" id="scheduleDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--primary-color); color: white;">
+                <h5 class="modal-title">
+                    <i class="fas fa-calendar-alt me-2"></i>Chi tiết lịch giảng dạy
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-4">
+                    <!-- Subject Info -->
+                    <div class="col-md-6">
+                        <div class="info-card">
+                            <h6 class="info-title">
+                                <i class="fas fa-book me-2 text-primary"></i>Thông tin môn học
+                            </h6>
+                            <div class="info-content">
+                                <div class="info-item">
+                                    <span class="info-label">Tên môn học:</span>
+                                    <span class="info-value" id="modalSubjectName">N/A</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Mã môn học:</span>
+                                    <span class="info-value" id="modalSubjectCode">N/A</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Mã lớp:</span>
+                                    <span class="info-value" id="modalClassCode">N/A</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Nhóm:</span>
+                                    <span class="info-value" id="modalGroup">N/A</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Schedule Info -->
+                    <div class="col-md-6">
+                        <div class="info-card">
+                            <h6 class="info-title">
+                                <i class="fas fa-clock me-2 text-success"></i>Thông tin lịch học
+                            </h6>
+                            <div class="info-content">
+                                <div class="info-item">
+                                    <span class="info-label">Thứ:</span>
+                                    <span class="info-value" id="modalDay">N/A</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Tiết học:</span>
+                                    <span class="info-value" id="modalPeriods">N/A</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Số tiết:</span>
+                                    <span class="info-value" id="modalNumPeriods">N/A</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Thời gian:</span>
+                                    <span class="info-value" id="modalTime">N/A</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location Info -->
+                    <div class="col-md-6">
+                        <div class="info-card">
+                            <h6 class="info-title">
+                                <i class="fas fa-map-marker-alt me-2 text-warning"></i>Địa điểm
+                            </h6>
+                            <div class="info-content">
+                                <div class="info-item">
+                                    <span class="info-label">Phòng học:</span>
+                                    <span class="info-value" id="modalRoom">N/A</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Mã phòng:</span>
+                                    <span class="info-value" id="modalRoomCode">N/A</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Academic Info -->
+                    <div class="col-md-6">
+                        <div class="info-card">
+                            <h6 class="info-title">
+                                <i class="fas fa-graduation-cap me-2 text-info"></i>Học kỳ
+                            </h6>
+                            <div class="info-content">
+                                <div class="info-item">
+                                    <span class="info-label">Học kỳ:</span>
+                                    <span class="info-value" id="modalSemester">N/A</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Năm học:</span>
+                                    <span class="info-value" id="modalAcademicYear">N/A</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Đóng
+                </button>
+                <button type="button" class="btn btn-primary" id="viewClassDetailsBtn">
+                    <i class="fas fa-eye me-2"></i>Xem chi tiết lớp
+                </button>
+                <button type="button" class="btn btn-success" onclick="openAttendanceFromModal()">
+                    <i class="fas fa-user-check me-2"></i>Điểm danh
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Data -->
+<input type="hidden" th:value="${maGv}" id="hiddenMaGv">
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/sidebar.js}"></script>
+
+<script>
+    // Global State
+    const globalState = {
+        currentViewMode: 'calendar',
+        scheduleData: [],
+        filteredData: [],
+        currentWeek: 0,
+        maGv: document.getElementById('hiddenMaGv')?.value || '',
+        lastRefresh: null
+    };
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeApplication();
+    });
+
+    function initializeApplication() {
+        console.log('🚀 Initializing Teaching Schedule Application');
+        console.log('👨‍🏫 Lecturer ID:', globalState.maGv);
+
+        bindEventListeners();
+        loadScheduleData();
+    }
+
+    function bindEventListeners() {
+        // Filter changes
+        document.getElementById('semesterFilter').addEventListener('change', loadScheduleData);
+        document.getElementById('yearFilter').addEventListener('change', loadScheduleData);
+        document.getElementById('subjectFilter').addEventListener('change', loadScheduleData);
+    }
+
+    async function loadScheduleData() {
+        try {
+            showLoading(true);
+            showEmptyState(false);
+
+            const semester = document.getElementById('semesterFilter').value;
+            const year = document.getElementById('yearFilter').value;
+            const subject = document.getElementById('subjectFilter').value;
+
+            // Build API URL
+            let url = `/api/lichhoc/by-giangvien/${globalState.maGv}`;
+            const params = new URLSearchParams();
+            if (semester) params.append('semester', semester);
+            if (year) params.append('year', year);
+            if (subject) params.append('subject', subject);
+            if (params.toString()) url += '?' + params.toString();
+
+            console.log('📡 Loading schedule data from:', url);
+
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            globalState.scheduleData = await response.json();
+            globalState.filteredData = [...globalState.scheduleData];
+
+            console.log('✅ Loaded', globalState.scheduleData.length, 'schedule items');
+
+            // Debug: Log structure of first item
+            if (globalState.scheduleData.length > 0) {
+                console.log('📋 First schedule item:', globalState.scheduleData[0]);
+                console.log('🔤 Available fields:', Object.keys(globalState.scheduleData[0]));
+            }
+
+            // Populate subject filter
+            populateSubjectFilter();
+
+            // Render statistics
+            renderStatistics();
+
+            // Render current view
+            renderCurrentView();
+
+            globalState.lastRefresh = new Date();
+
+        } catch (error) {
+            console.error('❌ Error loading schedule:', error);
+            showError('Không thể tải lịch giảng dạy: ' + error.message);
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    function populateSubjectFilter() {
+        const subjectFilter = document.getElementById('subjectFilter');
+        const currentValue = subjectFilter.value;
+
+        // Get unique subjects
+        const subjects = [...new Set(globalState.scheduleData.map(item => ({
+            maMh: item.maMh,
+            tenMonHoc: item.tenMonHoc
+        })).filter(s => s.maMh))];
+
+        // Clear existing options (except "Tất cả môn")
+        subjectFilter.innerHTML = '<option value="">Tất cả môn</option>';
+
+        // Add subject options
+        subjects.forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject.maMh;
+            option.textContent = `${subject.tenMonHoc} (${subject.maMh})`;
+            subjectFilter.appendChild(option);
+        });
+
+        // Restore previous selection
+        subjectFilter.value = currentValue;
+    }
+
+    function renderStatistics() {
+        const totalClasses = globalState.filteredData.length;
+        const uniqueSubjects = new Set(globalState.filteredData.map(item => item.maMh)).size;
+        const totalPeriods = globalState.filteredData.reduce((sum, item) => sum + (item.soTiet || 0), 0);
+        const uniqueRooms = new Set(globalState.filteredData.map(item => item.maPhong)).size;
+
+        document.getElementById('statsOverview').innerHTML = `
+        <div class="stat-card">
+            <div class="stat-number">${totalClasses}</div>
+            <div class="stat-label">Tổng số lớp</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">${uniqueSubjects}</div>
+            <div class="stat-label">Môn học</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">${totalPeriods}</div>
+            <div class="stat-label">Tổng tiết dạy</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">${uniqueRooms}</div>
+            <div class="stat-label">Phòng học</div>
+        </div>
+    `;
+    }
+
+    function switchView(viewMode) {
+        globalState.currentViewMode = viewMode;
+
+        // Update active button
+        document.querySelectorAll('.view-mode-toggle button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-view="${viewMode}"]`).classList.add('active');
+
+        // Toggle views
+        const calendarView = document.getElementById('calendarViewContainer');
+        const listView = document.getElementById('listViewContainer');
+
+        if (viewMode === 'calendar') {
+            calendarView.style.display = 'block';
+            listView.style.display = 'none';
+            renderCalendarView();
+        } else {
+            calendarView.style.display = 'none';
+            listView.style.display = 'block';
+            renderListView();
+        }
+    }
+
+    function renderCurrentView() {
+        if (globalState.filteredData.length === 0) {
+            showEmptyState(true);
+            return;
+        }
+
+        showEmptyState(false);
+
+        if (globalState.currentViewMode === 'calendar') {
+            renderCalendarView();
+        } else {
+            renderListView();
+        }
+    }
+
+    function renderCalendarView() {
+        // Clear all day contents
+        for (let day = 2; day <= 8; day++) {
+            const dayContent = document.getElementById(`day-${day}`);
+            if (dayContent) {
+                dayContent.innerHTML = '';
+            }
+        }
+
+        // Render schedule items
+        globalState.filteredData.forEach(schedule => {
+            const dayContent = document.getElementById(`day-${schedule.thu}`);
+            if (!dayContent) return;
+
+            const scheduleItem = createScheduleItem(schedule);
+            dayContent.appendChild(scheduleItem);
+        });
+
+        // Update calendar title
+        updateCalendarTitle();
+    }
+
+    function createScheduleItem(schedule) {
+        const item = document.createElement('div');
+        item.className = 'schedule-item';
+
+        // Safe fallback values
+        const tenMonHoc = schedule.tenMonHoc || schedule.maMh || 'Môn học';
+        const maLhp = schedule.maLhp || 'N/A';
+        const tenPhong = schedule.tenPhong || schedule.maPhong || 'N/A';
+        const tietBatDau = schedule.tietBatDau || 1;
+        const soTiet = schedule.soTiet || 1;
+
+        // Calculate position: mỗi tiết 60px, bắt đầu từ tiết 1
+        const top = (tietBatDau - 1) * 60;
+        const height = soTiet * 60 - 6; // -6 for margins between items
+
+        item.style.top = `${top}px`;
+        item.style.height = `${height}px`;
+
+        // Calculate time for display
+        const timeRange = calculateTimeRange(tietBatDau, soTiet);
+
+        item.innerHTML = `
+        <div class="title">${tenMonHoc}</div>
+        <div class="info">
+            Lớp: ${maLhp}<br>
+            Tiết: ${tietBatDau}-${tietBatDau + soTiet - 1}<br>
+            <small>${timeRange}</small>
+        </div>
+        <div class="room">${tenPhong}</div>
+    `;
+
+        // Add click event
+        item.addEventListener('click', () => showScheduleDetailsModal(schedule));
+
+        return item;
+    }
+    function validatePeriod(tietBatDau, soTiet) {
+        const maxPeriod = 12;
+        const endPeriod = tietBatDau + soTiet - 1;
+
+        if (tietBatDau < 1 || tietBatDau > maxPeriod) {
+            console.warn(`Invalid start period: ${tietBatDau}`);
+            return false;
+        }
+
+        if (endPeriod > maxPeriod) {
+            console.warn(`Period extends beyond max: ${endPeriod} > ${maxPeriod}`);
+            return false;
+        }
+
+        return true;
+    }
+
+    // Sử dụng trong createScheduleItem
+    function createScheduleItem(schedule) {
+        const item = document.createElement('div');
+        item.className = 'schedule-item';
+
+        const tenMonHoc = schedule.tenMonHoc || schedule.maMh || 'Môn học';
+        const maLhp = schedule.maLhp || 'N/A';
+        const tenPhong = schedule.tenPhong || schedule.maPhong || 'N/A';
+        const tietBatDau = schedule.tietBatDau || 1;
+        const soTiet = schedule.soTiet || 1;
+
+        // Validate period
+        if (!validatePeriod(tietBatDau, soTiet)) {
+            console.error('Invalid schedule period:', schedule);
+            return null;
+        }
+
+        // Rest of the function remains the same...
+    }
+
+    function renderListView() {
+        const tbody = document.getElementById('scheduleTableBody');
+
+        if (globalState.filteredData.length === 0) {
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center text-muted py-4">
+                    <i class="fas fa-calendar-times fa-2x mb-2"></i><br>
+                    Không có dữ liệu lịch học
+                </td>
+            </tr>
+        `;
+            return;
+        }
+
+        // Debug: Log first item to see structure
+        console.log('📋 Sample schedule item structure:', globalState.filteredData[0]);
+
+        // Sort by day then by period
+        const sortedData = [...globalState.filteredData].sort((a, b) => {
+            if (a.thu !== b.thu) return a.thu - b.thu;
+            return a.tietBatDau - b.tietBatDau;
+        });
+
+        tbody.innerHTML = sortedData.map((schedule, index) => {
+            // Safe fallback values with debug info
+            const tenMonHoc = schedule.tenMonHoc || 'Chưa có tên môn';
+            const maMh = schedule.maMh || schedule.maMh || 'N/A';
+            const maLhp = schedule.maLhp || 'N/A';
+            const tenPhong = schedule.tenPhong || schedule.maPhong || 'N/A';
+            const hocKy = schedule.hocKy || 'N/A';
+            const namHoc = schedule.namHoc || 'N/A';
+            const soTiet = schedule.soTiet || 1;
+            const tietBatDau = schedule.tietBatDau || 1;
+            const thu = schedule.thu || 2;
+
+            // Debug log for missing maMh
+            if (!schedule.maMh) {
+                console.warn('⚠️ Missing maMh for schedule:', {
+                    maLich: schedule.maLich,
+                    tenMonHoc: schedule.tenMonHoc,
+                    maLhp: schedule.maLhp,
+                    availableFields: Object.keys(schedule)
+                });
+            }
+
+            return `
+            <tr class="schedule-row" onclick="showScheduleDetailsModal(${JSON.stringify(schedule).replace(/"/g, '&quot;')})">
+                <td class="fw-bold">${index + 1}</td>
+                <td class="fw-bold">${getDayName(thu)}</td>
+                <td>
+                    <span class="badge bg-primary">
+                        Tiết ${tietBatDau}-${tietBatDau + soTiet - 1}
+                    </span>
+                </td>
+                <td>
+                    <div class="text-start">
+                        <div class="fw-bold">${tenMonHoc}</div>
+                        <small class="text-muted">${maMh}</small>
+                    </div>
+                </td>
+                <td>
+                    <span class="subject-badge">${maLhp}</span>
+                </td>
+                <td>
+                    <span class="room-badge">${tenPhong}</span>
+                </td>
+                <td class="fw-bold">${soTiet}</td>
+                <td>
+                    <span class="semester-badge">HK${hocKy} - ${namHoc}</span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); showScheduleDetailsModal(${JSON.stringify(schedule).replace(/"/g, '&quot;')})">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        }).join('');
+    }
+
+    function populateSubjectFilter() {
+        const subjectFilter = document.getElementById('subjectFilter');
+        const currentValue = subjectFilter.value;
+
+        // Debug: Check what fields are available
+        console.log('🔍 Checking available subject fields:', globalState.scheduleData.map(item => ({
+            maMh: item.maMh,
+            tenMonHoc: item.tenMonHoc,
+            maLhp: item.maLhp,
+            availableFields: Object.keys(item).filter(key => key.includes('m') || key.includes('M'))
+        })).slice(0, 3));
+
+        // Get unique subjects - try both maMh and maLhp as fallback
+        const subjects = [...new Set(globalState.scheduleData
+            .map(item => {
+                const maMh = item.maMh || item.maLhp; // fallback to maLhp if maMh not available
+                const tenMonHoc = item.tenMonHoc || item.maLhp;
+                return maMh ? { maMh, tenMonHoc } : null;
+            })
+            .filter(s => s && s.maMh)
+        )];
+
+        console.log('📚 Found subjects:', subjects);
+
+        // Clear existing options (except "Tất cả môn")
+        subjectFilter.innerHTML = '<option value="">Tất cả môn</option>';
+
+        // Add subject options
+        subjects.forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject.maMh;
+            option.textContent = `${subject.tenMonHoc} (${subject.maMh})`;
+            subjectFilter.appendChild(option);
+        });
+
+        // Restore previous selection
+        subjectFilter.value = currentValue;
+    }
+
+    function showScheduleDetails(scheduleOrEvent) {
+        let schedule;
+
+        if (scheduleOrEvent && scheduleOrEvent.currentTarget) {
+            // Called from table row click
+            const row = scheduleOrEvent.currentTarget;
+            schedule = JSON.parse(row.getAttribute('data-schedule'));
+        } else {
+            // Called from calendar item click
+            schedule = scheduleOrEvent;
+        }
+
+        if (!schedule) return;
+
+        const details = `
+        📚 Môn học: ${schedule.tenMonHoc || 'N/A'} (${schedule.maMh || 'N/A'})
+        🏫 Lớp: ${schedule.maLhp}
+        📅 Thời gian: ${getDayName(schedule.thu)} - Tiết ${schedule.tietBatDau}-${schedule.tietBatDau + schedule.soTiet - 1}
+        🏢 Phòng: ${schedule.tenPhong || schedule.maPhong}
+        📖 Số tiết: ${schedule.soTiet}
+        📚 Học kỳ: HK${schedule.hocKy} - ${schedule.namHoc}
+    `;
+
+        alert(details);
+    }
+
+    function viewClassDetails(maLhp) {
+        window.location.href = `/lecturer/lophoc/${maLhp}`;
+    }
+
+    // Calendar Navigation
+    function previousWeek() {
+        globalState.currentWeek--;
+        updateCalendarTitle();
+    }
+
+    function currentWeek() {
+        globalState.currentWeek = 0;
+        updateCalendarTitle();
+    }
+
+    function nextWeek() {
+        globalState.currentWeek++;
+        updateCalendarTitle();
+    }
+
+    function updateCalendarTitle() {
+        const today = new Date();
+        const targetDate = new Date(today.getTime() + (globalState.currentWeek * 7 * 24 * 60 * 60 * 1000));
+
+        const startOfWeek = new Date(targetDate);
+        startOfWeek.setDate(targetDate.getDate() - targetDate.getDay() + 1);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+        const formatDate = (date) => {
+            return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+        };
+
+        document.getElementById('calendarTitle').textContent =
+            `Tuần ${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}`;
+    }
+
+    // Utility Functions
+    function getDayName(day) {
+        const days = ['', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+        return days[day] || 'N/A';
+    }
+
+    function resetFilters() {
+        document.getElementById('semesterFilter').value = '';
+        document.getElementById('yearFilter').value = '2024-2025';
+        document.getElementById('subjectFilter').value = '';
+        loadScheduleData();
+    }
+
+    function refreshData() {
+        console.log('🔄 Refreshing data...');
+        loadScheduleData();
+    }
+
+    function exportSchedule() {
+        exportToExcel();
+    }
+
+    function exportToExcel() {
+        if (globalState.filteredData.length === 0) {
+            alert('Không có dữ liệu để xuất');
+            return;
+        }
+
+        const data = globalState.filteredData;
+        let csvContent = "STT,Thứ,Tiết bắt đầu,Số tiết,Môn học,Mã môn,Lớp,Phòng,Học kỳ,Năm học\n";
+
+        data.forEach((item, index) => {
+            const dayName = getDayName(item.thu);
+            csvContent += `${index + 1},"${dayName}",${item.tietBatDau},${item.soTiet},"${item.tenMonHoc || ''}","${item.maMh || ''}","${item.maLhp}","${item.tenPhong || item.maPhong}","${item.hocKy}","${item.namHoc}"\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `lich-giangday-${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // UI State Management
+    function showLoading(show) {
+        const loadingState = document.getElementById('loadingState');
+        const calendarView = document.getElementById('calendarViewContainer');
+        const listView = document.getElementById('listViewContainer');
+
+        if (show) {
+            loadingState.style.display = 'block';
+            calendarView.style.display = 'none';
+            listView.style.display = 'none';
+        } else {
+            loadingState.style.display = 'none';
+            if (globalState.currentViewMode === 'calendar') {
+                calendarView.style.display = 'block';
+            } else {
+                listView.style.display = 'block';
+            }
+        }
+    }
+
+    function showEmptyState(show) {
+        const emptyState = document.getElementById('emptyState');
+        const calendarView = document.getElementById('calendarViewContainer');
+        const listView = document.getElementById('listViewContainer');
+
+        if (show) {
+            emptyState.style.display = 'block';
+            calendarView.style.display = 'none';
+            listView.style.display = 'none';
+        } else {
+            emptyState.style.display = 'none';
+        }
+    }
+
+    function showError(message) {
+        console.error('💥 Error:', message);
+
+        // Create and show alert
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show mx-4';
+        alertDiv.innerHTML = `
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+        // Insert after page header
+        const pageHeader = document.querySelector('.page-header');
+        pageHeader.insertAdjacentElement('afterend', alertDiv);
+
+        // Auto dismiss after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                const alert = new bootstrap.Alert(alertDiv);
+                alert.close();
+            }
+        }, 5000);
+    }
+
+
+    function renderListView() {
+        const tbody = document.getElementById('scheduleTableBody');
+
+        if (globalState.filteredData.length === 0) {
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center text-muted py-4">
+                    <i class="fas fa-calendar-times fa-2x mb-2"></i><br>
+                    Không có dữ liệu lịch học
+                </td>
+            </tr>
+        `;
+            return;
+        }
+
+        // Sort by day then by period
+        const sortedData = [...globalState.filteredData].sort((a, b) => {
+            if (a.thu !== b.thu) return a.thu - b.thu;
+            return a.tietBatDau - b.tietBatDau;
+        });
+
+        tbody.innerHTML = sortedData.map((schedule, index) => {
+            // Safe fallback values
+            const tenMonHoc = schedule.tenMonHoc || schedule.maMh || 'Chưa có tên';
+            const maMh = schedule.maMh || 'N/A';
+            const maLhp = schedule.maLhp || 'N/A';
+            const tenPhong = schedule.tenPhong || schedule.maPhong || 'N/A';
+            const hocKy = schedule.hocKy || 'N/A';
+            const namHoc = schedule.namHoc || 'N/A';
+            const soTiet = schedule.soTiet || 1;
+            const tietBatDau = schedule.tietBatDau || 1;
+            const thu = schedule.thu || 2;
+
+            return `
+            <tr class="schedule-row" onclick="showScheduleDetailsModal(${JSON.stringify(schedule).replace(/"/g, '&quot;')})">
+                <td class="fw-bold">${index + 1}</td>
+                <td class="fw-bold">${getDayName(thu)}</td>
+                <td>
+                    <span class="badge bg-primary">
+                        Tiết ${tietBatDau}-${tietBatDau + soTiet - 1}
+                    </span>
+                </td>
+                <td>
+                    <div class="text-start">
+                        <div class="fw-bold">${tenMonHoc}</div>
+                        <small class="text-muted">${maMh}</small>
+                    </div>
+                </td>
+                <td>
+                    <span class="subject-badge">${maLhp}</span>
+                </td>
+                <td>
+                    <span class="room-badge">${tenPhong}</span>
+                </td>
+                <td class="fw-bold">${soTiet}</td>
+                <td>
+                    <span class="semester-badge">HK${hocKy} - ${namHoc}</span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); showScheduleDetailsModal(${JSON.stringify(schedule).replace(/"/g, '&quot;')})">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        }).join('');
+    }
+
+    function createScheduleItem(schedule) {
+        const item = document.createElement('div');
+        item.className = 'schedule-item';
+
+        // Safe fallback values
+        const tenMonHoc = schedule.tenMonHoc || schedule.maMh || 'Môn học';
+        const maLhp = schedule.maLhp || 'N/A';
+        const tenPhong = schedule.tenPhong || schedule.maPhong || 'N/A';
+        const tietBatDau = schedule.tietBatDau || 1;
+        const soTiet = schedule.soTiet || 1;
+
+        // Calculate position (60px per period)
+        const top = (tietBatDau - 1) * 60;
+        const height = soTiet * 60 - 6; // -6 for margins
+
+        item.style.top = `${top}px`;
+        item.style.height = `${height}px`;
+
+        item.innerHTML = `
+        <div class="title">${tenMonHoc}</div>
+        <div class="info">
+            Lớp: ${maLhp}<br>
+            Tiết: ${tietBatDau}-${tietBatDau + soTiet - 1}
+        </div>
+        <div class="room">${tenPhong}</div>
+    `;
+
+        // Add click event
+        item.addEventListener('click', () => showScheduleDetailsModal(schedule));
+
+        return item;
+    }
+
+    function showScheduleDetailsModal(schedule) {
+        if (!schedule) {
+            console.error('No schedule data provided');
+            return;
+        }
+
+        // Safe fallback values
+        const tenMonHoc = schedule.tenMonHoc || schedule.maMh || 'Chưa có tên';
+        const maMh = schedule.maMh || 'N/A';
+        const maLhp = schedule.maLhp || 'N/A';
+        const nhom = schedule.nhom || 'N/A';
+        const thu = schedule.thu || 2;
+        const tietBatDau = schedule.tietBatDau || 1;
+        const soTiet = schedule.soTiet || 1;
+        const tenPhong = schedule.tenPhong || 'N/A';
+        const maPhong = schedule.maPhong || 'N/A';
+        const hocKy = schedule.hocKy || 'N/A';
+        const namHoc = schedule.namHoc || 'N/A';
+
+        // Calculate time range
+        const timeRange = calculateTimeRange(tietBatDau, soTiet);
+
+        // Populate modal data
+        document.getElementById('modalSubjectName').textContent = tenMonHoc;
+        document.getElementById('modalSubjectCode').textContent = maMh;
+        document.getElementById('modalClassCode').textContent = maLhp;
+        document.getElementById('modalGroup').textContent = nhom;
+        document.getElementById('modalDay').textContent = getDayName(thu);
+        document.getElementById('modalPeriods').textContent = `Tiết ${tietBatDau} - ${tietBatDau + soTiet - 1}`;
+        document.getElementById('modalNumPeriods').textContent = `${soTiet} tiết`;
+        document.getElementById('modalTime').textContent = timeRange;
+        document.getElementById('modalRoom').textContent = tenPhong;
+        document.getElementById('modalRoomCode').textContent = maPhong;
+        document.getElementById('modalSemester').textContent = `Học kỳ ${hocKy}`;
+        document.getElementById('modalAcademicYear').textContent = namHoc;
+
+        // Set up view class details button
+        const viewClassBtn = document.getElementById('viewClassDetailsBtn');
+        viewClassBtn.onclick = () => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('scheduleDetailsModal'));
+            modal.hide();
+            window.location.href = `/lecturer/lophoc/${maLhp}`;
+        };
+
+        // Store current schedule for other actions
+        window.currentSchedule = schedule;
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('scheduleDetailsModal'));
+        modal.show();
+    }
+
+    function calculateTimeRange(tietBatDau, soTiet) {
+        // Chuẩn thời gian tiết học: tiết 1 bắt đầu 7:00, mỗi tiết 50 phút
+        const periodTimes = {
+            1: { start: '07:00', end: '07:50' },
+            2: { start: '07:55', end: '08:45' },
+            3: { start: '08:50', end: '09:40' },
+            4: { start: '09:45', end: '10:35' },
+            5: { start: '10:40', end: '11:30' },
+            6: { start: '13:00', end: '13:50' }, // Nghỉ trưa từ 11:30-13:00
+            7: { start: '13:55', end: '14:45' },
+            8: { start: '14:50', end: '15:40' },
+            9: { start: '15:45', end: '16:35' },
+            10: { start: '16:40', end: '17:30' },
+            11: { start: '18:00', end: '18:50' }, // Nghỉ tối từ 17:30-18:00
+            12: { start: '18:55', end: '19:45' }
+        };
+
+        if (!periodTimes[tietBatDau]) {
+            return 'Thời gian không xác định';
+        }
+
+        const startTime = periodTimes[tietBatDau].start;
+        const endPeriod = tietBatDau + soTiet - 1;
+
+        if (!periodTimes[endPeriod]) {
+            return `${startTime} - ?`;
+        }
+
+        const endTime = periodTimes[endPeriod].end;
+        return `${startTime} - ${endTime}`;
+    }
+
+    function openAttendanceFromModal() {
+        if (window.currentSchedule) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('scheduleDetailsModal'));
+            modal.hide();
+            // Redirect to attendance page for this class
+            window.location.href = `/lecturer/lophoc/${window.currentSchedule.maLhp}`;
+        }
+    }
+
+    // Remove old functions and replace with new ones
+    function showScheduleDetails(scheduleOrEvent) {
+        // This function is now deprecated, redirect to modal version
+        let schedule;
+
+        if (scheduleOrEvent && scheduleOrEvent.currentTarget) {
+            const row = scheduleOrEvent.currentTarget;
+            schedule = JSON.parse(row.getAttribute('data-schedule'));
+        } else {
+            schedule = scheduleOrEvent;
+        }
+
+        showScheduleDetailsModal(schedule);
+    }
+
+    function viewClassDetails(maLhp) {
+        // Instead of direct redirect, show modal first
+        const schedule = globalState.filteredData.find(s => s.maLhp === maLhp);
+        if (schedule) {
+            showScheduleDetailsModal(schedule);
+        } else {
+            window.location.href = `/lecturer/lophoc/${maLhp}`;
+        }
+    }
+
+    // Make functions globally accessible
+    window.switchView = switchView;
+    window.loadScheduleData = loadScheduleData;
+    window.resetFilters = resetFilters;
+    window.refreshData = refreshData;
+    window.exportSchedule = exportSchedule;
+    window.exportToExcel = exportToExcel;
+    window.previousWeek = previousWeek;
+    window.currentWeek = currentWeek;
+    window.nextWeek = nextWeek;
+    window.showScheduleDetails = showScheduleDetails;
+    window.viewClassDetails = viewClassDetails;
+</script>
+
+</body>
+</html>

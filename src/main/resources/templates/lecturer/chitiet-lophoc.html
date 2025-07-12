@@ -494,10 +494,10 @@
         <i class="fas fa-edit"></i>
         Điểm danh thủ công
       </button>
-      <a th:href="@{'/lecturer/baocao-diemdanh?class=' + ${lopHocPhan.maLhp}}" class="btn-action btn-secondary-action">
+      <button class="btn-action btn-secondary-action" onclick="openAttendanceReport()">
         <i class="fas fa-chart-bar"></i>
         Báo cáo điểm danh
-      </a>
+      </button>
       <button class="btn-action btn-secondary-action" onclick="exportStudentList()">
         <i class="fas fa-download"></i>
         Xuất danh sách
@@ -671,7 +671,143 @@
     </div>
   </div>
 </div>
+<!-- Attendance Report Modal -->
+<div class="modal fade" id="attendanceReportModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header" style="background: var(--primary-gradient); color: white;">
+        <h5 class="modal-title">
+          <i class="fas fa-chart-line me-2"></i>
+          Báo cáo điểm danh - <span id="reportClassName"></span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
 
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <!-- Loading State -->
+        <div id="reportLoading" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Đang tải...</span>
+          </div>
+          <p class="mt-3 text-muted">Đang tạo báo cáo điểm danh...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="reportError" class="alert alert-danger" style="display: none;">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <span id="reportErrorMessage"></span>
+        </div>
+
+        <!-- Report Content -->
+        <div id="reportContent" style="display: none;">
+          <!-- Semester Summary -->
+          <div class="row mb-4">
+            <div class="col-md-12">
+              <div class="card border-0" style="background: linear-gradient(135deg, #f8f9ff 0%, #e3f2fd 100%);">
+                <div class="card-body">
+                  <h6 class="card-title text-primary">
+                    <i class="fas fa-calendar-alt me-2"></i>Thông tin học kỳ
+                  </h6>
+                  <div id="semesterSummary" class="row g-3">
+                    <!-- Will be populated by JS -->
+                  </div>
+
+                  <!-- Progress Bar -->
+                  <div class="mt-3" id="semesterProgress">
+                    <!-- Will be populated by JS -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Statistics Cards -->
+          <div class="row mb-4" id="statsCards">
+            <!-- Will be populated by JS -->
+          </div>
+
+          <!-- Students Table -->
+          <div class="card border-0">
+            <div class="card-header bg-light">
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <h6 class="mb-0">
+                    <i class="fas fa-users me-2"></i>Chi tiết điểm danh sinh viên
+                  </h6>
+                </div>
+                <div class="col-md-6 text-end">
+                  <button class="btn btn-success btn-sm" onclick="exportReportData()">
+                    <i class="fas fa-download me-1"></i>Xuất Excel
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover mb-0" id="studentsReportTable">
+                  <thead class="table-light">
+                  <tr>
+                    <th width="60">STT</th>
+                    <th width="100">Mã SV</th>
+                    <th>Họ tên</th>
+                    <th width="80">Tổng buổi</th>
+                    <th width="80">Có mặt</th>
+                    <th width="80">Vắng</th>
+                    <th width="80">Trễ</th>
+                    <th width="80">Có phép</th>
+                    <th width="100">Tỷ lệ (%)</th>
+                    <th width="100">Xếp hạng</th>
+                  </tr>
+                  </thead>
+                  <tbody id="studentsReportBody">
+                  <!-- Will be populated by JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="row mt-4" id="chartsRow">
+            <div class="col-md-6">
+              <div class="card border-0">
+                <div class="card-header bg-light">
+                  <h6 class="mb-0">
+                    <i class="fas fa-pie-chart me-2"></i>Thống kê tổng quan
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <canvas id="overviewChart" width="400" height="300"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card border-0">
+                <div class="card-header bg-light">
+                  <h6 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Top sinh viên
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <canvas id="topStudentsChart" width="400" height="300"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-2"></i>Đóng
+        </button>
+        <button type="button" class="btn btn-primary" onclick="printReport()">
+          <i class="fas fa-print me-2"></i>In báo cáo
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script th:src="@{/js/sidebar.js}"></script>
@@ -1500,8 +1636,443 @@
       console.error('❌ Network error:', error);
     }
   }
+  // Global variables
+  let reportData = null;
+  let overviewChart = null;
+  let topStudentsChart = null;
 
+  /**
+   * Mở modal báo cáo điểm danh
+   */
+  async function openAttendanceReport() {
+    const maLhp = document.getElementById('currentClassId')?.value;
+    const className = document.querySelector('.class-title')?.textContent;
 
+    if (!maLhp) {
+      alert('Không tìm thấy mã lớp học phần');
+      return;
+    }
+
+    // Set class name và show modal
+    document.getElementById('reportClassName').textContent = className || maLhp;
+
+    const modal = new bootstrap.Modal(document.getElementById('attendanceReportModal'));
+    modal.show();
+
+    // Reset states
+    showReportLoading(true);
+    showReportError(false);
+    showReportContent(false);
+
+    try {
+      // Call API
+      const response = await fetch(`/lecturer/api/attendance-report/${maLhp}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      reportData = await response.json();
+
+      if (!reportData.success) {
+        throw new Error('Dữ liệu báo cáo không hợp lệ');
+      }
+
+      // Render report
+      renderAttendanceReport();
+
+      showReportLoading(false);
+      showReportContent(true);
+
+    } catch (error) {
+      console.error('Error loading attendance report:', error);
+      showReportLoading(false);
+      showReportError(true, 'Không thể tải báo cáo: ' + error.message);
+    }
+  }
+
+  /**
+   * Render báo cáo điểm danh
+   */
+  function renderAttendanceReport() {
+    if (!reportData) return;
+
+    const { semesterInfo, attendanceStats } = reportData;
+
+    // Render semester summary
+    renderSemesterSummary(semesterInfo);
+
+    // Render statistics cards
+    renderStatsCards(attendanceStats);
+
+    // Render students table
+    renderStudentsTable(attendanceStats.studentStats || []);
+
+    // Render charts
+    renderReportCharts(attendanceStats.studentStats || []);
+  }
+
+  /**
+   * Render thông tin học kỳ
+   */
+  function renderSemesterSummary(semesterInfo) {
+    const {
+      totalWeeks, sessionsPerWeek, totalExpectedSessions,
+      completedSessions, progressByTime, remainingDays,
+      avgAttendanceRate, ngayBatDau, ngayKetThuc
+    } = semesterInfo;
+
+    // Summary stats
+    document.getElementById('semesterSummary').innerHTML = `
+        <div class="col-md-3">
+            <div class="text-center">
+                <div class="h4 text-primary mb-1">${totalWeeks || 0}</div>
+                <small class="text-muted">Tổng tuần học</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="text-center">
+                <div class="h4 text-success mb-1">${completedSessions || 0}/${totalExpectedSessions || 0}</div>
+                <small class="text-muted">Buổi học</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="text-center">
+                <div class="h4 text-warning mb-1">${avgAttendanceRate || 0}%</div>
+                <small class="text-muted">Tỷ lệ TB</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="text-center">
+                <div class="h4 text-info mb-1">${remainingDays || 0}</div>
+                <small class="text-muted">Ngày còn lại</small>
+            </div>
+        </div>
+    `;
+
+    // Progress bar
+    document.getElementById('semesterProgress').innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <small class="text-muted">Tiến độ học kỳ</small>
+            <span class="badge bg-primary">${progressByTime || 0}%</span>
+        </div>
+        <div class="progress" style="height: 20px;">
+            <div class="progress-bar bg-gradient"
+                 style="width: ${progressByTime || 0}%"
+                 role="progressbar">
+                ${completedSessions || 0}/${totalExpectedSessions || 0} buổi
+            </div>
+        </div>
+        <div class="d-flex justify-content-between mt-2">
+            <small class="text-muted">
+                <i class="fas fa-calendar-day me-1"></i>
+                ${formatDate(ngayBatDau)} - ${formatDate(ngayKetThuc)}
+            </small>
+            <small class="text-muted">
+                ${sessionsPerWeek || 0} buổi/tuần
+            </small>
+        </div>
+    `;
+  }
+
+  /**
+   * Render thẻ thống kê
+   */
+  function renderStatsCards(attendanceStats) {
+    const totalStudents = attendanceStats.totalStudents || 0;
+    const avgPresentRate = attendanceStats.averagePresentRate || 0;
+
+    // Calculate totals from student stats
+    const students = attendanceStats.studentStats || [];
+    const totals = students.reduce((acc, student) => {
+      acc.present += student.presentCount || 0;
+      acc.absent += student.absentCount || 0;
+      acc.late += student.lateCount || 0;
+      acc.excused += student.excusedCount || 0;
+      return acc;
+    }, { present: 0, absent: 0, late: 0, excused: 0 });
+
+    document.getElementById('statsCards').innerHTML = `
+        <div class="col-md-3">
+            <div class="card border-0 bg-success bg-opacity-10">
+                <div class="card-body text-center">
+                    <div class="h3 text-success mb-1">${totals.present}</div>
+                    <small class="text-muted">Lượt có mặt</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 bg-danger bg-opacity-10">
+                <div class="card-body text-center">
+                    <div class="h3 text-danger mb-1">${totals.absent}</div>
+                    <small class="text-muted">Lượt vắng mặt</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 bg-warning bg-opacity-10">
+                <div class="card-body text-center">
+                    <div class="h3 text-warning mb-1">${totals.late}</div>
+                    <small class="text-muted">Lượt đi trễ</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 bg-info bg-opacity-10">
+                <div class="card-body text-center">
+                    <div class="h3 text-info mb-1">${totalStudents}</div>
+                    <small class="text-muted">Tổng sinh viên</small>
+                </div>
+            </div>
+        </div>
+    `;
+  }
+
+  /**
+   * Render bảng sinh viên
+   */
+  function renderStudentsTable(students) {
+    // Sort by attendance rate
+    students.sort((a, b) => (b.presentRate || 0) - (a.presentRate || 0));
+
+    const tbody = document.getElementById('studentsReportBody');
+    tbody.innerHTML = students.map((student, index) => {
+      const rank = getAttendanceRank(student.presentRate || 0);
+      const rankClass = getRankBadgeClass(student.presentRate || 0);
+
+      return `
+            <tr>
+                <td class="text-center">${index + 1}</td>
+                <td class="fw-bold">${student.maSv || 'N/A'}</td>
+                <td>${student.hoTen || 'N/A'}</td>
+                <td class="text-center">${student.totalSessions || 0}</td>
+                <td class="text-center text-success fw-bold">${student.presentCount || 0}</td>
+                <td class="text-center text-danger fw-bold">${student.absentCount || 0}</td>
+                <td class="text-center text-warning fw-bold">${student.lateCount || 0}</td>
+                <td class="text-center text-info fw-bold">${student.excusedCount || 0}</td>
+                <td class="text-center">
+                    <span class="badge ${rankClass}">${student.presentRate || 0}%</span>
+                </td>
+                <td class="text-center">
+                    <span class="badge ${rankClass}">${rank}</span>
+                </td>
+            </tr>
+        `;
+    }).join('');
+  }
+
+  /**
+   * Render biểu đồ
+   */
+  function renderReportCharts(students) {
+    // Destroy existing charts
+    if (overviewChart) {
+      overviewChart.destroy();
+    }
+    if (topStudentsChart) {
+      topStudentsChart.destroy();
+    }
+
+    // Overview pie chart
+    renderOverviewPieChart(students);
+
+    // Top students bar chart
+    renderTopStudentsChart(students);
+  }
+
+  /**
+   * Biểu đồ tròn tổng quan
+   */
+  function renderOverviewPieChart(students) {
+    const ctx = document.getElementById('overviewChart').getContext('2d');
+
+    const totals = students.reduce((acc, student) => {
+      acc.present += student.presentCount || 0;
+      acc.absent += student.absentCount || 0;
+      acc.late += student.lateCount || 0;
+      acc.excused += student.excusedCount || 0;
+      return acc;
+    }, { present: 0, absent: 0, late: 0, excused: 0 });
+
+    overviewChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Có mặt', 'Vắng mặt', 'Đi trễ', 'Có phép'],
+        datasets: [{
+          data: [totals.present, totals.absent, totals.late, totals.excused],
+          backgroundColor: ['#28a745', '#dc3545', '#ffc107', '#17a2b8'],
+          borderWidth: 2,
+          borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    });
+  }
+
+  /**
+   * Biểu đồ top sinh viên
+   */
+  function renderTopStudentsChart(students) {
+    const ctx = document.getElementById('topStudentsChart').getContext('2d');
+
+    // Get top 10 students
+    const topStudents = students.slice(0, 10);
+
+    topStudentsChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: topStudents.map(s => s.hoTen || s.maSv),
+        datasets: [{
+          label: 'Tỷ lệ điểm danh (%)',
+          data: topStudents.map(s => s.presentRate || 0),
+          backgroundColor: 'rgba(102, 126, 234, 0.8)',
+          borderColor: 'rgba(102, 126, 234, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              callback: function(value) {
+                return value + '%';
+              }
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
+      }
+    });
+  }
+
+  /**
+   * Helper functions
+   */
+  function getAttendanceRank(rate) {
+    if (rate >= 90) return 'Xuất sắc';
+    if (rate >= 80) return 'Tốt';
+    if (rate >= 70) return 'Khá';
+    if (rate >= 60) return 'Trung bình';
+    return 'Yếu';
+  }
+
+  function getRankBadgeClass(rate) {
+    if (rate >= 90) return 'bg-success';
+    if (rate >= 80) return 'bg-primary';
+    if (rate >= 70) return 'bg-info';
+    if (rate >= 60) return 'bg-warning';
+    return 'bg-danger';
+  }
+
+  function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('vi-VN');
+    } catch (e) {
+      return dateString;
+    }
+  }
+
+  function showReportLoading(show) {
+    document.getElementById('reportLoading').style.display = show ? 'block' : 'none';
+  }
+
+  function showReportError(show, message = '') {
+    const errorDiv = document.getElementById('reportError');
+    errorDiv.style.display = show ? 'block' : 'none';
+    if (show && message) {
+      document.getElementById('reportErrorMessage').textContent = message;
+    }
+  }
+
+  function showReportContent(show) {
+    document.getElementById('reportContent').style.display = show ? 'block' : 'none';
+  }
+
+  /**
+   * Xuất dữ liệu Excel
+   */
+  function exportReportData() {
+    if (!reportData || !reportData.attendanceStats) {
+      alert('Không có dữ liệu để xuất');
+      return;
+    }
+
+    const students = reportData.attendanceStats.studentStats || [];
+    const className = document.getElementById('reportClassName').textContent;
+
+    let csvContent = "STT,Mã SV,Họ tên,Tổng buổi,Có mặt,Vắng,Trễ,Có phép,Tỷ lệ %,Xếp hạng\n";
+
+    students.forEach((student, index) => {
+      const rank = getAttendanceRank(student.presentRate || 0);
+      csvContent += `${index + 1},"${student.maSv}","${student.hoTen}",${student.totalSessions},${student.presentCount},${student.absentCount},${student.lateCount},${student.excusedCount},${student.presentRate},"${rank}"\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `baocao-diemdanh-${className.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  /**
+   * In báo cáo
+   */
+  function printReport() {
+    const modal = document.getElementById('attendanceReportModal');
+    const modalContent = modal.querySelector('.modal-content').cloneNode(true);
+
+    // Remove modal-specific elements
+    modalContent.querySelector('.modal-header .btn-close').remove();
+    modalContent.querySelector('.modal-footer').remove();
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>Báo cáo điểm danh</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+            <style>
+                body { font-size: 12px; }
+                @media print {
+                    .modal-header { background: #667eea !important; -webkit-print-color-adjust: exact; }
+                }
+            </style>
+        </head>
+        <body>
+            ${modalContent.outerHTML}
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  }
 </script>
 </body>
 </html>

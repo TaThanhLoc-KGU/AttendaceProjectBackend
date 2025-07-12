@@ -69,27 +69,10 @@ const SIDEBAR_CONFIG = {
             url: "/lecturer/lophoc"
         },
         {
-            title: "Điểm danh",
-            icon: "fas fa-user-check",
-            children: [
-                { title: "Điểm danh hôm nay", icon: "fas fa-calendar-day", url: "/lecturer/diemdanh-homnay" },
-                { title: "Lịch sử điểm danh", icon: "fas fa-history", url: "/lecturer/lichsu-diemdanh" },
-                { title: "Báo cáo điểm danh", icon: "fas fa-chart-line", url: "/lecturer/baocao-diemdanh" }
-            ]
-        },
-        {
             title: "Lịch giảng dạy",
             icon: "fas fa-calendar-alt",
             url: "/lecturer/lich-giangday"
         },
-        {
-            title: "Sinh viên",
-            icon: "fas fa-user-graduate",
-            children: [
-                { title: "Danh sách sinh viên", icon: "fas fa-list", url: "/lecturer/danhsach-sinhvien" },
-                { title: "Quản lý khuôn mặt", icon: "fas fa-user-circle", url: "/lecturer/quanly-khuonmat" }
-            ]
-        }
     ],
 
     STUDENT: [
