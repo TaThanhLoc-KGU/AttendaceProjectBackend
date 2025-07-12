@@ -51,10 +51,18 @@ public class NamHocService {
         }
     }
 
-    public NamHocDTO getById(String id) {
-        return namHocRepository.findById(id)
-                .map(this::toDTO)
-                .orElseThrow(() -> new ResourceNotFoundException("NamHoc", "maNamHoc", id));
+    /**
+     * Lấy năm học theo mã năm học - với exception handling
+     */
+    public NamHocDTO getById(String maNamHoc) {
+        try {
+            return namHocRepository.findById(maNamHoc)
+                    .map(this::toDTO)
+                    .orElseThrow(() -> new ResourceNotFoundException("NamHoc", "maNamHoc", maNamHoc));
+        } catch (Exception e) {
+            log.error("Error getting NamHoc by ID: {}", maNamHoc, e);
+            throw e;
+        }
     }
 
     @Transactional

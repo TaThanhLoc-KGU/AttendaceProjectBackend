@@ -48,10 +48,18 @@ public class HocKyService {
         }
     }
 
-    public HocKyDTO getById(String id) {
-        return hocKyRepository.findById(id)
-                .map(this::toDTO)
-                .orElseThrow(() -> new ResourceNotFoundException("HocKy", "maHocKy", id));
+    /**
+     * Lấy học kỳ theo mã học kỳ (string) - với exception handling
+     */
+    public HocKyDTO getById(String maHocKy) {
+        try {
+            return hocKyRepository.findById(maHocKy)
+                    .map(this::toDTO)
+                    .orElseThrow(() -> new ResourceNotFoundException("HocKy", "maHocKy", maHocKy));
+        } catch (Exception e) {
+            log.error("Error getting HocKy by ID: {}", maHocKy, e);
+            throw e;
+        }
     }
 
     @Transactional

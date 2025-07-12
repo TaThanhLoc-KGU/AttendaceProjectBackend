@@ -10,6 +10,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,6 +22,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
+// src/main/java/com/tathanhloc/faceattendance/Controller/AttendanceReportController.java
 
 @RestController
 @RequestMapping("/lecturer")
@@ -34,6 +37,48 @@ public class AttendanceReportController {
     private final HocKyService hocKyService;
     private final NamHocService namHocService;
     private final SinhVienService sinhVienService;
+
+    /**
+     * Trang báo cáo điểm danh
+     */
+    @GetMapping("/baocao-diemdanh")
+    public String baoCaoDiemDanh(Authentication authentication, Model model,
+                                 @RequestParam(required = false) String classId) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/?error=not_authenticated";
+        }
+
+        try {
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            String maGv = userDetails.getTaiKhoan().getGiangVien().getMaGv();
+
+            // Kiểm tra quyền truy cập nếu có classId
+            if (classId != null && !classId.isEmpty()) {
+                LopHocPhanDTO lopHocPhan = lopHocPhanService.getByMaLhp(classId);
+                if (!maGv.equals(lopHocPhan.getMaGv())) {
+                    model.addAttribute("error", "Bạn không có quyền truy cập lớp học này");
+                    return "lecturer/baocao-diemdanh";
+                }
+                model.addAttribute("lopHocPhan", lopHocPhan);
+            }
+
+            // Lấy danh sách lớp của giảng viên
+            List<LopHocPhanDTO> myClasses = lopHocPhanService.getAll().stream()
+                    .filter(lhp -> maGv.equals(lhp.getMaGv()) && Boolean.TRUE.equals(lhp.getIsActive()))
+                    .collect(Collectors.toList());
+
+            model.addAttribute("currentUser", userDetails.getTaiKhoan());
+            model.addAttribute("myClasses", myClasses);
+            model.addAttribute("selectedClass", classId);
+
+            return "lecturer/baocao-diemdanh";
+
+        } catch (Exception e) {
+            log.error("Error loading attendance report: {}", e.getMessage());
+            model.addAttribute("error", "Không thể tải báo cáo điểm danh: " + e.getMessage());
+            return "lecturer/baocao-diemdanh";
+        }
+    }
 
     /**
      * API lấy thông tin báo cáo điểm danh với tính toán chính xác
@@ -87,11 +132,23 @@ public class AttendanceReportController {
 
         try {
             // Lấy thông tin học kỳ và năm học
-            HocKyDTO hocKy = hocKyService.getById(lopHocPhan.getHocKy());
-            NamHocDTO namHoc = namHocService.getById(lopHocPhan.getNamHoc());
+            HocKyDTO hocKy = null;
+            NamHocDTO namHoc = null;
 
-            LocalDate ngayBatDau = hocKy.getNgayBatDau();
-            LocalDate ngayKetThuc = hocKy.getNgayKetThuc();
+            try {
+                hocKy = hocKyService.getById(lopHocPhan.getHocKy());
+            } catch (Exception e) {
+                log.warn("Cannot find HocKy with ID: {}", lopHocPhan.getHocKy());
+            }
+
+            try {
+                namHoc = namHocService.getById(lopHocPhan.getNamHoc());
+            } catch (Exception e) {
+                log.warn("Cannot find NamHoc with ID: {}", lopHocPhan.getNamHoc());
+            }
+
+            LocalDate ngayBatDau = hocKy != null ? hocKy.getNgayBatDau() : null;
+            LocalDate ngayKetThuc = hocKy != null ? hocKy.getNgayKetThuc() : null;
 
             if (ngayBatDau == null || ngayKetThuc == null) {
                 log.warn("Học kỳ {} không có thông tin ngày bắt đầu/kết thúc", lopHocPhan.getHocKy());
@@ -207,8 +264,67 @@ public class AttendanceReportController {
         result.put("totalExpectedSessions", defaultWeeks * sessionsPerWeek);
         result.put("completedSessions", countCompletedSessions(lopHocPhan.getMaLhp()));
         result.put("isDefault", true);
+        result.put("progressByTime", 0.0);
+        result.put("remainingDays", 0);
+        result.put("avgAttendanceRate", 0.0);
 
         return result;
+    }
+
+    /**
+     * Tính tỷ lệ điểm danh trung bình của cả lớp
+     */
+    private double calculateAverageAttendanceRateForClass(String maLhp) {
+        try {
+            // Lấy danh sách sinh viên trong lớp
+            List<SinhVienDTO> sinhVienList = getSinhVienByMaLhp(maLhp);
+            if (sinhVienList.isEmpty()) {
+                return 0.0;
+            }
+
+            // Lấy tất cả lịch học của lớp
+            List<LichHocDTO> lichHocList = lichHocService.getByLopHocPhan(maLhp);
+            if (lichHocList.isEmpty()) {
+                return 0.0;
+            }
+
+            double totalRate = 0.0;
+            int validStudents = 0;
+
+            // Tính tỷ lệ điểm danh cho từng sinh viên
+            for (SinhVienDTO sv : sinhVienList) {
+                int totalSessions = 0;
+                int presentSessions = 0;
+
+                for (LichHocDTO lichHoc : lichHocList) {
+                    List<DiemDanhDTO> attendanceList = diemDanhService.getByMaLich(lichHoc.getMaLich());
+                    if (!attendanceList.isEmpty()) {
+                        totalSessions++;
+
+                        // Kiểm tra sinh viên có điểm danh không
+                        boolean isPresent = attendanceList.stream()
+                                .anyMatch(dd -> sv.getMaSv().equals(dd.getMaSv()) &&
+                                        ("PRESENT".equals(dd.getTrangThai()) || "LATE".equals(dd.getTrangThai())));
+
+                        if (isPresent) {
+                            presentSessions++;
+                        }
+                    }
+                }
+
+                if (totalSessions > 0) {
+                    double studentRate = (double) presentSessions / totalSessions * 100;
+                    totalRate += studentRate;
+                    validStudents++;
+                }
+            }
+
+            return validStudents > 0 ? totalRate / validStudents : 0.0;
+
+        } catch (Exception e) {
+            log.error("Error calculating average attendance rate: {}", e.getMessage());
+            return 0.0;
+        }
     }
 
     /**
@@ -219,7 +335,7 @@ public class AttendanceReportController {
 
         try {
             // Lấy danh sách sinh viên
-            List<SinhVienDTO> sinhVienList = sinhVienService.getByMaLhp(maLhp);
+            List<SinhVienDTO> sinhVienList = getSinhVienByMaLhp(maLhp);
 
             // Tính thống kê cho từng sinh viên
             List<Map<String, Object>> studentStats = new ArrayList<>();
@@ -243,6 +359,133 @@ public class AttendanceReportController {
         } catch (Exception e) {
             log.error("Error calculating attendance stats: {}", e.getMessage());
             return new HashMap<>();
+        }
+    }
+
+    /**
+     * Tính thống kê điểm danh cho một sinh viên
+     */
+    private Map<String, Object> calculateStudentAttendanceStats(String maSv, String maLhp, String fromDate, String toDate) {
+        Map<String, Object> stats = new HashMap<>();
+
+        try {
+            SinhVienDTO sinhVien = sinhVienService.getById(maSv);
+            List<LichHocDTO> lichHocList = lichHocService.getByLopHocPhan(maLhp);
+
+            int totalSessions = 0;
+            int presentCount = 0;
+            int absentCount = 0;
+            int lateCount = 0;
+            int excusedCount = 0;
+
+            for (LichHocDTO lichHoc : lichHocList) {
+                List<DiemDanhDTO> attendanceList = diemDanhService.getByMaLich(lichHoc.getMaLich());
+                if (!attendanceList.isEmpty()) {
+                    totalSessions++;
+
+                    DiemDanhDTO studentAttendance = attendanceList.stream()
+                            .filter(dd -> maSv.equals(dd.getMaSv()))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (studentAttendance != null) {
+                        switch (studentAttendance.getTrangThai()) {
+                            case CO_MAT:
+                                presentCount++;
+                                break;
+                            case VANG_MAT:
+                                absentCount++;
+                                break;
+                            case DI_TRE:
+                                lateCount++;
+                                break;
+                            case VANG_CO_PHEP:
+                                excusedCount++;
+                                break;
+                        }
+                    } else {
+                        // Không có record = vắng mặt
+                        absentCount++;
+                    }
+                }
+            }
+
+            double presentRate = totalSessions > 0 ? (double) (presentCount + lateCount) / totalSessions * 100 : 0.0;
+
+            stats.put("maSv", maSv);
+            stats.put("hoTen", sinhVien.getHoTen());
+            stats.put("totalSessions", totalSessions);
+            stats.put("presentCount", presentCount);
+            stats.put("absentCount", absentCount);
+            stats.put("lateCount", lateCount);
+            stats.put("excusedCount", excusedCount);
+            stats.put("presentRate", Math.round(presentRate * 10.0) / 10.0);
+
+            return stats;
+
+        } catch (Exception e) {
+            log.error("Error calculating student attendance stats: {}", e.getMessage());
+            stats.put("maSv", maSv);
+            stats.put("error", "Không thể tính toán");
+            return stats;
+        }
+    }
+
+    /**
+     * Tạo dữ liệu cho biểu đồ
+     */
+    private Map<String, Object> generateChartData(String maLhp, String fromDate, String toDate) {
+        Map<String, Object> chartData = new HashMap<>();
+
+        try {
+            // Dữ liệu cho biểu đồ timeline điểm danh
+            List<Map<String, Object>> timelineData = new ArrayList<>();
+
+            // Dữ liệu cho biểu đồ tỷ lệ điểm danh theo ngày
+            List<Map<String, Object>> dailyAttendanceData = new ArrayList<>();
+
+            // Dữ liệu cho biểu đồ top sinh viên có tỷ lệ điểm danh cao/thấp
+            List<Map<String, Object>> studentRankingData = new ArrayList<>();
+
+            chartData.put("timeline", timelineData);
+            chartData.put("dailyAttendance", dailyAttendanceData);
+            chartData.put("studentRanking", studentRankingData);
+
+            return chartData;
+
+        } catch (Exception e) {
+            log.error("Error generating chart data: {}", e.getMessage());
+            return new HashMap<>();
+        }
+    }
+
+    /**
+     * Helper method: Lấy sinh viên theo mã lớp học phần
+     */
+    private List<SinhVienDTO> getSinhVienByMaLhp(String maLhp) {
+        try {
+            // Nếu SinhVienService không có method getByMaLhp, ta sẽ tự implement
+            LopHocPhanDTO lopHocPhan = lopHocPhanService.getByMaLhp(maLhp);
+
+            // Lấy danh sách mã sinh viên từ lớp học phần
+            Set<String> maSvs = lopHocPhan.getMaSvs() != null ? lopHocPhan.getMaSvs() : new HashSet<>();
+
+            // Lấy thông tin chi tiết của từng sinh viên
+            List<SinhVienDTO> result = new ArrayList<>();
+            for (String maSv : maSvs) {
+                try {
+                    SinhVienDTO sv = sinhVienService.getById(maSv);
+                    result.add(sv);
+                } catch (Exception e) {
+                    log.warn("Cannot find student with ID: {}", maSv);
+                }
+            }
+
+            return result;
+
+        } catch (Exception e) {
+            log.error("Error getting students by class: {}", e.getMessage());
+            return new ArrayList<>();
         }
     }
 }
