@@ -12683,3 +12683,8 @@ org.thymeleaf.exceptions.TemplateInputException: Error resolving template [lectu
         (action, created_at, duration_ms, entity_id, entity_type, error_details, ip_address, log_level, message, module, new_value, old_value, request_method, request_url, session_id, status, user_agent, user_id, user_name) 
     values
         (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2025-07-13 02:16:32 [SpringApplicationShutdownHook] INFO  o.s.b.w.e.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-07-13 02:16:32 [tomcat-shutdown] INFO  o.s.b.w.e.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-07-13 02:16:32 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-07-13 02:16:32 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-21 - Shutdown initiated...
+2025-07-13 02:16:32 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-21 - Shutdown completed.

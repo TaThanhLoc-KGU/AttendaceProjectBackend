@@ -82,35 +82,14 @@ const SIDEBAR_CONFIG = {
             url: "/student/dashboard"
         },
         {
-            title: "Điểm danh của tôi",
-            icon: "fas fa-user-check",
-            children: [
-                { title: "Lịch sử điểm danh", icon: "fas fa-history", url: "/student/lichsu-diemdanh" },
-                { title: "Thống kê điểm danh", icon: "fas fa-chart-pie", url: "/student/thongke-diemdanh" }
-            ]
-        },
-        {
             title: "Lịch học",
             icon: "fas fa-calendar-alt",
-            url: "/student/lich-hoc"
-        },
-        {
-            title: "Lớp học phần",
-            icon: "fas fa-book-open",
-            url: "/student/lophocphan"
-        },
-        {
-            title: "Khuôn mặt",
-            icon: "fas fa-user-circle",
-            children: [
-                { title: "Đăng ký khuôn mặt", icon: "fas fa-camera", url: "/student/dangky-khuonmat" },
-                { title: "Cập nhật khuôn mặt", icon: "fas fa-sync-alt", url: "/student/capnhat-khuonmat" }
-            ]
+            url: "/student/lichhoc"
         },
         {
             title: "Thông tin cá nhân",
-            icon: "fas fa-user",
-            url: "/student/thongtin-canhan"
+            icon: "fas fa-user-circle",
+            url: "/student/profile"
         }
     ]
 };

@@ -362,4 +362,34 @@ public class FileUploadService {
         json.append("}");
         return json.toString();
     }
+    /**
+     * Xóa ảnh đại diện sinh viên
+     */
+    public void deleteStudentProfileImage(String maSv) {
+        try {
+            Path studentDir = getStudentDirectory(maSv);
+            if (!Files.exists(studentDir)) {
+                log.warn("Student directory does not exist: {}", maSv);
+                return;
+            }
+
+            // Tìm và xóa tất cả file profile
+            try (Stream<Path> files = Files.list(studentDir)) {
+                files.filter(Files::isRegularFile)
+                        .filter(file -> file.getFileName().toString().startsWith("profile"))
+                        .forEach(file -> {
+                            try {
+                                Files.delete(file);
+                                log.info("Deleted profile image for student {}: {}", maSv, file.getFileName());
+                            } catch (IOException e) {
+                                log.warn("Could not delete profile image: {}", file, e);
+                            }
+                        });
+            }
+
+        } catch (IOException e) {
+            log.error("Error deleting profile image for student {}: ", maSv, e);
+            throw new RuntimeException("Không thể xóa ảnh đại diện", e);
+        }
+    }
 }
