@@ -659,18 +659,14 @@
                 <label class="form-label fw-semibold">Học kỳ</label>
                 <select class="form-select" id="semesterFilter">
                     <option value="">Tất cả học kỳ</option>
-                    <option value="1">Học kỳ I</option>
-                    <option value="2">Học kỳ II</option>
-                    <option value="3">Học kỳ hè</option>
+                    <!-- Options sẽ được load từ API -->
                 </select>
             </div>
             <div class="col-md-3">
                 <label class="form-label fw-semibold">Năm học</label>
                 <select class="form-select" id="yearFilter">
                     <option value="">Tất cả năm học</option>
-                    <option value="2024-2025">2024-2025</option>
-                    <option value="2023-2024">2023-2024</option>
-                    <option value="2022-2023">2022-2023</option>
+                    <!-- Options sẽ được load từ API -->
                 </select>
             </div>
             <div class="col-md-3">
@@ -696,6 +692,9 @@
                 <button class="btn btn-clear" onclick="clearFilters()">
                     <i class="fas fa-times me-2"></i>Xóa bộ lọc
                 </button>
+                <span id="filterLoading" class="text-muted ms-3" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...
+            </span>
             </div>
         </div>
     </div>
@@ -827,43 +826,48 @@
     /**
      * Load classes data from API
      */
-    async function loadClasses() {
-        showLoading(true);
+// Sửa hàm loadClasses() để gọi initializeFilterData
+async function loadClasses() {
+    showLoading(true);
 
-        try {
-            console.log('🔄 Loading classes...');
+    try {
+        console.log('🔄 Loading classes...');
 
-            const response = await fetch(CONFIG.API_ENDPOINTS.CLASSES, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const response = await fetch(CONFIG.API_ENDPOINTS.CLASSES, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
             }
+        });
 
-            const data = await response.json();
-            allClasses = Array.isArray(data) ? data : [];
-            filteredClasses = [...allClasses];
-
-            renderClasses();
-            updateSummaryCards();
-            populateFilterOptions();
-
-            console.log('✅ Loaded classes successfully:', allClasses.length);
-
-        } catch (error) {
-            console.error('❌ Error loading classes:', error);
-            showNotification('Không thể tải danh sách lớp học: ' + error.message, 'error');
-            allClasses = [];
-            filteredClasses = [];
-            renderClasses();
-        } finally {
-            showLoading(false);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
+
+        const data = await response.json();
+        allClasses = Array.isArray(data) ? data : [];
+        filteredClasses = [...allClasses];
+
+        renderClasses();
+        updateSummaryCards();
+
+        // Load filter data sau khi load classes thành công
+        await initializeFilterData();
+
+        console.log('✅ Loaded classes successfully:', allClasses.length);
+
+    } catch (error) {
+        console.error('❌ Error loading classes:', error);
+        showNotification('Không thể tải danh sách lớp học: ' + error.message, 'error');
+        allClasses = [];
+        filteredClasses = [];
+        renderClasses();
+    } finally {
+        showLoading(false);
     }
+}
+
+
 
     /**
      * Load statistics data from API
@@ -1474,9 +1478,7 @@ function renderClasses() {
     window.refreshData = refreshData;
     window.exportClassesData = exportClassesData;
     window.viewClassDetails = viewClassDetails;
-</script>
-<!-- Enhanced JavaScript for the new design -->
-<script>
+
     // Override the renderClasses function for the new design
     function renderClasses() {
         const grid = document.getElementById('classesGrid');
@@ -1557,6 +1559,156 @@ function renderClasses() {
             el.style.animationDelay = `${index * 0.1}s`;
         });
     });
+
+// Thêm vào sau hàm loadClasses() hiện tại
+async function initializeFilterData() {
+    try {
+        console.log('🔄 Loading filter data...');
+
+        // Show loading
+        const filterLoading = document.getElementById('filterLoading');
+        if (filterLoading) filterLoading.style.display = 'inline';
+
+        // Load semester và year data từ API
+        const [semesters, years] = await Promise.all([
+            loadActiveSemesters(),
+            loadActiveYears()
+        ]);
+
+        // Populate filters
+        populateSemesterFilter(semesters);
+        populateYearFilter(years);
+
+        // Set current semester/year if found
+        await setCurrentSemesterYear(semesters, years);
+
+        console.log('✅ Filter data loaded:', {
+            semesters: semesters.length,
+            years: years.length
+        });
+
+    } catch (error) {
+        console.error('❌ Error loading filter data:', error);
+        showNotification('Không thể tải dữ liệu bộ lọc', 'warning');
+    } finally {
+        const filterLoading = document.getElementById('filterLoading');
+        if (filterLoading) filterLoading.style.display = 'none';
+    }
+}
+
+// Load học kỳ đang active
+async function loadActiveSemesters() {
+    try {
+        const response = await fetch('/api/hocky');
+        if (response.ok) {
+            const semesters = await response.json();
+            return semesters.filter(s => s.isActive !== false);
+        }
+        return [];
+    } catch (error) {
+        console.error('Error loading active semesters:', error);
+        return [];
+    }
+}
+
+// Load năm học đang active
+async function loadActiveYears() {
+    try {
+        const response = await fetch('/api/namhoc');
+        if (response.ok) {
+            const years = await response.json();
+            return years.filter(y => y.isActive !== false);
+        }
+        return [];
+    } catch (error) {
+        console.error('Error loading active years:', error);
+        return [];
+    }
+}
+
+// Populate semester filter
+function populateSemesterFilter(semesters) {
+    const semesterFilter = document.getElementById('semesterFilter');
+    if (!semesterFilter) return;
+
+    // Clear existing options (except first)
+    while (semesterFilter.children.length > 1) {
+        semesterFilter.removeChild(semesterFilter.lastChild);
+    }
+
+    // Add semester options
+    semesters.forEach(semester => {
+        const option = document.createElement('option');
+        option.value = semester.maHocKy;
+        option.textContent = semester.tenHocKy;
+        semesterFilter.appendChild(option);
+    });
+
+    console.log(`📚 Populated ${semesters.length} semesters in filter`);
+}
+
+// Populate year filter
+function populateYearFilter(years) {
+    const yearFilter = document.getElementById('yearFilter');
+    if (!yearFilter) return;
+
+    // Clear existing options (except first)
+    while (yearFilter.children.length > 1) {
+        yearFilter.removeChild(yearFilter.lastChild);
+    }
+
+    // Sort years by name (descending)
+    const sortedYears = [...years].sort((a, b) => b.tenNamHoc.localeCompare(a.tenNamHoc));
+
+    // Add year options
+    sortedYears.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year.maNamHoc;
+        option.textContent = year.tenNamHoc;
+        yearFilter.appendChild(option);
+    });
+
+    console.log(`📅 Populated ${years.length} years in filter`);
+}
+
+// Set current semester and year
+async function setCurrentSemesterYear(semesters, years) {
+    try {
+        // Try to get current semester and year from API
+        const [currentSemester, currentYear] = await Promise.all([
+            fetch('/api/hocky/current').then(r => r.ok ? r.json() : null).catch(() => null),
+            fetch('/api/namhoc/current').then(r => r.ok ? r.json() : null).catch(() => null)
+        ]);
+
+        // Set current semester
+        if (currentSemester) {
+            const semesterFilter = document.getElementById('semesterFilter');
+            if (semesterFilter) {
+                semesterFilter.value = currentSemester.maHocKy;
+                console.log('🎯 Set current semester:', currentSemester.tenHocKy);
+            }
+        }
+
+        // Set current year
+        if (currentYear) {
+            const yearFilter = document.getElementById('yearFilter');
+            if (yearFilter) {
+                yearFilter.value = currentYear.maNamHoc;
+                console.log('🎯 Set current year:', currentYear.tenNamHoc);
+            }
+        }
+
+        // Apply filters if current semester/year was set
+        if (currentSemester || currentYear) {
+            applyFilters();
+        }
+
+    } catch (error) {
+        console.error('Error setting current semester/year:', error);
+    }
+}
+
+
 </script>
 </body>
 </html>

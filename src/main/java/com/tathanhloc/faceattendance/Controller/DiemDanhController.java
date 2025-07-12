@@ -55,8 +55,16 @@ public class DiemDanhController {
     }
 
     @GetMapping("/by-malich/{maLich}")
-    public ResponseEntity<List<DiemDanhDTO>> getByMaLich(@PathVariable String maLich) {
-        return ResponseEntity.ok(diemDanhService.getByMaLich(maLich));
+    public ResponseEntity<List<DiemDanhDTO>> getByMaLich(
+            @PathVariable String maLich,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+
+        if (date != null) {
+            List<DiemDanhDTO> attendances = diemDanhService.getByMaLichAndDate(maLich, date);
+            return ResponseEntity.ok(attendances);
+        } else {
+            return ResponseEntity.ok(diemDanhService.getByMaLich(maLich));
+        }
     }
 
     @GetMapping("/today/count")
@@ -243,18 +251,4 @@ public class DiemDanhController {
         return ResponseEntity.ok(attendances);
     }
 
-    // Thêm vào DiemDanhController.java
-
-    @GetMapping("/by-malich/{maLich}")
-    public ResponseEntity<List<DiemDanhDTO>> getByMaLichAndDate(
-            @PathVariable String maLich,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-
-        if (date != null) {
-            List<DiemDanhDTO> attendances = diemDanhService.getByMaLichAndDate(maLich, date);
-            return ResponseEntity.ok(attendances);
-        } else {
-            return ResponseEntity.ok(diemDanhService.getByMaLich(maLich));
-        }
-    }
 }

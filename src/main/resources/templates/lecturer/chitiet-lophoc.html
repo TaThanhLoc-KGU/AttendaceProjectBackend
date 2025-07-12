@@ -13,8 +13,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Custom CSS -->
   <link th:href="@{/css/sidebar.css}" rel="stylesheet">
-  <link th:href="@{/css/lecturer.css}" rel="stylesheet">
-
   <style>
     :root {
       --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -22,7 +20,6 @@
       --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
       --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
       --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-      --card-shadow-hover: 0 20px 60px rgba(0, 0, 0, 0.15);
       --border-radius: 20px;
       --text-primary: #2d3748;
       --text-secondary: #718096;
@@ -262,52 +259,6 @@
       font-size: 0.85rem;
     }
 
-    /* Attendance Stats */
-    .attendance-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
-
-    .attendance-card {
-      background: white;
-      border-radius: 15px;
-      padding: 1.5rem;
-      box-shadow: var(--card-shadow);
-      border-left: 4px solid transparent;
-    }
-
-    .attendance-card.present {
-      border-left-color: #28a745;
-    }
-
-    .attendance-card.absent {
-      border-left-color: #dc3545;
-    }
-
-    .attendance-card.late {
-      border-left-color: #ffc107;
-    }
-
-    .attendance-number {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-
-    .attendance-card.present .attendance-number {
-      color: #28a745;
-    }
-
-    .attendance-card.absent .attendance-number {
-      color: #dc3545;
-    }
-
-    .attendance-card.late .attendance-number {
-      color: #ffc107;
-    }
-
     /* Action Buttons */
     .action-buttons {
       display: flex;
@@ -351,13 +302,6 @@
       text-decoration: none;
     }
 
-    /* Charts */
-    .chart-container {
-      position: relative;
-      height: 300px;
-      margin: 2rem 0;
-    }
-
     /* Responsive */
     @media (max-width: 768px) {
       .class-title {
@@ -381,24 +325,7 @@
       }
     }
 
-    /* Loading States */
-    .loading {
-      text-align: center;
-      padding: 3rem;
-      color: var(--text-secondary);
-    }
-
-    .loading i {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    /* Thêm vào cuối CSS */
+    /* Modal Styles */
     .modal-xl {
       max-width: 1200px;
     }
@@ -424,310 +351,25 @@
       max-height: 70vh;
       overflow-y: auto;
     }
-
   </style>
 </head>
 <body>
-<div class="main-wrapper">
-  <!-- Include Sidebar Component -->
-  <div th:replace="~{components/sidebar :: sidebar}"></div>
-
-  <!-- Main Content -->
-  <div class="main-content">
-    <!-- Class Header -->
-    <div class="class-header" th:if="${lopHocPhan}">
-      <div class="class-header-content">
-        <div class="d-flex justify-content-between align-items-start">
-          <div>
-            <h1 class="class-title" th:text="${lopHocPhan.tenMonHoc}">Tên môn học</h1>
-            <div class="class-code" th:text="${lopHocPhan.maLhp}">Mã lớp học phần</div>
-            <p class="mb-0" th:text="'Nhóm ' + ${lopHocPhan.nhom} + ' - ' + ${lopHocPhan.hocKy} + '/' + ${lopHocPhan.namHoc}">
-              Thông tin học kỳ
-            </p>
-          </div>
-          <div class="text-end">
-            <a th:href="@{/lecturer/lophoc}" class="btn btn-light btn-sm">
-              <i class="fas fa-arrow-left"></i> Quay lại
-            </a>
-          </div>
-        </div>
-
-        <div class="class-stats">
-          <div class="stat-item">
-            <div class="stat-number" th:text="${soLuongSinhVien}">0</div>
-            <div class="stat-label">Sinh viên</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number" th:text="${#lists.size(lichHocList)}">0</div>
-            <div class="stat-label">Buổi học</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">85%</div>
-            <div class="stat-label">Tỷ lệ điểm danh</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">12</div>
-            <div class="stat-label">Buổi đã học</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Error Message -->
-    <div th:if="${error}" class="alert alert-danger mx-4">
-      <i class="fas fa-exclamation-triangle"></i>
-      <span th:text="${error}"></span>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="action-buttons mx-4" th:if="${lopHocPhan}">
-      <a th:href="@{'/lecturer/diemdanh/' + ${lopHocPhan.maLhp}}" class="btn-action btn-primary-action">
-        <i class="fas fa-user-check"></i>
-        Điểm danh
-      </a>
-      <button class="btn-action btn-primary-action" onclick="openManualAttendance()">
-        <i class="fas fa-edit"></i>
-        Điểm danh thủ công
-      </button>
-      <a th:href="@{'/lecturer/baocao-diemdanh?class=' + ${lopHocPhan.maLhp}}" class="btn-action btn-secondary-action">
-        <i class="fas fa-chart-bar"></i>
-        Báo cáo điểm danh
-      </a>
-      <button class="btn-action btn-secondary-action" onclick="exportStudentList()">
-        <i class="fas fa-download"></i>
-        Xuất danh sách
-      </button>
-    </div>
-
-    <!-- Content Tabs -->
-    <div class="content-tabs" th:if="${lopHocPhan}">
-      <ul class="nav nav-tabs" id="classTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="students-tab" data-bs-toggle="tab"
-                  data-bs-target="#students" type="button" role="tab">
-            <i class="fas fa-users"></i>
-            Danh sách sinh viên
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="schedule-tab" data-bs-toggle="tab"
-                  data-bs-target="#schedule" type="button" role="tab">
-            <i class="fas fa-calendar-alt"></i>
-            Lịch học
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="attendance-tab" data-bs-toggle="tab"
-                  data-bs-target="#attendance" type="button" role="tab">
-            <i class="fas fa-chart-line"></i>
-            Thống kê điểm danh
-          </button>
-        </li>
-      </ul>
-    </div>
-
-    <!-- Tab Content -->
-    <div class="tab-content" th:if="${lopHocPhan}">
-      <!-- Students Tab -->
-      <div class="tab-pane fade show active" id="students" role="tabpanel">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h5 class="mb-0">
-            <i class="fas fa-users text-primary"></i>
-            Danh sách sinh viên (<span th:text="${soLuongSinhVien}">0</span>)
-          </h5>
-          <div class="input-group" style="max-width: 300px;">
-            <input type="text" class="form-control" placeholder="Tìm kiếm sinh viên..."
-                   id="searchStudent" onkeyup="searchStudents()">
-            <button class="btn btn-outline-secondary" type="button">
-              <i class="fas fa-search"></i>
-            </button>
-          </div>
-        </div>
-
-        <div class="students-grid" id="studentsGrid">
-          <div class="student-card" th:each="sinhVien : ${danhSachSinhVien}">
-            <div class="student-info">
-              <div class="student-avatar" th:text="${sinhVien.hoTen?.substring(0,1)?.toUpperCase()}">S</div>
-              <div class="student-details">
-                <h6 th:text="${sinhVien.hoTen}">Tên sinh viên</h6>
-                <p class="student-id" th:text="${sinhVien.maSv}">Mã sinh viên</p>
-                <small class="text-muted" th:text="${sinhVien.email}">Email</small>
-              </div>
-            </div>
-            <div class="mt-2">
-              <small class="text-success">
-                <i class="fas fa-check-circle"></i>
-                Tỷ lệ điểm danh: <span class="fw-bold">85%</span>
-              </small>
-            </div>
-          </div>
-        </div>
-
-        <div th:if="${#lists.isEmpty(danhSachSinhVien)}" class="text-center py-5">
-          <i class="fas fa-users fa-3x text-muted mb-3"></i>
-          <h5 class="text-muted">Chưa có sinh viên nào đăng ký lớp này</h5>
-        </div>
-      </div>
-
-      <!-- Schedule Tab -->
-      <div class="tab-pane fade" id="schedule" role="tabpanel">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h5 class="mb-0">
-            <i class="fas fa-calendar-alt text-primary"></i>
-            Lịch học trong tuần
-          </h5>
-        </div>
-
-        <div class="schedule-table">
-          <table class="table table-hover mb-0">
-            <thead>
-            <tr>
-              <th>Thứ</th>
-              <th>Tiết học</th>
-              <th>Phòng học</th>
-              <th>Thời gian</th>
-              <th>Trạng thái</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="lichHoc : ${lichHocList}">
-              <td>
-                <span class="fw-bold" th:text="'Thứ ' + ${lichHoc.thu}">Thứ 2</span>
-              </td>
-              <td>
-                                    <span class="time-slot"
-                                          th:text="'Tiết ' + ${lichHoc.tietBatDau} + '-' + ${lichHoc.tietBatDau + lichHoc.soTiet - 1}">
-                                        Tiết 1-3
-                                    </span>
-              </td>
-              <td>
-                <span class="room-badge" th:text="${lichHoc.tenPhong}">A101</span>
-              </td>
-              <td>
-                <small class="text-muted">7:00 - 9:30</small>
-              </td>
-              <td>
-                <span class="badge bg-success" th:if="${lichHoc.isActive}">Đang hoạt động</span>
-                <span class="badge bg-secondary" th:unless="${lichHoc.isActive}">Không hoạt động</span>
-              </td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div th:if="${#lists.isEmpty(lichHocList)}" class="text-center py-5">
-          <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
-          <h5 class="text-muted">Chưa có lịch học nào được lên lịch</h5>
-        </div>
-      </div>
-
-      <!-- Attendance Stats Tab -->
-      <div class="tab-pane fade" id="attendance" role="tabpanel">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h5 class="mb-0">
-            <i class="fas fa-chart-line text-primary"></i>
-            Thống kê điểm danh
-          </h5>
-          <div class="btn-group" role="group">
-            <input type="radio" class="btn-check" name="timeRange" id="week" checked>
-            <label class="btn btn-outline-primary" for="week">Tuần</label>
-
-            <input type="radio" class="btn-check" name="timeRange" id="month">
-            <label class="btn btn-outline-primary" for="month">Tháng</label>
-
-            <input type="radio" class="btn-check" name="timeRange" id="semester">
-            <label class="btn btn-outline-primary" for="semester">Học kỳ</label>
-          </div>
-        </div>
-
-        <!-- Thay thế phần attendance-stats cũ -->
-        <div class="attendance-stats">
-          <div class="attendance-card present">
-            <div class="attendance-number" id="presentCount">0</div>
-            <div class="text-muted">Có mặt</div>
-            <div class="mt-2">
-              <small class="text-success">
-                <i class="fas fa-arrow-up"></i> <span id="presentTrend">0%</span>
-              </small>
-            </div>
-          </div>
-          <div class="attendance-card absent">
-            <div class="attendance-number" id="absentCount">0</div>
-            <div class="text-muted">Vắng mặt</div>
-            <div class="mt-2">
-              <small class="text-danger">
-                <i class="fas fa-arrow-down"></i> <span id="absentTrend">0%</span>
-              </small>
-            </div>
-          </div>
-          <div class="attendance-card late">
-            <div class="attendance-number" id="lateCount">0</div>
-            <div class="text-muted">Đi muộn</div>
-            <div class="mt-2">
-              <small class="text-warning">
-                <i class="fas fa-minus"></i> <span id="lateTrend">0%</span>
-              </small>
-            </div>
-          </div>
-          <div class="attendance-card">
-            <div class="attendance-number" style="color: #667eea;" id="attendanceRate">0%</div>
-            <div class="text-muted">Tỷ lệ điểm danh</div>
-            <div class="mt-2">
-              <small class="text-primary">
-                <i class="fas fa-chart-line"></i> <span id="rateTrend">Chưa có dữ liệu</span>
-              </small>
-            </div>
-          </div>
-        </div>
-
-        <!-- Charts -->
-        <div class="row">
-          <div class="col-md-6">
-            <div class="card">
-              <div class="card-header">
-                <h6 class="mb-0">Xu hướng điểm danh</h6>
-              </div>
-              <div class="card-body">
-                <div class="chart-container">
-                  <canvas id="attendanceTrendChart"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="card">
-              <div class="card-header">
-                <h6 class="mb-0">Tỷ lệ điểm danh</h6>
-              </div>
-              <div class="card-body">
-                <div class="chart-container">
-                  <canvas id="attendanceRatioChart"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 <!-- Manual Attendance Modal -->
-<div class="modal fade" id="manualAttendanceModal" tabindex="-1">
+<div class="modal fade" id="manualAttendanceModal" tabindex="-1" aria-labelledby="manualAttendanceModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">
-          <i class="fas fa-edit"></i>
-          Điểm danh thủ công - Ngày hôm nay
+        <h5 class="modal-title" id="manualAttendanceModalLabel">
+          <i class="fas fa-edit"></i> Điểm danh thủ công
         </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <!-- Date and Schedule Selection -->
         <div class="row mb-4">
           <div class="col-md-6">
             <label class="form-label">Ngày điểm danh:</label>
-            <input type="date" class="form-control" id="attendanceDate" disabled />
+            <input type="date" class="form-control" id="attendanceDate" readonly />
             <small class="text-muted">Chỉ có thể điểm danh cho ngày hôm nay</small>
           </div>
           <div class="col-md-6">
@@ -744,6 +386,9 @@
           <strong>Lưu ý:</strong> Chỉ hiển thị sinh viên <strong>chưa được điểm danh tự động</strong>.
           Sinh viên đã điểm danh sẽ hiển thị với nền xanh.
         </div>
+
+        <!-- Attendance Counter -->
+        <div id="attendanceCounter" class="alert alert-info mb-3" style="display: none;"></div>
 
         <!-- Quick Actions -->
         <div class="row mb-3">
@@ -791,171 +436,250 @@
   </div>
 </div>
 
+<div class="main-wrapper">
+  <!-- Include Sidebar Component -->
+  <div th:replace="~{components/sidebar :: sidebar}"></div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Class Header -->
+    <div class="class-header" th:if="${lopHocPhan}">
+      <div class="class-header-content">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h1 class="class-title" th:text="${lopHocPhan.tenMonHoc}">Tên môn học</h1>
+            <div class="class-code" th:text="${lopHocPhan.maLhp}">Mã lớp học phần</div>
+            <p class="mb-0" th:text="'Nhóm ' + ${lopHocPhan.nhom} + ' - ' + ${lopHocPhan.hocKy} + '/' + ${lopHocPhan.namHoc}">
+              Thông tin học kỳ
+            </p>
+          </div>
+          <div class="text-end">
+            <a th:href="@{/lecturer/lophoc}" class="btn btn-light btn-sm">
+              <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+          </div>
+        </div>
+
+        <div class="class-stats">
+          <div class="stat-item">
+            <div class="stat-number" th:text="${soLuongSinhVien}">0</div>
+            <div class="stat-label">Sinh viên</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" th:text="${lichHocList != null ? #lists.size(lichHocList) : 0}">0</div>
+            <div class="stat-label">Buổi học</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="overallAttendanceRate">0%</div>
+            <div class="stat-label">Tỷ lệ điểm danh</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="completedSessions">0</div>
+            <div class="stat-label">Buổi đã học</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div th:if="${error}" class="alert alert-danger mx-4">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span th:text="${error}"></span>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons mx-5" th:if="${lopHocPhan}">
+      <button class="btn-action btn-primary-action" onclick="openManualAttendance()">
+        <i class="fas fa-edit"></i>
+        Điểm danh thủ công
+      </button>
+      <a th:href="@{'/lecturer/baocao-diemdanh?class=' + ${lopHocPhan.maLhp}}" class="btn-action btn-secondary-action">
+        <i class="fas fa-chart-bar"></i>
+        Báo cáo điểm danh
+      </a>
+      <button class="btn-action btn-secondary-action" onclick="exportStudentList()">
+        <i class="fas fa-download"></i>
+        Xuất danh sách
+      </button>
+    </div>
+
+    <!-- Content Tabs -->
+    <div class="content-tabs" th:if="${lopHocPhan}">
+      <ul class="nav nav-tabs" id="classTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="students-tab" data-bs-toggle="tab"
+                  data-bs-target="#students" type="button" role="tab">
+            <i class="fas fa-users"></i>
+            Danh sách sinh viên
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="schedule-tab" data-bs-toggle="tab"
+                  data-bs-target="#schedule" type="button" role="tab">
+            <i class="fas fa-calendar-alt"></i>
+            Lịch học
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="attendance-tab" data-bs-toggle="tab"
+                  data-bs-target="#attendance" type="button" role="tab">
+            <i class="fas fa-chart-line"></i>
+            Thống kê điểm danh
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" th:if="${lopHocPhan}">
+      <!-- Students Tab -->
+      <div class="tab-pane fade show active" id="students" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h5 class="mb-0 ">
+            <i class="fas fa-users text-primary"></i>
+            Danh sách sinh viên (<span th:text="${soLuongSinhVien}">0</span>)
+          </h5>
+          <div class="input-group" style="max-width: 300px;">
+            <input type="text" class="form-control" placeholder="Tìm kiếm sinh viên..."
+                   id="searchStudent" onkeyup="searchStudents()">
+            <button class="btn btn-outline-secondary" type="button">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="students-grid" id="studentsGrid" th:if="${danhSachSinhVien != null and not #lists.isEmpty(danhSachSinhVien)}">
+          <div class="student-card" th:each="sinhVien : ${danhSachSinhVien}">
+            <div class="student-info">
+              <div class="student-avatar" th:text="${sinhVien.hoTen != null ? sinhVien.hoTen.substring(0,1).toUpperCase() : 'S'}">S</div>
+              <div class="student-details">
+                <h6 th:text="${sinhVien.hoTen}">Tên sinh viên</h6>
+                <p class="student-id" th:text="${sinhVien.maSv}">Mã sinh viên</p>
+                <small class="text-muted" th:text="${sinhVien.email}">Email</small>
+              </div>
+            </div>
+            <div class="mt-2">
+              <small class="text-muted">
+                <i class="fas fa-spinner fa-spin"></i>
+                Đang tải tỷ lệ điểm danh...
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <div th:if="${danhSachSinhVien == null or #lists.isEmpty(danhSachSinhVien)}" class="text-center py-5">
+          <i class="fas fa-users fa-3x text-muted mb-3"></i>
+          <h5 class="text-muted">Chưa có sinh viên nào đăng ký lớp này</h5>
+        </div>
+      </div>
+
+      <!-- Schedule Tab -->
+      <div class="tab-pane fade" id="schedule" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h5 class="mb-0">
+            <i class="fas fa-calendar-alt text-primary"></i>
+            Lịch học trong tuần
+          </h5>
+        </div>
+
+        <div class="schedule-table" th:if="${lichHocList != null and not #lists.isEmpty(lichHocList)}">
+          <table class="table table-hover mb-0">
+            <thead>
+            <tr>
+              <th>Thứ</th>
+              <th>Tiết học</th>
+              <th>Phòng học</th>
+              <th>Trạng thái</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="lichHoc : ${lichHocList}">
+              <td>
+                <span class="fw-bold" th:text="'Thứ ' + ${lichHoc.thu}">Thứ 2</span>
+              </td>
+              <td>
+                <span class="time-slot"
+                      th:text="'Tiết ' + ${lichHoc.tietBatDau} + '-' + ${lichHoc.tietBatDau + lichHoc.soTiet - 1}">
+                  Tiết 1-3
+                </span>
+              </td>
+              <td>
+                <span class="room-badge" th:text="${lichHoc.tenPhong}">A101</span>
+              </td>
+              <td>
+                <span class="badge bg-success" th:if="${lichHoc.isActive}">Đang hoạt động</span>
+                <span class="badge bg-secondary" th:unless="${lichHoc.isActive}">Không hoạt động</span>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div th:if="${lichHocList == null or #lists.isEmpty(lichHocList)}" class="text-center py-5">
+          <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+          <h5 class="text-muted">Chưa có lịch học nào được lên lịch</h5>
+        </div>
+      </div>
+
+      <!-- Attendance Stats Tab -->
+      <div class="tab-pane fade" id="attendance" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h5 class="mb-0">
+            <i class="fas fa-chart-line text-primary"></i>
+            Thống kê điểm danh
+          </h5>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <h6 class="mb-0">Tỷ lệ điểm danh tổng quan</h6>
+              </div>
+              <div class="card-body text-center">
+                <div id="attendanceRate" style="font-size: 3rem; font-weight: bold; color: #667eea;">0%</div>
+                <small class="text-muted">Tỷ lệ điểm danh trung bình</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <h6 class="mb-0">Thống kê chi tiết</h6>
+              </div>
+              <div class="card-body">
+                <div class="row text-center">
+                  <div class="col-4">
+                    <div id="presentCount" style="font-size: 1.5rem; font-weight: bold; color: #28a745;">0</div>
+                    <small class="text-muted">Có mặt</small>
+                  </div>
+                  <div class="col-4">
+                    <div id="absentCount" style="font-size: 1.5rem; font-weight: bold; color: #dc3545;">0</div>
+                    <small class="text-muted">Vắng mặt</small>
+                  </div>
+                  <div class="col-4">
+                    <div id="lateCount" style="font-size: 1.5rem; font-weight: bold; color: #ffc107;">0</div>
+                    <small class="text-muted">Đi muộn</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script th:src="@{/js/common.js}"></script>
 <script th:src="@{/js/sidebar.js}"></script>
-
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Initialize charts
-    initializeCharts();
+  // Global variables
+  let currentClassId = /*[[${lopHocPhan?.maLhp}]]*/ '';
 
-    // Initialize search functionality
-    initializeSearch();
-  });
-
-  function initializeCharts() {
-    // Attendance Trend Chart
-    const trendCtx = document.getElementById('attendanceTrendChart');
-    if (trendCtx) {
-      new Chart(trendCtx, {
-        type: 'line',
-        data: {
-          labels: ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4', 'Tuần 5', 'Tuần 6'],
-          datasets: [{
-            label: 'Có mặt',
-            data: [85, 88, 82, 90, 87, 85],
-            borderColor: '#28a745',
-            backgroundColor: 'rgba(40, 167, 69, 0.1)',
-            tension: 0.4
-          }, {
-            label: 'Vắng mặt',
-            data: [15, 12, 18, 10, 13, 15],
-            borderColor: '#dc3545',
-            backgroundColor: 'rgba(220, 53, 69, 0.1)',
-            tension: 0.4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'top',
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              max: 100
-            }
-          }
-        }
-      });
-    }
-
-    // Attendance Ratio Chart
-    const ratioCtx = document.getElementById('attendanceRatioChart');
-    if (ratioCtx) {
-      new Chart(ratioCtx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Có mặt', 'Vắng mặt', 'Đi muộn'],
-          datasets: [{
-            data: [75, 15, 10],
-            backgroundColor: [
-              '#28a745',
-              '#dc3545',
-              '#ffc107'
-            ],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom',
-            }
-          }
-        }
-      });
-    }
-  }
-
-  function searchStudents() {
-    const searchTerm = document.getElementById('searchStudent').value.toLowerCase();
-    const studentCards = document.querySelectorAll('.student-card');
-
-    studentCards.forEach(card => {
-      const studentName = card.querySelector('.student-details h6').textContent.toLowerCase();
-      const studentId = card.querySelector('.student-id').textContent.toLowerCase();
-      const studentEmail = card.querySelector('.text-muted').textContent.toLowerCase();
-
-      if (studentName.includes(searchTerm) ||
-              studentId.includes(searchTerm) ||
-              studentEmail.includes(searchTerm)) {
-        card.style.display = 'block';
-      } else {
-        card.style.display = 'none';
-      }
-    });
-  }
-
-  function initializeSearch() {
-    const searchInput = document.getElementById('searchStudent');
-    if (searchInput) {
-      searchInput.addEventListener('input', debounce(searchStudents, 300));
-    }
-  }
-
-  function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  }
-
-  function exportStudentList() {
-    // Get class info
-    const className = document.querySelector('.class-title').textContent;
-    const classCode = document.querySelector('.class-code').textContent;
-
-    // Get student data
-    const students = [];
-    document.querySelectorAll('.student-card').forEach(card => {
-      const name = card.querySelector('.student-details h6').textContent;
-      const id = card.querySelector('.student-id').textContent;
-      const email = card.querySelector('.text-muted').textContent;
-
-      students.push({
-        name: name,
-        id: id,
-        email: email
-      });
-    });
-
-    // Create CSV content
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "STT,Mã sinh viên,Họ tên,Email\n";
-
-    students.forEach((student, index) => {
-      csvContent += `${index + 1},${student.id},${student.name},${student.email}\n`;
-    });
-
-    // Download file
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `danh-sach-${classCode}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    // Show success message
-    showNotification('Đã xuất danh sách sinh viên thành công!', 'success');
-  }
-
+  // Notification function
   function showNotification(message, type = 'info') {
-    // Create notification element
     const notification = document.createElement('div');
     notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
     notification.style.cssText = `
@@ -965,16 +689,12 @@
         min-width: 300px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     `;
-
     notification.innerHTML = `
         <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'}"></i>
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-
     document.body.appendChild(notification);
-
-    // Auto remove after 5 seconds
     setTimeout(() => {
       if (notification.parentNode) {
         notification.parentNode.removeChild(notification);
@@ -982,220 +702,13 @@
     }, 5000);
   }
 
-  // Tab switching animation
-  document.addEventListener('shown.bs.tab', function (event) {
-    const target = event.target.getAttribute('data-bs-target');
-    const tabPane = document.querySelector(target);
-
-    if (tabPane) {
-      tabPane.style.opacity = '0';
-      tabPane.style.transform = 'translateY(20px)';
-
-      setTimeout(() => {
-        tabPane.style.transition = 'all 0.3s ease';
-        tabPane.style.opacity = '1';
-        tabPane.style.transform = 'translateY(0)';
-      }, 50);
-    }
-  });
-
-  // Refresh attendance data
-  function refreshAttendanceData() {
-    const classId = /*[[${lopHocPhan?.maLhp}]]*/ '';
-    if (!classId) return;
-
-    fetch(`/lecturer/api/diemdanh/${classId}`)
-            .then(response => response.json())
-            .then(data => {
-              updateAttendanceStats(data);
-              updateCharts(data);
-            })
-            .catch(error => {
-              console.error('Error fetching attendance data:', error);
-              showNotification('Không thể tải dữ liệu điểm danh', 'danger');
-            });
-  }
-
-  function updateAttendanceStats(data) {
-    // Update attendance statistics based on real data
-    // This would be implemented based on the actual API response structure
-    console.log('Updating attendance stats with:', data);
-  }
-
-  function updateCharts(data) {
-    // Update charts with real data
-    // This would be implemented based on the actual API response structure
-    console.log('Updating charts with:', data);
-  }
-
-  // Auto-refresh every 5 minutes
-  setInterval(refreshAttendanceData, 5 * 60 * 1000);
-
-  // Keyboard shortcuts
-  document.addEventListener('keydown', function(event) {
-    // Ctrl/Cmd + S to export student list
-    if ((event.ctrlKey || event.metaKey) && event.key === 's') {
-      event.preventDefault();
-      exportStudentList();
-    }
-
-    // Ctrl/Cmd + F to focus search
-    if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
-      event.preventDefault();
-      const searchInput = document.getElementById('searchStudent');
-      if (searchInput) {
-        searchInput.focus();
-      }
-    }
-  });
-
-  // Student card interactions
-  document.querySelectorAll('.student-card').forEach(card => {
-    card.addEventListener('click', function() {
-      // Add click effect
-      this.style.transform = 'scale(0.98)';
-      setTimeout(() => {
-        this.style.transform = '';
-      }, 150);
-
-      // Could open student detail modal here
-      const studentName = this.querySelector('.student-details h6').textContent;
-      const studentId = this.querySelector('.student-id').textContent;
-      console.log(`Clicked on student: ${studentName} (${studentId})`);
-    });
-  });
-
-  // Smooth scroll for better UX
-  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-      e.preventDefault();
-      const target = document.querySelector(this.getAttribute('href'));
-      if (target) {
-        target.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }
-    });
-  });
-
-  // Lazy load student avatars (if using actual images)
-  function loadStudentAvatars() {
-    const avatars = document.querySelectorAll('.student-avatar[data-src]');
-
-    const imageObserver = new IntersectionObserver((entries, observer) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const img = entry.target;
-          img.src = img.dataset.src;
-          img.classList.remove('loading');
-          imageObserver.unobserve(img);
-        }
-      });
-    });
-
-    avatars.forEach(img => imageObserver.observe(img));
-  }
-
-  // Initialize on page load
-  document.addEventListener('DOMContentLoaded', function() {
-    loadStudentAvatars();
-
-    // Add loading states to cards
-    document.querySelectorAll('.student-card, .attendance-card').forEach(card => {
-      card.style.opacity = '0';
-      card.style.transform = 'translateY(20px)';
-    });
-
-    // Animate cards in
-    setTimeout(() => {
-      document.querySelectorAll('.student-card, .attendance-card').forEach((card, index) => {
-        setTimeout(() => {
-          card.style.transition = 'all 0.3s ease';
-          card.style.opacity = '1';
-          card.style.transform = 'translateY(0)';
-        }, index * 50);
-      });
-    }, 100);
-  });
-  // Print class list
-  function printClassInfo() {
-    const className = document.querySelector('.class-title')?.textContent || '';
-    const classCode = document.querySelector('.class-code')?.textContent || '';
-
-    let studentList = '';
-    document.querySelectorAll('.student-card').forEach((card, index) => {
-      const name = card.querySelector('.student-details h6')?.textContent || '';
-      const id = card.querySelector('.student-id')?.textContent || '';
-      studentList += `<tr><td>${index + 1}</td><td>${id}</td><td>${name}</td><td></td></tr>`;
-    });
-
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html><head><title>Danh sách ${classCode}</title>
-        <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #ddd; padding: 8px; }
-            th { background: #f2f2f2; }
-        </style></head>
-        <body>
-            <h2>DANH SÁCH LỚP HỌC PHẦN</h2>
-            <h3>${className} - ${classCode}</h3>
-            <p>Ngày in: ${new Date().toLocaleDateString('vi-VN')}</p>
-            <table>
-                <tr><th>STT</th><th>Mã SV</th><th>Họ tên</th><th>Chữ ký</th></tr>
-                ${studentList}
-            </table>
-        </body></html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
-  }
-
-  // Add print button
-  setTimeout(() => {
-    const actionButtons = document.querySelector('.action-buttons');
-    if (actionButtons) {
-      const printBtn = document.createElement('button');
-      printBtn.className = 'btn-action btn-secondary-action';
-      printBtn.innerHTML = '<i class="fas fa-print"></i> In danh sách';
-      printBtn.onclick = printClassInfo;
-      actionButtons.appendChild(printBtn);
-    }
-  }, 500);
-
-  // Dark mode toggle
-  function toggleDarkMode() {
-    document.body.classList.toggle('dark-mode');
-    localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
-  }
-
-  if (localStorage.getItem('darkMode') === 'true') {
-    document.body.classList.add('dark-mode');
-  }
-
-  // Enhanced error handling
-  window.addEventListener('error', function(event) {
-    console.error('Error:', event.error);
-    showNotification('Đã xảy ra lỗi nhỏ', 'warning');
-  });
-
-  console.log('Class details page loaded successfully');
-  // Thêm vào cuối file JavaScript
-
-  // Global variables for attendance
-  let currentClassId = /*[[${lopHocPhan?.maLhp}]]*/ '';
-  let attendanceData = [];
-  let todaySchedules = [];
-  let existingAttendance = [];
-
   // Load attendance statistics when page loads
   document.addEventListener('DOMContentLoaded', function() {
     if (currentClassId) {
-      loadAttendanceStats();
-      loadStudentAttendanceData();
+      setTimeout(() => {
+        loadAttendanceStats();
+        loadStudentAttendanceData();
+      }, 500);
     }
   });
 
@@ -1218,12 +731,7 @@
     document.getElementById('absentCount').textContent = stats.absentCount || 0;
     document.getElementById('lateCount').textContent = stats.lateCount || 0;
     document.getElementById('attendanceRate').textContent = (stats.attendanceRate || 0).toFixed(1) + '%';
-
-    // Update trends (mockup for now)
-    document.getElementById('presentTrend').textContent = '+5% so với tuần trước';
-    document.getElementById('absentTrend').textContent = '-2% so với tuần trước';
-    document.getElementById('lateTrend').textContent = 'Không đổi';
-    document.getElementById('rateTrend').textContent = '+3% so với tuần trước';
+    document.getElementById('overallAttendanceRate').textContent = (stats.attendanceRate || 0).toFixed(1) + '%';
   }
 
   // Load student attendance data
@@ -1236,6 +744,7 @@
       }
     } catch (error) {
       console.error('Error loading student attendance:', error);
+      updateStudentCardsError();
     }
   }
 
@@ -1244,83 +753,172 @@
     const studentCards = document.querySelectorAll('.student-card');
 
     studentCards.forEach(card => {
-      const studentId = card.querySelector('.student-id').textContent;
+      const studentIdElement = card.querySelector('.student-id');
+      if (!studentIdElement) {
+        console.warn('Student ID element not found in card');
+        return;
+      }
+
+      const studentId = studentIdElement.textContent.trim();
       const stat = studentStats.find(s => s.maSv === studentId);
 
+      // Tìm element chứa thông tin điểm danh
+      const attendanceInfo = card.querySelector('.mt-2 small');
+      if (!attendanceInfo) {
+        console.warn('Attendance info element not found in card for student:', studentId);
+        return;
+      }
+
       if (stat) {
-        const attendanceInfo = card.querySelector('.mt-2 small');
-        if (attendanceInfo) {
-          attendanceInfo.innerHTML = `
+        const attendanceRate = stat.attendanceRate || 0;
+
+        attendanceInfo.innerHTML = `
           <i class="fas fa-check-circle"></i>
-          Tỷ lệ điểm danh: <span class="fw-bold">${stat.attendanceRate.toFixed(1)}%</span>
+          Tỷ lệ điểm danh: <span class="fw-bold">${attendanceRate.toFixed(1)}%</span>
         `;
 
-          // Add color coding based on attendance rate
-          if (stat.attendanceRate >= 90) {
-            attendanceInfo.className = 'text-success';
-          } else if (stat.attendanceRate >= 75) {
-            attendanceInfo.className = 'text-warning';
-          } else {
-            attendanceInfo.className = 'text-danger';
-          }
+        // Thêm màu sắc theo tỷ lệ điểm danh
+        attendanceInfo.className = '';
+        if (attendanceRate >= 90) {
+          attendanceInfo.classList.add('text-success');
+        } else if (attendanceRate >= 75) {
+          attendanceInfo.classList.add('text-warning');
+        } else {
+          attendanceInfo.classList.add('text-danger');
         }
+      } else {
+        attendanceInfo.innerHTML = `
+          <i class="fas fa-question-circle"></i>
+          Chưa có dữ liệu điểm danh
+        `;
+        attendanceInfo.className = 'text-muted';
       }
     });
   }
 
-  // Load today's schedules for the class
-  async function loadTodaySchedules() {
-    try {
-      const today = new Date();
-      const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-      const vietnamDayOfWeek = dayOfWeek === 0 ? 7 : dayOfWeek; // Convert to Vietnam format (2 = Monday)
+  // Update student cards when there's an error loading data
+  function updateStudentCardsError() {
+    const studentCards = document.querySelectorAll('.student-card');
 
+    studentCards.forEach(card => {
+      const attendanceInfo = card.querySelector('.mt-2 small');
+      if (attendanceInfo) {
+        attendanceInfo.innerHTML = `
+          <i class="fas fa-exclamation-triangle"></i>
+          Không thể tải dữ liệu
+        `;
+        attendanceInfo.className = 'text-muted';
+      }
+    });
+  }
+
+  // Search functionality
+  function searchStudents() {
+    const searchTerm = document.getElementById('searchStudent').value.toLowerCase();
+    const studentCards = document.querySelectorAll('.student-card');
+
+    studentCards.forEach(card => {
+      const studentName = card.querySelector('.student-details h6').textContent.toLowerCase();
+      const studentId = card.querySelector('.student-id').textContent.toLowerCase();
+      const studentEmail = card.querySelector('.text-muted').textContent.toLowerCase();
+
+      if (studentName.includes(searchTerm) ||
+              studentId.includes(searchTerm) ||
+              studentEmail.includes(searchTerm)) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  // Export student list
+  function exportStudentList() {
+    const className = document.querySelector('.class-title')?.textContent || '';
+    const classCode = document.querySelector('.class-code')?.textContent || '';
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "STT,Mã sinh viên,Họ tên,Email\n";
+
+    document.querySelectorAll('.student-card').forEach((card, index) => {
+      const name = card.querySelector('.student-details h6')?.textContent || '';
+      const id = card.querySelector('.student-id')?.textContent || '';
+      const email = card.querySelector('.text-muted')?.textContent || '';
+      csvContent += `${index + 1},${id},${name},${email}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `danh-sach-${classCode}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showNotification('Đã xuất danh sách sinh viên thành công!', 'success');
+  }
+
+  // Sửa lại function openManualAttendance() - đơn giản hóa
+  async function openManualAttendance() {
+    try {
+      console.log('🔄 Opening manual attendance...');
+
+      // Set today's date
+      const today = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById('attendanceDate');
+      if (dateInput) {
+        dateInput.value = today;
+      }
+
+      // Load all schedules for this class (không filter theo ngày)
       const response = await fetch(`/api/lichhoc/by-lhp/${currentClassId}`);
       if (response.ok) {
         const allSchedules = await response.json();
-        // Filter schedules for today
-        todaySchedules = allSchedules.filter(schedule => schedule.thu === vietnamDayOfWeek);
+        populateScheduleOptions(allSchedules);
+      } else {
+        throw new Error('Không thể tải lịch học');
       }
+
+      // Show modal
+      const modal = new bootstrap.Modal(document.getElementById('manualAttendanceModal'));
+      modal.show();
+
+      console.log('✅ Manual attendance modal opened');
+
     } catch (error) {
-      console.error('Error loading today schedules:', error);
+      console.error('❌ Error opening manual attendance:', error);
+      showNotification('Không thể mở form điểm danh: ' + error.message, 'danger');
     }
   }
 
-  // Open manual attendance modal
-  async function openManualAttendance() {
-    // Load today's schedules first
-    await loadTodaySchedules();
-
-    if (todaySchedules.length === 0) {
-      showNotification('Hôm nay không có lịch học nào cho lớp này!', 'warning');
-      return;
-    }
-
-    // Set today's date (locked)
-    const today = new Date().toISOString().split('T')[0];
-    const dateInput = document.getElementById('attendanceDate');
-    dateInput.value = today;
-    dateInput.disabled = true; // Lock to today only
-
-    // Populate schedule dropdown with today's schedules only
+  // Populate schedule options
+  function populateScheduleOptions(schedules) {
     const scheduleSelect = document.getElementById('attendanceSchedule');
-    scheduleSelect.innerHTML = '<option value="">-- Chọn buổi học hôm nay --</option>';
+    if (!scheduleSelect) return;
 
-    todaySchedules.forEach(schedule => {
+    scheduleSelect.innerHTML = '<option value="">-- Chọn buổi học --</option>';
+
+    if (schedules && schedules.length > 0) {
+      schedules.forEach(schedule => {
+        const option = document.createElement('option');
+        option.value = schedule.maLich;
+        option.textContent = `Thứ ${schedule.thu} - Tiết ${schedule.tietBatDau}-${schedule.tietBatDau + schedule.soTiet - 1} (${schedule.tenPhong || 'N/A'})`;
+        scheduleSelect.appendChild(option);
+      });
+
+      // Add event listener
+      scheduleSelect.removeEventListener('change', loadStudentListForAttendance);
+      scheduleSelect.addEventListener('change', loadStudentListForAttendance);
+
+      console.log(`📚 Loaded ${schedules.length} schedules`);
+    } else {
       const option = document.createElement('option');
-      option.value = schedule.maLich;
-      option.textContent = `Tiết ${schedule.tietBatDau}-${schedule.tietBatDau + schedule.soTiet - 1} (${schedule.tenPhong})`;
+      option.value = '';
+      option.textContent = 'Không có lịch học nào';
       scheduleSelect.appendChild(option);
-    });
-
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('manualAttendanceModal'));
-    modal.show();
-
-    // Add schedule selection event
-    scheduleSelect.addEventListener('change', loadStudentListForAttendance);
+      console.log('⚠️ No schedules found');
+    }
   }
-
   // Load student list for manual attendance
   async function loadStudentListForAttendance() {
     const scheduleSelect = document.getElementById('attendanceSchedule');
@@ -1328,94 +926,122 @@
 
     if (!selectedScheduleId) {
       document.getElementById('attendanceTableBody').innerHTML = '';
+      document.getElementById('attendanceCounter').style.display = 'none';
       return;
     }
 
-    // Load existing attendance for this schedule today
-    await loadExistingAttendance(selectedScheduleId);
+    try {
+      // Load existing attendance for this schedule today
+      await loadExistingAttendance(selectedScheduleId);
 
-    const tbody = document.getElementById('attendanceTableBody');
-    const studentCards = document.querySelectorAll('.student-card');
+      const tbody = document.getElementById('attendanceTableBody');
+      const studentCards = document.querySelectorAll('.student-card');
 
-    tbody.innerHTML = '';
-    attendanceData = [];
+      tbody.innerHTML = '';
+      attendanceData = [];
 
-    // Get current time for default
-    const now = new Date();
-    const currentTime = now.toTimeString().slice(0, 5);
+      // Get current time for default
+      const now = new Date();
+      const currentTime = now.toTimeString().slice(0, 5);
 
-    studentCards.forEach((card, index) => {
-      const studentName = card.querySelector('.student-details h6').textContent;
-      const studentId = card.querySelector('.student-id').textContent;
+      studentCards.forEach((card, index) => {
+        const studentName = card.querySelector('.student-details h6').textContent;
+        const studentId = card.querySelector('.student-id').textContent;
 
-      // Check if student already has attendance
-      const existingRecord = existingAttendance.find(record => record.maSv === studentId);
-      const isAlreadyAttended = !!existingRecord;
+        // Check if student already has attendance
+        const existingRecord = existingAttendance.find(record => record.maSv === studentId);
+        const isAlreadyAttended = !!existingRecord;
 
-      const row = document.createElement('tr');
-      row.className = isAlreadyAttended ? 'table-success' : '';
+        const row = document.createElement('tr');
+        row.className = isAlreadyAttended ? 'table-success' : '';
 
-      row.innerHTML = `
-      <td>${index + 1}</td>
-      <td>${studentId}</td>
-      <td>${studentName}</td>
-      <td>
-        ${isAlreadyAttended ?
-              `<span class="badge bg-success">
-            ${getStatusText(existingRecord.trangThai)}
-            <i class="fas fa-check-circle ms-1"></i>
-          </span>` :
-              `<select class="form-select form-select-sm attendance-status" data-student="${studentId}">
-            <option value="">-- Chưa điểm danh --</option>
-            <option value="CO_MAT">Có mặt</option>
-            <option value="VANG_MAT">Vắng mặt</option>
-            <option value="DI_TRE">Đi trễ</option>
-            <option value="VANG_CO_PHEP">Vắng có phép</option>
-          </select>`
+        row.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${studentId}</td>
+        <td>${studentName}</td>
+        <td>
+          ${isAlreadyAttended ?
+                `<span class="badge bg-success">
+              ${getStatusText(existingRecord.trangThai)}
+              <i class="fas fa-check-circle ms-1"></i>
+            </span>` :
+                `<select class="form-select form-select-sm attendance-status" data-student="${studentId}">
+              <option value="">-- Chưa điểm danh --</option>
+              <option value="CO_MAT">Có mặt</option>
+              <option value="VANG_MAT">Vắng mặt</option>
+              <option value="DI_MUON">Đi muộn</option>
+              <option value="VANG_CO_PHEP">Vắng có phép</option>
+            </select>`
+        }
+        </td>
+        <td>
+          ${isAlreadyAttended ?
+                `<span class="text-muted">${existingRecord.thoiGianVao || '--:--'}</span>` :
+                `<input type="time" class="form-control form-control-sm time-in"
+                data-student="${studentId}" value="${currentTime}" />`
+        }
+        </td>
+        <td>
+          ${isAlreadyAttended ?
+                `<span class="text-muted">${existingRecord.thoiGianRa || '--:--'}</span>` :
+                `<input type="time" class="form-control form-control-sm time-out"
+                data-student="${studentId}" />`
+        }
+        </td>
+      `;
+
+        tbody.appendChild(row);
+
+        // Initialize attendance data for students not yet attended
+        if (!isAlreadyAttended) {
+          attendanceData.push({
+            maSv: studentId,
+            trangThai: null,
+            thoiGianVao: currentTime,
+            thoiGianRa: null
+          });
+        }
+      });
+
+      // Add event listeners only for unattended students
+      tbody.querySelectorAll('.attendance-status').forEach(select => {
+        select.addEventListener('change', updateAttendanceData);
+      });
+
+      tbody.querySelectorAll('.time-in, .time-out').forEach(input => {
+        input.addEventListener('change', updateAttendanceData);
+      });
+
+      // Update counter
+      updateAttendanceCounter();
+
+    } catch (error) {
+      console.error('Error loading student list for attendance:', error);
+      showNotification('Không thể tải danh sách sinh viên!', 'danger');
+    }
+  }
+
+  // Global variables for manual attendance
+  let attendanceData = [];
+  let todaySchedules = [];
+  let existingAttendance = [];
+
+  // Đổi tên và sửa logic
+  async function loadAllSchedules() {
+    try {
+      console.log('🔄 Loading all schedules for class:', currentClassId);
+
+      const response = await fetch(`/api/lichhoc/by-lhp/${currentClassId}`);
+      if (response.ok) {
+        const schedules = await response.json();
+        console.log('✅ Loaded schedules:', schedules.length);
+        return schedules;
       }
-      </td>
-      <td>
-        ${isAlreadyAttended ?
-              `<span class="text-muted">${existingRecord.thoiGianVao || '--:--'}</span>` :
-              `<input type="time" class="form-control form-control-sm time-in"
-                  data-student="${studentId}" value="${currentTime}" />`
-      }
-      </td>
-      <td>
-        ${isAlreadyAttended ?
-              `<span class="text-muted">${existingRecord.thoiGianRa || '--:--'}</span>` :
-              `<input type="time" class="form-control form-control-sm time-out"
-                  data-student="${studentId}" />`
-      }
-      </td>
-    `;
-
-      tbody.appendChild(row);
-
-      // Initialize attendance data for students not yet attended
-      if (!isAlreadyAttended) {
-        attendanceData.push({
-          maSv: studentId,
-          trangThai: null,
-          thoiGianVao: currentTime,
-          thoiGianRa: null
-        });
-      }
-    });
-
-    // Add event listeners only for unattended students
-    tbody.querySelectorAll('.attendance-status').forEach(select => {
-      select.addEventListener('change', updateAttendanceData);
-    });
-
-    tbody.querySelectorAll('.time-in, .time-out').forEach(input => {
-      input.addEventListener('change', updateAttendanceData);
-    });
-
-    // Update counter
-    const unattendedCount = attendanceData.length;
-    const totalCount = studentCards.length;
-    updateAttendanceCounter(unattendedCount, totalCount);
+      return [];
+    } catch (error) {
+      console.error('❌ Error loading schedules:', error);
+      return [];
+    }
   }
 
   // Load existing attendance for selected schedule
@@ -1429,9 +1055,11 @@
       } else {
         existingAttendance = [];
       }
+      return existingAttendance;
     } catch (error) {
       console.error('Error loading existing attendance:', error);
       existingAttendance = [];
+      return [];
     }
   }
 
@@ -1440,32 +1068,60 @@
     const statusMap = {
       'CO_MAT': 'Có mặt',
       'VANG_MAT': 'Vắng mặt',
-      'DI_TRE': 'Đi trễ',
+      'DI_MUON': 'Đi muộn',
       'VANG_CO_PHEP': 'Vắng có phép'
     };
     return statusMap[status] || status;
   }
 
-  // Update attendance counter
-  function updateAttendanceCounter(unattended, total) {
-    let counterElement = document.getElementById('attendanceCounter');
-    if (!counterElement) {
-      counterElement = document.createElement('div');
-      counterElement.id = 'attendanceCounter';
-      counterElement.className = 'alert alert-info mb-3';
-      document.querySelector('.table-responsive').insertBefore(counterElement, document.querySelector('.table-responsive table'));
-    }
+  // Quick attendance actions
+  function markAllPresent() {
+    document.querySelectorAll('.attendance-status').forEach(select => {
+      if (!select.disabled) {
+        select.value = 'CO_MAT';
+        select.dispatchEvent(new Event('change'));
+      }
+    });
+    showNotification('Đã đánh dấu tất cả sinh viên có mặt!', 'success');
+  }
 
-    const attended = total - unattended;
-    counterElement.innerHTML = `
-    <i class="fas fa-info-circle"></i>
-    <strong>Trạng thái:</strong> ${attended}/${total} sinh viên đã điểm danh.
-    ${unattended > 0 ? `Còn ${unattended} sinh viên chưa điểm danh.` : 'Tất cả sinh viên đã điểm danh.'}
-  `;
+  function markAllAbsent() {
+    document.querySelectorAll('.attendance-status').forEach(select => {
+      if (!select.disabled) {
+        select.value = 'VANG_MAT';
+        select.dispatchEvent(new Event('change'));
+      }
+    });
 
-    if (unattended === 0) {
-      counterElement.className = 'alert alert-success mb-3';
-    }
+    // Clear times for absent students
+    document.querySelectorAll('.time-in, .time-out').forEach(input => {
+      if (!input.disabled) {
+        const studentId = input.getAttribute('data-student');
+        const student = attendanceData.find(s => s.maSv === studentId);
+        if (student && student.trangThai === 'VANG_MAT') {
+          input.value = '';
+          input.dispatchEvent(new Event('change'));
+        }
+      }
+    });
+    showNotification('Đã đánh dấu tất cả sinh viên vắng mặt!', 'warning');
+  }
+
+  function clearAllAttendance() {
+    document.querySelectorAll('.attendance-status').forEach(select => {
+      if (!select.disabled) {
+        select.value = '';
+        select.dispatchEvent(new Event('change'));
+      }
+    });
+
+    document.querySelectorAll('.time-in, .time-out').forEach(input => {
+      if (!input.disabled) {
+        input.value = '';
+        input.dispatchEvent(new Event('change'));
+      }
+    });
+    showNotification('Đã xóa tất cả dữ liệu điểm danh!', 'info');
   }
 
   // Update attendance data when form changes
@@ -1480,7 +1136,7 @@
         // Auto-set time in when status is selected
         if (event.target.value && !student.thoiGianVao) {
           const timeInput = document.querySelector(`.time-in[data-student="${studentId}"]`);
-          if (timeInput && !timeInput.value) {
+          if (timeInput && !timeInput.value && !timeInput.disabled) {
             const now = new Date();
             timeInput.value = now.toTimeString().slice(0, 5);
             student.thoiGianVao = timeInput.value;
@@ -1492,58 +1148,61 @@
         student.thoiGianRa = event.target.value || null;
       }
     }
+
+    updateAttendanceCounter();
   }
 
-  // Quick attendance actions - only for unattended students
-  function markAllPresent() {
-    document.querySelectorAll('.attendance-status').forEach(select => {
-      select.value = 'CO_MAT';
-      select.dispatchEvent(new Event('change'));
-    });
-  }
+  // Update attendance counter
+  // Update attendance counter
+  function updateAttendanceCounter() {
+    let counterElement = document.getElementById('attendanceCounter');
+    if (!counterElement) {
+      return;
+    }
 
-  function markAllAbsent() {
-    document.querySelectorAll('.attendance-status').forEach(select => {
-      select.value = 'VANG_MAT';
-      select.dispatchEvent(new Event('change'));
-    });
+    const total = attendanceData.length;
+    const attended = attendanceData.filter(s => s.trangThai).length;
+    const unattended = total - attended;
 
-    // Clear times for absent students
-    document.querySelectorAll('.time-in, .time-out').forEach(input => {
-      const studentId = input.getAttribute('data-student');
-      const student = attendanceData.find(s => s.maSv === studentId);
-      if (student && student.trangThai === 'VANG_MAT') {
-        input.value = '';
-        input.dispatchEvent(new Event('change'));
+    if (total > 0) {
+      counterElement.style.display = 'block';
+      counterElement.innerHTML = `
+      <i class="fas fa-info-circle"></i>
+      <strong>Trạng thái:</strong> ${attended}/${total} sinh viên đã điểm danh.
+      ${unattended > 0 ? `Còn ${unattended} sinh viên chưa điểm danh.` : 'Tất cả sinh viên đã điểm danh.'}
+    `;
+
+      if (unattended === 0) {
+        counterElement.className = 'alert alert-success mb-3';
+      } else {
+        counterElement.className = 'alert alert-info mb-3';
       }
-    });
-  }
-
-  function clearAllAttendance() {
-    document.querySelectorAll('.attendance-status').forEach(select => {
-      select.value = '';
-      select.dispatchEvent(new Event('change'));
-    });
-
-    document.querySelectorAll('.time-in, .time-out').forEach(input => {
-      input.value = '';
-      input.dispatchEvent(new Event('change'));
-    });
+    } else {
+      counterElement.style.display = 'none';
+    }
   }
 
   // Save manual attendance
   async function saveManualAttendance() {
-    const scheduleId = document.getElementById('attendanceSchedule').value;
-    const attendanceDate = document.getElementById('attendanceDate').value;
+    const scheduleSelect = document.getElementById('attendanceSchedule');
+    const attendanceDate = document.getElementById('attendanceDate');
 
-    if (!scheduleId || !attendanceDate) {
+    if (!scheduleSelect || !attendanceDate) {
+      showNotification('Không tìm thấy form điểm danh!', 'danger');
+      return;
+    }
+
+    const scheduleId = scheduleSelect.value;
+    const dateValue = attendanceDate.value;
+
+    if (!scheduleId || !dateValue) {
       showNotification('Vui lòng chọn buổi học!', 'warning');
       return;
     }
 
     // Validate date is today
     const today = new Date().toISOString().split('T')[0];
-    if (attendanceDate !== today) {
+    if (dateValue !== today) {
       showNotification('Chỉ có thể điểm danh cho ngày hôm nay!', 'danger');
       return;
     }
@@ -1557,7 +1216,7 @@
     }
 
     try {
-      const url = `/api/diemdanh/manual?maLich=${scheduleId}&ngayDiemDanh=${attendanceDate}`;
+      const url = `/api/diemdanh/manual?maLich=${scheduleId}&ngayDiemDanh=${dateValue}`;
 
       const response = await fetch(url, {
         method: 'POST',
@@ -1570,9 +1229,11 @@
       if (response.ok) {
         showNotification(`Đã điểm danh thủ công cho ${validAttendance.length} sinh viên!`, 'success');
 
-        // Close modal
+        // Close modal if exists
         const modal = bootstrap.Modal.getInstance(document.getElementById('manualAttendanceModal'));
-        modal.hide();
+        if (modal) {
+          modal.hide();
+        }
 
         // Refresh stats
         loadAttendanceStats();
@@ -1595,6 +1256,94 @@
     }
   }, 30000); // Refresh every 30 seconds
 
+  // Auto-refresh when tab becomes visible
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && currentClassId) {
+      loadAttendanceStats();
+      loadStudentAttendanceData();
+    }
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', function(event) {
+    // Ctrl/Cmd + S to export student list
+    if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+      event.preventDefault();
+      exportStudentList();
+    }
+
+    // Ctrl/Cmd + F to focus search
+    if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+      event.preventDefault();
+      const searchInput = document.getElementById('searchStudent');
+      if (searchInput) {
+        searchInput.focus();
+      }
+    }
+
+    // ESC to close modals
+    if (event.key === 'Escape') {
+      const modals = document.querySelectorAll('.modal.show');
+      modals.forEach(modal => {
+        const bsModal = bootstrap.Modal.getInstance(modal);
+        if (bsModal) {
+          bsModal.hide();
+        }
+      });
+    }
+  });
+
+  // Add loading animations
+  function addLoadingAnimations() {
+    document.querySelectorAll('.student-card, .stat-item').forEach(card => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+    });
+
+    setTimeout(() => {
+      document.querySelectorAll('.student-card, .stat-item').forEach((card, index) => {
+        setTimeout(() => {
+          card.style.transition = 'all 0.3s ease';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, index * 50);
+      });
+    }, 100);
+  }
+
+  // Initialize page
+  document.addEventListener('DOMContentLoaded', function() {
+    addLoadingAnimations();
+
+    // Add enhanced interactivity
+    document.querySelectorAll('.student-card').forEach(card => {
+      card.addEventListener('click', function() {
+        this.style.transform = 'scale(0.98)';
+        setTimeout(() => {
+          this.style.transform = '';
+        }, 150);
+      });
+    });
+
+    // Tab switching animations
+    document.addEventListener('shown.bs.tab', function (event) {
+      const target = event.target.getAttribute('data-bs-target');
+      const tabPane = document.querySelector(target);
+
+      if (tabPane) {
+        tabPane.style.opacity = '0';
+        tabPane.style.transform = 'translateY(20px)';
+
+        setTimeout(() => {
+          tabPane.style.transition = 'all 0.3s ease';
+          tabPane.style.opacity = '1';
+          tabPane.style.transform = 'translateY(0)';
+        }, 50);
+      }
+    });
+  });
+
+  console.log('Class details page loaded successfully');
 </script>
 </body>
 </html>
