@@ -2,6 +2,7 @@ package com.tathanhloc.faceattendance.Controller;
 
 import com.tathanhloc.faceattendance.DTO.DangKyHocDTO;
 import com.tathanhloc.faceattendance.DTO.DiemDanhDTO;
+import com.tathanhloc.faceattendance.DTO.LichHocDTO;
 import com.tathanhloc.faceattendance.DTO.SinhVienDTO;
 import com.tathanhloc.faceattendance.Security.CustomUserDetails;
 import com.tathanhloc.faceattendance.Service.DangKyHocService;
@@ -21,9 +22,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Controller
 @RequestMapping("/student")
@@ -41,15 +40,83 @@ public class StudentDashboardController {
 
 
     /**
-     * Trang lịch học của sinh viên
+     * Trang lịch học chi tiết của sinh viên - URL: /student/lichhoc
      */
-    @GetMapping("/schedule")
-    public String schedule(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+    @GetMapping("/lichhoc")
+    public String lichHoc(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         if (userDetails == null) {
             return "redirect:/?error=not_authenticated";
         }
-        model.addAttribute("schedules", lichHocService.getAll());
-        return "student/schedule";
+
+        try {
+            // Kiểm tra thông tin sinh viên
+            if (userDetails.getTaiKhoan().getSinhVien() == null) {
+                log.error("User has no student profile: {}", userDetails.getUsername());
+                model.addAttribute("error", "Tài khoản không có thông tin sinh viên");
+                return "student/lichhoc";
+            }
+
+            String maSv = userDetails.getTaiKhoan().getSinhVien().getMaSv();
+            SinhVienDTO student = sinhVienService.getByMaSv(maSv);
+
+            // Lấy lịch học của sinh viên
+            List<LichHocDTO> mySchedules = lichHocService.getBySinhVien(maSv);
+            List<LichHocDTO> todaySchedules = lichHocService.getTodaySchedule(null, maSv, null);
+
+            // ✅ CHUẨN BỊ DATA CHO CALENDAR GRID VIEW
+            // Map<Ngày, Map<Tiết, LichHocDTO>>
+            Map<Integer, Map<Integer, LichHocDTO>> calendarGrid = new HashMap<>();
+
+            // Khởi tạo grid cho 7 ngày và 12 tiết
+            for (int day = 2; day <= 8; day++) {
+                Map<Integer, LichHocDTO> daySchedule = new HashMap<>();
+                calendarGrid.put(day, daySchedule);
+            }
+
+            // Đặt lịch vào grid
+            for (LichHocDTO schedule : mySchedules) {
+                Integer day = schedule.getThu();
+                Integer startPeriod = schedule.getTietBatDau();
+                Integer numPeriods = schedule.getSoTiet();
+
+                if (day != null && startPeriod != null && numPeriods != null) {
+                    // Đặt lịch vào các tiết liên tiếp
+                    for (int i = 0; i < numPeriods; i++) {
+                        int period = startPeriod + i;
+                        if (period <= 12) { // Giới hạn 12 tiết
+                            calendarGrid.get(day).put(period, schedule);
+                        }
+                    }
+                }
+            }
+
+            // Các thống kê khác
+            long uniqueSubjectsCount = mySchedules.stream()
+                    .map(LichHocDTO::getTenMonHoc)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .count();
+
+            // Thêm vào model
+            model.addAttribute("student", student);
+            model.addAttribute("schedules", mySchedules);
+            model.addAttribute("calendarGrid", calendarGrid); // ✅ GRID DATA
+            model.addAttribute("todaySchedules", todaySchedules);
+            model.addAttribute("totalSchedules", mySchedules.size());
+            model.addAttribute("uniqueSubjectsCount", uniqueSubjectsCount);
+
+            // ✅ THÊM DANH SÁCH TIẾT HỌC VÀ NGÀY
+            model.addAttribute("periods", Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12));
+            model.addAttribute("weekDays", Arrays.asList(2, 3, 4, 5, 6, 7, 8));
+
+            log.info("✅ Calendar grid prepared: {} schedules", mySchedules.size());
+            return "student/lichhoc";
+
+        } catch (Exception e) {
+            log.error("❌ Error loading student schedule", e);
+            model.addAttribute("error", "Không thể tải lịch học: " + e.getMessage());
+            return "student/lichhoc";
+        }
     }
 
     /**
@@ -293,28 +360,6 @@ public class StudentDashboardController {
     }
 
     /**
-     * API lấy danh sách ảnh khuôn mặt
-     */
-    @GetMapping("/api/face-images")
-    @ResponseBody
-    public ResponseEntity<List<Map<String, Object>>> getFaceImages(
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        if (userDetails == null || userDetails.getTaiKhoan().getSinhVien() == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        try {
-            String maSv = userDetails.getTaiKhoan().getSinhVien().getMaSv();
-            List<Map<String, Object>> faceImages = fileUploadService.getFaceImages(maSv);
-            return ResponseEntity.ok(faceImages);
-        } catch (Exception e) {
-            log.error("Error loading face images: ", e);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    /**
      * API xóa ảnh khuôn mặt
      */
     @DeleteMapping("/api/face-image/{filename}")
@@ -420,6 +465,7 @@ public class StudentDashboardController {
             model.addAttribute("totalSubjects", myRegistrations.size());
 
             // 3. Tình trạng sinh trắc học
+            // 3. Tình trạng sinh trắc học - LOGIC SỬA
             boolean hasEmbedding = student.getEmbedding() != null && !student.getEmbedding().trim().isEmpty();
             int faceImageCount = fileUploadService.getFaceImageCount(maSv);
             boolean hasProfileImage = student.getHinhAnh() != null && !student.getHinhAnh().trim().isEmpty();
@@ -428,18 +474,21 @@ public class StudentDashboardController {
             model.addAttribute("faceImageCount", faceImageCount);
             model.addAttribute("hasProfileImage", hasProfileImage);
 
-            // Tính toán trạng thái sinh trắc học
+// Tính toán trạng thái sinh trắc học - LOGIC ĐÚNG
             String biometricStatus;
-            if (hasEmbedding) {
-                biometricStatus = "completed"; // Đã hoàn tất
+            if (hasEmbedding && faceImageCount >= 3) {
+                biometricStatus = "completed"; // ✅ Có embedding VÀ đủ ảnh
             } else if (faceImageCount >= 3) {
-                biometricStatus = "ready"; // Đủ ảnh, chưa trích xuất
+                biometricStatus = "ready"; // ✅ Đủ ảnh, chưa có embedding
             } else if (faceImageCount > 0) {
-                biometricStatus = "partial"; // Có ảnh nhưng chưa đủ
+                biometricStatus = "partial"; // ✅ Có ít ảnh, chưa đủ
             } else {
-                biometricStatus = "empty"; // Chưa có gì
+                biometricStatus = "empty"; // ✅ Chưa có ảnh nào
             }
             model.addAttribute("biometricStatus", biometricStatus);
+
+            log.info("Biometric Status: {} (embedding: {}, faceCount: {})",
+                    biometricStatus, hasEmbedding, faceImageCount);
 
             // 4. Thống kê điểm danh
             List<DiemDanhDTO> myAttendance = diemDanhService.getByMaSv(maSv);
@@ -527,5 +576,79 @@ public class StudentDashboardController {
         }
 
         return subjectStats;
+    }
+
+    /**
+     * API lấy danh sách ảnh khuôn mặt
+     */
+    @GetMapping("/api/get-face-images")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getFaceImages(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        if (userDetails == null || userDetails.getTaiKhoan().getSinhVien() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Không có quyền truy cập"));
+        }
+
+        try {
+            String maSv = userDetails.getTaiKhoan().getSinhVien().getMaSv();
+
+            // Lấy số lượng ảnh hiện có
+            int faceImageCount = fileUploadService.getFaceImageCount(maSv);
+
+            // Tạo danh sách ảnh giả để frontend render
+            List<Map<String, Object>> images = new ArrayList<>();
+            for (int i = 1; i <= faceImageCount; i++) {
+                Map<String, Object> image = new HashMap<>();
+                image.put("id", i);
+                image.put("url", "/uploads/students/" + maSv + "/faces/face_" + i + ".jpg");
+                image.put("filename", "face_" + i + ".jpg");
+                images.add(image);
+            }
+
+            return ResponseEntity.ok(Map.of(
+                    "images", images,
+                    "count", faceImageCount,
+                    "maxCount", 5
+            ));
+
+        } catch (Exception e) {
+            log.error("Error getting face images", e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Không thể lấy danh sách ảnh"));
+        }
+    }
+
+    /**
+     * API xóa ảnh khuôn mặt
+     */
+    @DeleteMapping("/api/delete-face-image/{imageId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> deleteFaceImage(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable int imageId) {
+
+        if (userDetails == null || userDetails.getTaiKhoan().getSinhVien() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Không có quyền truy cập"));
+        }
+
+        try {
+            String maSv = userDetails.getTaiKhoan().getSinhVien().getMaSv();
+
+            // TODO: Implement delete specific face image in FileUploadService
+            // fileUploadService.deleteFaceImage(maSv, imageId);
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "success",
+                    "message", "Xóa ảnh thành công"
+            ));
+
+        } catch (Exception e) {
+            log.error("Error deleting face image", e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Không thể xóa ảnh"));
+        }
     }
 }

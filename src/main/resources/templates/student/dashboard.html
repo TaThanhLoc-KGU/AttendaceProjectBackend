@@ -6,669 +6,358 @@
     <title>Dashboard Sinh viên - Face Attendance</title>
 
     <!-- Bootstrap CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Chart.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <!-- Custom CSS -->
-    <link th:href="@{/css/common.css}" rel="stylesheet">
-    <link th:href="@{/css/student.css}" rel="stylesheet">
-    <link th:href="@{/css/sidebar.css}" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- Custom CSS - Tái sử dụng CSS hiện có -->
+    <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/sidebar.css}" rel="stylesheet">
+    <link th:href="@{/css/student.css}" rel="stylesheet">
+
+    <style>
+        /* Biometric Status Styles */
+        .biometric-overview {
+            text-align: center;
+            padding: 2rem;
+            border-radius: var(--border-radius-lg);
+            margin-bottom: 1.5rem;
+        }
+
+        .biometric-overview.completed {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+        }
+
+        .biometric-overview.ready {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            color: #856404;
+        }
+
+        .biometric-overview.partial {
+            background: linear-gradient(135deg, #f8d7da, #f5c2c7);
+            color: #721c24;
+        }
+
+        .biometric-overview.empty {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            color: #6c757d;
+        }
+
+        .status-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .biometric-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-item {
+            background: var(--white);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .detail-item i {
+            font-size: 1.5rem;
+        }
+
+        .detail-content {
+            flex: 1;
+        }
+
+        .detail-status {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .setup-action {
+            margin-top: 1.5rem;
+        }
+
+        .dashboard-card {
+            background: var(--white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            padding: 1.5rem;
+            border-bottom: none;
+        }
+
+        .card-title {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.125rem;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+    </style>
 </head>
 
 <body class="student-dashboard">
-<!-- Include Sidebar -->
-<div th:replace="~{components/sidebar :: sidebar}"></div>
+<div class="main-wrapper">
+    <!-- Include Sidebar Component - Tái sử dụng sidebar hiện có -->
+    <div th:replace="~{components/sidebar :: sidebar}"></div>
 
-<!-- Main Content -->
-<div class="main-content">
-
-    <!-- Page Content -->
-    <div class="page-content">
-        <div class="container-fluid">
-            <!-- Welcome Header -->
-            <div class="welcome-header mb-4">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h2 class="welcome-title">
-                            <i class="fas fa-graduation-cap me-2"></i>
-                            Xin chào, <span th:text="${student.hoTen}">Tên sinh viên</span>!
-                        </h2>
-                        <p class="welcome-subtitle">
-                            Mã sinh viên: <strong th:text="${student.maSv}">20210001</strong>
-                            | Lớp: <strong th:text="${student.getMaLop() ?: 'Chưa phân lớp'}">CNTT01</strong>
-                        </p>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <div class="current-date">
-                            <i class="fas fa-calendar-alt me-2"></i>
-                            <span id="currentDate"></span>
-                        </div>
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-left ">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">
+                        <i class="fas fa-graduation-cap me-2"></i>
+                        Dashboard Sinh viên
+                    </h1>
+                </div>
+                <div class="header-right">
+                    <div class="welcome-info">
+                        <span class="welcome-text">Xin chào, </span>
+                        <span class="user-name" th:text="${student?.hoTen ?: 'Sinh viên'}">Sinh viên</span>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Quick Stats Cards -->
-            <div class="row mb-4">
-                <div class="col-md-4">
-                    <div class="stats-card bg-primary">
-                        <div class="stats-icon">
-                            <i class="fas fa-book-open"></i>
-                        </div>
-                        <div class="stats-content">
-                            <h3 class="stats-number" th:text="${totalSubjects ?: 0}">0</h3>
-                            <p class="stats-label">Môn học đang học</p>
-                        </div>
-                    </div>
+        <!-- Content -->
+        <div class="content">
+            <div class="container-fluid">
+
+                <!-- Error Alert -->
+                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span th:text="${error}">Lỗi xảy ra</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
 
-                <div class="col-md-4">
-                    <div class="stats-card" th:classappend="${biometricStatus == 'completed'} ? 'bg-success' : (${biometricStatus == 'ready'} ? 'bg-warning' : 'bg-danger')">
-                        <div class="stats-icon">
-                            <i class="fas fa-user-check"></i>
+                <!-- Welcome Section -->
+                <div class="welcome-header mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="welcome-title">
+                                <i class="fas fa-user-circle me-2"></i>
+                                <span th:text="${student?.hoTen ?: 'Sinh viên'}">Sinh viên</span>
+                            </h2>
+                            <p class="welcome-subtitle">
+                                Mã sinh viên: <strong th:text="${student?.maSv ?: 'N/A'}">20210001</strong>
+                                | Lớp: <strong th:text="${student?.maLop ?: 'Chưa phân lớp'}">CNTT01</strong>
+                            </p>
                         </div>
-                        <div class="stats-content">
-                            <h3 class="stats-number" th:text="${faceImageCount}">0</h3>
-                            <p class="stats-label">Ảnh khuôn mặt</p>
-                            <small class="stats-status">
-                                <span th:if="${biometricStatus == 'completed'}" class="text-light">✓ Đã sẵn sàng</span>
-                                <span th:if="${biometricStatus == 'ready'}" class="text-light">⚠ Cần trích xuất</span>
-                                <span th:if="${biometricStatus == 'partial'}" class="text-light">⚠ Cần thêm ảnh</span>
-                                <span th:if="${biometricStatus == 'empty'}" class="text-light">✗ Chưa thiết lập</span>
-                            </small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="stats-card bg-info">
-                        <div class="stats-icon">
-                            <i class="fas fa-clipboard-check"></i>
-                        </div>
-                        <div class="stats-content">
-                            <h3 class="stats-number" th:text="${attendanceStats?.present ?: 0}">0</h3>
-                            <p class="stats-label">Lần có mặt</p>
-                            <small class="stats-status text-light">
-                                Tổng: <span th:text="${attendanceStats?.total ?: 0}">0</span> buổi
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Main Content Sections -->
-            <div class="row">
-                <!-- 1. Các môn đang học -->
-                <div class="col-lg-6 mb-4">
-                    <div class="dashboard-card">
-                        <div class="card-header">
-                            <h5 class="card-title">
-                                <i class="fas fa-book-open me-2 text-primary"></i>
-                                Các môn đang học
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div th:if="${myRegistrations.isEmpty()}" class="empty-state text-center py-4">
-                                <i class="fas fa-book fa-3x text-muted mb-3"></i>
-                                <p class="text-muted">Chưa đăng ký môn học nào</p>
-                            </div>
-
-                            <div th:unless="${myRegistrations.isEmpty()}" class="subjects-list">
-                                <div th:each="registration : ${myRegistrations}" class="subject-item">
-                                    <div class="subject-info">
-                                        <h6 class="subject-name" th:text="${registration.tenMonHoc ?: 'N/A'}">Tên môn học</h6>
-                                        <p class="subject-details">
-                                            <span class="subject-code" th:text="${registration.maMh}">MH001</span> |
-                                            Nhóm <span th:text="${registration.nhom}">1</span>
-                                        </p>
-                                        <p class="subject-teacher">
-                                            <i class="fas fa-chalkboard-teacher me-1"></i>
-                                            <span th:text="${registration.tenGiangVien ?: 'N/A'}">Tên giảng viên</span>
-                                        </p>
-                                    </div>
-                                    <div class="subject-stats">
-                                        <div class="attendance-summary" th:if="${subjectAttendanceStats.containsKey(registration.maLhp)}">
-                                            <div class="attendance-rate">
-                                                    <span th:with="stats=${subjectAttendanceStats.get(registration.maLhp)}"
-                                                          th:text="${stats.total > 0 ? #numbers.formatDecimal((stats.present * 100.0 / stats.total), 1, 1) + '%' : '0%'}">
-                                                        0%
-                                                    </span>
-                                            </div>
-                                            <small class="text-muted">Tỷ lệ có mặt</small>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="col-md-4 text-end">
+                            <div class="current-date">
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                <span id="currentDate"></span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 2. Tình trạng sinh trắc học -->
-                <div class="col-lg-6 mb-4">
-                    <div class="dashboard-card">
-                        <div class="card-header">
-                            <h5 class="card-title">
-                                <i class="fas fa-user-circle me-2 text-success"></i>
-                                Tình trạng sinh trắc học
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <!-- Biometric Status Overview -->
-                            <!-- Biometric Status Overview -->
-                            <div class="biometric-overview mb-3">
-                                <div class="status-indicator" th:classappend="${biometricStatus}">
-                                    <!-- Status Icon với th:switch -->
+                <!-- MỤC TIÊU 1: Kiểm tra tình trạng sinh trắc học -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h5 class="card-title">
+                                    <i class="fas fa-user-shield me-2"></i>
+                                    Tình trạng Sinh trắc học
+                                </h5>
+                            </div>
+                            <div class="card-body">
+
+                                <!-- Biometric Status Overview -->
+                                <div class="biometric-overview" th:classappend="${biometricStatus ?: 'empty'}">
                                     <div class="status-icon">
                                         <div th:switch="${biometricStatus}">
-                                            <i th:case="'completed'" class="fas fa-check-circle"></i>
-                                            <i th:case="'ready'" class="fas fa-exclamation-triangle"></i>
-                                            <i th:case="'partial'" class="fas fa-clock"></i>
-                                            <i th:case="*" class="fas fa-times-circle"></i>
+                                            <i th:case="'completed'" class="fas fa-check-circle text-success"></i>
+                                            <i th:case="'ready'" class="fas fa-exclamation-triangle text-warning"></i>
+                                            <i th:case="'partial'" class="fas fa-clock text-info"></i>
+                                            <i th:case="*" class="fas fa-times-circle text-muted"></i>
                                         </div>
                                     </div>
 
-                                    <!-- Status Content với th:switch -->
                                     <div class="status-content">
                                         <div th:switch="${biometricStatus}">
-                                            <h6 th:case="'completed'">Đã sẵn sàng điểm danh</h6>
-                                            <h6 th:case="'ready'">Cần trích xuất đặc trưng</h6>
-                                            <h6 th:case="'partial'">Cần upload thêm ảnh</h6>
-                                            <h6 th:case="*">Chưa thiết lập sinh trắc học</h6>
+                                            <div th:case="'completed'">
+                                                <h4>✅ Đã sẵn sàng điểm danh</h4>
+                                                <p>Sinh trắc học đã được thiết lập hoàn tất. Bạn có thể tham gia điểm danh bằng khuôn mặt.</p>
+                                            </div>
+                                            <div th:case="'ready'">
+                                                <h4>⚠️ Cần trích xuất đặc trưng</h4>
+                                                <p>Đã có đủ ảnh khuôn mặt nhưng chưa trích xuất đặc trưng AI. Hãy liên hệ admin để hoàn tất.</p>
+                                            </div>
+                                            <div th:case="'partial'">
+                                                <h4>🔄 Cần upload thêm ảnh</h4>
+                                                <p>Cần upload thêm ảnh khuôn mặt để hoàn tất thiết lập sinh trắc học.</p>
+                                            </div>
+                                            <div th:case="*">
+                                                <h4>❌ Chưa thiết lập sinh trắc học</h4>
+                                                <p>Bạn chưa thiết lập sinh trắc học. Hãy upload ảnh khuôn mặt để có thể điểm danh.</p>
+                                            </div>
                                         </div>
+                                    </div>
+                                </div>
 
-                                        <!-- Description với th:switch -->
-                                        <div th:switch="${biometricStatus}" class="mb-0 text-muted">
-                                            <p th:case="'completed'" class="mb-0">Hệ thống có thể nhận diện khuôn mặt của bạn</p>
-                                            <p th:case="'ready'" class="mb-0">Đã có đủ ảnh, cần chạy thuật toán trích xuất</p>
-                                            <p th:case="'partial'" class="mb-0">Cần ít nhất 3 ảnh khuôn mặt để trích xuất đặc trưng</p>
-                                            <p th:case="*" class="mb-0">Chưa upload ảnh khuôn mặt nào</p>
+                                <!-- MỤC TIÊU 2: Chi tiết kiểm tra từng thành phần -->
+                                <div class="biometric-details">
+                                    <!-- Kiểm tra số lượng ảnh khuôn mặt -->
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-images"
+                                               th:classappend="${faceImageCount >= 3} ? 'text-success' : 'text-muted'"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <div class="detail-label">Ảnh khuôn mặt</div>
+                                            <div class="detail-status"
+                                                 th:text="${faceImageCount ?: 0} + '/3 ảnh'">0/3 ảnh</div>
+                                            <small class="text-muted">Cần tối thiểu 3 ảnh</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Kiểm tra ảnh đại diện -->
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-user-circle"
+                                               th:classappend="${hasProfileImage} ? 'text-success' : 'text-muted'"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <div class="detail-label">Ảnh đại diện</div>
+                                            <div class="detail-status"
+                                                 th:text="${hasProfileImage} ? 'Đã có' : 'Chưa có'">Chưa có</div>
+                                            <small class="text-muted">Ảnh hiển thị hồ sơ</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Kiểm tra đặc trưng AI -->
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-brain"
+                                               th:classappend="${hasEmbedding} ? 'text-success' : 'text-muted'"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <div class="detail-label">Đặc trưng AI</div>
+                                            <div class="detail-status"
+                                                 th:text="${hasEmbedding} ? 'Đã có' : 'Chưa có'">Chưa có</div>
+                                            <small class="text-muted">Dữ liệu nhận diện</small>
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Action Button -->
+                                <div class="setup-action text-center">
+                                    <div th:switch="${biometricStatus}">
+                                        <div th:case="'completed'">
+                                            <button class="btn btn-success btn-lg" disabled>
+                                                <i class="fas fa-check me-2"></i>
+                                                Sinh trắc học đã hoàn tất
+                                            </button>
+                                        </div>
+                                        <div th:case="*">
+                                            <a href="/student/profile" class="btn btn-primary btn-lg">
+                                                <i class="fas fa-cog me-2"></i>
+                                                Thiết lập sinh trắc học
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
+                        </div>
+                    </div>
+                </div>
 
-                            <!-- Biometric Details -->
-                            <div class="biometric-details">
-                                <div class="detail-item">
-                                    <div class="detail-icon">
-                                        <i class="fas fa-image" th:classappend="${hasProfileImage} ? ' text-success' : ' text-muted'"></i>
-                                    </div>
-                                    <div class="detail-content">
-                                        <span>Ảnh đại diện</span>
-                                        <span class="detail-status" th:text="${hasProfileImage} ? 'Đã có' : 'Chưa có'">Chưa có</span>
-                                    </div>
-                                </div>
-
-                                <div class="detail-item">
-                                    <div class="detail-icon">
-                                        <i class="fas fa-images" th:classappend="${faceImageCount >= 3} ? ' text-success' : ' text-warning'"></i>
-                                    </div>
-                                    <div class="detail-content">
-                                        <span>Ảnh khuôn mặt</span>
-                                        <span class="detail-status" th:text="${faceImageCount + '/5 ảnh'}">0/5 ảnh</span>
-                                    </div>
-                                </div>
-
-                                <div class="detail-item">
-                                    <div class="detail-icon">
-                                        <i class="fas fa-brain" th:classappend="${hasEmbedding} ? ' text-success' : ' text-muted'"></i>
-                                    </div>
-                                    <div class="detail-content">
-                                        <span>Đặc trưng AI</span>
-                                        <span class="detail-status" th:text="${hasEmbedding} ? 'Đã có' : 'Chưa có'">Chưa có</span>
-                                    </div>
-                                </div>
+                <!-- Quick Actions -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h5 class="card-title">
+                                    <i class="fas fa-book-open me-2"></i>
+                                    Môn học
+                                </h5>
                             </div>
+                            <div class="card-body text-center">
+                                <div class="stats-number h2" th:text="${totalSubjects ?: 0}">0</div>
+                                <p class="text-muted">Môn đang học</p>
+                                <a href="/student/schedule" class="btn btn-outline-primary">
+                                    <i class="fas fa-calendar me-2"></i>Xem lịch học
+                                </a>
+                            </div>
+                        </div>
+                    </div>
 
-                            <!-- Action Button -->
-                            <div class="text-center mt-3">
-                                <a href="/student/profile" class="btn btn-primary">
-                                    <i class="fas fa-cog me-2"></i>
-                                    Thiết lập sinh trắc học
+                    <div class="col-md-6">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h5 class="card-title">
+                                    <i class="fas fa-clipboard-check me-2"></i>
+                                    Điểm danh
+                                </h5>
+                            </div>
+                            <div class="card-body text-center">
+                                <div class="stats-number h2" th:text="${attendanceStats?.present ?: 0}">0</div>
+                                <p class="text-muted">Lần có mặt</p>
+                                <a href="/student/attendance" class="btn btn-outline-primary">
+                                    <i class="fas fa-history me-2"></i>Xem lịch sử
                                 </a>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- 3. Tình trạng điểm danh -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="dashboard-card">
-                        <div class="card-header">
-                            <h5 class="card-title">
-                                <i class="fas fa-clipboard-check me-2 text-info"></i>
-                                Tình trạng điểm danh
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <!-- Overall Stats -->
-                                <div class="col-md-4">
-                                    <div class="attendance-chart-container">
-                                        <canvas id="attendanceOverviewChart" width="200" height="200"></canvas>
-                                    </div>
-                                </div>
-
-                                <!-- Detailed Stats -->
-                                <div class="col-md-8">
-                                    <div class="attendance-stats-grid">
-                                        <div class="stat-item present">
-                                            <div class="stat-icon">
-                                                <i class="fas fa-check-circle"></i>
-                                            </div>
-                                            <div class="stat-content">
-                                                <h4 th:text="${attendanceStats?.present ?: 0}">0</h4>
-                                                <p>Có mặt</p>
-                                            </div>
-                                        </div>
-
-                                        <div class="stat-item late">
-                                            <div class="stat-icon">
-                                                <i class="fas fa-clock"></i>
-                                            </div>
-                                            <div class="stat-content">
-                                                <h4 th:text="${attendanceStats?.late ?: 0}">0</h4>
-                                                <p>Đi trễ</p>
-                                            </div>
-                                        </div>
-
-                                        <div class="stat-item excused">
-                                            <div class="stat-icon">
-                                                <i class="fas fa-file-medical"></i>
-                                            </div>
-                                            <div class="stat-content">
-                                                <h4 th:text="${attendanceStats?.excused ?: 0}">0</h4>
-                                                <p>Có phép</p>
-                                            </div>
-                                        </div>
-
-                                        <div class="stat-item absent">
-                                            <div class="stat-icon">
-                                                <i class="fas fa-times-circle"></i>
-                                            </div>
-                                            <div class="stat-content">
-                                                <h4 th:text="${attendanceStats?.absent ?: 0}">0</h4>
-                                                <p>Vắng mặt</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Attendance Rate -->
-                                    <div class="attendance-rate-section mt-3">
-                                        <h6>Tỷ lệ tham gia</h6>
-                                        <div class="progress" style="height: 20px;">
-                                            <div class="progress-bar bg-success"
-                                                 th:style="'width: ' + (${attendanceStats?.total > 0 ? (attendanceStats.present * 100.0 / attendanceStats.total) : 0}) + '%'"
-                                                 th:text="${attendanceStats?.total > 0 ? #numbers.formatDecimal((attendanceStats.present * 100.0 / attendanceStats.total), 1, 1) + '%' : '0%'}">
-                                                0%
-                                            </div>
-                                        </div>
-                                        <small class="text-muted">
-                                            Tổng cộng: <span th:text="${attendanceStats?.total ?: 0}">0</span> buổi học
-                                        </small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Scripts -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-<script src="/js/sidebar.js"></script>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Update current date
-        updateCurrentDate();
-
-        // Initialize attendance chart
-        initAttendanceChart();
-
-        // Initialize sidebar
-        if (typeof initializeSidebar === 'function') {
-            initializeSidebar('STUDENT');
-        }
-    });
-
-    function updateCurrentDate() {
-        const now = new Date();
-        const options = {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        };
-        document.getElementById('currentDate').textContent = now.toLocaleDateString('vi-VN', options);
-    }
-
-    function initAttendanceChart() {
-        const ctx = document.getElementById('attendanceOverviewChart');
-        if (!ctx) return;
-
-        const present = parseInt('[[${attendanceStats?.present ?: 0}]]');
-        const late = parseInt('[[${attendanceStats?.late ?: 0}]]');
-        const excused = parseInt('[[${attendanceStats?.excused ?: 0}]]');
-        const absent = parseInt('[[${attendanceStats?.absent ?: 0}]]');
-
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Có mặt', 'Đi trễ', 'Có phép', 'Vắng mặt'],
-                datasets: [{
-                    data: [present, late, excused, absent],
-                    backgroundColor: [
-                        '#28a745',  // Có mặt - xanh lá
-                        '#ffc107',  // Đi trễ - vàng
-                        '#17a2b8',  // Có phép - xanh dương
-                        '#dc3545'   // Vắng mặt - đỏ
-                    ],
-                    borderWidth: 2,
-                    borderColor: '#fff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            boxWidth: 12,
-                            padding: 15,
-                            font: {
-                                size: 11
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-</script>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom JS - Tái sử dụng sidebar.js hiện có -->
 <script th:src="@{/js/sidebar.js}"></script>
 
-<style>
-    .welcome-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 15px;
-        margin-bottom: 2rem;
-    }
+<script>
+    // Update current date
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentDateElement = document.getElementById('currentDate');
+        if (currentDateElement) {
+            const now = new Date();
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            };
+            currentDateElement.textContent = now.toLocaleDateString('vi-VN', options);
+        }
 
-    .welcome-title {
-        margin: 0;
-        font-size: 1.5rem;
-        font-weight: 600;
-    }
+        // Initialize sidebar - tương thích với code hiện tại
+        if (typeof SidebarManager !== 'undefined') {
+            new SidebarManager();
+        }
 
-    .welcome-subtitle {
-        margin: 0.5rem 0 0 0;
-        opacity: 0.9;
-    }
+        console.log('✅ Student Dashboard loaded successfully');
+    });
+</script>
 
-    .current-date {
-        background: rgba(255, 255, 255, 0.2);
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        font-size: 0.9rem;
-    }
-
-    .stats-card {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        color: white;
-        position: relative;
-        overflow: hidden;
-        height: 120px;
-    }
-
-    .stats-card::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 100%;
-        height: 200%;
-        background: rgba(255, 255, 255, 0.1);
-        transform: rotate(45deg);
-    }
-
-    .stats-card .stats-icon {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        font-size: 2rem;
-        opacity: 0.3;
-    }
-
-    .stats-card .stats-content {
-        position: relative;
-        z-index: 1;
-    }
-
-    .stats-number {
-        font-size: 2rem;
-        font-weight: 700;
-        margin: 0;
-    }
-
-    .stats-label {
-        margin: 0;
-        font-size: 0.9rem;
-        opacity: 0.9;
-    }
-
-    .stats-status {
-        font-size: 0.75rem;
-        opacity: 0.8;
-    }
-
-    .dashboard-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        border: none;
-        height: 100%;
-    }
-
-    .dashboard-card .card-header {
-        background: #f8f9fa;
-        border-bottom: 1px solid #dee2e6;
-        border-radius: 12px 12px 0 0;
-        padding: 1rem 1.5rem;
-    }
-
-    .dashboard-card .card-body {
-        padding: 1.5rem;
-    }
-
-    .subject-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        margin-bottom: 0.75rem;
-        transition: all 0.3s ease;
-    }
-
-    .subject-item:hover {
-        border-color: #667eea;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .subject-name {
-        margin: 0 0 0.25rem 0;
-        font-weight: 600;
-        color: #495057;
-    }
-
-    .subject-details {
-        margin: 0 0 0.25rem 0;
-        font-size: 0.85rem;
-        color: #6c757d;
-    }
-
-    .subject-teacher {
-        margin: 0;
-        font-size: 0.8rem;
-        color: #495057;
-    }
-
-    .subject-stats .attendance-rate {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #28a745;
-    }
-
-    .biometric-overview {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 1rem;
-    }
-
-    .status-indicator {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .status-indicator.completed .status-icon {
-        color: #28a745;
-    }
-
-    .status-indicator.ready .status-icon {
-        color: #ffc107;
-    }
-
-    .status-indicator.partial .status-icon {
-        color: #fd7e14;
-    }
-
-    .status-indicator.empty .status-icon {
-        color: #dc3545;
-    }
-
-    .status-icon {
-        font-size: 2rem;
-    }
-
-    .detail-item {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.5rem 0;
-        border-bottom: 1px solid #e9ecef;
-    }
-
-    .detail-item:last-child {
-        border-bottom: none;
-    }
-
-    .detail-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex: 1;
-    }
-
-    .detail-status {
-        font-weight: 500;
-        font-size: 0.85rem;
-    }
-
-    .attendance-chart-container {
-        height: 200px;
-        position: relative;
-    }
-
-    .attendance-stats-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-    }
-
-    .stat-item {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 1rem;
-        border-radius: 8px;
-        background: #f8f9fa;
-    }
-
-    .stat-item.present {
-        border-left: 4px solid #28a745;
-    }
-
-    .stat-item.late {
-        border-left: 4px solid #ffc107;
-    }
-
-    .stat-item.excused {
-        border-left: 4px solid #17a2b8;
-    }
-
-    .stat-item.absent {
-        border-left: 4px solid #dc3545;
-    }
-
-    .stat-item .stat-icon {
-        font-size: 1.5rem;
-        opacity: 0.7;
-    }
-
-    .stat-item.present .stat-icon {
-        color: #28a745;
-    }
-
-    .stat-item.late .stat-icon {
-        color: #ffc107;
-    }
-
-    .stat-item.excused .stat-icon {
-        color: #17a2b8;
-    }
-
-    .stat-item.absent .stat-icon {
-        color: #dc3545;
-    }
-
-    .stat-content h4 {
-        margin: 0;
-        font-size: 1.5rem;
-        font-weight: 700;
-    }
-
-    .stat-content p {
-        margin: 0;
-        font-size: 0.85rem;
-        color: #6c757d;
-    }
-
-    .attendance-rate-section {
-        background: #f8f9fa;
-        padding: 1rem;
-        border-radius: 8px;
-    }
-
-    .empty-state i {
-        color: #dee2e6;
-    }
-</style>
 </body>
 </html>

@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch học - Face Attendance</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Custom CSS - Tái sử dụng CSS hiện có -->
+    <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/sidebar.css}" rel="stylesheet">
+    <link th:href="@{/css/student.css}" rel="stylesheet">
+
+    <style>
+        .calendar-grid {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .calendar-grid th,
+        .calendar-grid td {
+            border: 1px solid #e5e7eb;
+            padding: 0;
+            vertical-align: top;
+            position: relative;
+        }
+
+        .calendar-grid th {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            font-weight: 600;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .period-header {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            font-weight: 600;
+            text-align: center;
+            padding: 0.75rem 0.5rem;
+            min-width: 60px;
+            font-size: 0.9rem;
+        }
+
+        .calendar-cell {
+            height: 80px;
+            min-width: 140px;
+            padding: 4px;
+            position: relative;
+            background: #fafafa;
+            transition: all 0.2s ease;
+        }
+
+        .calendar-cell:hover {
+            background: #f0f9ff;
+        }
+
+        .schedule-block {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            border-radius: 6px;
+            padding: 8px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .schedule-block:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .schedule-block.subject-1 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .schedule-block.subject-2 { background: linear-gradient(135deg, #10b981, #047857); }
+        .schedule-block.subject-3 { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .schedule-block.subject-4 { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .schedule-block.subject-5 { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .schedule-block.subject-6 { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+
+        .subject-name-short {
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .schedule-room {
+            font-size: 0.7rem;
+            opacity: 0.9;
+            margin-top: auto;
+        }
+
+        .schedule-info {
+            font-size: 0.65rem;
+            opacity: 0.8;
+        }
+
+        .time-range {
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            font-size: 0.6rem;
+            background: rgba(255,255,255,0.2);
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+
+        .calendar-container {
+            overflow-x: auto;
+            margin-bottom: 2rem;
+        }
+
+        .calendar-header {
+            background: var(--gray-50);
+            padding: 1rem;
+            border-bottom: 2px solid var(--primary-color);
+            text-align: center;
+        }
+
+        .current-week {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            margin-top: 0.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .calendar-cell {
+                min-width: 100px;
+                height: 60px;
+            }
+
+            .subject-name-short {
+                font-size: 0.7rem;
+            }
+
+            .schedule-room {
+                font-size: 0.65rem;
+            }
+        }
+        /* Schedule-specific styles */
+        .schedule-card {
+            background: var(--white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .schedule-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .schedule-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            padding: 1.5rem;
+            border-bottom: none;
+        }
+
+        .schedule-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+
+        .schedule-item:hover {
+            background: var(--gray-100);
+        }
+
+        .schedule-item:last-child {
+            border-bottom: none;
+        }
+
+        .schedule-time {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            min-width: 120px;
+            text-align: center;
+            margin-right: 1rem;
+        }
+
+        .schedule-info {
+            flex: 1;
+        }
+
+        .subject-name {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+        }
+
+        .schedule-details {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        .schedule-location {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--border-radius);
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .day-section {
+            margin-bottom: 2rem;
+        }
+
+        .day-header {
+            background: var(--gray-100);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .day-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin: 0;
+        }
+
+        .today-highlight {
+            background: linear-gradient(135deg, var(--success-color), #27ae60) !important;
+            color: white !important;
+        }
+
+        .view-toggle {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 0.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .view-btn {
+            background: none;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .view-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .empty-schedule {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray-500);
+        }
+
+        .schedule-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body class="student-dashboard">
+<div class="main-wrapper">
+    <!-- Include Sidebar Component - Tái sử dụng sidebar hiện có -->
+    <div th:replace="~{components/sidebar :: sidebar}"></div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        Lịch học
+                    </h1>
+                </div>
+                <div class="header-right">
+                    <div class="welcome-info">
+                        <span class="welcome-text">Sinh viên: </span>
+                        <span class="user-name" th:text="${student?.hoTen ?: 'N/A'}">Sinh viên</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <div class="container-fluid">
+
+                <!-- Error Alert -->
+                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span th:text="${error}">Lỗi xảy ra</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <!-- Schedule Stats -->
+                <div class="schedule-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" th:text="${totalSchedules ?: 0}">0</div>
+                        <div class="stat-label">Tổng số tiết học</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" th:text="${todaySchedules?.size() ?: 0}">0</div>
+                        <div class="stat-label">Tiết học hôm nay</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" th:text="${uniqueSubjectsCount ?: 0}">0</div>
+                        <div class="stat-label">Môn học</div>
+                    </div>
+                </div>
+
+                <!-- View Toggle -->
+                <div class="view-toggle">
+                    <button class="view-btn active" onclick="showWeekView()">
+                        <i class="fas fa-calendar-week me-2"></i>Xem theo tuần
+                    </button>
+                    <button class="view-btn" onclick="showListView()">
+                        <i class="fas fa-list me-2"></i>Xem danh sách
+                    </button>
+                </div>
+
+                <!-- Week View - PHIÊN BẢN ĐƠN GIẢN -->
+                <!-- Week View - CALENDAR GRID FORMAT -->
+                <div id="weekView">
+                    <div class="schedule-card">
+                        <div class="schedule-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-calendar-week me-2"></i>
+                                Lịch học tuần này
+                            </h5>
+                        </div>
+
+                        <div class="calendar-container">
+                            <table class="calendar-grid">
+                                <!-- Header với các ngày trong tuần -->
+                                <thead>
+                                <tr>
+                                    <th class="period-header">Tiết</th>
+                                    <th th:each="day : ${weekDays}">
+                                        <div th:switch="${day}">
+                                            <span th:case="2">Thứ Hai</span>
+                                            <span th:case="3">Thứ Ba</span>
+                                            <span th:case="4">Thứ Tư</span>
+                                            <span th:case="5">Thứ Năm</span>
+                                            <span th:case="6">Thứ Sáu</span>
+                                            <span th:case="7">Thứ Bảy</span>
+                                            <span th:case="8">Chủ Nhật</span>
+                                        </div>
+                                        <div class="current-week" th:if="${day == #temporals.dayOfWeek(#temporals.createNow())}">
+                                            <small class="badge bg-light text-primary">Hôm nay</small>
+                                        </div>
+                                    </th>
+                                </tr>
+                                </thead>
+
+                                <!-- Body với các tiết học -->
+                                <tbody>
+                                <tr th:each="period : ${periods}">
+                                    <!-- Cột tiết học -->
+                                    <td class="period-header">
+                                        <div th:text="'Tiết ' + ${period}">Tiết 1</div>
+                                        <small th:switch="${period}">
+                                            <span th:case="1">7:00-7:50</span>
+                                            <span th:case="2">8:00-8:50</span>
+                                            <span th:case="3">9:00-9:50</span>
+                                            <span th:case="4">10:00-10:50</span>
+                                            <span th:case="5">11:00-11:50</span>
+                                            <span th:case="6">13:00-13:50</span>
+                                            <span th:case="7">14:00-14:50</span>
+                                            <span th:case="8">15:00-15:50</span>
+                                            <span th:case="9">16:00-16:50</span>
+                                            <span th:case="10">17:00-17:50</span>
+                                            <span th:case="11">18:00-18:50</span>
+                                            <span th:case="12">19:00-19:50</span>
+                                        </small>
+                                    </td>
+
+                                    <!-- Các ô lịch cho từng ngày -->
+                                    <td th:each="day : ${weekDays}" class="calendar-cell">
+                                        <!-- Kiểm tra có lịch học không -->
+                                        <div th:if="${calendarGrid.get(day).containsKey(period)}">
+                                            <div th:with="schedule=${calendarGrid.get(day).get(period)}"
+                                                 class="schedule-block schedule-clickable"
+                                                 th:classappend="'subject-' + ${(schedule.tenMonHoc.hashCode() % 6) + 1}"
+                                                 th:data-schedule-id="${schedule.maLich}"
+                                                 th:data-subject-name="${schedule.tenMonHoc}"
+                                                 th:data-teacher="${schedule.tenGiangVien}"
+                                                 th:data-room="${schedule.tenPhong}"
+                                                 th:data-period-start="${schedule.tietBatDau}"
+                                                 th:data-period-count="${schedule.soTiet}"
+                                                 th:data-group="${schedule.nhom}"
+                                                 th:data-semester="${schedule.hocKy}"
+                                                 th:data-year="${schedule.namHoc}">
+
+                                                <div class="subject-name-short" th:text="${schedule.tenMonHoc}">
+                                                    Tên môn học
+                                                </div>
+
+                                                <div class="schedule-info">
+                                                    Nhóm <span th:text="${schedule.nhom}">1</span>
+                                                </div>
+
+                                                <div class="schedule-room" th:text="${schedule.tenPhong}">
+                                                    Phòng học
+                                                </div>
+
+                                                <!-- Hiển thị thời gian nếu môn học kéo dài nhiều tiết -->
+                                                <div th:if="${schedule.soTiet > 1}" class="time-range">
+                                        <span th:text="${schedule.tietBatDau} + '-' + ${schedule.tietBatDau + schedule.soTiet - 1}">
+                                            1-2
+                                        </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Legend cho màu sắc môn học -->
+                        <div class="card-footer bg-light">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Click vào ô lịch để xem chi tiết môn học
+                                    </small>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <small class="text-muted">
+                                        Tổng: <strong th:text="${totalSchedules}">0</strong> tiết học
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- List View -->
+                <div id="listView" style="display: none;">
+                    <div class="schedule-card">
+                        <div class="schedule-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-list me-2"></i>
+                                Danh sách lịch học
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div th:if="${schedules.isEmpty()}" class="empty-schedule">
+                                <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                                <h5>Chưa có lịch học</h5>
+                                <p class="text-muted">Bạn chưa đăng ký môn học nào hoặc chưa có lịch học được xếp.</p>
+                            </div>
+
+                            <div th:each="schedule : ${schedules}" class="schedule-item">
+                                <div class="schedule-time">
+                                    <div th:switch="${schedule.thu}">
+                                        <span th:case="2">T2</span>
+                                        <span th:case="3">T3</span>
+                                        <span th:case="4">T4</span>
+                                        <span th:case="5">T5</span>
+                                        <span th:case="6">T6</span>
+                                        <span th:case="7">T7</span>
+                                        <span th:case="8">CN</span>
+                                    </div>
+                                    <small>Tiết <span th:text="${schedule.tietBatDau}">1</span></small>
+                                </div>
+                                <div class="schedule-info">
+                                    <div class="subject-name" th:text="${schedule.tenMonHoc}">Tên môn học</div>
+                                    <div class="schedule-details">
+                                        <span th:text="${schedule.tenGiangVien}">Giảng viên</span> •
+                                        Nhóm <span th:text="${schedule.nhom}">1</span> •
+                                        <span th:text="${schedule.soTiet}">1</span> tiết
+                                    </div>
+                                </div>
+                                <div class="schedule-location">
+                                    <span th:text="${schedule.tenPhong}">Phòng học</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Back to Dashboard -->
+                <div class="text-center mt-4">
+                    <a href="/student/dashboard" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Quay lại Dashboard
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom JS - Tái sử dụng sidebar.js hiện có -->
+<script th:src="@{/js/sidebar.js}"></script>
+
+<script>
+    // View toggle functionality
+    function showWeekView() {
+        document.getElementById('weekView').style.display = 'block';
+        document.getElementById('listView').style.display = 'none';
+
+        // Update button states
+        document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+
+    function showListView() {
+        document.getElementById('weekView').style.display = 'none';
+        document.getElementById('listView').style.display = 'block';
+
+        // Update button states
+        document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+
+    // ✅ SỬA FUNCTION NÀY - DÙNG EVENT DELEGATION
+    function showScheduleDetail(element) {
+        const scheduleId = element.dataset.scheduleId;
+        const subjectName = element.dataset.subjectName;
+        const teacher = element.dataset.teacher;
+        const room = element.dataset.room;
+        const periodStart = element.dataset.periodStart;
+        const periodCount = element.dataset.periodCount;
+        const group = element.dataset.group;
+        const semester = element.dataset.semester;
+        const year = element.dataset.year;
+
+        // Hiển thị modal hoặc alert với thông tin chi tiết
+        const message = `
+📚 ${subjectName || 'N/A'}
+👨‍🏫 Giảng viên: ${teacher || 'N/A'}
+🏫 Phòng: ${room || 'N/A'}
+⏰ Tiết: ${periodStart} - ${parseInt(periodStart) + parseInt(periodCount) - 1}
+👥 Nhóm: ${group || 'N/A'}
+🎓 Học kỳ: ${semester || 'N/A'} - ${year || 'N/A'}
+        `;
+
+        alert(message);
+    }
+
+    // ✅ THÊM EVENT LISTENER CHO CLICK
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize sidebar
+        if (typeof SidebarManager !== 'undefined') {
+            new SidebarManager();
+        }
+
+        // ✅ ADD CLICK EVENT LISTENERS TO SCHEDULE BLOCKS
+        document.addEventListener('click', function(event) {
+            if (event.target.closest('.schedule-clickable')) {
+                const scheduleBlock = event.target.closest('.schedule-clickable');
+                showScheduleDetail(scheduleBlock);
+            }
+        });
+
+        console.log('✅ Student Schedule page loaded successfully');
+    });
+</script>
+
+</body>
+</html>
