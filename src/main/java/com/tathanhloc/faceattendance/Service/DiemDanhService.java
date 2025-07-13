@@ -131,6 +131,7 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
                 .thoiGianRa(d.getThoiGianRa())
                 .maLich(d.getLichHoc().getMaLich())
                 .maSv(d.getSinhVien().getMaSv())
+                .maLhp(d.getLichHoc().getLopHocPhan().getMaLhp())
                 .build();
     }
 

@@ -1,5 +1,7 @@
 package com.tathanhloc.faceattendance.Controller;
 
+import com.tathanhloc.faceattendance.DTO.DangKyHocDTO;
+import com.tathanhloc.faceattendance.DTO.DiemDanhDTO;
 import com.tathanhloc.faceattendance.DTO.SinhVienDTO;
 import com.tathanhloc.faceattendance.Security.CustomUserDetails;
 import com.tathanhloc.faceattendance.Service.DangKyHocService;
@@ -19,6 +21,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,43 +39,6 @@ public class StudentDashboardController {
     private final TaiKhoanService taiKhoanService;
     private final PasswordEncoder passwordEncoder;
 
-    /**
-     * Trang dashboard chính của sinh viên
-     */
-    @GetMapping("/dashboard")
-    public String dashboard(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
-        log.info("=== STUDENT DASHBOARD ACCESS ===");
-        log.info("User: {}", userDetails != null ? userDetails.getUsername() : "null");
-
-        if (userDetails == null) {
-            log.warn("No user details found, redirecting to login");
-            return "redirect:/?error=not_authenticated";
-        }
-
-        try {
-            // Check if user has student profile
-            if (userDetails.getTaiKhoan().getSinhVien() == null) {
-                log.error("User has no student profile: {}", userDetails.getUsername());
-                model.addAttribute("error", "Tài khoản không có thông tin sinh viên");
-                return "student/dashboard";
-            }
-
-            String maSv = userDetails.getTaiKhoan().getSinhVien().getMaSv();
-            log.info("Loading student dashboard for student: {}", maSv);
-
-            model.addAttribute("currentUser", userDetails.getTaiKhoan());
-            model.addAttribute("myRegistrations", dangKyHocService.getByMaSv(maSv));
-            model.addAttribute("allSchedules", lichHocService.getAll());
-            model.addAttribute("myAttendance", diemDanhService.getByMaSv(maSv));
-
-            log.info("Student dashboard loaded successfully");
-            return "student/dashboard";
-        } catch (Exception e) {
-            log.error("Error loading student dashboard", e);
-            model.addAttribute("error", "Không thể tải dữ liệu dashboard: " + e.getMessage());
-            return "student/dashboard";
-        }
-    }
 
     /**
      * Trang lịch học của sinh viên
@@ -421,5 +387,145 @@ public class StudentDashboardController {
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", "Không thể xóa ảnh: " + e.getMessage()));
         }
+    }
+    @GetMapping("/dashboard")
+    public String dashboard(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+        log.info("=== STUDENT DASHBOARD ACCESS ===");
+        log.info("User: {}", userDetails != null ? userDetails.getUsername() : "null");
+
+        if (userDetails == null) {
+            log.warn("No user details found, redirecting to login");
+            return "redirect:/?error=not_authenticated";
+        }
+
+        try {
+            // Check if user has student profile
+            if (userDetails.getTaiKhoan().getSinhVien() == null) {
+                log.error("User has no student profile: {}", userDetails.getUsername());
+                model.addAttribute("error", "Tài khoản không có thông tin sinh viên");
+                return "student/dashboard";
+            }
+
+            String maSv = userDetails.getTaiKhoan().getSinhVien().getMaSv();
+            SinhVienDTO student = sinhVienService.getByMaSv(maSv);
+            log.info("Loading student dashboard for student: {}", maSv);
+
+            // 1. Thông tin sinh viên
+            model.addAttribute("currentUser", userDetails.getTaiKhoan());
+            model.addAttribute("student", student);
+
+            // 2. Các môn đang học
+            List<DangKyHocDTO> myRegistrations = dangKyHocService.getByMaSv(maSv);
+            model.addAttribute("myRegistrations", myRegistrations);
+            model.addAttribute("totalSubjects", myRegistrations.size());
+
+            // 3. Tình trạng sinh trắc học
+            boolean hasEmbedding = student.getEmbedding() != null && !student.getEmbedding().trim().isEmpty();
+            int faceImageCount = fileUploadService.getFaceImageCount(maSv);
+            boolean hasProfileImage = student.getHinhAnh() != null && !student.getHinhAnh().trim().isEmpty();
+
+            model.addAttribute("hasEmbedding", hasEmbedding);
+            model.addAttribute("faceImageCount", faceImageCount);
+            model.addAttribute("hasProfileImage", hasProfileImage);
+
+            // Tính toán trạng thái sinh trắc học
+            String biometricStatus;
+            if (hasEmbedding) {
+                biometricStatus = "completed"; // Đã hoàn tất
+            } else if (faceImageCount >= 3) {
+                biometricStatus = "ready"; // Đủ ảnh, chưa trích xuất
+            } else if (faceImageCount > 0) {
+                biometricStatus = "partial"; // Có ảnh nhưng chưa đủ
+            } else {
+                biometricStatus = "empty"; // Chưa có gì
+            }
+            model.addAttribute("biometricStatus", biometricStatus);
+
+            // 4. Thống kê điểm danh
+            List<DiemDanhDTO> myAttendance = diemDanhService.getByMaSv(maSv);
+            model.addAttribute("myAttendance", myAttendance);
+
+            // Thống kê tổng hợp điểm danh
+            Map<String, Integer> attendanceStats = calculateAttendanceStats(myAttendance);
+            model.addAttribute("attendanceStats", attendanceStats);
+
+            // Thống kê điểm danh theo môn học
+            Map<String, Map<String, Integer>> subjectAttendanceStats = calculateSubjectAttendanceStats(myAttendance, myRegistrations);
+            model.addAttribute("subjectAttendanceStats", subjectAttendanceStats);
+
+            log.info("Student dashboard loaded successfully");
+            return "student/dashboard";
+        } catch (Exception e) {
+            log.error("Error loading student dashboard", e);
+            model.addAttribute("error", "Không thể tải dữ liệu dashboard: " + e.getMessage());
+            return "student/dashboard";
+        }
+    }
+
+    // Helper methods
+    private Map<String, Integer> calculateAttendanceStats(List<DiemDanhDTO> attendanceList) {
+        Map<String, Integer> stats = new HashMap<>();
+        stats.put("total", attendanceList.size());
+        stats.put("present", 0);
+        stats.put("absent", 0);
+        stats.put("late", 0);
+        stats.put("excused", 0);
+
+        for (DiemDanhDTO attendance : attendanceList) {
+            switch (attendance.getTrangThai()) {
+                case CO_MAT -> stats.put("present", stats.get("present") + 1);
+                case VANG_MAT -> stats.put("absent", stats.get("absent") + 1);
+                case DI_TRE -> stats.put("late", stats.get("late") + 1);
+                case VANG_CO_PHEP -> stats.put("excused", stats.get("excused") + 1);
+            }
+        }
+
+        return stats;
+    }
+
+    private Map<String, Map<String, Integer>> calculateSubjectAttendanceStats(
+            List<DiemDanhDTO> attendanceList, List<DangKyHocDTO> registrations) {
+
+        Map<String, Map<String, Integer>> subjectStats = new HashMap<>();
+
+        // Tạo map để lookup thông tin lớp học phần
+        Map<String, String> lichToLhpMap = new HashMap<>();
+        for (DiemDanhDTO attendance : attendanceList) {
+            try {
+                // Lấy thông tin lịch học để biết mã lớp học phần
+                // Note: Cần implement method getLichHocByMaLich trong service
+                String maLhp = attendance.getMaLhp(); // Giả sử có field này trong DTO
+                lichToLhpMap.put(attendance.getMaLich(), maLhp);
+            } catch (Exception e) {
+                log.warn("Cannot get LHP for attendance: {}", attendance.getMaLich());
+            }
+        }
+
+        for (DangKyHocDTO registration : registrations) {
+            String maLhp = registration.getMaLhp();
+            Map<String, Integer> stats = new HashMap<>();
+            stats.put("total", 0);
+            stats.put("present", 0);
+            stats.put("absent", 0);
+            stats.put("late", 0);
+            stats.put("excused", 0);
+
+            // Đếm điểm danh theo lớp học phần
+            for (DiemDanhDTO attendance : attendanceList) {
+                if (maLhp.equals(lichToLhpMap.get(attendance.getMaLich()))) {
+                    stats.put("total", stats.get("total") + 1);
+                    switch (attendance.getTrangThai()) {
+                        case CO_MAT -> stats.put("present", stats.get("present") + 1);
+                        case VANG_MAT -> stats.put("absent", stats.get("absent") + 1);
+                        case DI_TRE -> stats.put("late", stats.get("late") + 1);
+                        case VANG_CO_PHEP -> stats.put("excused", stats.get("excused") + 1);
+                    }
+                }
+            }
+
+            subjectStats.put(maLhp, stats);
+        }
+
+        return subjectStats;
     }
 }

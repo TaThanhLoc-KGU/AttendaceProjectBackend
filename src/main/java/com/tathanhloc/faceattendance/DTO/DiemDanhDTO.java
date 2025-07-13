@@ -19,4 +19,12 @@ public class DiemDanhDTO {
     private LocalTime thoiGianRa;
     private String maLich;
     private String maSv;
+
+    // THÊM FIELD NÀY
+    private String maLhp;  // Mã lớp học phần
+
+    // Có thể thêm các field display khác nếu cần
+    private String tenMonHoc;
+    private String tenGiangVien;
+    private String tenSinhVien;
 }

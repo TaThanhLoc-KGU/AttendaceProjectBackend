@@ -3,363 +3,315 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Giảng viên - Face Attendance</title>
+    <title>Dashboard Sinh viên - Face Attendance</title>
 
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <!-- Custom CSS -->
     <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/student.css}" rel="stylesheet">
     <link th:href="@{/css/sidebar.css}" rel="stylesheet">
-    <link th:href="@{/css/lecturer.css}" rel="stylesheet">
 
-    <style>
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stats-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border-left: 4px solid #007bff;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .stats-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-        }
-
-        .stats-card.primary { border-left-color: #007bff; }
-        .stats-card.success { border-left-color: #28a745; }
-        .stats-card.warning { border-left-color: #ffc107; }
-        .stats-card.info { border-left-color: #17a2b8; }
-
-        .stats-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 0.5rem;
-        }
-
-        .stats-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            color: white;
-        }
-
-        .stats-card.primary .stats-icon { background: #007bff; }
-        .stats-card.success .stats-icon { background: #28a745; }
-        .stats-card.warning .stats-icon { background: #ffc107; }
-        .stats-card.info .stats-icon { background: #17a2b8; }
-
-        .stats-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #2c3e50;
-            margin: 0;
-        }
-
-        .stats-label {
-            color: #6c757d;
-            font-size: 0.9rem;
-            margin: 0;
-        }
-
-        .content-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 1.5rem;
-            overflow: hidden;
-        }
-
-        .card-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid #e9ecef;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .card-header h5 {
-            margin: 0;
-            font-weight: 600;
-        }
-
-        .card-body {
-            padding: 1.5rem;
-        }
-
-        .schedule-item, .class-item {
-            display: flex;
-            align-items: center;
-            padding: 1rem;
-            margin-bottom: 0.75rem;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border-left: 4px solid #007bff;
-            transition: all 0.2s ease;
-        }
-
-        .schedule-item:hover, .class-item:hover {
-            background: #e3f2fd;
-            transform: translateX(5px);
-        }
-
-        .schedule-time {
-            font-weight: 600;
-            color: #007bff;
-            margin-right: 1rem;
-            min-width: 100px;
-        }
-
-        .item-info {
-            flex: 1;
-        }
-
-        .item-title {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .item-details {
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
-
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .action-btn {
-            display: flex;
-            align-items: center;
-            padding: 1rem 1.5rem;
-            background: white;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            text-decoration: none;
-            color: #495057;
-            transition: all 0.2s ease;
-        }
-
-        .action-btn:hover {
-            background: #f8f9fa;
-            border-color: #007bff;
-            color: #007bff;
-            transform: translateY(-2px);
-            text-decoration: none;
-        }
-
-        .action-btn i {
-            margin-right: 0.75rem;
-            font-size: 1.25rem;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: #6c757d;
-        }
-
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        @media (max-width: 768px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .quick-actions {
-                grid-template-columns: 1fr;
-            }
-
-            .schedule-item, .class-item {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .schedule-time {
-                margin-bottom: 0.5rem;
-                margin-right: 0;
-            }
-        }
-    </style>
 </head>
-<body class="lecturer-dashboard">
-<div class="main-wrapper">
-    <!-- Include Sidebar Component -->
-    <div th:replace="~{components/sidebar :: sidebar}"></div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Header -->
-        <div class="header">
-            <div class="header-content">
-                <div class="header-left">
-                    <button class="sidebar-toggle" id="sidebarToggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <h1 class="page-title">
-                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard Giảng viên
-                    </h1>
-                </div>
-                <div class="header-right">
-                    <div class="welcome-info">
-                        <span class="welcome-text">Xin chào, </span>
-                        <span class="user-name" th:text="${currentUser?.giangVien?.hoTen ?: 'Giảng viên'}">Giảng viên</span>
+<body class="student-dashboard">
+<!-- Include Sidebar -->
+<div th:replace="~{components/sidebar :: sidebar}"></div>
+
+<!-- Main Content -->
+<div class="main-content">
+
+    <!-- Page Content -->
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- Welcome Header -->
+            <div class="welcome-header mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="welcome-title">
+                            <i class="fas fa-graduation-cap me-2"></i>
+                            Xin chào, <span th:text="${student.hoTen}">Tên sinh viên</span>!
+                        </h2>
+                        <p class="welcome-subtitle">
+                            Mã sinh viên: <strong th:text="${student.maSv}">20210001</strong>
+                            | Lớp: <strong th:text="${student.getMaLop() ?: 'Chưa phân lớp'}">CNTT01</strong>
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="current-date">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            <span id="currentDate"></span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Content -->
-        <div class="content">
-            <!-- Error Alert -->
-            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <span th:text="${error}">Lỗi xảy ra</span>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-
-            <!-- Stats Overview -->
-            <div class="stats-grid">
-                <!-- Total Classes -->
-                <div class="stats-card primary">
-                    <div class="stats-header">
-                        <div>
-                            <h3 class="stats-number" th:text="${totalClasses ?: 0}">0</h3>
-                            <p class="stats-label">Tổng số lớp</p>
-                        </div>
+            <!-- Quick Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="stats-card bg-primary">
                         <div class="stats-icon">
-                            <i class="fas fa-chalkboard"></i>
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <div class="stats-content">
+                            <h3 class="stats-number" th:text="${totalSubjects ?: 0}">0</h3>
+                            <p class="stats-label">Môn học đang học</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Total Students -->
-                <div class="stats-card success">
-                    <div class="stats-header">
-                        <div>
-                            <h3 class="stats-number" th:text="${totalStudents ?: 0}">0</h3>
-                            <p class="stats-label">Tổng sinh viên</p>
-                        </div>
+                <div class="col-md-4">
+                    <div class="stats-card" th:classappend="${biometricStatus == 'completed'} ? 'bg-success' : (${biometricStatus == 'ready'} ? 'bg-warning' : 'bg-danger')">
                         <div class="stats-icon">
-                            <i class="fas fa-user-graduate"></i>
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="stats-content">
+                            <h3 class="stats-number" th:text="${faceImageCount}">0</h3>
+                            <p class="stats-label">Ảnh khuôn mặt</p>
+                            <small class="stats-status">
+                                <span th:if="${biometricStatus == 'completed'}" class="text-light">✓ Đã sẵn sàng</span>
+                                <span th:if="${biometricStatus == 'ready'}" class="text-light">⚠ Cần trích xuất</span>
+                                <span th:if="${biometricStatus == 'partial'}" class="text-light">⚠ Cần thêm ảnh</span>
+                                <span th:if="${biometricStatus == 'empty'}" class="text-light">✗ Chưa thiết lập</span>
+                            </small>
                         </div>
                     </div>
                 </div>
 
-                <!-- Classes Today -->
-                <div class="stats-card warning">
-                    <div class="stats-header">
-                        <div>
-                            <h3 class="stats-number" th:text="${classesToday ?: 0}">0</h3>
-                            <p class="stats-label">Lớp học hôm nay</p>
-                        </div>
-                        <div class="stats-icon">
-                            <i class="fas fa-calendar-day"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Attendance Today -->
-                <div class="stats-card info">
-                    <div class="stats-header">
-                        <div>
-                            <h3 class="stats-number" th:text="${attendanceToday ?: 0}">0</h3>
-                            <p class="stats-label">Điểm danh hôm nay</p>
-                        </div>
+                <div class="col-md-4">
+                    <div class="stats-card bg-info">
                         <div class="stats-icon">
                             <i class="fas fa-clipboard-check"></i>
                         </div>
+                        <div class="stats-content">
+                            <h3 class="stats-number" th:text="${attendanceStats?.present ?: 0}">0</h3>
+                            <p class="stats-label">Lần có mặt</p>
+                            <small class="stats-status text-light">
+                                Tổng: <span th:text="${attendanceStats?.total ?: 0}">0</span> buổi
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Main Content Grid -->
+            <!-- Main Content Sections -->
             <div class="row">
-                <!-- Today's Schedule -->
-                <div class="col-lg-8 mb-4">
-                    <div class="content-card">
+                <!-- 1. Các môn đang học -->
+                <div class="col-lg-6 mb-4">
+                    <div class="dashboard-card">
                         <div class="card-header">
-                            <h5><i class="fas fa-calendar-day me-2"></i>Lịch dạy hôm nay</h5>
+                            <h5 class="card-title">
+                                <i class="fas fa-book-open me-2 text-primary"></i>
+                                Các môn đang học
+                            </h5>
                         </div>
                         <div class="card-body">
-                            <div th:if="${todaySchedule != null and !todaySchedule.isEmpty()}">
-                                <div th:each="schedule : ${todaySchedule}" class="schedule-item">
-                                    <div class="schedule-time" th:text="'Tiết ' + ${schedule.tietBatDau} + '-' + ${schedule.tietBatDau + schedule.soTiet - 1}">
-                                        Tiết 1-3
+                            <div th:if="${myRegistrations.isEmpty()}" class="empty-state text-center py-4">
+                                <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">Chưa đăng ký môn học nào</p>
+                            </div>
+
+                            <div th:unless="${myRegistrations.isEmpty()}" class="subjects-list">
+                                <div th:each="registration : ${myRegistrations}" class="subject-item">
+                                    <div class="subject-info">
+                                        <h6 class="subject-name" th:text="${registration.tenMonHoc ?: 'N/A'}">Tên môn học</h6>
+                                        <p class="subject-details">
+                                            <span class="subject-code" th:text="${registration.maMh}">MH001</span> |
+                                            Nhóm <span th:text="${registration.nhom}">1</span>
+                                        </p>
+                                        <p class="subject-teacher">
+                                            <i class="fas fa-chalkboard-teacher me-1"></i>
+                                            <span th:text="${registration.tenGiangVien ?: 'N/A'}">Tên giảng viên</span>
+                                        </p>
                                     </div>
-                                    <div class="item-info">
-                                        <div class="item-title" th:text="${schedule.tenMonHoc ?: 'Môn học'}">
-                                            Lập trình Web
-                                        </div>
-                                        <div class="item-details">
-                                            <span th:text="'Lớp: ' + ${schedule.maLhp}">Lớp: IT001.O21</span> •
-                                            <span th:text="'Phòng: ' + ${schedule.maPhong}">Phòng: H6.302</span> •
-                                            <span th:text="'Thứ ' + ${schedule.thu}">Thứ 2</span>
+                                    <div class="subject-stats">
+                                        <div class="attendance-summary" th:if="${subjectAttendanceStats.containsKey(registration.maLhp)}">
+                                            <div class="attendance-rate">
+                                                    <span th:with="stats=${subjectAttendanceStats.get(registration.maLhp)}"
+                                                          th:text="${stats.total > 0 ? #numbers.formatDecimal((stats.present * 100.0 / stats.total), 1, 1) + '%' : '0%'}">
+                                                        0%
+                                                    </span>
+                                            </div>
+                                            <small class="text-muted">Tỷ lệ có mặt</small>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div th:if="${todaySchedule == null or todaySchedule.isEmpty()}" class="empty-state">
-                                <i class="fas fa-calendar-times"></i>
-                                <h6>Không có lịch dạy hôm nay</h6>
-                                <p>Hôm nay bạn không có lớp học nào được lên lịch.</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Teaching Classes -->
-                <div class="col-lg-4 mb-4">
-                    <div class="content-card">
+                <!-- 2. Tình trạng sinh trắc học -->
+                <div class="col-lg-6 mb-4">
+                    <div class="dashboard-card">
                         <div class="card-header">
-                            <h5><i class="fas fa-users me-2"></i>Lớp đang dạy</h5>
+                            <h5 class="card-title">
+                                <i class="fas fa-user-circle me-2 text-success"></i>
+                                Tình trạng sinh trắc học
+                            </h5>
                         </div>
                         <div class="card-body">
-                            <div th:if="${recentClasses != null and !recentClasses.isEmpty()}">
-                                <div th:each="lhp : ${recentClasses}" class="class-item">
-                                    <div class="item-info">
-                                        <div class="item-title" th:text="${lhp.tenMonHoc ?: 'Môn học'}">
-                                            Lập trình Web
+                            <!-- Biometric Status Overview -->
+                            <!-- Biometric Status Overview -->
+                            <div class="biometric-overview mb-3">
+                                <div class="status-indicator" th:classappend="${biometricStatus}">
+                                    <!-- Status Icon với th:switch -->
+                                    <div class="status-icon">
+                                        <div th:switch="${biometricStatus}">
+                                            <i th:case="'completed'" class="fas fa-check-circle"></i>
+                                            <i th:case="'ready'" class="fas fa-exclamation-triangle"></i>
+                                            <i th:case="'partial'" class="fas fa-clock"></i>
+                                            <i th:case="*" class="fas fa-times-circle"></i>
                                         </div>
-                                        <div class="item-details">
-                                            <span th:text="'Mã lớp: ' + ${lhp.maLhp}">Mã lớp: IT001.O21</span><br>
-                                            <span th:text="${lhp.soLuongSinhVien ?: 0} + ' sinh viên'">25 sinh viên</span> •
-                                            <span th:text="${lhp.hocKy ?: 'N/A'}">HK1 2024-2025</span>
+                                    </div>
+
+                                    <!-- Status Content với th:switch -->
+                                    <div class="status-content">
+                                        <div th:switch="${biometricStatus}">
+                                            <h6 th:case="'completed'">Đã sẵn sàng điểm danh</h6>
+                                            <h6 th:case="'ready'">Cần trích xuất đặc trưng</h6>
+                                            <h6 th:case="'partial'">Cần upload thêm ảnh</h6>
+                                            <h6 th:case="*">Chưa thiết lập sinh trắc học</h6>
+                                        </div>
+
+                                        <!-- Description với th:switch -->
+                                        <div th:switch="${biometricStatus}" class="mb-0 text-muted">
+                                            <p th:case="'completed'" class="mb-0">Hệ thống có thể nhận diện khuôn mặt của bạn</p>
+                                            <p th:case="'ready'" class="mb-0">Đã có đủ ảnh, cần chạy thuật toán trích xuất</p>
+                                            <p th:case="'partial'" class="mb-0">Cần ít nhất 3 ảnh khuôn mặt để trích xuất đặc trưng</p>
+                                            <p th:case="*" class="mb-0">Chưa upload ảnh khuôn mặt nào</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="text-center mt-3">
-                                    <a href="/lecturer/lophoc" class="btn btn-primary btn-sm">
-                                        <i class="fas fa-list me-2"></i>Xem tất cả lớp
-                                    </a>
+                            </div>
+
+                            <!-- Biometric Details -->
+                            <div class="biometric-details">
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <i class="fas fa-image" th:classappend="${hasProfileImage} ? ' text-success' : ' text-muted'"></i>
+                                    </div>
+                                    <div class="detail-content">
+                                        <span>Ảnh đại diện</span>
+                                        <span class="detail-status" th:text="${hasProfileImage} ? 'Đã có' : 'Chưa có'">Chưa có</span>
+                                    </div>
+                                </div>
+
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <i class="fas fa-images" th:classappend="${faceImageCount >= 3} ? ' text-success' : ' text-warning'"></i>
+                                    </div>
+                                    <div class="detail-content">
+                                        <span>Ảnh khuôn mặt</span>
+                                        <span class="detail-status" th:text="${faceImageCount + '/5 ảnh'}">0/5 ảnh</span>
+                                    </div>
+                                </div>
+
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <i class="fas fa-brain" th:classappend="${hasEmbedding} ? ' text-success' : ' text-muted'"></i>
+                                    </div>
+                                    <div class="detail-content">
+                                        <span>Đặc trưng AI</span>
+                                        <span class="detail-status" th:text="${hasEmbedding} ? 'Đã có' : 'Chưa có'">Chưa có</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div th:if="${recentClasses == null or recentClasses.isEmpty()}" class="empty-state">
-                                <i class="fas fa-chalkboard"></i>
-                                <h6>Chưa có lớp học</h6>
-                                <p>Bạn chưa được phân công dạy lớp nào.</p>
+
+                            <!-- Action Button -->
+                            <div class="text-center mt-3">
+                                <a href="/student/profile" class="btn btn-primary">
+                                    <i class="fas fa-cog me-2"></i>
+                                    Thiết lập sinh trắc học
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Tình trạng điểm danh -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <i class="fas fa-clipboard-check me-2 text-info"></i>
+                                Tình trạng điểm danh
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Overall Stats -->
+                                <div class="col-md-4">
+                                    <div class="attendance-chart-container">
+                                        <canvas id="attendanceOverviewChart" width="200" height="200"></canvas>
+                                    </div>
+                                </div>
+
+                                <!-- Detailed Stats -->
+                                <div class="col-md-8">
+                                    <div class="attendance-stats-grid">
+                                        <div class="stat-item present">
+                                            <div class="stat-icon">
+                                                <i class="fas fa-check-circle"></i>
+                                            </div>
+                                            <div class="stat-content">
+                                                <h4 th:text="${attendanceStats?.present ?: 0}">0</h4>
+                                                <p>Có mặt</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="stat-item late">
+                                            <div class="stat-icon">
+                                                <i class="fas fa-clock"></i>
+                                            </div>
+                                            <div class="stat-content">
+                                                <h4 th:text="${attendanceStats?.late ?: 0}">0</h4>
+                                                <p>Đi trễ</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="stat-item excused">
+                                            <div class="stat-icon">
+                                                <i class="fas fa-file-medical"></i>
+                                            </div>
+                                            <div class="stat-content">
+                                                <h4 th:text="${attendanceStats?.excused ?: 0}">0</h4>
+                                                <p>Có phép</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="stat-item absent">
+                                            <div class="stat-icon">
+                                                <i class="fas fa-times-circle"></i>
+                                            </div>
+                                            <div class="stat-content">
+                                                <h4 th:text="${attendanceStats?.absent ?: 0}">0</h4>
+                                                <p>Vắng mặt</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Attendance Rate -->
+                                    <div class="attendance-rate-section mt-3">
+                                        <h6>Tỷ lệ tham gia</h6>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-success"
+                                                 th:style="'width: ' + (${attendanceStats?.total > 0 ? (attendanceStats.present * 100.0 / attendanceStats.total) : 0}) + '%'"
+                                                 th:text="${attendanceStats?.total > 0 ? #numbers.formatDecimal((attendanceStats.present * 100.0 / attendanceStats.total), 1, 1) + '%' : '0%'}">
+                                                0%
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">
+                                            Tổng cộng: <span th:text="${attendanceStats?.total ?: 0}">0</span> buổi học
+                                        </small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -369,128 +321,354 @@
     </div>
 </div>
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- Custom JS -->
-<script th:src="@{/js/sidebar.js}"></script>
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script src="/js/sidebar.js"></script>
 
 <script>
-    // Main Dashboard JavaScript
     document.addEventListener('DOMContentLoaded', function() {
-        initializeDashboard();
-        updateDateTime();
+        // Update current date
+        updateCurrentDate();
+
+        // Initialize attendance chart
+        initAttendanceChart();
+
+        // Initialize sidebar
+        if (typeof initializeSidebar === 'function') {
+            initializeSidebar('STUDENT');
+        }
     });
 
-    function initializeDashboard() {
-        // Initialize sidebar - tương thích với code hiện tại
-        if (typeof SidebarManager !== 'undefined') {
-            new SidebarManager();
-        }
-
-        // Auto-refresh data every 5 minutes
-        setInterval(refreshDashboardData, 5 * 60 * 1000);
-
-        console.log('✅ Lecturer Dashboard initialized successfully');
-    }
-
-    function updateDateTime() {
+    function updateCurrentDate() {
         const now = new Date();
         const options = {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            day: 'numeric'
         };
-
-        const dateTimeElement = document.getElementById('currentDateTime');
-        if (dateTimeElement) {
-            dateTimeElement.textContent = now.toLocaleDateString('vi-VN', options);
-        }
-
-        // Update every minute
-        setTimeout(updateDateTime, 60000);
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('vi-VN', options);
     }
 
-    async function refreshDashboardData() {
-        try {
-            // Refresh today's schedule using API có sẵn
-            const scheduleResponse = await fetch('/lecturer/api/schedule/today');
-            if (scheduleResponse.ok) {
-                const scheduleData = await scheduleResponse.json();
-                updateTodaySchedule(scheduleData);
+    function initAttendanceChart() {
+        const ctx = document.getElementById('attendanceOverviewChart');
+        if (!ctx) return;
+
+        const present = parseInt('[[${attendanceStats?.present ?: 0}]]');
+        const late = parseInt('[[${attendanceStats?.late ?: 0}]]');
+        const excused = parseInt('[[${attendanceStats?.excused ?: 0}]]');
+        const absent = parseInt('[[${attendanceStats?.absent ?: 0}]]');
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Có mặt', 'Đi trễ', 'Có phép', 'Vắng mặt'],
+                datasets: [{
+                    data: [present, late, excused, absent],
+                    backgroundColor: [
+                        '#28a745',  // Có mặt - xanh lá
+                        '#ffc107',  // Đi trễ - vàng
+                        '#17a2b8',  // Có phép - xanh dương
+                        '#dc3545'   // Vắng mặt - đỏ
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 15,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    }
+                }
             }
-
-            console.log('✅ Dashboard data refreshed');
-        } catch (error) {
-            console.error('❌ Error refreshing dashboard data:', error);
-        }
-    }
-
-    function updateTodaySchedule(scheduleData) {
-        // Update today's schedule display
-        const scheduleContainer = document.querySelector('.schedule-container');
-        if (scheduleContainer && scheduleData && scheduleData.length > 0) {
-            // Update schedule display logic
-            console.log('Schedule data updated:', scheduleData);
-        }
-    }
-
-    // Helper functions for quick actions
-    function quickAttendance() {
-        window.location.href = '/lecturer/diemdanh-homnay';
-    }
-
-    function manualAttendance() {
-        window.location.href = '/lecturer/diemdanh-thucong';
-    }
-
-    function viewSchedule() {
-        window.location.href = '/lecturer/lich-giangday';
-    }
-
-    function generateReport() {
-        window.location.href = '/lecturer/baocao-ngay';
-    }
-
-    // Error handling
-    window.addEventListener('error', function(e) {
-        console.error('JavaScript error:', e.error);
-    });
-
-    // Show notification function
-    function showNotification(message, type = 'info') {
-        // Create toast notification
-        const toast = document.createElement('div');
-        toast.className = `toast align-items-center text-white bg-${type} border-0`;
-        toast.setAttribute('role', 'alert');
-        toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">${message}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        `;
-
-        // Add to toast container or create one
-        let toastContainer = document.querySelector('.toast-container');
-        if (!toastContainer) {
-            toastContainer = document.createElement('div');
-            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-            document.body.appendChild(toastContainer);
-        }
-
-        toastContainer.appendChild(toast);
-
-        // Show toast
-        const bsToast = new bootstrap.Toast(toast);
-        bsToast.show();
-
-        // Remove from DOM after hidden
-        toast.addEventListener('hidden.bs.toast', () => {
-            toast.remove();
         });
     }
 </script>
+<script th:src="@{/js/sidebar.js}"></script>
+
+<style>
+    .welcome-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+    }
+
+    .welcome-title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .welcome-subtitle {
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+    }
+
+    .current-date {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+    }
+
+    .stats-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        color: white;
+        position: relative;
+        overflow: hidden;
+        height: 120px;
+    }
+
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: rgba(255, 255, 255, 0.1);
+        transform: rotate(45deg);
+    }
+
+    .stats-card .stats-icon {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        font-size: 2rem;
+        opacity: 0.3;
+    }
+
+    .stats-card .stats-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .stats-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .stats-label {
+        margin: 0;
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .stats-status {
+        font-size: 0.75rem;
+        opacity: 0.8;
+    }
+
+    .dashboard-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border: none;
+        height: 100%;
+    }
+
+    .dashboard-card .card-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        border-radius: 12px 12px 0 0;
+        padding: 1rem 1.5rem;
+    }
+
+    .dashboard-card .card-body {
+        padding: 1.5rem;
+    }
+
+    .subject-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        transition: all 0.3s ease;
+    }
+
+    .subject-item:hover {
+        border-color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .subject-name {
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .subject-details {
+        margin: 0 0 0.25rem 0;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    .subject-teacher {
+        margin: 0;
+        font-size: 0.8rem;
+        color: #495057;
+    }
+
+    .subject-stats .attendance-rate {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #28a745;
+    }
+
+    .biometric-overview {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .status-indicator.completed .status-icon {
+        color: #28a745;
+    }
+
+    .status-indicator.ready .status-icon {
+        color: #ffc107;
+    }
+
+    .status-indicator.partial .status-icon {
+        color: #fd7e14;
+    }
+
+    .status-indicator.empty .status-icon {
+        color: #dc3545;
+    }
+
+    .status-icon {
+        font-size: 2rem;
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .detail-item:last-child {
+        border-bottom: none;
+    }
+
+    .detail-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex: 1;
+    }
+
+    .detail-status {
+        font-weight: 500;
+        font-size: 0.85rem;
+    }
+
+    .attendance-chart-container {
+        height: 200px;
+        position: relative;
+    }
+
+    .attendance-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        border-radius: 8px;
+        background: #f8f9fa;
+    }
+
+    .stat-item.present {
+        border-left: 4px solid #28a745;
+    }
+
+    .stat-item.late {
+        border-left: 4px solid #ffc107;
+    }
+
+    .stat-item.excused {
+        border-left: 4px solid #17a2b8;
+    }
+
+    .stat-item.absent {
+        border-left: 4px solid #dc3545;
+    }
+
+    .stat-item .stat-icon {
+        font-size: 1.5rem;
+        opacity: 0.7;
+    }
+
+    .stat-item.present .stat-icon {
+        color: #28a745;
+    }
+
+    .stat-item.late .stat-icon {
+        color: #ffc107;
+    }
+
+    .stat-item.excused .stat-icon {
+        color: #17a2b8;
+    }
+
+    .stat-item.absent .stat-icon {
+        color: #dc3545;
+    }
+
+    .stat-content h4 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .stat-content p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    .attendance-rate-section {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+    }
+
+    .empty-state i {
+        color: #dee2e6;
+    }
+</style>
 </body>
 </html>
