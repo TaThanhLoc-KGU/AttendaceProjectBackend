@@ -308,18 +308,13 @@
                         </div>
 
                         <div class="info-item">
-                            <span class="info-label">Số điện thoại:</span>
-                            <span class="info-value" th:text="${student?.soDienThoai ?: 'N/A'}">N/A</span>
-                        </div>
-
-                        <div class="info-item">
                             <span class="info-label">Email:</span>
                             <span class="info-value" th:text="${student?.email ?: 'N/A'}">N/A</span>
                         </div>
 
                         <div class="info-item">
                             <span class="info-label">Lớp:</span>
-                            <span class="info-value" th:text="${student?.maLop ?: 'Chưa phân lớp'}">Chưa phân lớp</span>
+                            <span class="info-value" th:text="${student?.getLop().tenLop ?: 'Chưa phân lớp'}">Chưa phân lớp</span>
                         </div>
                     </div>
                 </div>
