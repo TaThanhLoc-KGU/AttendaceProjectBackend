@@ -16,6 +16,121 @@
     <link th:href="@{/css/student.css}" rel="stylesheet">
 
     <style>
+        /* Delete button styles */
+        .profile-delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+            opacity: 0;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        .avatar-container:hover .profile-delete-btn {
+            opacity: 1;
+        }
+
+        .profile-delete-btn:hover {
+            background: #dc2626;
+            transform: scale(1.1);
+        }
+
+        /* Face image overlay */
+        .face-image-card {
+            position: relative;
+        }
+
+        .face-image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            border-radius: var(--border-radius);
+        }
+
+        .face-image-card:hover .face-image-overlay {
+            opacity: 1;
+        }
+
+        .face-image-overlay .delete-btn,
+        .face-image-overlay .view-btn {
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .face-image-overlay .delete-btn {
+            color: var(--danger-color);
+        }
+
+        .face-image-overlay .view-btn {
+            color: var(--primary-color);
+        }
+
+        .face-image-overlay .delete-btn:hover {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .face-image-overlay .view-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Modal image styling */
+        #modalImage {
+            max-height: 70vh;
+            border-radius: var(--border-radius);
+        }
+        /* Enhanced Progress Bar */
+        .progress-bar {
+            transition: width 0.3s ease;
+            font-size: 0.75rem;
+            font-weight: bold;
+            line-height: 1.5;
+        }
+
+        .image-preview {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .preview-overlay {
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        /* Progress text styling */
+        #progressText {
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
         /* Profile-specific styles */
         .profile-card {
             background: var(--white);
@@ -388,189 +503,6 @@
         console.log('✅ Student Profile page loaded successfully');
     });
 
-    // Upload Profile Image
-    function uploadProfileImage(input) {
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
-
-            // Validate file
-            if (!validateImageFile(file)) {
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            // Show loading
-            showAlert('info', 'Đang tải lên ảnh đại diện...', false);
-
-            fetch('/student/api/upload-profile-image', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        showAlert('danger', data.error);
-                    } else {
-                        // Update profile image
-                        const profileImage = document.getElementById('profileImage');
-                        const profilePlaceholder = document.getElementById('profilePlaceholder');
-
-                        if (profileImage) {
-                            profileImage.src = data.url;
-                        } else {
-                            // Create new image element
-                            const newImg = document.createElement('img');
-                            newImg.id = 'profileImage';
-                            newImg.src = data.url;
-                            newImg.alt = 'Avatar';
-                            newImg.className = 'avatar-image';
-
-                            // Replace placeholder
-                            profilePlaceholder.parentNode.replaceChild(newImg, profilePlaceholder);
-                        }
-
-                        showAlert('success', 'Cập nhật ảnh đại diện thành công!');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error uploading profile image:', error);
-                    showAlert('danger', 'Có lỗi xảy ra khi tải lên ảnh');
-                });
-        }
-    }
-
-    // Upload Face Image
-    function uploadFaceImage(input) {
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
-
-            // Validate file
-            if (!validateImageFile(file)) {
-                return;
-            }
-
-            if (currentFaceImageCount >= maxFaceImages) {
-                showAlert('warning', 'Đã đạt giới hạn tối đa 5 ảnh khuôn mặt');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            // Show progress
-            showProgress(0);
-
-            fetch('/student/api/upload-face-image', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    hideProgress();
-
-                    if (data.error) {
-                        showAlert('danger', data.error);
-                    } else {
-                        currentFaceImageCount = data.currentCount;
-                        showAlert('success', 'Tải lên ảnh khuôn mặt thành công!');
-                        loadFaceImages(); // Reload face images
-                    }
-                })
-                .catch(error => {
-                    hideProgress();
-                    console.error('Error uploading face image:', error);
-                    showAlert('danger', 'Có lỗi xảy ra khi tải lên ảnh');
-                });
-        }
-
-        // Reset input
-        input.value = '';
-    }
-
-    // Load Face Images
-    function loadFaceImages() {
-        // Get current count from server
-        fetch('/student/api/get-face-images')
-            .then(response => response.json())
-            .then(data => {
-                currentFaceImageCount = data.images ? data.images.length : 0;
-                renderFaceImagesGrid(data.images || []);
-                updateBiometricStatus();
-            })
-            .catch(error => {
-                console.error('Error loading face images:', error);
-                renderFaceImagesGrid([]);
-                updateBiometricStatus();
-            });
-    }
-
-    // Render Face Images Grid
-    function renderFaceImagesGrid(images) {
-        const grid = document.getElementById('faceImagesGrid');
-        grid.innerHTML = '';
-
-        // Render existing images
-        images.forEach((image, index) => {
-            const card = createFaceImageCard(image, index, true);
-            grid.appendChild(card);
-        });
-
-        // Render empty slots
-        const emptySlots = maxFaceImages - images.length;
-        for (let i = 0; i < emptySlots; i++) {
-            const card = createFaceImageCard(null, images.length + i, false);
-            grid.appendChild(card);
-        }
-    }
-
-    // Create Face Image Card
-    function createFaceImageCard(image, index, hasImage) {
-        const card = document.createElement('div');
-        card.className = `face-image-card ${hasImage ? 'has-image' : ''}`;
-
-        if (hasImage) {
-            card.innerHTML = `
-                <img src="${image.url}" alt="Face ${index + 1}" class="face-image">
-                <button class="delete-btn" onclick="deleteFaceImage(${image.id}, ${index})">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-        } else {
-            card.innerHTML = `
-                <div class="upload-placeholder">
-                    <i class="fas fa-plus fa-2x mb-2"></i>
-                    <div>Thêm ảnh ${index + 1}</div>
-                </div>
-            `;
-            card.onclick = () => document.getElementById('faceUpload').click();
-        }
-
-        return card;
-    }
-
-    // Delete Face Image
-    function deleteFaceImage(imageId, index) {
-        if (confirm('Bạn có chắc chắn muốn xóa ảnh này?')) {
-            fetch(`/student/api/delete-face-image/${imageId}`, {
-                method: 'DELETE'
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        showAlert('danger', data.error);
-                    } else {
-                        showAlert('success', 'Xóa ảnh thành công!');
-                        loadFaceImages(); // Reload
-                    }
-                })
-                .catch(error => {
-                    console.error('Error deleting face image:', error);
-                    showAlert('danger', 'Có lỗi xảy ra khi xóa ảnh');
-                });
-        }
-    }
 
     // Update Biometric Status
     function updateBiometricStatus() {
@@ -634,21 +566,446 @@
             }, 5000);
         }
     }
+    // Upload Image with Progress and Preview
+    function uploadImageWithProgress(file, uploadUrl, previewElementId, successCallback) {
+        if (!file) return;
 
-    // Show Progress
+        // Validate file
+        if (!validateImageFile(file)) {
+            return;
+        }
+
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            showImagePreview(previewElementId, e.target.result);
+        };
+        reader.readAsDataURL(file);
+
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Create XMLHttpRequest for progress tracking
+        const xhr = new XMLHttpRequest();
+
+        // Upload progress event
+        xhr.upload.addEventListener('progress', function(e) {
+            if (e.lengthComputable) {
+                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                showProgress(percentComplete);
+
+                // Update progress text
+                const progressText = document.getElementById('progressText');
+                if (progressText) {
+                    progressText.textContent = `Đang tải lên... ${percentComplete}%`;
+                }
+            }
+        });
+
+        // Request completion
+        xhr.addEventListener('load', function() {
+            hideProgress();
+
+            if (xhr.status === 200) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.error) {
+                        showAlert('danger', response.error);
+                        removeImagePreview(previewElementId);
+                    } else {
+                        showAlert('success', 'Tải lên ảnh thành công!');
+                        if (successCallback) {
+                            successCallback(response);
+                        }
+                    }
+                } catch (error) {
+                    showAlert('danger', 'Có lỗi xảy ra khi xử lý phản hồi từ server');
+                    removeImagePreview(previewElementId);
+                }
+            } else {
+                showAlert('danger', 'Có lỗi xảy ra khi tải lên ảnh');
+                removeImagePreview(previewElementId);
+            }
+        });
+
+        // Request error
+        xhr.addEventListener('error', function() {
+            hideProgress();
+            showAlert('danger', 'Có lỗi mạng xảy ra');
+            removeImagePreview(previewElementId);
+        });
+
+        // Request timeout
+        xhr.addEventListener('timeout', function() {
+            hideProgress();
+            showAlert('danger', 'Timeout - Vui lòng thử lại');
+            removeImagePreview(previewElementId);
+        });
+
+        // Start upload
+        showAlert('info', 'Bắt đầu tải lên ảnh...', false);
+        xhr.timeout = 30000; // 30 seconds timeout
+        xhr.open('POST', uploadUrl);
+        xhr.send(formData);
+    }
+
+    // Show Image Preview
+    function showImagePreview(elementId, imageSrc) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            // If it's an img element
+            if (element.tagName === 'IMG') {
+                element.src = imageSrc;
+                element.style.opacity = '0.7'; // Show loading state
+            } else {
+                // If it's a container, create preview
+                element.innerHTML = `
+                <div class="image-preview" style="position: relative;">
+                    <img src="${imageSrc}" alt="Preview" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.7;">
+                    <div class="preview-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 4px; font-size: 12px;">
+                        <i class="fas fa-spinner fa-spin me-1"></i>Đang tải...
+                    </div>
+                </div>
+            `;
+            }
+        }
+    }
+
+    // Remove Image Preview
+    function removeImagePreview(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            if (element.tagName === 'IMG') {
+                element.style.opacity = '1';
+            } else {
+                // Restore original content if needed
+                const previewOverlay = element.querySelector('.preview-overlay');
+                if (previewOverlay) {
+                    previewOverlay.remove();
+                }
+            }
+        }
+    }
+
+    // Enhanced Show Progress with Text
     function showProgress(percent) {
         const progress = document.getElementById('uploadProgress');
         const bar = progress.querySelector('.progress-bar');
 
         progress.style.display = 'block';
         bar.style.width = percent + '%';
+        bar.textContent = percent + '%';
+
+        // Add progress text if not exists
+        let progressText = document.getElementById('progressText');
+        if (!progressText) {
+            progressText = document.createElement('div');
+            progressText.id = 'progressText';
+            progressText.className = 'text-center mt-2 text-muted';
+            progress.parentNode.insertBefore(progressText, progress.nextSibling);
+        }
     }
 
-    // Hide Progress
+    // Enhanced Hide Progress
     function hideProgress() {
         const progress = document.getElementById('uploadProgress');
+        const progressText = document.getElementById('progressText');
+
         progress.style.display = 'none';
+        if (progressText) {
+            progressText.remove();
+        }
     }
+
+    // Update existing upload functions to use new progress function
+    function uploadProfileImage(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+
+            uploadImageWithProgress(
+                file,
+                '/student/api/upload-profile-image',
+                'profileImage',
+                function(response) {
+                    // Success callback
+                    const profileImage = document.getElementById('profileImage');
+                    const profilePlaceholder = document.getElementById('profilePlaceholder');
+
+                    if (profileImage) {
+                        profileImage.src = response.url;
+                        profileImage.style.opacity = '1';
+                    } else {
+                        // Create new image element
+                        const newImg = document.createElement('img');
+                        newImg.id = 'profileImage';
+                        newImg.src = response.url;
+                        newImg.alt = 'Avatar';
+                        newImg.className = 'avatar-image';
+
+                        // Replace placeholder
+                        profilePlaceholder.parentNode.replaceChild(newImg, profilePlaceholder);
+                    }
+                }
+            );
+        }
+    }
+
+    function uploadFaceImage(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+
+            if (currentFaceImageCount >= maxFaceImages) {
+                showAlert('warning', 'Đã đạt giới hạn tối đa 5 ảnh khuôn mặt');
+                return;
+            }
+
+            uploadImageWithProgress(
+                file,
+                '/student/api/upload-face-image',
+                'faceImagesGrid',
+                function(response) {
+                    // Success callback
+                    currentFaceImageCount = response.currentCount;
+                    loadFaceImages(); // Reload face images
+                }
+            );
+        }
+
+        // Reset input
+        input.value = '';
+    }
+    // Enhanced Delete Functions for Profile Page
+
+    // Delete Profile Image
+    function deleteProfileImage() {
+        if (confirm('Bạn có chắc chắn muốn xóa ảnh đại diện?')) {
+            showAlert('info', 'Đang xóa ảnh đại diện...', false);
+
+            fetch('/student/api/delete-profile-image', {
+                method: 'DELETE'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        showAlert('danger', data.error);
+                    } else {
+                        // Remove image and show placeholder
+                        const profileImage = document.getElementById('profileImage');
+                        const profilePlaceholder = document.getElementById('profilePlaceholder');
+                        const avatarContainer = document.querySelector('.avatar-container');
+
+                        if (profileImage) {
+                            // Create placeholder element
+                            const newPlaceholder = document.createElement('div');
+                            newPlaceholder.id = 'profilePlaceholder';
+                            newPlaceholder.className = 'avatar-placeholder';
+                            newPlaceholder.innerHTML = '<i class="fas fa-user"></i>';
+
+                            // Replace image with placeholder
+                            profileImage.parentNode.replaceChild(newPlaceholder, profileImage);
+                        }
+
+                        showAlert('success', 'Xóa ảnh đại diện thành công!');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting profile image:', error);
+                    showAlert('danger', 'Có lỗi xảy ra khi xóa ảnh');
+                });
+        }
+    }
+
+    // Delete Face Image by filename
+    function deleteFaceImageByFilename(filename, cardElement) {
+        if (confirm('Bạn có chắc chắn muốn xóa ảnh này?')) {
+            // Add loading state to card
+            cardElement.style.opacity = '0.5';
+            cardElement.style.pointerEvents = 'none';
+
+            fetch(`/student/api/face-image/${filename}`, {
+                method: 'DELETE'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        // Restore card state
+                        cardElement.style.opacity = '1';
+                        cardElement.style.pointerEvents = 'auto';
+                        showAlert('danger', data.error);
+                    } else {
+                        currentFaceImageCount = data.remainingCount;
+                        showAlert('success', 'Xóa ảnh thành công!');
+                        loadFaceImages(); // Reload face images
+                    }
+                })
+                .catch(error => {
+                    // Restore card state
+                    cardElement.style.opacity = '1';
+                    cardElement.style.pointerEvents = 'auto';
+                    console.error('Error deleting face image:', error);
+                    showAlert('danger', 'Có lỗi xảy ra khi xóa ảnh');
+                });
+        }
+    }
+
+    // Delete Face Image by ID (alternative method)
+    function deleteFaceImage(imageId, index) {
+        if (confirm('Bạn có chắc chắn muốn xóa ảnh này?')) {
+            fetch(`/student/api/delete-face-image/${imageId}`, {
+                method: 'DELETE'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        showAlert('danger', data.error);
+                    } else {
+                        showAlert('success', 'Xóa ảnh thành công!');
+                        loadFaceImages(); // Reload face images
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting face image:', error);
+                    showAlert('danger', 'Có lỗi xảy ra khi xóa ảnh');
+                });
+        }
+    }
+
+    // Enhanced Create Face Image Card with delete functionality
+    function createFaceImageCard(image, index, hasImage) {
+        const card = document.createElement('div');
+        card.className = `face-image-card ${hasImage ? 'has-image' : ''}`;
+
+        if (hasImage) {
+            card.innerHTML = `
+            <img src="${image.url}" alt="Face ${index + 1}" class="face-image">
+            <div class="face-image-overlay">
+                <button class="delete-btn" onclick="deleteFaceImageByFilename('${image.filename}', this.closest('.face-image-card'))">
+                    <i class="fas fa-trash"></i>
+                </button>
+                <button class="view-btn" onclick="viewFaceImage('${image.url}', '${image.filename}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+        `;
+        } else {
+            card.innerHTML = `
+            <div class="upload-placeholder">
+                <i class="fas fa-plus fa-2x mb-2"></i>
+                <div>Thêm ảnh ${index + 1}</div>
+            </div>
+        `;
+            card.onclick = () => document.getElementById('faceUpload').click();
+        }
+
+        return card;
+    }
+
+    // View Face Image in modal
+    function viewFaceImage(imageUrl, filename) {
+        // Create modal if not exists
+        let modal = document.getElementById('imageViewModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'imageViewModal';
+            modal.className = 'modal fade';
+            modal.innerHTML = `
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Xem ảnh khuôn mặt</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img id="modalImage" src="" alt="Face image" class="img-fluid">
+                        <p id="modalFilename" class="mt-2 text-muted"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" id="modalDeleteBtn">
+                            <i class="fas fa-trash me-2"></i>Xóa ảnh
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    </div>
+                </div>
+            </div>
+        `;
+            document.body.appendChild(modal);
+        }
+
+        // Update modal content
+        document.getElementById('modalImage').src = imageUrl;
+        document.getElementById('modalFilename').textContent = filename;
+
+        // Update delete button
+        const deleteBtn = document.getElementById('modalDeleteBtn');
+        deleteBtn.onclick = () => {
+            bootstrap.Modal.getInstance(modal).hide();
+            setTimeout(() => {
+                const cardElement = document.querySelector(`[data-filename="${filename}"]`);
+                deleteFaceImageByFilename(filename, cardElement);
+            }, 300);
+        };
+
+        // Show modal
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    }
+
+    // Add delete button to profile image
+    function addProfileImageDeleteButton() {
+        const avatarContainer = document.querySelector('.avatar-container');
+        const profileImage = document.getElementById('profileImage');
+
+        if (profileImage && !document.querySelector('.profile-delete-btn')) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'profile-delete-btn';
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+            deleteBtn.onclick = deleteProfileImage;
+            deleteBtn.title = 'Xóa ảnh đại diện';
+
+            avatarContainer.appendChild(deleteBtn);
+        }
+    }
+
+    // Enhanced Load Face Images with delete functionality
+    function loadFaceImages() {
+        fetch('/student/api/get-face-images')
+            .then(response => response.json())
+            .then(data => {
+                currentFaceImageCount = data.images ? data.images.length : 0;
+                renderFaceImagesGrid(data.images || []);
+                updateBiometricStatus();
+
+                // Add delete button to profile image if exists
+                addProfileImageDeleteButton();
+            })
+            .catch(error => {
+                console.error('Error loading face images:', error);
+                renderFaceImagesGrid([]);
+                updateBiometricStatus();
+            });
+    }
+
+    // Enhanced Render Face Images Grid with delete functionality
+    function renderFaceImagesGrid(images) {
+        const grid = document.getElementById('faceImagesGrid');
+        grid.innerHTML = '';
+
+        // Render existing images with delete buttons
+        images.forEach((image, index) => {
+            const card = createFaceImageCard(image, index, true);
+            card.setAttribute('data-filename', image.filename);
+            grid.appendChild(card);
+        });
+
+        // Render empty slots
+        const emptySlots = maxFaceImages - images.length;
+        for (let i = 0; i < emptySlots; i++) {
+            const card = createFaceImageCard(null, images.length + i, false);
+            grid.appendChild(card);
+        }
+    }
+
 </script>
 
 </body>
