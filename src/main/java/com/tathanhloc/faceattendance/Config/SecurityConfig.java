@@ -1,3 +1,7 @@
+// ===================================================================
+// Updated SecurityConfig.java - Merged với Flask support
+// ===================================================================
+
 package com.tathanhloc.faceattendance.Config;
 
 import com.tathanhloc.faceattendance.Security.CustomUserDetailsService;
@@ -103,6 +107,15 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/forgot-password").permitAll()
                         .requestMatchers("/api/python/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
+
+                        // ===== FLASK INTEGRATION ENDPOINTS - NO AUTHENTICATION =====
+                        .requestMatchers("/api/flask/**").permitAll()
+                        .requestMatchers("/api/roi/**").permitAll()
+                        .requestMatchers("/api/realtime/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/admin-ws/**").permitAll()
+
+                        // ===== EXISTING ROLE-BASED ACCESS =====
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/lecturer/**").hasRole("GIANGVIEN")
                         .requestMatchers("/student/**").hasRole("SINHVIEN")
@@ -118,14 +131,51 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token"));
-        configuration.setExposedHeaders(List.of("x-auth-token"));
+
+        // ===== ALLOW ORIGINS - Bao gồm Flask và existing =====
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "*",                        // Existing - allow all
+                "http://localhost:5000",    // Flask default port
+                "http://127.0.0.1:5000",   // Flask alternative
+                "http://localhost:8080"     // Spring Boot port
+        ));
+
+        // ===== ALLOW METHODS =====
+        configuration.setAllowedMethods(Arrays.asList(
+                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+        ));
+
+        // ===== ALLOW HEADERS - Merged existing + Flask requirements =====
+        configuration.setAllowedHeaders(Arrays.asList(
+                "authorization",
+                "content-type",
+                "x-auth-token",
+                "Content-Type",
+                "Authorization",
+                "X-Requested-With",
+                "Accept"
+        ));
+
+        // ===== EXPOSED HEADERS =====
+        configuration.setExposedHeaders(Arrays.asList(
+                "x-auth-token"
+        ));
+
+        // ===== ALLOW CREDENTIALS =====
         configuration.setAllowCredentials(true);
 
+        // ===== REGISTER CONFIGURATIONS =====
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
+        // Apply to all endpoints (existing behavior)
         source.registerCorsConfiguration("/**", configuration);
+
         return source;
     }
 }
+
+// ===================================================================
+// DELETE FlaskSecurityConfig.java - Không cần nữa vì đã merge
+// ===================================================================
+
+// REMOVE FILE: src/main/java/com/tathanhloc/faceattendance/Config/FlaskSecurityConfig.java

@@ -41,4 +41,5 @@ public interface LichHocRepository extends JpaRepository<LichHoc, String> {
     List<LichHoc> findByLopHocPhanMaLhpAndHocKyAndNamHoc(@Param("maLhp") String maLhp,
                                                          @Param("hocKy") String hocKy,
                                                          @Param("namHoc") String namHoc);
+
 }

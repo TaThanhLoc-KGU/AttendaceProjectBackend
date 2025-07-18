@@ -33,6 +33,9 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
     private final DangKyHocService dangKyHocService;
     private final LichHocService lichHocService;
     private final SinhVienService sinhVienService;
+    // Cấu hình thời gian cho phép điểm danh
+    private static final int ATTENDANCE_BEFORE_CLASS_MINUTES = 60; // Cho phép điểm danh trước 60 phút
+    private static final int ATTENDANCE_AFTER_CLASS_MINUTES = 30;  // Cho phép điểm danh sau 30 phút
 
     @Override
     protected JpaRepository<DiemDanh, Long> getRepository() {
@@ -206,36 +209,67 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
     }
 
     /**
-     * Tìm lịch học đang diễn ra tại phòng
+     * Tìm lịch học đang diễn ra hoặc sắp diễn ra tại phòng
+     * Bao gồm cả thời gian buffer trước và sau giờ học
      */
     private String findCurrentScheduleAtRoom(String maPhong) {
         LocalDate today = LocalDate.now();
         LocalTime now = LocalTime.now();
         int dayOfWeek = today.getDayOfWeek().getValue(); // 1=Mon, 7=Sun
 
+        log.info("🔍 Tìm lịch học tại phòng {} lúc {} ngày {}", maPhong, now, today);
+
         // Tìm tất cả lịch học ở phòng này hôm nay
         List<LichHoc> schedules = lichHocRepository
                 .findByPhongHocMaPhongAndThuAndIsActiveTrue(maPhong, dayOfWeek);
 
-        // Tìm lịch học đang diễn ra
+        if (schedules.isEmpty()) {
+            log.warn("⚠️ Không có lịch học nào tại phòng {} vào thứ {}", maPhong, dayOfWeek);
+            throw new RuntimeException("Không có lịch học nào được lên lịch tại phòng này hôm nay");
+        }
+
+        // Tìm lịch học phù hợp (đang diễn ra hoặc trong thời gian buffer)
         for (LichHoc lichHoc : schedules) {
-            if (isTimeInSchedule(lichHoc, now)) {
+            if (isTimeInScheduleWithBuffer(lichHoc, now)) {
+                log.info("✅ Tìm thấy lịch học phù hợp: {} - Tiết {}-{}",
+                        lichHoc.getMaLich(),
+                        lichHoc.getTietBatDau(),
+                        lichHoc.getTietBatDau() + lichHoc.getSoTiet() - 1);
                 return lichHoc.getMaLich();
             }
         }
 
-        throw new RuntimeException("Không có lịch học nào đang diễn ra tại phòng này");
+        // Nếu không tìm thấy, hiển thị thông tin debug
+        log.warn("❌ Không có lịch học nào phù hợp. Chi tiết:");
+        for (LichHoc lichHoc : schedules) {
+            LocalTime startTime = calculateStartTime(lichHoc.getTietBatDau());
+            LocalTime endTime = calculateEndTime(lichHoc.getTietBatDau(), lichHoc.getSoTiet());
+            LocalTime bufferStart = startTime.minusMinutes(ATTENDANCE_BEFORE_CLASS_MINUTES);
+            LocalTime bufferEnd = endTime.plusMinutes(ATTENDANCE_AFTER_CLASS_MINUTES);
+
+            log.warn("   Lịch {}: {}~{} (buffer: {}~{})",
+                    lichHoc.getMaLich(), startTime, endTime, bufferStart, bufferEnd);
+        }
+
+        throw new RuntimeException("Không có lịch học nào đang diễn ra tại phòng này trong thời gian cho phép điểm danh");
     }
 
     /**
-     * Kiểm tra thời gian hiện tại có trong khung giờ học không
+     * Kiểm tra thời gian hiện tại có trong khung giờ học không (bao gồm buffer)
+     * Buffer: cho phép điểm danh trước và sau giờ học
      */
-    private boolean isTimeInSchedule(LichHoc lichHoc, LocalTime currentTime) {
-        // Giả sử: Tiết 1 = 7:00, mỗi tiết 45 phút + nghỉ 5 phút
-        LocalTime startTime = LocalTime.of(7, 0).plusMinutes((lichHoc.getTietBatDau() - 1) * 50);
-        LocalTime endTime = startTime.plusMinutes(lichHoc.getSoTiet() * 50);
+    private boolean isTimeInScheduleWithBuffer(LichHoc lichHoc, LocalTime currentTime) {
+        LocalTime startTime = calculateStartTime(lichHoc.getTietBatDau());
+        LocalTime endTime = calculateEndTime(lichHoc.getTietBatDau(), lichHoc.getSoTiet());
 
-        return !currentTime.isBefore(startTime) && !currentTime.isAfter(endTime);
+        // Thời gian cho phép điểm danh (có buffer)
+        LocalTime allowedStartTime = startTime.minusMinutes(ATTENDANCE_BEFORE_CLASS_MINUTES);
+        LocalTime allowedEndTime = endTime.plusMinutes(ATTENDANCE_AFTER_CLASS_MINUTES);
+
+        log.debug("📊 Kiểm tra thời gian - Hiện tại: {}, Cho phép: {} ~ {} (Lịch gốc: {} ~ {})",
+                currentTime, allowedStartTime, allowedEndTime, startTime, endTime);
+
+        return !currentTime.isBefore(allowedStartTime) && !currentTime.isAfter(allowedEndTime);
     }
 
     /**
@@ -931,5 +965,106 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
             log.error("Error getting top attendance students: {}", e.getMessage());
             return result;
         }
+    }
+    public List<DiemDanhDTO> getByLichHocAndDate(String maLich, LocalDate date) {
+        log.info("Getting attendance for schedule {} on date {}", maLich, date);
+
+        try {
+            List<DiemDanh> attendances = diemDanhRepository.findByLichHocMaLichAndNgayDiemDanh(maLich, date);
+
+            return attendances.stream()
+                    .map(this::toDTO)
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            log.error("Error getting attendance for schedule {} on date {}: ", maLich, date, e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Tính thời gian bắt đầu dựa trên tiết học
+     * Giả sử: Tiết 1 = 7:00, mỗi tiết 45 phút + nghỉ 5 phút
+     */
+    private LocalTime calculateStartTime(int tietBatDau) {
+        return LocalTime.of(7, 0).plusMinutes((tietBatDau - 1) * 50);
+    }
+
+    /**
+     * Tính thời gian kết thúc dựa trên tiết bắt đầu và số tiết
+     */
+    private LocalTime calculateEndTime(int tietBatDau, int soTiet) {
+        LocalTime startTime = calculateStartTime(tietBatDau);
+        return startTime.plusMinutes(soTiet * 50);
+    }
+// ===== THÊM METHOD DEPRECATED CHO TƯƠNG THÍCH NGƯỢC =====
+
+    /**
+     * @deprecated Sử dụng isTimeInScheduleWithBuffer thay thế
+     */
+    @Deprecated
+    private boolean isTimeInSchedule(LichHoc lichHoc, LocalTime currentTime) {
+        log.warn("⚠️ Sử dụng method deprecated isTimeInSchedule, nên chuyển sang isTimeInScheduleWithBuffer");
+        return isTimeInScheduleWithBuffer(lichHoc, currentTime);
+    }
+
+// ===== THÊM METHOD CẤU HÌNH THỜI GIAN BUFFER =====
+
+    /**
+     * Tạo lịch học với thời gian buffer tùy chỉnh (cho admin config)
+     */
+    private boolean isTimeInScheduleWithCustomBuffer(LichHoc lichHoc, LocalTime currentTime,
+                                                     int beforeMinutes, int afterMinutes) {
+        LocalTime startTime = calculateStartTime(lichHoc.getTietBatDau());
+        LocalTime endTime = calculateEndTime(lichHoc.getTietBatDau(), lichHoc.getSoTiet());
+
+        LocalTime allowedStartTime = startTime.minusMinutes(beforeMinutes);
+        LocalTime allowedEndTime = endTime.plusMinutes(afterMinutes);
+
+        return !currentTime.isBefore(allowedStartTime) && !currentTime.isAfter(allowedEndTime);
+    }
+
+// ===== THÊM METHOD LẤY THÔNG TIN DEBUG =====
+
+    /**
+     * Lấy thông tin debug về lịch học tại phòng (để troubleshooting)
+     */
+    public Map<String, Object> getScheduleDebugInfo(String maPhong) {
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+        int dayOfWeek = today.getDayOfWeek().getValue();
+
+        List<LichHoc> schedules = lichHocRepository
+                .findByPhongHocMaPhongAndThuAndIsActiveTrue(maPhong, dayOfWeek);
+
+        Map<String, Object> debugInfo = new HashMap<>();
+        debugInfo.put("currentTime", now.toString());
+        debugInfo.put("currentDate", today.toString());
+        debugInfo.put("dayOfWeek", dayOfWeek);
+        debugInfo.put("roomCode", maPhong);
+        debugInfo.put("totalSchedules", schedules.size());
+        debugInfo.put("bufferBefore", ATTENDANCE_BEFORE_CLASS_MINUTES + " phút");
+        debugInfo.put("bufferAfter", ATTENDANCE_AFTER_CLASS_MINUTES + " phút");
+
+        List<Map<String, Object>> scheduleDetails = new ArrayList<>();
+        for (LichHoc lichHoc : schedules) {
+            LocalTime startTime = calculateStartTime(lichHoc.getTietBatDau());
+            LocalTime endTime = calculateEndTime(lichHoc.getTietBatDau(), lichHoc.getSoTiet());
+            LocalTime bufferStart = startTime.minusMinutes(ATTENDANCE_BEFORE_CLASS_MINUTES);
+            LocalTime bufferEnd = endTime.plusMinutes(ATTENDANCE_AFTER_CLASS_MINUTES);
+
+            Map<String, Object> detail = new HashMap<>();
+            detail.put("scheduleCode", lichHoc.getMaLich());
+            detail.put("period", "Tiết " + lichHoc.getTietBatDau() + "-" + (lichHoc.getTietBatDau() + lichHoc.getSoTiet() - 1));
+            detail.put("originalTime", startTime + " ~ " + endTime);
+            detail.put("allowedTime", bufferStart + " ~ " + bufferEnd);
+            detail.put("isCurrentlyValid", isTimeInScheduleWithBuffer(lichHoc, now));
+            detail.put("className", lichHoc.getLopHocPhan() != null ? lichHoc.getLopHocPhan().getMaLhp() : "N/A");
+
+            scheduleDetails.add(detail);
+        }
+        debugInfo.put("schedules", scheduleDetails);
+
+        return debugInfo;
     }
 }

@@ -23,4 +23,6 @@ public interface DangKyHocRepository extends JpaRepository<DangKyHoc, DangKyHocI
      * Kiểm tra sinh viên có đăng ký lớp không
      */
     boolean existsByLopHocPhanMaLhpAndSinhVienMaSv(String maLhp, String maSv);
+    boolean existsByIdMaSvAndIdMaLhpAndIsActiveTrue(String maSv, String maLhp);
+
 }

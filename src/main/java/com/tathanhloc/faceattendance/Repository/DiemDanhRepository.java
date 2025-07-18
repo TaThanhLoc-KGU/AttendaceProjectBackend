@@ -263,4 +263,5 @@ public interface DiemDanhRepository extends JpaRepository<DiemDanh, Long> {
         ORDER BY dd.ngay_diem_danh DESC
         """, nativeQuery = true)
     List<Object[]> findDailyAttendanceStats(@Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate);
+
 }

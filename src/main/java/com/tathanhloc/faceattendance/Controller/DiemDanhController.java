@@ -1,6 +1,11 @@
 package com.tathanhloc.faceattendance.Controller;
 
 import com.tathanhloc.faceattendance.DTO.*;
+import com.tathanhloc.faceattendance.Model.Camera;
+import com.tathanhloc.faceattendance.Model.LichHoc;
+import com.tathanhloc.faceattendance.Model.PhongHoc;
+import com.tathanhloc.faceattendance.Repository.CameraRepository;
+import com.tathanhloc.faceattendance.Repository.LichHocRepository;
 import com.tathanhloc.faceattendance.Service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +17,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -22,6 +31,8 @@ import java.util.Map;
 public class DiemDanhController {
 
     private final DiemDanhService diemDanhService;
+    private final CameraRepository cameraRepository;
+    private final LichHocRepository lichHocRepository;
 
     @GetMapping
     public List<DiemDanhDTO> getAll() {
@@ -250,5 +261,168 @@ public class DiemDanhController {
         List<DiemDanhDTO> attendances = diemDanhService.getByClassAndDate(maLhp, ngay);
         return ResponseEntity.ok(attendances);
     }
+    /**
+     * API debug: Kiểm tra lịch học tại phòng
+     * GET /api/diemdanh/debug/room/{maPhong}
+     */
+    @GetMapping("/debug/room/{maPhong}")
+    public ResponseEntity<?> debugScheduleAtRoom(@PathVariable String maPhong) {
+        try {
+            Map<String, Object> debugInfo = diemDanhService.getScheduleDebugInfo(maPhong);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Thông tin debug lịch học tại phòng " + maPhong,
+                    "data", debugInfo
+            ));
+        } catch (Exception e) {
+            log.error("Error getting debug info for room {}: {}", maPhong, e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Lỗi khi lấy thông tin debug: " + e.getMessage()
+            ));
+        }
+    }
+    /**
+     * API test điểm danh cho camera (có log chi tiết)
+     * POST /api/diemdanh/test-camera-attendance
+     */
+    @PostMapping("/test-camera-attendance")
+    public ResponseEntity<?> testCameraAttendance(@RequestBody Map<String, Object> testData) {
+        try {
+            String studentId = (String) testData.get("studentId");
+            Long cameraId = Long.valueOf(testData.get("cameraId").toString());
 
+            log.info("🧪 TEST ATTENDANCE - Student: {}, Camera: {}", studentId, cameraId);
+
+            // Thêm thông tin debug trước khi gọi recordAttendanceFromCamera
+            Optional<Camera> cameraOpt = cameraRepository.findById(cameraId);
+            if (cameraOpt.isPresent()) {
+                Camera camera = cameraOpt.get();
+                String maPhong = camera.getMaPhong() != null ? camera.getMaPhong().getMaPhong() : null;
+
+                if (maPhong != null) {
+                    Map<String, Object> debugInfo = diemDanhService.getScheduleDebugInfo(maPhong);
+                    log.info("🔍 Debug info cho phòng {}: {}", maPhong, debugInfo);
+                }
+            }
+
+            DiemDanhDTO result = diemDanhService.recordAttendanceFromCamera(studentId, cameraId);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Test điểm danh thành công",
+                    "data", result
+            ));
+
+        } catch (Exception e) {
+            log.error("❌ TEST ATTENDANCE FAILED: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Test điểm danh thất bại: " + e.getMessage(),
+                    "errorDetails", e.getClass().getSimpleName()
+            ));
+        }
+    }
+
+    /**
+     * API lấy tất cả lịch học hôm nay của phòng
+     * GET /api/diemdanh/room/{maPhong}/today-schedules
+     */
+    @GetMapping("/room/{maPhong}/today-schedules")
+    public ResponseEntity<?> getTodaySchedulesByRoom(@PathVariable String maPhong) {
+        try {
+            LocalDate today = LocalDate.now();
+            int dayOfWeek = today.getDayOfWeek().getValue();
+
+            List<LichHoc> schedules = lichHocRepository
+                    .findByPhongHocMaPhongAndThuAndIsActiveTrue(maPhong, dayOfWeek);
+
+            List<Map<String, Object>> scheduleInfo = schedules.stream().map(lichHoc -> {
+                LocalTime startTime = LocalTime.of(7, 0).plusMinutes((lichHoc.getTietBatDau() - 1) * 50);
+                LocalTime endTime = startTime.plusMinutes(lichHoc.getSoTiet() * 50);
+
+                Map<String, Object> info = new HashMap<>();
+                info.put("maLich", lichHoc.getMaLich());
+                info.put("maLhp", lichHoc.getLopHocPhan() != null ? lichHoc.getLopHocPhan().getMaLhp() : "N/A");
+                info.put("tietBatDau", lichHoc.getTietBatDau());
+                info.put("soTiet", lichHoc.getSoTiet());
+                info.put("thoiGianHoc", startTime + " - " + endTime);
+                info.put("thoiGianChoPhepDiemDanh",
+                        startTime.minusMinutes(60) + " - " + endTime.plusMinutes(30));
+                info.put("isActive", lichHoc.isActive());
+                return info;
+            }).collect(Collectors.toList());
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Lịch học hôm nay tại phòng " + maPhong,
+                    "data", Map.of(
+                            "date", today.toString(),
+                            "dayOfWeek", dayOfWeek,
+                            "roomCode", maPhong,
+                            "totalSchedules", schedules.size(),
+                            "schedules", scheduleInfo
+                    )
+            ));
+
+        } catch (Exception e) {
+            log.error("Error getting today schedules for room {}: {}", maPhong, e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Lỗi khi lấy lịch học: " + e.getMessage()
+            ));
+        }
+    }
+    /**
+     * API kiểm tra camera và phòng học
+     * GET /api/diemdanh/camera/{cameraId}/info
+     */
+    @GetMapping("/camera/{cameraId}/info")
+    public ResponseEntity<?> getCameraInfo(@PathVariable Long cameraId) {
+        try {
+            Optional<Camera> cameraOpt = cameraRepository.findById(cameraId);
+
+            if (cameraOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "Camera không tồn tại với ID: " + cameraId
+                ));
+            }
+
+            Camera camera = cameraOpt.get();
+            PhongHoc phong = camera.getMaPhong();
+
+            Map<String, Object> cameraInfo = new HashMap<>();
+            cameraInfo.put("cameraId", camera.getId());
+            cameraInfo.put("tenCamera", camera.getTenCamera());
+            cameraInfo.put("ipAddress", camera.getIpAddress());
+            cameraInfo.put("isActive", camera.getIsActive());
+
+            if (phong != null) {
+                cameraInfo.put("maPhong", phong.getMaPhong());
+                cameraInfo.put("tenPhong", phong.getTenPhong());
+                cameraInfo.put("loaiPhong", phong.getLoaiPhong());
+                cameraInfo.put("sucChua", phong.getSucChua());
+
+                // Lấy thêm thông tin lịch học hôm nay
+                Map<String, Object> debugInfo = diemDanhService.getScheduleDebugInfo(phong.getMaPhong());
+                cameraInfo.put("todaySchedules", debugInfo);
+            } else {
+                cameraInfo.put("warning", "Camera chưa được gán phòng học");
+            }
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Thông tin camera " + cameraId,
+                    "data", cameraInfo
+            ));
+
+        } catch (Exception e) {
+            log.error("Error getting camera info {}: {}", cameraId, e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Lỗi khi lấy thông tin camera: " + e.getMessage()
+            ));
+        }
+    }
 }
