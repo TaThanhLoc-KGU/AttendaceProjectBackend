@@ -594,18 +594,12 @@ public class StudentDashboardController {
         try {
             String maSv = userDetails.getTaiKhoan().getSinhVien().getMaSv();
 
+
             // Lấy số lượng ảnh hiện có
             int faceImageCount = fileUploadService.getFaceImageCount(maSv);
 
             // Tạo danh sách ảnh giả để frontend render
-            List<Map<String, Object>> images = new ArrayList<>();
-            for (int i = 1; i <= faceImageCount; i++) {
-                Map<String, Object> image = new HashMap<>();
-                image.put("id", i);
-                image.put("url", "/uploads/students/" + maSv + "/faces/face_" + i + ".jpg");
-                image.put("filename", "face_" + i + ".jpg");
-                images.add(image);
-            }
+            List<Map<String, Object>> images = fileUploadService.getFaceImages(maSv);
 
             return ResponseEntity.ok(Map.of(
                     "images", images,

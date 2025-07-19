@@ -16,6 +16,23 @@
     <link th:href="@{/css/student.css}" rel="stylesheet">
 
     <style>
+
+        :root {
+            --primary-color: #007bff;
+            --primary-light: #6c757d;
+            --danger-color: #dc3545;
+            --success-color: #28a745;
+            --white: #ffffff;
+            --gray-50: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-500: #6c757d;
+            --gray-700: #495057;
+            --gray-900: #212529;
+            --border-radius: 6px;
+            --border-radius-lg: 12px;
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
         /* Delete button styles */
         .profile-delete-btn {
             position: absolute;
@@ -108,12 +125,54 @@
             max-height: 70vh;
             border-radius: var(--border-radius);
         }
-        /* Enhanced Progress Bar */
+        /* Enhanced progress bar styling */
+        .progress {
+            height: 8px;
+            margin-top: 1rem;
+            display: none;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
         .progress-bar {
             transition: width 0.3s ease;
             font-size: 0.75rem;
             font-weight: bold;
-            line-height: 1.5;
+            line-height: 1.8;
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            color: white;
+        }
+
+        /* Loading overlay for images */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            border-radius: inherit;
+            z-index: 10;
+        }
+
+        .upload-progress-container {
+            background: #ffffff;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+            display: none;
+        }
+
+        .upload-progress-container.show {
+            display: block;
         }
 
         .image-preview {
@@ -299,24 +358,193 @@
             margin-bottom: 1rem;
             text-align: center;
         }
-
-        .status-completed {
-            background: linear-gradient(135deg, #d4edda, #c3e6cb);
-            color: #155724;
-        }
-
-        .status-partial {
-            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
-            color: #856404;
-        }
-
-        .status-empty {
-            background: linear-gradient(135deg, #f8d7da, #f5c2c7);
-            color: #721c24;
-        }
-
-        .hidden {
+        /* External Upload Progress Bar */
+        .external-upload-progress {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border: 2px solid #007bff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
             display: none;
+            box-shadow: 0 4px 12px rgba(0,123,255,0.15);
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .external-upload-progress.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .upload-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .upload-title {
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            color: #007bff;
+            font-size: 1.1rem;
+        }
+
+        .upload-cancel {
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .upload-cancel:hover {
+            background: #f8f9fa;
+            color: #dc3545;
+        }
+
+        .progress-container {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .external-progress {
+            height: 12px;
+            background: #e9ecef;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .external-progress-bar {
+            height: 100%;
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            border-radius: 6px;
+            transition: width 0.3s ease;
+            position: relative;
+            animation: progressShine 2s infinite;
+        }
+
+        @keyframes progressShine {
+            0% {
+                background-position: -100% 0;
+            }
+            100% {
+                background-position: 100% 0;
+            }
+        }
+
+        .external-progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255,255,255,0.4),
+                    transparent
+            );
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .progress-percent {
+            font-weight: 700;
+            color: #007bff;
+            font-size: 1.1rem;
+        }
+
+        .progress-details {
+            color: #6c757d;
+        }
+
+        .upload-speed {
+            font-size: 0.8rem;
+            color: #28a745;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: rgba(0,123,255,0.05);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .file-icon {
+            width: 32px;
+            height: 32px;
+            background: #007bff;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .file-details {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 0.25rem;
+        }
+
+        .file-size {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .upload-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .status-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .status-text {
+            color: #6c757d;
         }
     </style>
 </head>
@@ -392,7 +620,7 @@
                         </div>
 
                         <h3 th:text="${student?.hoTen ?: 'Tên sinh viên'}">Tên sinh viên</h3>
-                        <p class="mb-0" th:text="'Mã SV: ' + ${student?.maSv ?: 'N/A'}">Mã SV: N/A</p>
+                        <p style="color: white" class="mb-0" th:text="'Mã SV: ' + ${student?.maSv ?: 'N/A'}">Mã SV: N/A</p>
                     </div>
 
                     <!-- Student Information -->
@@ -449,6 +677,55 @@
                             <i class="fas fa-info-circle me-2"></i>
                             <span id="statusText">Đang tải thông tin...</span>
                         </div>
+                        <div class="external-upload-progress" id="externalUploadProgress">
+                            <div class="upload-header">
+                                <div class="upload-title">
+                                    <i class="fas fa-cloud-upload-alt me-2"></i>
+                                    Đang tải lên ảnh
+                                </div>
+                                <button class="upload-cancel" onclick="cancelUpload()" title="Hủy tải lên">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+
+                            <div class="file-info" id="fileInfo">
+                                <div class="file-icon">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                                <div class="file-details">
+                                    <div class="file-name" id="fileName">avatar.jpg</div>
+                                    <div class="file-size" id="fileSize">2.3 MB</div>
+                                </div>
+                            </div>
+
+                            <div class="progress-container">
+                                <div class="external-progress">
+                                    <div class="external-progress-bar" id="externalProgressBar" style="width: 0%"></div>
+                                </div>
+                                <div class="progress-info">
+                                    <div class="progress-details">
+                                        <span class="progress-percent" id="progressPercent">0%</span>
+                                        <span class="status-text" id="statusText">Chuẩn bị...</span>
+                                    </div>
+                                    <div class="upload-speed" id="uploadSpeed"></div>
+                                </div>
+                            </div>
+
+                            <div class="upload-status" id="uploadStatus">
+                                <i class="fas fa-spinner fa-spin status-icon text-primary"></i>
+                                <span class="status-text">Đang kết nối với server...</span>
+                            </div>
+                        </div>
+                        <!-- Upload Progress Container -->
+                        <div class="upload-progress-container" id="uploadProgressContainer">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-upload me-2 text-primary"></i>
+                                <span class="progress-text">Đang tải lên...</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: 0%">0%</div>
+                            </div>
+                        </div>
 
                         <p class="text-muted">
                             <i class="fas fa-lightbulb me-2"></i>
@@ -479,6 +756,7 @@
         </div>
     </div>
 </div>
+
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -566,255 +844,333 @@
             }, 5000);
         }
     }
-    // Upload Image with Progress and Preview
     function uploadImageWithProgress(file, uploadUrl, previewElementId, successCallback) {
-        if (!file) return;
+        if (!file || !validateImageFile(file)) return;
 
-        // Validate file
-        if (!validateImageFile(file)) {
-            return;
-        }
+        console.log('🚀 Upload started:', file.name);
+        showProgress(0);
+        showAlert('info', 'Bắt đầu tải lên...', true);
 
-        // Create preview
+        // Hiển thị preview ảnh trước khi upload
         const reader = new FileReader();
         reader.onload = function(e) {
             showImagePreview(previewElementId, e.target.result);
         };
         reader.readAsDataURL(file);
 
-        // Prepare form data
         const formData = new FormData();
         formData.append('file', file);
 
-        // Create XMLHttpRequest for progress tracking
         const xhr = new XMLHttpRequest();
 
-        // Upload progress event
-        xhr.upload.addEventListener('progress', function(e) {
+        // Progress tracking
+        xhr.upload.onprogress = (e) => {
             if (e.lengthComputable) {
-                const percentComplete = Math.round((e.loaded / e.total) * 100);
-                showProgress(percentComplete);
-
-                // Update progress text
-                const progressText = document.getElementById('progressText');
-                if (progressText) {
-                    progressText.textContent = `Đang tải lên... ${percentComplete}%`;
-                }
+                const percent = Math.round((e.loaded / e.total) * 100);
+                console.log('📊 Upload progress:', percent + '%');
+                showProgress(percent);
             }
-        });
+        };
 
-        // Request completion
-        xhr.addEventListener('load', function() {
+        // Success/Error handling
+        xhr.onload = () => {
+            console.log('✅ Upload completed, status:', xhr.status);
             hideProgress();
 
             if (xhr.status === 200) {
                 try {
                     const response = JSON.parse(xhr.responseText);
+                    console.log('📦 Response:', response);
+
                     if (response.error) {
                         showAlert('danger', response.error);
                         removeImagePreview(previewElementId);
                     } else {
-                        showAlert('success', 'Tải lên ảnh thành công!');
+                        showAlert('success', 'Tải lên thành công!');
                         if (successCallback) {
                             successCallback(response);
                         }
                     }
                 } catch (error) {
-                    showAlert('danger', 'Có lỗi xảy ra khi xử lý phản hồi từ server');
+                    console.error('❌ JSON parse error:', error);
+                    showAlert('danger', 'Lỗi xử lý phản hồi từ server');
                     removeImagePreview(previewElementId);
                 }
             } else {
-                showAlert('danger', 'Có lỗi xảy ra khi tải lên ảnh');
+                console.error('❌ HTTP error:', xhr.status);
+                showAlert('danger', 'Lỗi khi tải lên (HTTP ' + xhr.status + ')');
                 removeImagePreview(previewElementId);
             }
-        });
+        };
 
-        // Request error
-        xhr.addEventListener('error', function() {
+        // Network error
+        xhr.onerror = () => {
+            console.error('❌ Network error');
             hideProgress();
-            showAlert('danger', 'Có lỗi mạng xảy ra');
+            showAlert('danger', 'Lỗi mạng');
             removeImagePreview(previewElementId);
-        });
+        };
 
-        // Request timeout
-        xhr.addEventListener('timeout', function() {
+        // Timeout error
+        xhr.ontimeout = () => {
+            console.error('⏰ Timeout error');
             hideProgress();
             showAlert('danger', 'Timeout - Vui lòng thử lại');
             removeImagePreview(previewElementId);
-        });
+        };
 
-        // Start upload
-        showAlert('info', 'Bắt đầu tải lên ảnh...', false);
-        xhr.timeout = 30000; // 30 seconds timeout
+        xhr.timeout = 30000; // 30 seconds
         xhr.open('POST', uploadUrl);
         xhr.send(formData);
     }
 
-    // Show Image Preview
-    function showImagePreview(elementId, imageSrc) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            // If it's an img element
-            if (element.tagName === 'IMG') {
-                element.src = imageSrc;
-                element.style.opacity = '0.7'; // Show loading state
-            } else {
-                // If it's a container, create preview
-                element.innerHTML = `
-                <div class="image-preview" style="position: relative;">
-                    <img src="${imageSrc}" alt="Preview" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.7;">
-                    <div class="preview-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 4px; font-size: 12px;">
-                        <i class="fas fa-spinner fa-spin me-1"></i>Đang tải...
-                    </div>
-                </div>
-            `;
+
+
+    // ===== SỬA LỖI PROGRESS FUNCTIONS =====
+
+    function showProgress(percent = 0) {
+        console.log('📊 Showing progress:', percent + '%');
+
+        // Tìm container hiện có
+        let container = document.getElementById('uploadProgressContainer');
+
+        // Nếu không có thì tạo mới
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'uploadProgressContainer';
+            container.className = 'upload-progress-container';
+            container.innerHTML = `
+            <div class="d-flex align-items-center mb-2">
+                <i class="fas fa-upload me-2 text-primary"></i>
+                <span class="progress-text">Đang tải lên... 0%</span>
+            </div>
+            <div class="progress">
+                <div class="progress-bar bg-primary" style="width: 0%">0%</div>
+            </div>
+        `;
+
+            const statusDiv = document.getElementById('biometricStatus');
+            if (statusDiv) {
+                statusDiv.parentNode.insertBefore(container, statusDiv.nextSibling);
             }
         }
-    }
 
-    // Remove Image Preview
-    function removeImagePreview(elementId) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            if (element.tagName === 'IMG') {
-                element.style.opacity = '1';
-            } else {
-                // Restore original content if needed
-                const previewOverlay = element.querySelector('.preview-overlay');
-                if (previewOverlay) {
-                    previewOverlay.remove();
-                }
-            }
+        // Hiển thị container
+        container.style.display = 'block';
+
+        // Update progress
+        const progressText = container.querySelector('.progress-text');
+        const progressBar = container.querySelector('.progress-bar');
+
+        if (progressText) progressText.textContent = `Đang tải lên... ${percent}%`;
+        if (progressBar) {
+            progressBar.style.width = percent + '%';
+            progressBar.textContent = percent + '%';
         }
     }
 
-    // Enhanced Show Progress with Text
-    function showProgress(percent) {
-        const progress = document.getElementById('uploadProgress');
-        const bar = progress.querySelector('.progress-bar');
+    // Handle upload success
+    function handleUploadSuccess(response, previewElementId, successCallback) {
+        hideProgress();
+        removeLoadingOverlay();
+        showAlert('success', 'Tải lên ảnh thành công!');
 
-        progress.style.display = 'block';
-        bar.style.width = percent + '%';
-        bar.textContent = percent + '%';
-
-        // Add progress text if not exists
-        let progressText = document.getElementById('progressText');
-        if (!progressText) {
-            progressText = document.createElement('div');
-            progressText.id = 'progressText';
-            progressText.className = 'text-center mt-2 text-muted';
-            progress.parentNode.insertBefore(progressText, progress.nextSibling);
+        if (successCallback) {
+            successCallback(response);
         }
     }
 
-    // Enhanced Hide Progress
+    // Handle upload error
+    function handleUploadError(errorMessage, previewElementId) {
+        hideProgress();
+        removeLoadingOverlay();
+        removeImagePreview(previewElementId);
+        showAlert('danger', errorMessage);
+    }
+
+    function removeLoadingOverlay() {
+        const overlays = document.querySelectorAll('.loading-overlay');
+        overlays.forEach(overlay => overlay.remove());
+    }
+
+
     function hideProgress() {
-        const progress = document.getElementById('uploadProgress');
-        const progressText = document.getElementById('progressText');
-
-        progress.style.display = 'none';
-        if (progressText) {
-            progressText.remove();
+        console.log('❌ Hiding progress');
+        const container = document.getElementById('uploadProgressContainer');
+        if (container) {
+            container.style.display = 'none';
         }
     }
 
-    // Update existing upload functions to use new progress function
-    function uploadProfileImage(input) {
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
+    function showImagePreview(elementId, imageSrc) {
+        console.log('🖼️ Showing preview for:', elementId);
+        const element = document.getElementById(elementId);
+        if (element && element.tagName === 'IMG') {
+            element.src = imageSrc;
+            element.style.opacity = '0.7'; // Show loading state
 
-            uploadImageWithProgress(
-                file,
-                '/student/api/upload-profile-image',
-                'profileImage',
-                function(response) {
-                    // Success callback
-                    const profileImage = document.getElementById('profileImage');
-                    const profilePlaceholder = document.getElementById('profilePlaceholder');
-
-                    if (profileImage) {
-                        profileImage.src = response.url;
-                        profileImage.style.opacity = '1';
-                    } else {
-                        // Create new image element
-                        const newImg = document.createElement('img');
-                        newImg.id = 'profileImage';
-                        newImg.src = response.url;
-                        newImg.alt = 'Avatar';
-                        newImg.className = 'avatar-image';
-
-                        // Replace placeholder
-                        profilePlaceholder.parentNode.replaceChild(newImg, profilePlaceholder);
-                    }
-                }
-            );
+            // Add loading overlay
+            addLoadingOverlay(element);
         }
+    }
+
+    function addLoadingOverlay(imageElement) {
+        // Remove existing overlay
+        removeLoadingOverlay();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'loading-overlay';
+        overlay.innerHTML = `
+        <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+        <div>Đang tải lên...</div>
+    `;
+
+        // Position overlay
+        const container = imageElement.parentNode;
+        container.style.position = 'relative';
+        container.appendChild(overlay);
+    }
+
+    function removeImagePreview(elementId) {
+        console.log('🗑️ Removing preview for:', elementId);
+        const element = document.getElementById(elementId);
+        if (element && element.tagName === 'IMG') {
+            element.style.opacity = '1';
+        }
+        removeLoadingOverlay();
+    }
+
+    function uploadProfileImage(input) {
+        console.log('📸 Profile image upload triggered');
+
+        if (!input.files || !input.files[0]) {
+            console.log('❌ No file selected');
+            return;
+        }
+
+        const file = input.files[0];
+        console.log('📁 Selected file:', file.name, file.size, file.type);
+
+        uploadImageWithProgress(
+            file,
+            '/student/api/upload-profile-image',
+            'profileImage',
+            function(response) {
+                console.log('✅ Profile upload success:', response);
+
+                // Update profile image
+                const profileImage = document.getElementById('profileImage');
+                const profilePlaceholder = document.getElementById('profilePlaceholder');
+                const avatarContainer = document.querySelector('.avatar-container');
+
+                if (profilePlaceholder && avatarContainer) {
+                    // Create new image element
+                    const newImg = document.createElement('img');
+                    newImg.id = 'profileImage';
+                    newImg.src = response.url || response.imageUrl;
+                    newImg.alt = 'Avatar';
+                    newImg.className = 'avatar-image';
+                    newImg.style.opacity = '1';
+
+                    // Replace placeholder with image
+                    avatarContainer.replaceChild(newImg, profilePlaceholder);
+
+                    // Add delete button
+                    addProfileImageDeleteButton();
+
+                } else if (profileImage) {
+                    // Update existing image
+                    profileImage.src = response.url || response.imageUrl;
+                    profileImage.style.opacity = '1';
+                }
+            }
+        );
     }
 
     function uploadFaceImage(input) {
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
+        console.log('👤 Face image upload triggered');
 
-            if (currentFaceImageCount >= maxFaceImages) {
-                showAlert('warning', 'Đã đạt giới hạn tối đa 5 ảnh khuôn mặt');
-                return;
-            }
-
-            uploadImageWithProgress(
-                file,
-                '/student/api/upload-face-image',
-                'faceImagesGrid',
-                function(response) {
-                    // Success callback
-                    currentFaceImageCount = response.currentCount;
-                    loadFaceImages(); // Reload face images
-                }
-            );
+        if (!input.files || !input.files[0]) {
+            console.log('❌ No file selected');
+            return;
         }
+
+        const file = input.files[0];
+        console.log('📁 Selected file:', file.name, file.size, file.type);
+
+        if (currentFaceImageCount >= maxFaceImages) {
+            showAlert('warning', 'Đã đạt giới hạn tối đa 5 ảnh khuôn mặt');
+            return;
+        }
+
+        uploadImageWithProgress(
+            file,
+            '/student/api/upload-face-image',
+            'faceImagesGrid',
+            function(response) {
+                console.log('✅ Face upload success:', response);
+
+                // Update count and reload images
+                currentFaceImageCount = response.currentCount || currentFaceImageCount + 1;
+                loadFaceImages();
+            }
+        );
 
         // Reset input
         input.value = '';
     }
     // Enhanced Delete Functions for Profile Page
 
-    // Delete Profile Image
     function deleteProfileImage() {
-        if (confirm('Bạn có chắc chắn muốn xóa ảnh đại diện?')) {
-            showAlert('info', 'Đang xóa ảnh đại diện...', false);
+        if (!confirm('Bạn có chắc chắn muốn xóa ảnh đại diện?')) return;
 
-            fetch('/student/api/delete-profile-image', {
-                method: 'DELETE'
+        console.log('🗑️ Deleting profile image...');
+        showAlert('info', 'Đang xóa ảnh đại diện...', false);
+
+        fetch('/student/api/delete-profile-image', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => {
+                console.log('Delete response status:', response.status);
+                return response.json();
             })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        showAlert('danger', data.error);
-                    } else {
-                        // Remove image and show placeholder
-                        const profileImage = document.getElementById('profileImage');
-                        const profilePlaceholder = document.getElementById('profilePlaceholder');
-                        const avatarContainer = document.querySelector('.avatar-container');
+            .then(data => {
+                console.log('Delete response data:', data);
 
-                        if (profileImage) {
-                            // Create placeholder element
-                            const newPlaceholder = document.createElement('div');
-                            newPlaceholder.id = 'profilePlaceholder';
-                            newPlaceholder.className = 'avatar-placeholder';
-                            newPlaceholder.innerHTML = '<i class="fas fa-user"></i>';
+                if (data.error) {
+                    showAlert('danger', data.error);
+                } else {
+                    // Remove image and show placeholder
+                    const profileImage = document.getElementById('profileImage');
+                    const avatarContainer = document.querySelector('.avatar-container');
 
-                            // Replace image with placeholder
-                            profileImage.parentNode.replaceChild(newPlaceholder, profileImage);
-                        }
+                    if (profileImage && avatarContainer) {
+                        // Create placeholder element
+                        const newPlaceholder = document.createElement('div');
+                        newPlaceholder.id = 'profilePlaceholder';
+                        newPlaceholder.className = 'avatar-placeholder';
+                        newPlaceholder.innerHTML = '<i class="fas fa-user"></i>';
 
-                        showAlert('success', 'Xóa ảnh đại diện thành công!');
+                        // Replace image with placeholder
+                        avatarContainer.replaceChild(newPlaceholder, profileImage);
+
+                        // Remove delete button
+                        const deleteBtn = document.querySelector('.profile-delete-btn');
+                        if (deleteBtn) deleteBtn.remove();
                     }
-                })
-                .catch(error => {
-                    console.error('Error deleting profile image:', error);
-                    showAlert('danger', 'Có lỗi xảy ra khi xóa ảnh');
-                });
-        }
+
+                    showAlert('success', 'Xóa ảnh đại diện thành công!');
+                }
+            })
+            .catch(error => {
+                console.error('❌ Delete error:', error);
+                showAlert('danger', 'Có lỗi xảy ra khi xóa ảnh');
+            });
     }
+
 
     // Delete Face Image by filename
     function deleteFaceImageByFilename(filename, cardElement) {
@@ -1004,6 +1360,293 @@
             const card = createFaceImageCard(null, images.length + i, false);
             grid.appendChild(card);
         }
+    }
+
+
+    let uploadStartTime = null;
+    let uploadedBytes = 0;
+
+    function showExternalProgress(fileName, fileSize, percent = 0) {
+        console.log('📊 Showing external progress:', percent + '%');
+
+        const container = document.getElementById('externalUploadProgress');
+        if (!container) {
+            createExternalProgressContainer();
+        }
+
+        // Update file info
+        updateFileInfo(fileName, fileSize);
+
+        // Show container with animation
+        container.classList.add('show');
+
+        // Initialize upload tracking
+        if (percent === 0) {
+            uploadStartTime = Date.now();
+            uploadedBytes = 0;
+        }
+
+        // Update progress
+        updateExternalProgress(percent, fileSize);
+
+        // Update status
+        updateUploadStatus(percent);
+    }
+
+    function createExternalProgressContainer() {
+        const container = document.createElement('div');
+        container.id = 'externalUploadProgress';
+        container.className = 'external-upload-progress';
+        container.innerHTML = `
+        <div class="upload-header">
+            <div class="upload-title">
+                <i class="fas fa-cloud-upload-alt me-2"></i>
+                Đang tải lên ảnh
+            </div>
+            <button class="upload-cancel" onclick="cancelUpload()" title="Hủy tải lên">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="file-info" id="fileInfo">
+            <div class="file-icon">
+                <i class="fas fa-image"></i>
+            </div>
+            <div class="file-details">
+                <div class="file-name" id="fileName">avatar.jpg</div>
+                <div class="file-size" id="fileSize">2.3 MB</div>
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <div class="external-progress">
+                <div class="external-progress-bar" id="externalProgressBar" style="width: 0%"></div>
+            </div>
+            <div class="progress-info">
+                <div class="progress-details">
+                    <span class="progress-percent" id="progressPercent">0%</span>
+                    <span class="status-text" id="statusText">Chuẩn bị...</span>
+                </div>
+                <div class="upload-speed" id="uploadSpeed"></div>
+            </div>
+        </div>
+
+        <div class="upload-status" id="uploadStatus">
+            <i class="fas fa-spinner fa-spin status-icon text-primary"></i>
+            <span class="status-text">Đang kết nối với server...</span>
+        </div>
+    `;
+
+        // Insert after biometric status
+        const statusDiv = document.getElementById('biometricStatus');
+        if (statusDiv) {
+            statusDiv.parentNode.insertBefore(container, statusDiv.nextSibling);
+        }
+    }
+
+    function updateFileInfo(fileName, fileSize) {
+        const fileNameEl = document.getElementById('fileName');
+        const fileSizeEl = document.getElementById('fileSize');
+
+        if (fileNameEl) fileNameEl.textContent = fileName;
+        if (fileSizeEl) fileSizeEl.textContent = formatFileSize(fileSize);
+    }
+
+    function updateExternalProgress(percent, totalSize) {
+        const progressBar = document.getElementById('externalProgressBar');
+        const progressPercent = document.getElementById('progressPercent');
+        const statusText = document.getElementById('statusText');
+        const uploadSpeed = document.getElementById('uploadSpeed');
+
+        if (progressBar) {
+            progressBar.style.width = percent + '%';
+        }
+
+        if (progressPercent) {
+            progressPercent.textContent = percent + '%';
+        }
+
+        if (statusText) {
+            if (percent === 0) {
+                statusText.textContent = 'Chuẩn bị...';
+            } else if (percent < 100) {
+                statusText.textContent = 'Đang tải lên...';
+            } else {
+                statusText.textContent = 'Hoàn thành!';
+            }
+        }
+
+        // Calculate upload speed
+        if (uploadStartTime && percent > 0) {
+            const elapsed = (Date.now() - uploadStartTime) / 1000; // seconds
+            const uploadedSize = (totalSize * percent) / 100;
+            const speed = uploadedSize / elapsed; // bytes per second
+
+            if (uploadSpeed && elapsed > 1) {
+                uploadSpeed.textContent = formatSpeed(speed);
+            }
+        }
+    }
+
+    function updateUploadStatus(percent) {
+        const statusEl = document.getElementById('uploadStatus');
+        if (!statusEl) return;
+
+        if (percent === 0) {
+            statusEl.innerHTML = `
+            <i class="fas fa-spinner fa-spin status-icon text-primary"></i>
+            <span class="status-text">Đang kết nối với server...</span>
+        `;
+        } else if (percent < 100) {
+            statusEl.innerHTML = `
+            <i class="fas fa-upload status-icon text-primary"></i>
+            <span class="status-text">Đang tải lên dữ liệu...</span>
+        `;
+        } else {
+            statusEl.innerHTML = `
+            <i class="fas fa-check-circle status-icon text-success"></i>
+            <span class="status-text">Upload thành công!</span>
+        `;
+        }
+    }
+
+    function hideExternalProgress() {
+        console.log('❌ Hiding external progress');
+        const container = document.getElementById('externalUploadProgress');
+        if (container) {
+            container.classList.remove('show');
+            setTimeout(() => {
+                container.style.display = 'none';
+            }, 300);
+        }
+    }
+
+    function cancelUpload() {
+        if (confirm('Bạn có chắc chắn muốn hủy tải lên?')) {
+            // Cancel XHR request if exists
+            if (window.currentUploadXhr) {
+                window.currentUploadXhr.abort();
+            }
+
+            hideExternalProgress();
+            showAlert('info', 'Đã hủy tải lên');
+        }
+    }
+
+    // Utility functions
+    function formatFileSize(bytes) {
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        if (bytes === 0) return '0 Bytes';
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    function formatSpeed(bytesPerSecond) {
+        const speed = formatFileSize(bytesPerSecond);
+        return speed + '/s';
+    }
+
+    // ===== UPDATED UPLOAD FUNCTION =====
+
+    function uploadImageWithProgress(file, uploadUrl, previewElementId, successCallback) {
+        if (!file || !validateImageFile(file)) return;
+
+        console.log('🚀 Upload started:', file.name);
+
+        // Show external progress bar
+        showExternalProgress(file.name, file.size, 0);
+
+        showAlert('info', 'Bắt đầu tải lên...', true);
+
+        // Hiển thị preview ảnh
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            showImagePreview(previewElementId, e.target.result);
+        };
+        reader.readAsDataURL(file);
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const xhr = new XMLHttpRequest();
+
+        // Store xhr for cancellation
+        window.currentUploadXhr = xhr;
+
+        // Progress tracking
+        xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                console.log('📊 Upload progress:', percent + '%');
+
+                // Update external progress bar
+                updateExternalProgress(percent, file.size);
+            }
+        };
+
+        // Success/Error handling
+        xhr.onload = () => {
+            console.log('✅ Upload completed, status:', xhr.status);
+
+            if (xhr.status === 200) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    console.log('📦 Response:', response);
+
+                    if (response.error) {
+                        hideExternalProgress();
+                        showAlert('danger', response.error);
+                        removeImagePreview(previewElementId);
+                    } else {
+                        // Show success state briefly before hiding
+                        updateUploadStatus(100);
+                        setTimeout(() => {
+                            hideExternalProgress();
+                            showAlert('success', 'Tải lên thành công!');
+                        }, 1000);
+
+                        if (successCallback) {
+                            successCallback(response);
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ JSON parse error:', error);
+                    hideExternalProgress();
+                    showAlert('danger', 'Lỗi xử lý phản hồi từ server');
+                    removeImagePreview(previewElementId);
+                }
+            } else {
+                console.error('❌ HTTP error:', xhr.status);
+                hideExternalProgress();
+                showAlert('danger', 'Lỗi khi tải lên (HTTP ' + xhr.status + ')');
+                removeImagePreview(previewElementId);
+            }
+
+            // Clear xhr reference
+            window.currentUploadXhr = null;
+        };
+
+        // Network error
+        xhr.onerror = () => {
+            console.error('❌ Network error');
+            hideExternalProgress();
+            showAlert('danger', 'Lỗi mạng');
+            removeImagePreview(previewElementId);
+            window.currentUploadXhr = null;
+        };
+
+        // Timeout error
+        xhr.ontimeout = () => {
+            console.error('⏰ Timeout error');
+            hideExternalProgress();
+            showAlert('danger', 'Timeout - Vui lòng thử lại');
+            removeImagePreview(previewElementId);
+            window.currentUploadXhr = null;
+        };
+
+        xhr.timeout = 30000; // 30 seconds
+        xhr.open('POST', uploadUrl);
+        xhr.send(formData);
     }
 
 </script>

@@ -90,4 +90,10 @@ public class LopController {
         long count = lopService.countInactive();
         return ResponseEntity.ok(count);
     }
+    // Thêm vào class LopController
+    @GetMapping("/{maLop}/sinhvien/count")
+    public ResponseEntity<Long> countSinhVienByLop(@PathVariable String maLop) {
+        long count = lopService.countSinhVienByLop(maLop);
+        return ResponseEntity.ok(count);
+    }
 }

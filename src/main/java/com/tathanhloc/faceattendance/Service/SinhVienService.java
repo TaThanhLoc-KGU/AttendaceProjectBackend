@@ -158,5 +158,12 @@ public class SinhVienService extends BaseService<SinhVien, String, SinhVienDTO> 
     public long count() {
         return sinhVienRepository.count();
     }
+    // Thêm vào class SinhVienService
+    public long countActive() {
+        return sinhVienRepository.countByIsActiveTrue();
+    }
 
+    public long countAll() {
+        return sinhVienRepository.count();
+    }
 }

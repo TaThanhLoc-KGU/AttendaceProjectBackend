@@ -87,4 +87,28 @@ public interface LopHocPhanRepository extends JpaRepository<LopHocPhan, String> 
             "OR LOWER(mh.maMh) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "OR LOWER(lhp.maLhp) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     List<LopHocPhan> searchByGiangVienAndKeyword(@Param("maGv") String maGv, @Param("keyword") String keyword);
+// THÊM VÀO CUỐI FILE LopHocPhanRepository.java
+
+    /**
+     * Tìm các lớp học phần khác cùng môn học (để chuyển nhóm)
+     */
+    @Query("SELECT lhp FROM LopHocPhan lhp " +
+            "WHERE lhp.monHoc.maMh = :maMh " +
+            "AND lhp.maLhp != :excludeLhp " +
+            "AND lhp.isActive = true " +
+            "ORDER BY lhp.nhom ASC")
+    List<LopHocPhan> findOtherGroupsInSameSubject(@Param("maMh") String maMh, @Param("excludeLhp") String excludeLhp);
+
+    /**
+     * Kiểm tra sinh viên có thể thêm vào lớp không (chưa có trong môn học này)
+     */
+    @Query("SELECT COUNT(d) = 0 FROM DangKyHoc d " +
+            "JOIN d.lopHocPhan lhp " +
+            "WHERE d.sinhVien.maSv = :maSv " +
+            "AND lhp.monHoc.maMh = :maMh " +
+            "AND d.isActive = true")
+    boolean canAddStudentToSubject(@Param("maSv") String maSv, @Param("maMh") String maMh);
+
+
+
 }

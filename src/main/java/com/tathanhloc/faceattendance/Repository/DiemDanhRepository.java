@@ -1,11 +1,14 @@
 package com.tathanhloc.faceattendance.Repository;
 
+import com.tathanhloc.faceattendance.DTO.AttendanceHistoryDTO;
+import com.tathanhloc.faceattendance.DTO.SubjectAttendanceDTO;
 import com.tathanhloc.faceattendance.Enum.TrangThaiDiemDanhEnum;
 import com.tathanhloc.faceattendance.Model.DiemDanh;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -264,4 +267,62 @@ public interface DiemDanhRepository extends JpaRepository<DiemDanh, Long> {
         """, nativeQuery = true)
     List<Object[]> findDailyAttendanceStats(@Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate);
 
+
+// XÓA CÁC QUERIES LỖI VÀ THAY BẰNG CÁC QUERIES SAU:
+
+    /**
+     * Lấy thống kê điểm danh theo sinh viên - SỬA LẠI
+     */
+    @Query("SELECT COUNT(d) FROM DiemDanh d " +
+            "WHERE d.sinhVien.maSv = :maSv " +
+            "AND d.trangThai = 'CO_MAT'")
+    Long countPresentByStudent(@Param("maSv") String maSv);
+
+    @Query("SELECT COUNT(d) FROM DiemDanh d " +
+            "WHERE d.sinhVien.maSv = :maSv " +
+            "AND d.trangThai = 'VANG_MAT'")
+    Long countAbsentByStudent(@Param("maSv") String maSv);
+
+    /**
+     * Lấy thống kê theo môn học - RAW DATA
+     */
+    @Query("SELECT lhp.monHoc.maMh, lhp.monHoc.tenMh, lhp.maLhp, lhp.nhom, " +
+            "COUNT(DISTINCT lh.maLich), " +
+            "SUM(CASE WHEN d.trangThai = 'CO_MAT' THEN 1 ELSE 0 END), " +
+            "SUM(CASE WHEN d.trangThai = 'VANG_MAT' THEN 1 ELSE 0 END), " +
+            "CAST(SUM(CASE WHEN d.trangThai = 'CO_MAT' THEN 1 ELSE 0 END) * 100.0 / " +
+            "NULLIF(COUNT(DISTINCT lh.maLich), 0) AS double) " +
+            "FROM DiemDanh d " +
+            "RIGHT JOIN d.lichHoc lh " +
+            "JOIN lh.lopHocPhan lhp " +
+            "WHERE d.sinhVien.maSv = :maSv " +
+            "AND lhp.isActive = true " +
+            "GROUP BY lhp.monHoc.maMh, lhp.monHoc.tenMh, lhp.maLhp, lhp.nhom")
+    List<Object[]> getAttendanceBySubjectAndStudentRaw(@Param("maSv") String maSv);
+
+    /**
+     * Lấy lịch sử điểm danh - RAW DATA
+     */
+    @Query("SELECT d.id, d.ngayDiemDanh, lhp.monHoc.maMh, lhp.monHoc.tenMh, " +
+            "lhp.maLhp, lhp.nhom, lh.tietBatDau, lh.soTiet, " +
+            "d.trangThai, d.thoiGianVao " +
+            "FROM DiemDanh d " +
+            "JOIN d.lichHoc lh " +
+            "JOIN lh.lopHocPhan lhp " +
+            "WHERE d.sinhVien.maSv = :maSv " +
+            "ORDER BY d.ngayDiemDanh DESC")
+    List<Object[]> getAttendanceHistoryByStudentRaw(@Param("maSv") String maSv, Pageable pageable);
+
+    @Query("SELECT d.id, d.ngayDiemDanh, lhp.monHoc.maMh, lhp.monHoc.tenMh, " +
+            "lhp.maLhp, lhp.nhom, lh.tietBatDau, lh.soTiet, " +
+            "d.trangThai, d.thoiGianVao " +
+            "FROM DiemDanh d " +
+            "JOIN d.lichHoc lh " +
+            "JOIN lh.lopHocPhan lhp " +
+            "WHERE d.sinhVien.maSv = :maSv " +
+            "AND lhp.monHoc.maMh = :maMh " +
+            "ORDER BY d.ngayDiemDanh DESC")
+    List<Object[]> getAttendanceHistoryByStudentAndSubjectRaw(@Param("maSv") String maSv,
+                                                              @Param("maMh") String maMh,
+                                                              Pageable pageable);
 }

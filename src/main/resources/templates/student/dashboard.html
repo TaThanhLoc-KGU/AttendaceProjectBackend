@@ -18,6 +18,63 @@
     <link th:href="@{/css/student.css}" rel="stylesheet">
 
     <style>
+        /* Modal Attendance Styles */
+        .subject-item {
+            transition: all 0.3s ease;
+        }
+
+        .subject-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+
+        .progress {
+            border-radius: 10px;
+        }
+
+        .progress-bar {
+            border-radius: 10px;
+        }
+
+        .modal-xl {
+            max-width: 1200px;
+        }
+
+        .table th {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .badge {
+            font-weight: 500;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        /* Chart container */
+        #attendanceChart {
+            max-height: 300px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .modal-xl {
+                max-width: 95%;
+                margin: 1rem auto;
+            }
+
+            .subject-item .row {
+                font-size: 0.875rem;
+            }
+        }
         /* Biometric Status Styles */
         .biometric-overview {
             text-align: center;
@@ -299,7 +356,7 @@
                             <div class="card-body text-center">
                                 <div class="stats-number h2" th:text="${totalSubjects ?: 0}">0</div>
                                 <p class="text-muted">Môn đang học</p>
-                                <a href="/student/schedule" class="btn btn-outline-primary">
+                                <a href="/student/lichhoc" class="btn btn-outline-primary">
                                     <i class="fas fa-calendar me-2"></i>Xem lịch học
                                 </a>
                             </div>
@@ -317,9 +374,10 @@
                             <div class="card-body text-center">
                                 <div class="stats-number h2" th:text="${attendanceStats?.present ?: 0}">0</div>
                                 <p class="text-muted">Lần có mặt</p>
-                                <a href="/student/attendance" class="btn btn-outline-primary">
-                                    <i class="fas fa-history me-2"></i>Xem lịch sử
-                                </a>
+                                <!-- THAY ĐỔI: Button mở modal thay vì link -->
+                                <button class="btn btn-outline-primary" onclick="openAttendanceModal()" data-bs-toggle="modal" data-bs-target="#attendanceModal">
+                                    <i class="fas fa-chart-line me-2"></i>Xem thống kê
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -329,7 +387,119 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="attendanceModal" tabindex="-1" aria-labelledby="attendanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="attendanceModalLabel">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Thống kê Điểm danh
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <!-- Tổng quan -->
+                    <div class="col-md-12">
+                        <div class="alert alert-info">
+                            <div class="row text-center">
+                                <div class="col-md-3">
+                                    <h4 class="mb-0" id="totalClasses">0</h4>
+                                    <small>Tổng buổi học</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h4 class="mb-0 text-success" id="presentCount">0</h4>
+                                    <small>Có mặt</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h4 class="mb-0 text-danger" id="absentCount">0</h4>
+                                    <small>Vắng mặt</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h4 class="mb-0 text-primary" id="attendanceRate">0%</h4>
+                                    <small>Tỷ lệ đi học</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
+                <div class="row">
+                    <!-- Biểu đồ -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Biểu đồ Điểm danh</h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="attendanceChart" width="400" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chi tiết theo môn học -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Chi tiết theo môn học</h6>
+                            </div>
+                            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                <div id="subjectsList">
+                                    <div class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Đang tải...</span>
+                                        </div>
+                                        <p class="mt-2 text-muted">Đang tải thống kê...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bảng lịch sử chi tiết -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="card-title mb-0">Lịch sử Điểm danh gần đây</h6>
+                                <div class="filter-options">
+                                    <select class="form-select form-select-sm" id="subjectFilter">
+                                        <option value="">Tất cả môn học</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive" style="max-height: 300px;">
+                                    <table class="table table-striped table-hover mb-0">
+                                        <thead class="table-dark sticky-top">
+                                        <tr>
+                                            <th>Ngày</th>
+                                            <th>Môn học</th>
+                                            <th>Tiết học</th>
+                                            <th>Trạng thái</th>
+                                            <th>Ghi chú</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="attendanceHistory">
+                                        <!-- Data will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-primary" onclick="refreshAttendanceData()">
+                    <i class="fas fa-sync-alt me-2"></i>Làm mới
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Custom JS - Tái sử dụng sidebar.js hiện có -->
@@ -356,7 +526,362 @@
         }
 
         console.log('✅ Student Dashboard loaded successfully');
+        const attendanceModal = document.getElementById('attendanceModal');
+        if (attendanceModal) {
+            attendanceModal.addEventListener('hidden.bs.modal', function () {
+                // Cleanup when modal is closed
+                if (attendanceChart) {
+                    attendanceChart.destroy();
+                    attendanceChart = null;
+                }
+            });
+        }
     });
+    // Global variables
+    let attendanceChart = null;
+    let attendanceData = [];
+
+    /**
+     * Mở modal và load dữ liệu điểm danh
+     */
+    async function openAttendanceModal() {
+        try {
+            // Reset modal content
+            resetModalContent();
+
+            // Load attendance data
+            await loadAttendanceStatistics();
+
+            console.log('✅ Attendance modal opened successfully');
+        } catch (error) {
+            console.error('❌ Error opening attendance modal:', error);
+            showModalError('Lỗi khi tải dữ liệu điểm danh');
+        }
+    }
+
+    /**
+     * Reset nội dung modal
+     */
+    function resetModalContent() {
+        // Reset summary stats
+        document.getElementById('totalClasses').textContent = '0';
+        document.getElementById('presentCount').textContent = '0';
+        document.getElementById('absentCount').textContent = '0';
+        document.getElementById('attendanceRate').textContent = '0%';
+
+        // Reset subjects list
+        document.getElementById('subjectsList').innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+            </div>
+            <p class="mt-2 text-muted">Đang tải thống kê...</p>
+        </div>
+    `;
+
+        // Reset attendance history
+        document.getElementById('attendanceHistory').innerHTML = '';
+
+        // Destroy existing chart
+        if (attendanceChart) {
+            attendanceChart.destroy();
+            attendanceChart = null;
+        }
+    }
+
+    /**
+     * Load dữ liệu thống kê điểm danh
+     */
+    async function loadAttendanceStatistics() {
+        try {
+            // Giả sử có API endpoint để lấy thống kê điểm danh của sinh viên
+            const response = await fetch('/api/student/attendance-statistics');
+
+            if (!response.ok) {
+                throw new Error('Failed to load attendance statistics');
+            }
+
+            const data = await response.json();
+            attendanceData = data;
+
+            // Update summary statistics
+            updateSummaryStats(data.summary);
+
+            // Update subjects breakdown
+            updateSubjectsList(data.bySubjects);
+
+            // Create chart
+            createAttendanceChart(data.chartData);
+
+            // Load recent attendance history
+            await loadAttendanceHistory();
+
+            // Populate subject filter
+            populateSubjectFilter(data.bySubjects);
+
+        } catch (error) {
+            console.error('Error loading attendance statistics:', error);
+            showModalError('Không thể tải dữ liệu điểm danh');
+        }
+    }
+
+    /**
+     * Cập nhật thống kê tổng quan
+     */
+    function updateSummaryStats(summary) {
+        document.getElementById('totalClasses').textContent = summary.totalClasses || 0;
+        document.getElementById('presentCount').textContent = summary.present || 0;
+        document.getElementById('absentCount').textContent = summary.absent || 0;
+
+        const rate = summary.totalClasses > 0 ?
+            Math.round((summary.present / summary.totalClasses) * 100) : 0;
+        document.getElementById('attendanceRate').textContent = rate + '%';
+    }
+
+    /**
+     * Cập nhật danh sách môn học
+     */
+    function updateSubjectsList(subjects) {
+        const container = document.getElementById('subjectsList');
+
+        if (!subjects || subjects.length === 0) {
+            container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-book-open fa-2x text-muted mb-2"></i>
+                <p class="text-muted">Chưa có dữ liệu điểm danh</p>
+            </div>
+        `;
+            return;
+        }
+
+        container.innerHTML = subjects.map(subject => {
+            const rate = subject.totalClasses > 0 ?
+                Math.round((subject.present / subject.totalClasses) * 100) : 0;
+
+            const statusClass = rate >= 80 ? 'success' : rate >= 60 ? 'warning' : 'danger';
+
+            return `
+            <div class="subject-item border rounded p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">${subject.tenMh}</h6>
+                        <small class="text-muted">${subject.maMh} - Nhóm ${subject.nhom}</small>
+                    </div>
+                    <span class="badge bg-${statusClass}">${rate}%</span>
+                </div>
+                <div class="mt-2">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <small class="text-muted">Tổng</small>
+                            <div class="fw-bold">${subject.totalClasses}</div>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-success">Có mặt</small>
+                            <div class="fw-bold text-success">${subject.present}</div>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-danger">Vắng</small>
+                            <div class="fw-bold text-danger">${subject.absent}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress mt-2" style="height: 6px;">
+                    <div class="progress-bar bg-${statusClass}" style="width: ${rate}%"></div>
+                </div>
+            </div>
+        `;
+        }).join('');
+    }
+
+    /**
+     * Tạo biểu đồ điểm danh
+     */
+    function createAttendanceChart(chartData) {
+        const ctx = document.getElementById('attendanceChart').getContext('2d');
+
+        // Destroy existing chart
+        if (attendanceChart) {
+            attendanceChart.destroy();
+        }
+
+        attendanceChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Có mặt', 'Vắng mặt'],
+                datasets: [{
+                    data: [chartData.present || 0, chartData.absent || 0],
+                    backgroundColor: ['#28a745', '#dc3545'],
+                    borderColor: ['#ffffff', '#ffffff'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Load lịch sử điểm danh gần đây
+     */
+    async function loadAttendanceHistory(subjectFilter = '') {
+        try {
+            let url = '/api/student/attendance-history?limit=50';
+            if (subjectFilter) {
+                url += `&subject=${encodeURIComponent(subjectFilter)}`;
+            }
+
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Failed to load attendance history');
+
+            const history = await response.json();
+
+            const tbody = document.getElementById('attendanceHistory');
+
+            if (!history || history.length === 0) {
+                tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">
+                        <i class="fas fa-calendar-times fa-2x mb-2 d-block"></i>
+                        Chưa có lịch sử điểm danh
+                    </td>
+                </tr>
+            `;
+                return;
+            }
+
+            tbody.innerHTML = history.map(record => {
+                const statusClass = record.trangThai === 'Có mặt' ? 'success' : 'danger';
+                const statusIcon = record.trangThai === 'Có mặt' ? 'check' : 'times';
+
+                return `
+                <tr>
+                    <td>${formatDate(record.ngayHoc)}</td>
+                    <td>
+                        <div>${record.tenMh}</div>
+                        <small class="text-muted">${record.maMh}</small>
+                    </td>
+                    <td>Tiết ${record.tietBatDau}-${record.tietBatDau + record.soTiet - 1}</td>
+                    <td>
+                        <span class="badge bg-${statusClass}">
+                            <i class="fas fa-${statusIcon} me-1"></i>
+                            ${record.trangThai}
+                        </span>
+                    </td>
+                    <td>
+                        <small class="text-muted">${record.ghiChu || 'Điểm danh tự động'}</small>
+                    </td>
+                </tr>
+            `;
+            }).join('');
+
+        } catch (error) {
+            console.error('Error loading attendance history:', error);
+            document.getElementById('attendanceHistory').innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center py-4 text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Lỗi khi tải lịch sử điểm danh
+                </td>
+            </tr>
+        `;
+        }
+    }
+
+    /**
+     * Populate subject filter dropdown
+     */
+    function populateSubjectFilter(subjects) {
+        const select = document.getElementById('subjectFilter');
+
+        // Clear existing options except first one
+        select.innerHTML = '<option value="">Tất cả môn học</option>';
+
+        if (subjects && subjects.length > 0) {
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.maMh;
+                option.textContent = `${subject.tenMh} (${subject.maMh})`;
+                select.appendChild(option);
+            });
+        }
+
+        // Add event listener for filter change
+        select.addEventListener('change', function() {
+            loadAttendanceHistory(this.value);
+        });
+    }
+
+    /**
+     * Refresh attendance data
+     */
+    async function refreshAttendanceData() {
+        await loadAttendanceStatistics();
+        showToast('Đã cập nhật dữ liệu điểm danh', 'success');
+    }
+
+    /**
+     * Show error in modal
+     */
+    function showModalError(message) {
+        document.getElementById('subjectsList').innerHTML = `
+        <div class="text-center py-4">
+            <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
+            <p class="text-danger">${message}</p>
+            <button class="btn btn-outline-primary btn-sm" onclick="loadAttendanceStatistics()">
+                <i class="fas fa-sync-alt me-1"></i>Thử lại
+            </button>
+        </div>
+    `;
+    }
+
+    /**
+     * Format date for display
+     */
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    }
+
+    /**
+     * Show toast notification
+     */
+    function showToast(message, type = 'info') {
+        // Simple toast implementation - có thể tích hợp với Bootstrap Toast
+        const alertClass = type === 'success' ? 'alert-success' :
+            type === 'error' ? 'alert-danger' : 'alert-info';
+
+        const toast = document.createElement('div');
+        toast.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+        document.body.appendChild(toast);
+
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 3000);
+    }
 </script>
 
 </body>

@@ -65,32 +65,28 @@ spring.web.resources.static-locations=classpath:/static/
 spring.web.resources.cache.period=0
 
 # Upload Configuration
-spring.servlet.multipart.max-file-size=10MB
-spring.servlet.multipart.max-request-size=10MB
 spring.servlet.multipart.enabled=true
 spring.servlet.multipart.file-size-threshold=2KB
-# Base64 encoded secret key for JWT
-app.jwt.secret=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30
-app.jwt.expiration=86400000
-app.jwt.refresh-expiration=604800000
 management.endpoints.web.exposure.include=mappings
 
 # Application Upload Configuration
 app.upload.dir=src/main/resources/static/uploads
 app.upload.max-file-size=5242880
 app.python.executable=face_recognition_env/.venv/bin/python3
-app.python.script.path=scripts/face_recognition
 app.face.recognition.timeout=300
 
 
 
 # Python Feature Extraction Configuration
-app.python.venv.path=/face-attendance/.venv
+app.python.venv.path=/home/loki/Desktop/face-attendance/.venv
+app.python.script.path=/home/loki/Desktop/face-attendance
+app.python.script.file=scripts/face_recognition/face_feature_extractor.py
 app.python.timeout.minutes=30
 app.python.max.concurrent=2
 
 # File upload configuration
-
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=50MB
 app.uploads.path=src/main/resources/static/uploads
 
 # Face Recognition Service Configuration
@@ -106,3 +102,30 @@ app.features.similarity.threshold=0.4
 # Logging configuration for Python integration
 logging.level.com.tathanhloc.faceattendance.Service.PythonFeatureExtractionService=DEBUG
 logging.level.com.tathanhloc.faceattendance.Controller.PythonFeatureExtractionController=DEBUG
+
+
+# WebSocket Configuration
+spring.websocket.servlet.path=/ws
+
+# CORS Configuration for Flask
+spring.web.cors.allowed-origins=http://localhost:5000,http://127.0.0.1:5000
+spring.web.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS
+spring.web.cors.allowed-headers=Content-Type,Authorization,X-Requested-With,Accept
+spring.web.cors.allow-credentials=true
+
+# Async Configuration
+spring.task.execution.pool.core-size=4
+spring.task.execution.pool.max-size=8
+spring.task.execution.pool.queue-capacity=100
+
+# Face Recognition Settings
+app.face.recognition.threshold=0.6
+app.face.detection.threshold=0.5
+app.face.min.size=40
+app.face.max.size=1920
+
+# C?u hình th?i gian buffer cho ?i?m danh
+attendance.buffer.before.minutes=60
+attendance.buffer.after.minutes=30
+attendance.debug.enabled=true
+logging.level.com.tathanhloc.faceattendance.Service.DiemDanhService=DEBUG

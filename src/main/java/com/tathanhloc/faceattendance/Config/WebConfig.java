@@ -14,6 +14,14 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResourceLocations("classpath:/static/streams/")
                 .setCachePeriod(0) // No cache for live streams
                 .resourceChain(false);
+
+        // ✅ CẤU HÌNH CHO UPLOADS - GIẢI QUYẾT VẤN ĐỀ LOAD ẢNH
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("classpath:/static/uploads/")
+                .setCachePeriod(0) // No cache trong development
+                .resourceChain(false);
+
     }
+
 
 }

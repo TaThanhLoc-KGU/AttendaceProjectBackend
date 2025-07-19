@@ -713,7 +713,9 @@
             // Then load class data and stats
             await Promise.all([
                 loadClassData(),
-                loadStats()
+                loadStats(),
+                loadTotalStudents() // Chỉ giữ lại cái này
+
             ]);
 
         } catch (error) {
@@ -860,11 +862,11 @@
                 inactive: inactiveClasses
             });
 
-            // Update stats display
+            // Update stats display (KHÔNG cập nhật totalStudents ở đây)
             updateElement('totalClasses', totalClasses);
             updateElement('activeClasses', activeClasses);
             updateElement('inactiveClasses', inactiveClasses);
-            updateElement('totalStudents', 0); // This would need actual student count
+            // updateElement('totalStudents', 0); // XÓA DÒNG NÀY
 
             console.log('✅ Stats loaded');
         } catch (error) {
@@ -875,6 +877,70 @@
     // ================================
     // DATA ENRICHMENT
     // ================================
+    async function loadTotalStudents() {
+        try {
+            console.log('📡 Loading total students...');
+
+            // Thử phương pháp 1: API count trực tiếp
+            let response = await fetch(`${API_BASE}/sinhvien/count/active`);
+
+            if (response.ok) {
+                const totalCount = await response.json();
+                document.getElementById('totalStudents').textContent = totalCount.toLocaleString();
+                console.log('✅ Loaded total students from count API:', totalCount);
+                return;
+            }
+
+            // Phương pháp 2: Lấy danh sách và đếm
+            response = await fetch(`${API_BASE}/sinhvien/active`);
+            if (response.ok) {
+                const students = await response.json();
+                const totalCount = students.length;
+                document.getElementById('totalStudents').textContent = totalCount.toLocaleString();
+                console.log('✅ Counted total students from list:', totalCount);
+                return;
+            }
+
+            // Phương pháp 3: Đếm từ từng lớp (chậm nhất)
+            let tongSinhVien = 0;
+            if (classData && classData.length > 0) {
+                for (const lop of classData) {
+                    if (lop.isActive) {
+                        try {
+                            const lopResponse = await fetch(`${API_BASE}/lop/${lop.maLop}/sinhvien/count`);
+                            if (lopResponse.ok) {
+                                const count = await lopResponse.json();
+                                tongSinhVien += count;
+                            }
+                        } catch (err) {
+                            console.warn('⚠️ Failed to get count for class:', lop.maLop);
+                        }
+                    }
+                }
+            }
+
+            document.getElementById('totalStudents').textContent = tongSinhVien.toLocaleString();
+            console.log('✅ Calculated total students from class counts:', tongSinhVien);
+
+        } catch (error) {
+            console.error('❌ Error loading total students:', error);
+            document.getElementById('totalStudents').textContent = '---';
+            showNotification('Không thể tải số liệu sinh viên!', 'error');
+        }
+    }
+
+    async function refreshData() {
+        try {
+            showLoading(true);
+            await loadAllData(); // Sẽ tự động load lại stats
+            showNotification('Dữ liệu đã được làm mới!', 'success');
+        } catch (error) {
+            console.error('❌ Error refreshing data:', error);
+            showNotification('Không thể làm mới dữ liệu!', 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
     function enrichClassData() {
         classData.forEach(classItem => {
             // Find nganh information
@@ -1488,6 +1554,8 @@
             element.textContent = value;
         }
     }
+
+
 
     // Make functions globally available
     window.editClass = editClass;

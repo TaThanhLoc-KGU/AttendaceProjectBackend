@@ -27,8 +27,11 @@ public class LopHocPhanService {
     private final SinhVienRepository sinhVienRepository;
 
     public List<LopHocPhanDTO> getAll() {
-        return lopHocPhanRepository.findAll().stream().map(this::toDTO).toList();
+        return lopHocPhanRepository.findAll().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList()); // Thay .toList() bằng .collect(Collectors.toList())
     }
+
 
     public LopHocPhanDTO getById(String id) {
         return toDTO(lopHocPhanRepository.findById(id).orElseThrow());
@@ -154,9 +157,8 @@ public class LopHocPhanService {
 
     // THÊM METHOD LẤY CHỈ NHỮNG LỚP ĐANG ACTIVE
     public List<LopHocPhanDTO> getAllActiveWithNames() {
-        log.info("Getting active LopHocPhan with full names");
         return lopHocPhanRepository.findAll().stream()
-                .filter(lhp -> Boolean.TRUE.equals(lhp.getIsActive()))
+                .filter(lhp -> lhp.getIsActive())
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
@@ -294,5 +296,12 @@ public class LopHocPhanService {
                     return new ArrayList<>();
                 }
             }
+    public LopHocPhan findById(String maLhp) {
+        return lopHocPhanRepository.findById(maLhp)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lớp học phần"));
+    }
 
+    public LopHocPhanDTO convertToDTO(LopHocPhan lhp) {
+        return toDTO(lhp);
+    }
 }

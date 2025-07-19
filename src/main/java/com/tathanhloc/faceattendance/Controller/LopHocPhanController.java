@@ -68,27 +68,21 @@ public class LopHocPhanController {
     }
 
     /**
-     * Thêm sinh viên vào lớp học phần
+     * Thêm sinh viên vào lớp với validation
      */
     @PostMapping("/{maLhp}/sinhvien/{maSv}")
     public ResponseEntity<String> addStudentToLhp(@PathVariable String maLhp, @PathVariable String maSv) {
         try {
-            // Kiểm tra lớp học phần tồn tại
-            lopHocPhanService.getByMaLhp(maLhp);
-
-            // Kiểm tra sinh viên tồn tại
-            sinhVienService.getByMaSv(maSv);
-
-            // Tạo đăng ký học
             DangKyHocDTO dangKyDTO = DangKyHocDTO.builder()
                     .maSv(maSv)
                     .maLhp(maLhp)
+                    .isActive(true)
                     .build();
 
-            dangKyHocService.create(dangKyDTO);
+            dangKyHocService.createWithValidation(dangKyDTO);
             return ResponseEntity.ok("Thêm sinh viên thành công");
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi khi thêm sinh viên: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 

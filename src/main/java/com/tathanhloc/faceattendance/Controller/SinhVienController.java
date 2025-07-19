@@ -567,6 +567,19 @@ public class SinhVienController {
             return ResponseEntity.ok(response);
         }
     }
+    // Thêm vào class SinhVienController
+    @GetMapping("/count/active")
+    public ResponseEntity<Long> countActiveSinhVien() {
+        log.info("Đếm tổng số sinh viên đang hoạt động");
+        long count = sinhVienService.countActive();
+        return ResponseEntity.ok(count);
+    }
 
+    @GetMapping("/count/all")
+    public ResponseEntity<Long> countAllSinhVien() {
+        log.info("Đếm tổng số sinh viên");
+        long count = sinhVienService.countAll();
+        return ResponseEntity.ok(count);
+    }
 }
 

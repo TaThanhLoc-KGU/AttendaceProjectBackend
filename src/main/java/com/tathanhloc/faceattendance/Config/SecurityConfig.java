@@ -102,18 +102,14 @@ public class SecurityConfig {
                         .requestMatchers("/", "/index", "/index.html", "/login", "/logout").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()  // Cho phép truy cập tất cả uploads
+                        .requestMatchers("/uploads/students/**").permitAll()  // Cụ thể cho students
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/forgot-password").permitAll()
                         .requestMatchers("/api/python/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
 
-                        // ===== FLASK INTEGRATION ENDPOINTS - NO AUTHENTICATION =====
-                        .requestMatchers("/api/flask/**").permitAll()
-                        .requestMatchers("/api/roi/**").permitAll()
-                        .requestMatchers("/api/realtime/**").permitAll()
-                        .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/admin-ws/**").permitAll()
 
                         // ===== EXISTING ROLE-BASED ACCESS =====
                         .requestMatchers("/admin/**").hasRole("ADMIN")
@@ -173,9 +169,3 @@ public class SecurityConfig {
         return source;
     }
 }
-
-// ===================================================================
-// DELETE FlaskSecurityConfig.java - Không cần nữa vì đã merge
-// ===================================================================
-
-// REMOVE FILE: src/main/java/com/tathanhloc/faceattendance/Config/FlaskSecurityConfig.java

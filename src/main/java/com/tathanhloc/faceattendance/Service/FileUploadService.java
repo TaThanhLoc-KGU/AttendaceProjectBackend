@@ -392,4 +392,5 @@ public class FileUploadService {
             throw new RuntimeException("Không thể xóa ảnh đại diện", e);
         }
     }
+
 }

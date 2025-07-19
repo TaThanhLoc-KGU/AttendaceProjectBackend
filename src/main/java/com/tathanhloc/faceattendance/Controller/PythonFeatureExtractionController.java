@@ -194,7 +194,7 @@ public class PythonFeatureExtractionController {
     /**
      * Trích xuất đặc trưng cho tất cả sinh viên
      */
-    @PostMapping("/extract-all")
+    @RequestMapping(value = "/extract-all", method = {RequestMethod.POST, RequestMethod.GET})
     public ResponseEntity<?> extractFeaturesForAll() {
         try {
             log.info("Request to extract features for all students");

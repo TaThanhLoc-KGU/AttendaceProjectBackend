@@ -18,6 +18,7 @@ public class LopService {
     private final LopRepository lopRepository;
     private final NganhRepository nganhRepository;
     private final KhoaHocRepository khoaHocRepository;
+    private final SinhVienRepository sinhVienRepository;
 
     // Lấy tất cả lớp (bao gồm cả đã xóa)
     public List<LopDTO> getAll() {
@@ -112,5 +113,14 @@ public class LopService {
 
     public long countInactive() {
         return lopRepository.countByIsActiveFalse();
+    }
+    // Thêm vào class LopService
+    public long countSinhVienByLop(String maLop) {
+        // Tìm lớp
+        Lop lop = lopRepository.findById(maLop)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lớp với mã: " + maLop));
+
+        // Đếm sinh viên trong lớp (chỉ sinh viên đang hoạt động)
+        return sinhVienRepository.countByLopMaLopAndIsActiveTrue(maLop);
     }
 }

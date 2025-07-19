@@ -1,0 +1,634 @@
+/**
+ * loading.css
+ * CSS cho Loading System trong Face Attendance
+ * Bao gồm: spinners, skeletons, overlays, animations
+ */
+
+/* ========== LOADING SPINNERS ========== */
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #007bff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+.loading-spinner.primary {
+    border: 3px solid rgba(13, 110, 253, 0.3);
+    border-top-color: #0d6efd;
+}
+
+.loading-spinner.secondary {
+    border: 3px solid rgba(108, 117, 125, 0.3);
+    border-top-color: #6c757d;
+}
+
+.loading-spinner.success {
+    border: 3px solid rgba(25, 135, 84, 0.3);
+    border-top-color: #198754;
+}
+
+.loading-spinner.danger {
+    border: 3px solid rgba(220, 53, 69, 0.3);
+    border-top-color: #dc3545;
+}
+
+.loading-spinner.warning {
+    border: 3px solid rgba(255, 193, 7, 0.3);
+    border-top-color: #ffc107;
+}
+
+.loading-spinner.info {
+    border: 3px solid rgba(13, 202, 240, 0.3);
+    border-top-color: #0dcaf0;
+}
+
+.loading-spinner.white {
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+}
+
+.loading-spinner.small {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+}
+
+.loading-spinner.large {
+    width: 40px;
+    height: 40px;
+    border-width: 4px;
+}
+
+.loading-spinner.xl {
+    width: 60px;
+    height: 60px;
+    border-width: 6px;
+}
+
+/* ========== LOADING ANIMATIONS ========== */
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes bounce {
+    0%, 20%, 53%, 80%, 100% { transform: translate3d(0,0,0); }
+    40%, 43% { transform: translate3d(0, -30px, 0); }
+    70% { transform: translate3d(0, -15px, 0); }
+    90% { transform: translate3d(0, -4px, 0); }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ========== SKELETON LOADING ========== */
+
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+}
+
+.skeleton.rounded {
+    border-radius: 50%;
+}
+
+.skeleton.rounded-lg {
+    border-radius: 12px;
+}
+
+.skeleton.dark {
+    background: linear-gradient(90deg, #333 25%, #555 50%, #333 75%);
+    background-size: 200% 100%;
+}
+
+.skeleton.text {
+    height: 1em;
+    margin: 0.25em 0;
+}
+
+.skeleton.text.large {
+    height: 1.5em;
+}
+
+.skeleton.text.small {
+    height: 0.75em;
+}
+
+.skeleton.avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+}
+
+.skeleton.avatar.large {
+    width: 100px;
+    height: 100px;
+}
+
+.skeleton.card {
+    height: 200px;
+    border-radius: 8px;
+}
+
+.skeleton.button {
+    height: 38px;
+    border-radius: 6px;
+    width: 100px;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ========== SHIMMER EFFECT ========== */
+
+.shimmer {
+    position: relative;
+    overflow: hidden;
+}
+
+.shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+    );
+    transform: translateX(-100%);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    100% { transform: translateX(100%); }
+}
+
+/* ========== LOADING OVERLAYS ========== */
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: inherit;
+    z-index: 100;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(2px);
+}
+
+.loading-overlay.dark {
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+}
+
+.loading-overlay.transparent {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.loading-overlay.solid {
+    background: #ffffff;
+}
+
+.loading-overlay.blur {
+    backdrop-filter: blur(5px);
+}
+
+/* ========== PAGE LOADING ========== */
+
+.page-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
+}
+
+.page-loading.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.page-loading.dark {
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+}
+
+/* ========== LOADING TEXT ========== */
+
+.loading-text {
+    margin-top: 1rem;
+    font-size: 1rem;
+    color: #666;
+    text-align: center;
+}
+
+.loading-text.small {
+    font-size: 0.875rem;
+}
+
+.loading-text.large {
+    font-size: 1.125rem;
+}
+
+.loading-dots::after {
+    content: '';
+    animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+    0%, 20% { content: ''; }
+    40% { content: '.'; }
+    60% { content: '..'; }
+    80%, 100% { content: '...'; }
+}
+
+/* ========== PROGRESS BARS ========== */
+
+.loading-progress {
+    width: 100%;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 1rem 0;
+}
+
+.loading-progress.thin {
+    height: 4px;
+}
+
+.loading-progress.thick {
+    height: 12px;
+}
+
+.loading-progress-bar {
+    height: 100%;
+    background: #007bff;
+    border-radius: inherit;
+    transition: width 0.3s ease;
+    width: 0%;
+    position: relative;
+    overflow: hidden;
+}
+
+.loading-progress-bar.animated::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg,
+    rgba(255,255,255,0.2) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255,255,255,0.2) 50%,
+    rgba(255,255,255,0.2) 75%,
+    transparent 75%
+    );
+    background-size: 20px 20px;
+    animation: progress-stripes 1s linear infinite;
+}
+
+@keyframes progress-stripes {
+    0% { background-position: 0 0; }
+    100% { background-position: 20px 0; }
+}
+
+/* ========== IMAGE LOADING STATES ========== */
+
+.image-loading {
+    opacity: 0.6;
+    position: relative;
+    transition: opacity 0.3s ease;
+}
+
+.image-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.image-loaded {
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.image-error {
+    opacity: 0.5;
+    filter: grayscale(100%);
+}
+
+/* ========== FACE IMAGE SPECIFIC ========== */
+
+.face-skeleton {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    border: 2px dashed #ddd;
+    background: linear-gradient(90deg, #f8f9fa 25%, #e9ecef 50%, #f8f9fa 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+}
+
+.face-skeleton::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 24px;
+    border: 2px solid #ddd;
+    border-top-color: #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.profile-loading {
+    position: relative;
+}
+
+.profile-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-loading::before {
+    content: '\f110';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 2rem;
+    z-index: 10;
+    animation: spin 1s linear infinite;
+}
+
+/* ========== ERROR STATES ========== */
+
+.load-error {
+    background: #fee;
+    border: 2px dashed #fcc;
+    color: #c66;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 1rem;
+    text-align: center;
+    min-height: 100px;
+}
+
+.load-error:hover {
+    background: #fdd;
+    border-color: #fbb;
+    transform: translateY(-1px);
+}
+
+.load-error.dark {
+    background: #4a1a1a;
+    border-color: #6a2c2c;
+    color: #f5c6cb;
+}
+
+.load-error.dark:hover {
+    background: #5a2424;
+    border-color: #7a3636;
+}
+
+/* ========== GRID LOADING ========== */
+
+.grid-loading {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.grid-loading .skeleton {
+    aspect-ratio: 1;
+    border-radius: 8px;
+}
+
+/* ========== STATUS LOADING ========== */
+
+.status-loading {
+    background: linear-gradient(90deg, #f8f9fa 25%, #e9ecef 50%, #f8f9fa 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 8px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+/* ========== UTILITY CLASSES ========== */
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.slide-in {
+    animation: slideIn 0.5s ease-out;
+}
+
+.scale-in {
+    animation: scaleIn 0.5s ease-out;
+}
+
+.bounce-in {
+    animation: bounce 0.6s ease-out;
+}
+
+.pulse {
+    animation: pulse 1.5s infinite;
+}
+
+.loading-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.loading-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transition: opacity 0.3s ease;
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+    .loading-spinner.large {
+        width: 32px;
+        height: 32px;
+        border-width: 3px;
+    }
+
+    .loading-text {
+        font-size: 0.9rem;
+    }
+
+    .face-skeleton {
+        min-height: 120px;
+    }
+
+    .grid-loading {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .loading-spinner.xl {
+        width: 40px;
+        height: 40px;
+        border-width: 4px;
+    }
+
+    .loading-text {
+        font-size: 0.8rem;
+    }
+
+    .load-error {
+        padding: 0.75rem;
+        min-height: 80px;
+    }
+
+    .grid-loading {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.5rem;
+    }
+}
+
+/* ========== DARK THEME SUPPORT ========== */
+
+[data-theme="dark"] .skeleton {
+    background: linear-gradient(90deg, #2a2a2a 25%, #404040 50%, #2a2a2a 75%);
+    background-size: 200% 100%;
+}
+
+[data-theme="dark"] .loading-overlay {
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+}
+
+[data-theme="dark"] .loading-text {
+    color: #ccc;
+}
+
+[data-theme="dark"] .status-loading {
+    background: linear-gradient(90deg, #2a2a2a 25%, #404040 50%, #2a2a2a 75%);
+    background-size: 200% 100%;
+}
+
+[data-theme="dark"] .face-skeleton {
+    background: linear-gradient(90deg, #2a2a2a 25%, #404040 50%, #2a2a2a 75%);
+    background-size: 200% 100%;
+    border-color: #555;
+}
+
+[data-theme="dark"] .load-error {
+    background: #4a1a1a;
+    border-color: #6a2c2c;
+    color: #f5c6cb;
+}
+
+/* ========== PRINT STYLES ========== */
+
+@media print {
+    .loading-spinner,
+    .loading-overlay,
+    .page-loading,
+    .skeleton,
+    .load-error {
+        display: none !important;
+    }
+}
