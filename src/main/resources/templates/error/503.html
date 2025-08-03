@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>503 - Dịch Vụ Tạm Thời Không Khả Dụng</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .error-container {
+            text-align: center;
+            color: white;
+            max-width: 600px;
+            padding: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .error-code {
+            font-size: 8rem;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 1rem;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: breathe 3s ease-in-out infinite;
+        }
+
+        .error-title {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            text-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .error-message {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .error-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary:hover {
+            background: white;
+            color: #764ba2;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .floating-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .shape {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            width: 120px;
+            height: 120px;
+            top: 60%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+
+        .shape:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            top: 10%;
+            right: 20%;
+            animation-delay: 4s;
+        }
+
+        .shape:nth-child(4) {
+            width: 100px;
+            height: 100px;
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 1s;
+        }
+
+        .maintenance-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+            animation: tools 2s ease-in-out infinite;
+        }
+
+        .countdown {
+            font-size: 1.5rem;
+            margin: 1rem 0;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+            }
+        }
+
+        @keyframes tools {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            75% { transform: rotate(5deg); }
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        @media (max-width: 768px) {
+            .error-code {
+                font-size: 6rem;
+            }
+
+            .error-title {
+                font-size: 2rem;
+            }
+
+            .error-message {
+                font-size: 1rem;
+            }
+
+            .error-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="floating-shapes">
+    <div class="shape"></div>
+    <div class="shape"></div>
+    <div class="shape"></div>
+    <div class="shape"></div>
+</div>
+
+<div class="error-container">
+    <div class="maintenance-icon">🔧</div>
+    <div class="error-code">503</div>
+    <h1 class="error-title">Dịch vụ tạm thời không khả dụng</h1>
+    <p class="error-message">
+        <span class="status-indicator"></span>
+        Hệ thống đang bảo trì để cải thiện chất lượng dịch vụ.
+        Chúng tôi sẽ sớm quay lại hoạt động. Cảm ơn bạn đã kiên nhẫn!
+    </p>
+
+    <div class="countdown">
+        <div>Thời gian dự kiến hoàn thành:</div>
+        <div id="countdownTimer">Đang tính toán...</div>
+    </div>
+
+    <div class="error-buttons">
+        <a href="#" class="btn btn-primary" onclick="checkStatus()">
+            🔄 Kiểm Tra Trạng Thái
+        </a>
+        <a href="#" class="btn btn-secondary" onclick="subscribeUpdates()">
+            📧 Nhận Thông Báo
+        </a>
+        <a href="/" class="btn btn-secondary">
+            🏠 Trang Chủ
+        </a>
+    </div>
+</div>
+
+<script>
+    // Countdown timer
+    function startCountdown() {
+        // Giả sử maintenance kéo dài 2 giờ từ bây giờ
+        const maintenanceEnd = new Date().getTime() + (2 * 60 * 60 * 1000);
+
+        const timer = setInterval(function() {
+            const now = new Date().getTime();
+            const distance = maintenanceEnd - now;
+
+            if (distance < 0) {
+                clearInterval(timer);
+                document.getElementById('countdownTimer').textContent = 'Đang kiểm tra hệ thống...';
+                // Tự động reload page sau 5 giây
+                setTimeout(() => window.location.reload(), 5000);
+                return;
+            }
+
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById('countdownTimer').textContent =
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }, 1000);
+    }
+
+    function checkStatus() {
+        // Thử ping server
+        fetch('/', { method: 'HEAD', cache: 'no-cache' })
+            .then(response => {
+                if (response.ok) {
+                    alert('Hệ thống đã hoạt động trở lại!');
+                    window.location.reload();
+                } else {
+                    alert('Hệ thống vẫn đang bảo trì. Vui lòng thử lại sau.');
+                }
+            })
+            .catch(() => {
+                alert('Hệ thống vẫn đang bảo trì. Vui lòng thử lại sau.');
+            });
+    }
+
+    function subscribeUpdates() {
+        const email = prompt('Nhập email để nhận thông báo khi hệ thống hoạt động trở lại:');
+        if (email && email.includes('@')) {
+            // Gửi email subscription request
+            alert('Cảm ơn! Chúng tôi sẽ thông báo cho bạn qua email: ' + email);
+
+            // Có thể gửi request đến server để lưu email
+            // fetch('/api/maintenance/subscribe', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({ email: email })
+            // });
+        } else if (email) {
+            alert('Email không hợp lệ. Vui lòng thử lại.');
+        }
+    }
+
+    // Hiệu ứng di chuột cho các hình tròn
+    document.addEventListener('mousemove', function(e) {
+        const shapes = document.querySelectorAll('.shape');
+        const x = e.clientX / window.innerWidth;
+        const y = e.clientY / window.innerHeight;
+
+        shapes.forEach((shape, index) => {
+            const speed = (index + 1) * 0.5;
+            const xMove = (x * 50 - 25) * speed;
+            const yMove = (y * 50 - 25) * speed;
+
+            shape.style.transform = `translate(${xMove}px, ${yMove}px)`;
+        });
+    });
+
+    // Auto check status mỗi 5 phút
+    setInterval(function() {
+        fetch('/', { method: 'HEAD', cache: 'no-cache' })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                }
+            })
+            .catch(() => {
+                // Service still unavailable
+            });
+    }, 5 * 60 * 1000);
+
+    // Start countdown when page loads
+    document.addEventListener('DOMContentLoaded', startCountdown);
+</script>
+</body>
+</html>
