@@ -1,5 +1,7 @@
 package com.tathanhloc.faceattendance.Controller;
 
+import com.tathanhloc.faceattendance.DTO.ChangePasswordRequest;
+import com.tathanhloc.faceattendance.DTO.ResetPasswordRequest;
 import com.tathanhloc.faceattendance.DTO.UserProfileDTO;
 import com.tathanhloc.faceattendance.Model.LoginRequest;
 import com.tathanhloc.faceattendance.Model.TaiKhoan;
@@ -15,6 +17,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -118,34 +122,68 @@ public class AuthController {
         }
     }
 
-    @PutMapping("/change-password")
-    public ResponseEntity<?> changePassword(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestParam String oldPassword,
-            @RequestParam String newPassword) {
-
-        if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(createErrorResponse("Không có người dùng đăng nhập"));
-        }
-
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
         try {
-            log.info("Password change request for user: {}", userDetails.getUsername());
+            // Option 2: Simple password change without verification (admin/reset scenario)
+            boolean success = taiKhoanService.changePassword(
+                    request.getUsername(),
+                    request.getNewPassword()
+            );
 
-            if (!passwordEncoder.matches(oldPassword, userDetails.getPassword())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(createErrorResponse("Mật khẩu cũ không đúng"));
+            if (success) {
+                return ResponseEntity.ok(Map.of(
+                        "message", "Đặt lại mật khẩu thành công",
+                        "success", true
+                ));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "message", "Không thể đặt lại mật khẩu",
+                        "success", false
+                ));
             }
 
-            TaiKhoan updated = taiKhoanService.changePassword(userDetails.getUsername(), newPassword);
-            UserProfileDTO profile = buildUserProfileDTO(updated);
-
-            log.info("Password changed successfully for user: {}", userDetails.getUsername());
-            return ResponseEntity.ok(profile);
         } catch (Exception e) {
-            log.error("Password change failed for user: {}", userDetails.getUsername(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Lỗi khi đổi mật khẩu"));
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", e.getMessage(),
+                    "success", false
+            ));
+        }
+    }
+
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(
+            @RequestBody ChangePasswordRequest request,
+            Authentication authentication) {
+
+        try {
+            String username = authentication.getName();
+
+            // Option 1: Change password with old password verification
+            boolean success = taiKhoanService.changePassword(
+                    username,
+                    request.getOldPassword(),
+                    request.getNewPassword()
+            );
+
+            if (success) {
+                return ResponseEntity.ok(Map.of(
+                        "message", "Đổi mật khẩu thành công",
+                        "success", true
+                ));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "message", "Không thể đổi mật khẩu",
+                        "success", false
+                ));
+            }
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", e.getMessage(),
+                    "success", false
+            ));
         }
     }
 

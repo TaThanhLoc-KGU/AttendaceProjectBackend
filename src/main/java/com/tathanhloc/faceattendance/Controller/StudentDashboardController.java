@@ -1,9 +1,6 @@
 package com.tathanhloc.faceattendance.Controller;
 
-import com.tathanhloc.faceattendance.DTO.DangKyHocDTO;
-import com.tathanhloc.faceattendance.DTO.DiemDanhDTO;
-import com.tathanhloc.faceattendance.DTO.LichHocDTO;
-import com.tathanhloc.faceattendance.DTO.SinhVienDTO;
+import com.tathanhloc.faceattendance.DTO.*;
 import com.tathanhloc.faceattendance.Security.CustomUserDetails;
 import com.tathanhloc.faceattendance.Service.DangKyHocService;
 import com.tathanhloc.faceattendance.Service.DiemDanhService;
@@ -15,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
@@ -645,4 +643,54 @@ public class StudentDashboardController {
                     .body(Map.of("error", "Không thể xóa ảnh"));
         }
     }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changeStudentPassword(
+            @RequestBody ChangePasswordRequest request,
+            Authentication authentication) {
+
+        try {
+            String username = authentication.getName();
+
+            // Validate input
+            if (request.getNewPassword() == null || request.getNewPassword().length() < 6) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "message", "Mật khẩu mới phải có ít nhất 6 ký tự",
+                        "success", false
+                ));
+            }
+
+            // Change password with verification
+            boolean success = taiKhoanService.changePassword(
+                    username,
+                    request.getOldPassword(),
+                    request.getNewPassword()
+            );
+
+            if (success) {
+                return ResponseEntity.ok(Map.of(
+                        "message", "Đổi mật khẩu thành công",
+                        "success", true,
+                        "redirect", "/student/dashboard"
+                ));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "message", "Không thể đổi mật khẩu",
+                        "success", false
+                ));
+            }
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", e.getMessage(),
+                    "success", false
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "message", "Lỗi hệ thống: " + e.getMessage(),
+                    "success", false
+            ));
+        }
+    }
+
 }
