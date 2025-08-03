@@ -16,7 +16,7 @@ def extract_single_student(ma_sv):
 
     async def extract_one():
         # Cấu hình
-        PROJECT_ROOT = "/home/loki/Desktop/face-attendance"
+        PROJECT_ROOT = "D:/LuanVan/face-attendance"
         BACKEND_API_URL = "http://localhost:8080/api"
         FACE_API_URL = "http://localhost:8001"
 
@@ -46,7 +46,7 @@ def extract_all_students():
 
     async def extract_all():
         # Cấu hình
-        PROJECT_ROOT = "/home/loki/Desktop/face-attendance"
+        PROJECT_ROOT = "D:/LuanVan/face-attendance"
         BACKEND_API_URL = "http://localhost:8080/api"
         FACE_API_URL = "http://localhost:8001"
 
