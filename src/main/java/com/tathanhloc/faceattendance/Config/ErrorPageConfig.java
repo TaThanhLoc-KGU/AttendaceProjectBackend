@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.server.ErrorPage;
 import org.springframework.boot.web.server.ErrorPageRegistrar;
 import org.springframework.boot.web.server.ErrorPageRegistry;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -22,7 +21,7 @@ public class ErrorPageConfig implements ErrorPageRegistrar, WebMvcConfigurer {
     public void registerErrorPages(ErrorPageRegistry registry) {
         log.info("🔧 Registering custom error pages for Face Attendance System");
 
-        // Đăng ký các error pages
+        // Đăng ký các error pages - TẤT CẢ ĐỀU POINT VỀ /error
         registry.addErrorPages(
                 // 4xx Client Errors
                 new ErrorPage(HttpStatus.BAD_REQUEST, "/error"),
@@ -46,14 +45,9 @@ public class ErrorPageConfig implements ErrorPageRegistrar, WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        log.info("🔧 Configuring static resource handlers for error pages");
+        log.info("🔧 Configuring static resource handlers");
 
-        // Serve error pages from static/error/
-        registry.addResourceHandler("/error/**")
-                .addResourceLocations("classpath:/static/error/")
-                .setCachePeriod(300); // Cache for 5 minutes
-
-        // Ensure static resources are properly served
+        // Serve static resources
         registry.addResourceHandler("/static/**")
                 .addResourceLocations("classpath:/static/")
                 .setCachePeriod(3600); // Cache for 1 hour
@@ -71,27 +65,20 @@ public class ErrorPageConfig implements ErrorPageRegistrar, WebMvcConfigurer {
                 .addResourceLocations("classpath:/static/images/")
                 .setCachePeriod(7200); // Cache images for 2 hours
 
+        // Add favicon handling
+        registry.addResourceHandler("/favicon.ico")
+                .addResourceLocations("classpath:/static/")
+                .setCachePeriod(86400); // Cache for 24 hours
+
         log.info("✅ Static resource handlers configured successfully");
     }
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        log.info("🔧 Configuring view controllers for error pages");
+        log.info("🔧 Configuring view controllers");
 
-        // Direct mappings for error pages (optional, for direct access)
-        registry.addViewController("/error/404").setViewName("forward:/error/404.html");
-        registry.addViewController("/error/403").setViewName("forward:/error/403.html");
-        registry.addViewController("/error/500").setViewName("forward:/error/500.html");
-        registry.addViewController("/error/503").setViewName("forward:/error/503.html");
+        // No direct error page mappings - let CustomErrorController handle them
 
         log.info("✅ View controllers configured successfully");
-    }
-
-    /**
-     * Bean for custom error attributes (optional)
-     */
-    @Bean
-    public CustomErrorAttributes customErrorAttributes() {
-        return new CustomErrorAttributes();
     }
 }

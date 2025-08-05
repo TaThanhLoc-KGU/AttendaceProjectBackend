@@ -255,12 +255,22 @@
 
                                     <div class="status-content">
                                         <div th:switch="${biometricStatus}">
-                                            <div th:case="'completed'">
-                                                <h4>✅ Đã sẵn sàng điểm danh</h4>
-                                                <p>Sinh trắc học đã được thiết lập hoàn tất. Bạn có thể tham gia điểm danh bằng khuôn mặt.</p>
-                                            </div>
+                                        <div th:case="'completed'">
+                                            <h4>
+                                                <span class="badge bg-success me-2">
+                                                    <i class="fas fa-check-circle"></i>
+                                                </span>
+                                                Đã sẵn sàng điểm danh
+                                            </h4>
+                                            <p>Sinh trắc học đã được thiết lập hoàn tất. Bạn có thể tham gia điểm danh bằng khuôn mặt.</p>
+                                        </div>
                                             <div th:case="'ready'">
-                                                <h4>⚠️ Cần trích xuất đặc trưng</h4>
+                                                <h4>
+                                                    <span class="badge bg-warning text-dark me-2">
+                                                        <i class="fas fa-exclamation-triangle"></i>
+                                                    </span>
+                                                    Cần trích xuất đặc trưng
+                                                </h4>
                                                 <p>Đã có đủ ảnh khuôn mặt nhưng chưa trích xuất đặc trưng AI. Hãy liên hệ admin để hoàn tất.</p>
                                             </div>
                                             <div th:case="'partial'">

@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.stereotype.Component;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -20,7 +21,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import java.util.Set;
 
-@ControllerAdvice
+//@ControllerAdvice
+@Component
 @Slf4j
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
@@ -30,6 +32,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.error("Resource not found: {}", ex.getMessage());
         return buildResponseEntity(apiError);
     }
+
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     protected ResponseEntity<Object> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
@@ -96,12 +99,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(apiError);
     }
 
-    @ExceptionHandler(Exception.class)
-    protected ResponseEntity<Object> handleAllExceptions(Exception ex) {
-        ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi hệ thống", ex);
-        log.error("Unhandled exception occurred", ex);
-        return buildResponseEntity(apiError);
-    }
+//    @ExceptionHandler(Exception.class)  // ← BẮT TẤT CẢ EXCEPTION
+//    protected ResponseEntity<Object> handleAllExceptions(Exception ex) {
+//        ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi hệ thống", ex);
+//        log.error("Unhandled exception occurred", ex);
+//        return buildResponseEntity(apiError);
+//    }
 
     private ResponseEntity<Object> buildResponseEntity(ApiError apiError) {
         return new ResponseEntity<>(apiError, apiError.getStatus());

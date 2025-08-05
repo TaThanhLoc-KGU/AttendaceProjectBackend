@@ -132,15 +132,15 @@
             transform: scale(1.1);
         }
 
-        /* Face images grid */
+        /* Face images grid - Fixed slots */
         .face-images-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 3fr));
             gap: 1rem;
             margin-top: 1rem;
         }
 
-        .face-image-card {
+        .face-image-slot {
             position: relative;
             border: 2px dashed var(--gray-300);
             border-radius: var(--border-radius);
@@ -154,27 +154,34 @@
             overflow: hidden;
         }
 
-        .face-image-card:hover {
+        .face-image-slot:hover {
             border-color: var(--primary-color);
             background: rgba(0, 123, 255, 0.1);
         }
 
-        .face-image-card.has-image {
+        .face-image-slot.has-image {
             border: 2px solid var(--success-color);
             padding: 0;
+            cursor: default;
         }
 
-        .face-image-card.uploading {
+        .face-image-slot.has-image:hover {
+            border-color: var(--success-color);
+            background: transparent;
+        }
+
+        .face-image-slot.uploading {
             border: 2px solid var(--warning-color);
             background: rgba(255, 193, 7, 0.1);
+            cursor: wait;
         }
 
-        .face-image-card.loading-from-server {
+        .face-image-slot.loading {
             border: 2px solid var(--primary-color);
             background: rgba(0, 123, 255, 0.05);
         }
 
-        .face-image-card.error {
+        .face-image-slot.error {
             border: 2px solid var(--danger-color);
             background: rgba(220, 53, 69, 0.05);
         }
@@ -206,9 +213,10 @@
             opacity: 0;
             transition: opacity 0.2s ease;
             border-radius: var(--border-radius);
+            z-index: 10;
         }
 
-        .face-image-card:hover .face-image-overlay {
+        .face-image-slot:hover .face-image-overlay {
             opacity: 1;
         }
 
@@ -224,6 +232,8 @@
             justify-content: center;
             cursor: pointer;
             transition: all 0.2s ease;
+            z-index: 11;
+            position: relative;
         }
 
         .face-image-overlay .delete-btn {
@@ -237,17 +247,40 @@
         .face-image-overlay .delete-btn:hover {
             background: var(--danger-color);
             color: white;
+            transform: scale(1.1);
         }
 
         .face-image-overlay .view-btn:hover {
             background: var(--primary-color);
             color: white;
+            transform: scale(1.1);
         }
 
         .upload-placeholder {
             text-align: center;
             color: var(--gray-500);
             padding: 1rem;
+            pointer-events: none;
+        }
+
+        .slot-label {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: var(--primary-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .face-image-slot.has-image .slot-label {
+            background: var(--success-color);
+        }
+
+        .face-image-slot.error .slot-label {
+            background: var(--danger-color);
         }
 
         /* Image loading skeleton */
@@ -286,34 +319,6 @@
         .skeleton-text {
             font-size: 0.8rem;
             opacity: 0.7;
-        }
-
-        /* Error state for failed image loads */
-        .image-error {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #fff5f5;
-            border-radius: inherit;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: var(--danger-color);
-            cursor: pointer;
-        }
-
-        .error-icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .error-text {
-            font-size: 0.8rem;
-            text-align: center;
-            padding: 0 0.5rem;
         }
 
         /* Loading overlay for upload */
@@ -358,93 +363,6 @@
             font-size: 0.8rem;
             color: #ffc107;
             font-weight: bold;
-        }
-
-        /* Global progress bar */
-        .global-upload-progress {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: #007bff;
-            height: 4px;
-            z-index: 9999;
-            transform: scaleX(0);
-            transform-origin: left;
-            transition: transform 0.3s ease;
-        }
-
-        .global-upload-progress.show {
-            transform: scaleX(1);
-        }
-
-        /* Notification for upload */
-        .upload-notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 1rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 9998;
-            min-width: 300px;
-            display: none;
-        }
-
-        .upload-notification.show {
-            display: block;
-            animation: slideInRight 0.3s ease-out;
-        }
-
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(100%);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .notification-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-        }
-
-        .notification-title {
-            font-weight: 600;
-            color: #007bff;
-        }
-
-        .notification-close {
-            background: none;
-            border: none;
-            color: #6c757d;
-            cursor: pointer;
-        }
-
-        .notification-progress {
-            height: 6px;
-            background: #e9ecef;
-            border-radius: 3px;
-            overflow: hidden;
-            margin-bottom: 0.5rem;
-        }
-
-        .notification-progress-bar {
-            height: 100%;
-            background: #007bff;
-            transition: width 0.3s ease;
-        }
-
-        .notification-text {
-            font-size: 0.9rem;
-            color: #6c757d;
         }
 
         /* Biometric status */
@@ -499,32 +417,35 @@
             color: var(--gray-900);
         }
 
-        /* Modal styling */
-        #modalImage {
-            max-height: 70vh;
-            border-radius: var(--border-radius);
+        /* Upload notification */
+        .upload-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 9998;
+            min-width: 300px;
+            display: none;
         }
 
-        /* Retry button for failed images */
-        .retry-btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 0.25rem 0.5rem;
-            font-size: 0.7rem;
-            margin-top: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
+        .upload-notification.show {
+            display: block;
+            animation: slideInRight 0.3s ease-out;
         }
 
-        .retry-btn:hover {
-            background: #0056b3;
-        }
-
-        .avatar-image.loading {
-            opacity: 0.7;
-            filter: blur(1px);
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .avatar-container.uploading::after {
@@ -540,6 +461,54 @@
             border-top-color: white;
             animation: spin 1s ease-in-out infinite;
             z-index: 20;
+        }
+
+        /* Change password modal styles */
+        .modal-content {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            border-radius: 12px 12px 0 0;
+            border-bottom: none;
+        }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .input-group .btn-outline-secondary {
+            border-color: #ced4da;
+        }
+
+        .input-group .btn-outline-secondary:hover {
+            background-color: #f8f9fa;
+            border-color: #adb5bd;
+        }
+
+        .progress-bar {
+            transition: all 0.3s ease;
+        }
+
+        .password-weak {
+            background-color: #dc3545 !important;
+        }
+
+        .password-medium {
+            background-color: #ffc107 !important;
+        }
+
+        .password-strong {
+            background-color: #28a745 !important;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
     </style>
 </head>
@@ -672,14 +641,22 @@
                             <span id="statusText">Đang tải thông tin...</span>
                         </div>
 
+                        <!-- Thêm vào cuối phần info-section trong profile card -->
+                        <div class="info-item">
+                            <span class="info-label">Bảo mật:</span>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="openChangePasswordModal()">
+                                <i class="fas fa-key me-2"></i>Đổi mật khẩu
+                            </button>
+                        </div>
+
                         <p class="text-muted">
                             <i class="fas fa-lightbulb me-2"></i>
                             Cần tối thiểu 3 ảnh khuôn mặt rõ nét để hệ thống có thể nhận diện bạn. Tối đa 5 ảnh.
                         </p>
 
-                        <!-- Face Images Grid -->
+                        <!-- Face Images Grid with Fixed Slots -->
                         <div class="face-images-grid" id="faceImagesGrid">
-                            <!-- Face images will be loaded here -->
+                            <!-- Face image slots will be generated here -->
                         </div>
 
                         <!-- Hidden File Input for Face Images -->
@@ -694,9 +671,6 @@
         </div>
     </div>
 </div>
-
-<!-- Global Progress Bar -->
-<div class="global-upload-progress" id="globalProgress"></div>
 
 <!-- Upload Notification -->
 <div class="upload-notification" id="uploadNotification">
@@ -715,6 +689,77 @@
     <div class="notification-text" id="notificationText">Đang chuẩn bị...</div>
 </div>
 
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changePasswordModalLabel">
+                    <i class="fas fa-key me-2"></i>Thay đổi mật khẩu
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="changePasswordForm">
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label">
+                            <i class="fas fa-lock me-1"></i>Mật khẩu hiện tại
+                        </label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="currentPassword" required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('currentPassword')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">
+                            <i class="fas fa-key me-1"></i>Mật khẩu mới
+                        </label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="newPassword" required minlength="6">
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('newPassword')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">Mật khẩu phải có ít nhất 6 ký tự</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">
+                            <i class="fas fa-check me-1"></i>Xác nhận mật khẩu mới
+                        </label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('confirmPassword')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Password strength indicator -->
+                    <div class="mb-3">
+                        <label class="form-label">Độ mạnh mật khẩu:</label>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar" id="passwordStrength" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <small id="passwordStrengthText" class="text-muted">Nhập mật khẩu mới</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Hủy
+                </button>
+                <button type="button" class="btn btn-primary" onclick="changePassword()" id="changePasswordBtn">
+                    <i class="fas fa-save me-2"></i>Thay đổi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Custom JS -->
@@ -722,8 +767,8 @@
 
 <script>
     // ===== GLOBAL VARIABLES =====
-    let currentFaceImageCount = 0;
-    let currentUploadXhr = null;
+    let faceImagesData = {}; // Object to store face images by index: {0: {id, filename, url}, 1: {...}}
+    let currentUploadSlot = null;
     let uploadStartTime = null;
     const maxFaceImages = 5;
 
@@ -736,20 +781,192 @@
             new SidebarManager();
         }
 
+        // Initialize face image slots
+        initializeFaceImageSlots();
+
         // Load face images
         loadFaceImages();
+
+        // Add profile image delete button if image exists
+        addProfileImageDeleteButton();
 
         console.log('✅ Student Profile page loaded successfully');
     });
 
-    // ===== UTILITY FUNCTIONS =====
-    function formatFileSize(bytes) {
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        if (bytes === 0) return '0 Bytes';
-        const i = Math.floor(Math.log(bytes) / Math.log(1024));
-        return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+    // ===== SLOT MANAGEMENT =====
+    function initializeFaceImageSlots() {
+        console.log('🏗️ Initializing face image slots...');
+        const grid = document.getElementById('faceImagesGrid');
+        grid.innerHTML = '';
+
+        // Initialize data object
+        faceImagesData = {};
+
+        // Create 5 fixed slots
+        for (let i = 0; i < maxFaceImages; i++) {
+            const slot = createFaceImageSlot(i);
+            grid.appendChild(slot);
+        }
+
+        console.log('✅ Face image slots initialized');
     }
 
+    function createFaceImageSlot(slotIndex) {
+        const slot = document.createElement('div');
+        slot.className = 'face-image-slot';
+        slot.setAttribute('data-slot-index', slotIndex);
+        slot.innerHTML = `
+            <div class="slot-label">Ảnh ${slotIndex + 1}</div>
+            <div class="upload-placeholder">
+                <i class="fas fa-plus fa-2x mb-2"></i>
+                <div>Thêm ảnh ${slotIndex + 1}</div>
+            </div>
+        `;
+
+        // Add click handler for empty slots
+        slot.onclick = () => {
+            if (!faceImagesData[slotIndex]) {
+                currentUploadSlot = slotIndex;
+                document.getElementById('faceUpload').click();
+            }
+        };
+
+        return slot;
+    }
+
+    function updateSlotContent(slotIndex, imageData = null) {
+        const slot = document.querySelector(`[data-slot-index="${slotIndex}"]`);
+        if (!slot) return;
+
+        if (imageData) {
+            // Update slot with image
+            faceImagesData[slotIndex] = imageData;
+
+            slot.className = 'face-image-slot has-image';
+            slot.onclick = null; // Remove click handler
+
+            // Add image with loading
+            loadImageIntoSlot(slot, imageData.url, imageData.filename);
+
+        } else {
+            // Clear slot
+            delete faceImagesData[slotIndex];
+
+            slot.className = 'face-image-slot';
+            slot.innerHTML = `
+                <div class="slot-label">Ảnh ${slotIndex + 1}</div>
+                <div class="upload-placeholder">
+                    <i class="fas fa-plus fa-2x mb-2"></i>
+                    <div>Thêm ảnh ${slotIndex + 1}</div>
+                </div>
+            `;
+
+            // Re-add click handler
+            slot.onclick = () => {
+                currentUploadSlot = slotIndex;
+                document.getElementById('faceUpload').click();
+            };
+        }
+    }
+
+    function loadImageIntoSlot(slot, imageUrl, filename) {
+        console.log('🖼️ Loading image into slot:', imageUrl, 'filename:', filename);
+
+        // Add skeleton loading
+        addImageSkeleton(slot);
+
+        // Create image element
+        const img = document.createElement('img');
+        img.className = 'face-image';
+        img.alt = 'Face image';
+
+        // Create overlay with proper event binding
+        const overlay = document.createElement('div');
+        overlay.className = 'face-image-overlay';
+
+        // Create delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        deleteBtn.title = 'Xóa ảnh';
+        deleteBtn.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const slotIndex = parseInt(slot.getAttribute('data-slot-index'));
+            deleteFaceImageFromSlot(slotIndex);
+        };
+
+        // Create view button
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'view-btn';
+        viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
+        viewBtn.title = 'Xem ảnh';
+        viewBtn.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            viewFaceImage(imageUrl, filename);
+        };
+
+        overlay.appendChild(deleteBtn);
+        overlay.appendChild(viewBtn);
+
+        // Handle successful load
+        img.onload = function() {
+            console.log('✅ Image loaded successfully in slot');
+            removeImageSkeleton(slot);
+
+            // Clear slot content and add image + overlay
+            slot.innerHTML = `<div class="slot-label">Ảnh ${parseInt(slot.getAttribute('data-slot-index')) + 1}</div>`;
+            img.classList.add('loaded');
+            slot.appendChild(img);
+            slot.appendChild(overlay);
+
+            // Add debug event listeners
+            slot.addEventListener('mouseenter', function() {
+                console.log('🖱️ Mouse enter slot:', slot.getAttribute('data-slot-index'));
+            });
+
+            overlay.addEventListener('mouseenter', function() {
+                console.log('👁️ Mouse enter overlay:', slot.getAttribute('data-slot-index'));
+            });
+
+            deleteBtn.addEventListener('click', function(e) {
+                console.log('🗑️ Delete button clicked for slot:', slot.getAttribute('data-slot-index'));
+            });
+
+            // Add double-click fallback for delete
+            img.addEventListener('dblclick', function(e) {
+                console.log('👆 Double-click detected on image in slot:', slot.getAttribute('data-slot-index'));
+                const slotIndex = parseInt(slot.getAttribute('data-slot-index'));
+                if (confirm('Double-click detected. Bạn có muốn xóa ảnh này không?')) {
+                    deleteFaceImageFromSlot(slotIndex);
+                }
+            });
+
+            // Add context menu for alternative delete method
+            img.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                console.log('🖱️ Right-click detected on image in slot:', slot.getAttribute('data-slot-index'));
+                const slotIndex = parseInt(slot.getAttribute('data-slot-index'));
+                if (confirm('Right-click detected. Bạn có muốn xóa ảnh này không?')) {
+                    deleteFaceImageFromSlot(slotIndex);
+                }
+            });
+        };
+
+        // Handle load error
+        img.onerror = function() {
+            console.error('❌ Failed to load image in slot:', imageUrl);
+            removeImageSkeleton(slot);
+            // Show error state
+            slot.classList.add('error');
+        };
+
+        // Start loading
+        img.src = imageUrl;
+    }
+
+    // ===== UTILITY FUNCTIONS =====
     function validateImageFile(file) {
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
         if (!allowedTypes.includes(file.type)) {
@@ -790,12 +1007,26 @@
         }
     }
 
+    function findEmptySlot() {
+        for (let i = 0; i < maxFaceImages; i++) {
+            if (!faceImagesData[i]) {
+                return i;
+            }
+        }
+        return -1; // No empty slot found
+    }
+
+    function getImageCount() {
+        return Object.keys(faceImagesData).length;
+    }
+
     // ===== IMAGE LOADING FUNCTIONS =====
     function addImageSkeleton(element) {
-        console.log('💀 Adding skeleton to:', element);
-
-        // Remove existing skeleton
+        console.log('💀 Adding skeleton to slot');
         removeImageSkeleton(element);
+
+        // Keep slot label
+        const slotLabel = element.querySelector('.slot-label');
 
         const skeleton = document.createElement('div');
         skeleton.className = 'image-skeleton';
@@ -805,9 +1036,8 @@
         `;
 
         element.appendChild(skeleton);
-        element.classList.add('loading-from-server');
+        element.classList.add('loading');
 
-        console.log('✅ Skeleton added successfully');
         return skeleton;
     }
 
@@ -816,126 +1046,31 @@
         if (skeleton) {
             skeleton.remove();
         }
-        element.classList.remove('loading-from-server');
+        element.classList.remove('loading');
     }
-
-    function addImageError(element, imageUrl, retryCallback) {
-        console.log('💥 Adding error state to:', element);
-
-        // Remove existing error
-        removeImageError(element);
-
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'image-error';
-        errorDiv.innerHTML = `
-            <i class="fas fa-exclamation-triangle error-icon"></i>
-            <div class="error-text">Không thể tải ảnh</div>
-            <button class="retry-btn" onclick="retryLoadImage('${imageUrl}', this.closest('.face-image-card'))">
-                <i class="fas fa-redo me-1"></i>Thử lại
-            </button>
-        `;
-
-        element.appendChild(errorDiv);
-        element.classList.add('error');
-
-        console.log('✅ Error state added successfully');
-    }
-
-    function removeImageError(element) {
-        const errorDiv = element.querySelector('.image-error');
-        if (errorDiv) {
-            errorDiv.remove();
-        }
-        element.classList.remove('error');
-    }
-
-    function loadImageWithSkeleton(imageUrl, card, onSuccess, onError) {
-        console.log('🖼️ Loading image with skeleton:', imageUrl);
-
-        // Add skeleton loading
-        const skeleton = addImageSkeleton(card);
-
-        // Create image element
-        const img = document.createElement('img');
-        img.className = 'face-image';
-        img.alt = 'Face image';
-
-        // Handle successful load
-        img.onload = function() {
-            console.log('✅ Image loaded successfully:', imageUrl);
-            removeImageSkeleton(card);
-            removeImageError(card);
-
-            // Add image to card
-            img.classList.add('loaded');
-            card.appendChild(img);
-
-            if (onSuccess) {
-                onSuccess(img);
-            }
-        };
-
-        // Handle load error
-        img.onerror = function() {
-            console.error('❌ Failed to load image:', imageUrl);
-            removeImageSkeleton(card);
-
-            // Add error state
-            addImageError(card, imageUrl, () => {
-                removeImageError(card);
-                loadImageWithSkeleton(imageUrl, card, onSuccess, onError);
-            });
-
-            if (onError) {
-                onError();
-            }
-        };
-
-        // Start loading
-        img.src = imageUrl;
-    }
-
-    // Global retry function
-    window.retryLoadImage = function(imageUrl, cardElement) {
-        console.log('🔄 Retrying image load:', imageUrl);
-        removeImageError(cardElement);
-
-        // Clear existing image
-        const existingImage = cardElement.querySelector('.face-image');
-        if (existingImage) {
-            existingImage.remove();
-        }
-
-        // Reload with skeleton
-        loadImageWithSkeleton(imageUrl, cardElement);
-    };
 
     // ===== UPLOAD LOADING FUNCTIONS =====
     function addImageLoadingOverlay(element, fileName) {
-        console.log('🔄 Adding upload loading overlay to:', element, 'for file:', fileName);
-
-        // Remove existing overlay
+        console.log('🔄 Adding upload loading overlay');
         removeImageLoadingOverlay(element);
 
         // Special handling for avatar container
         if (element.classList.contains('avatar-container')) {
             element.classList.add('uploading');
-            return null; // Use CSS pseudo-element for avatar
+            return null;
         }
 
         const overlay = document.createElement('div');
         overlay.className = 'image-loading-overlay';
         overlay.innerHTML = `
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Đang tải lên...</div>
-        <div class="loading-progress" id="imageProgress_${Date.now()}">0%</div>
-    `;
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Đang tải lên...</div>
+            <div class="loading-progress" id="imageProgress_${Date.now()}">0%</div>
+        `;
 
-        element.style.position = 'relative';
         element.appendChild(overlay);
         element.classList.add('uploading');
 
-        console.log('✅ Upload loading overlay added successfully');
         return overlay;
     }
 
@@ -950,7 +1085,6 @@
     }
 
     function removeImageLoadingOverlay(element) {
-        // Special handling for avatar container
         if (element.classList.contains('avatar-container')) {
             element.classList.remove('uploading');
             return;
@@ -970,9 +1104,9 @@
         const progressBar = document.getElementById('notificationProgressBar');
         const text = document.getElementById('notificationText');
 
-        title.textContent = `Tải lên: ${fileName}`;
-        progressBar.style.width = `${percent}%`;
-        text.textContent = `${percent}% hoàn thành`;
+        if (title) title.textContent = `Tải lên: ${fileName}`;
+        if (progressBar) progressBar.style.width = `${percent}%`;
+        if (text) text.textContent = `${percent}% hoàn thành`;
 
         notification.classList.add('show');
     }
@@ -1010,7 +1144,6 @@
         formData.append('file', file);
 
         const xhr = new XMLHttpRequest();
-        currentUploadXhr = xhr;
         uploadStartTime = Date.now();
 
         // Progress tracking
@@ -1019,10 +1152,7 @@
                 const percent = Math.round((e.loaded / e.total) * 100);
                 console.log(`📊 Upload progress: ${percent}%`);
 
-                // Update image loading overlay
                 updateImageLoadingProgress(targetElement, percent);
-
-                // Update notification
                 updateUploadNotification(percent, 'Đang tải lên...');
             }
         };
@@ -1030,9 +1160,6 @@
         // Upload completion
         xhr.onload = () => {
             console.log('✅ Upload completed, status:', xhr.status);
-            currentUploadXhr = null;
-
-            // Remove loading overlay
             removeImageLoadingOverlay(targetElement);
 
             if (xhr.status === 200) {
@@ -1070,7 +1197,6 @@
         // Error handling
         xhr.onerror = () => {
             console.error('❌ Network error');
-            currentUploadXhr = null;
             removeImageLoadingOverlay(targetElement);
             updateUploadNotification(100, 'Lỗi mạng');
             showAlert('danger', 'Lỗi mạng');
@@ -1079,7 +1205,6 @@
 
         xhr.ontimeout = () => {
             console.error('⏰ Timeout error');
-            currentUploadXhr = null;
             removeImageLoadingOverlay(targetElement);
             updateUploadNotification(100, 'Timeout');
             showAlert('danger', 'Timeout - Vui lòng thử lại');
@@ -1118,13 +1243,11 @@
                 const profilePlaceholder = document.getElementById('profilePlaceholder');
 
                 if (profilePlaceholder && avatarContainer) {
-                    // Create new image element
                     const newImg = document.createElement('img');
                     newImg.id = 'profileImage';
                     newImg.className = 'avatar-image';
                     newImg.alt = 'Avatar';
 
-                    // Add loading handler
                     newImg.onload = function() {
                         this.style.opacity = '1';
                         addProfileImageDeleteButton();
@@ -1135,14 +1258,11 @@
                         showAlert('danger', 'Không thể hiển thị ảnh đã tải lên');
                     };
 
-                    newImg.style.opacity = '0.7'; // Show loading state
+                    newImg.style.opacity = '0.7';
                     newImg.src = response.url || response.imageUrl;
-
-                    // Replace placeholder with image
                     avatarContainer.replaceChild(newImg, profilePlaceholder);
 
                 } else if (profileImage) {
-                    // Update existing image with loading
                     profileImage.style.opacity = '0.7';
                     profileImage.onload = function() {
                         this.style.opacity = '1';
@@ -1165,29 +1285,46 @@
         const file = input.files[0];
         console.log('📁 Selected file:', file.name, file.size, file.type);
 
-        if (currentFaceImageCount >= maxFaceImages) {
+        // Check if we have reached the limit
+        if (getImageCount() >= maxFaceImages) {
             showAlert('warning', 'Đã đạt giới hạn tối đa 5 ảnh khuôn mặt');
             return;
         }
 
-        // Find first empty slot
-        const emptySlot = document.querySelector('.face-image-card:not(.has-image)');
+        // Use the selected slot or find an empty one
+        let targetSlot = currentUploadSlot;
+        if (targetSlot === null || faceImagesData[targetSlot]) {
+            targetSlot = findEmptySlot();
+        }
 
-        if (!emptySlot) {
+        if (targetSlot === -1) {
             showAlert('warning', 'Không tìm thấy slot trống để upload');
             return;
         }
 
-        console.log('🎯 Found empty slot for upload:', emptySlot);
+        console.log('🎯 Uploading to slot:', targetSlot);
+
+        const slotElement = document.querySelector(`[data-slot-index="${targetSlot}"]`);
 
         uploadImageWithProgress(
             file,
             '/student/api/upload-face-image',
-            emptySlot,
+            slotElement,
             function(response) {
                 console.log('✅ Face upload success:', response);
-                currentFaceImageCount = response.currentCount || currentFaceImageCount + 1;
-                loadFaceImages();
+
+                // Update the specific slot with the new image
+                updateSlotContent(targetSlot, {
+                    id: response.id || Date.now(),
+                    filename: response.filename || file.name,
+                    url: response.url || response.imageUrl
+                });
+
+                // Update biometric status
+                updateBiometricStatus();
+
+                // Reset current upload slot
+                currentUploadSlot = null;
             }
         );
 
@@ -1217,16 +1354,13 @@
                     const avatarContainer = document.querySelector('.avatar-container');
 
                     if (profileImage && avatarContainer) {
-                        // Create placeholder element
                         const newPlaceholder = document.createElement('div');
                         newPlaceholder.id = 'profilePlaceholder';
                         newPlaceholder.className = 'avatar-placeholder';
                         newPlaceholder.innerHTML = '<i class="fas fa-user"></i>';
 
-                        // Replace image with placeholder
                         avatarContainer.replaceChild(newPlaceholder, profileImage);
 
-                        // Remove delete button
                         const deleteBtn = document.querySelector('.profile-delete-btn');
                         if (deleteBtn) deleteBtn.remove();
                     }
@@ -1240,31 +1374,55 @@
             });
     }
 
-    function deleteFaceImageByFilename(filename, cardElement) {
+    function deleteFaceImageFromSlot(slotIndex) {
+        console.log('🗑️ Delete triggered for slot:', slotIndex);
+
         if (!confirm('Bạn có chắc chắn muốn xóa ảnh này?')) return;
 
-        console.log('🗑️ Deleting face image:', filename);
-        addImageLoadingOverlay(cardElement, 'Đang xóa...');
+        const imageData = faceImagesData[slotIndex];
+        if (!imageData) {
+            console.error('❌ No image data found for slot:', slotIndex);
+            showAlert('danger', 'Không tìm thấy dữ liệu ảnh để xóa');
+            return;
+        }
 
-        fetch(`/student/api/face-image/${filename}`, {
-            method: 'DELETE'
+        console.log('🗑️ Deleting face image from slot:', slotIndex, 'filename:', imageData.filename);
+
+        const slotElement = document.querySelector(`[data-slot-index="${slotIndex}"]`);
+        addImageLoadingOverlay(slotElement, 'Đang xóa...');
+
+        // Use the correct API endpoint format
+        fetch(`/student/api/face-image/${encodeURIComponent(imageData.filename)}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
         })
-            .then(response => response.json())
+            .then(response => {
+                console.log('🔄 Delete response status:', response.status);
+                return response.json();
+            })
             .then(data => {
-                removeImageLoadingOverlay(cardElement);
+                console.log('📦 Delete response data:', data);
+                removeImageLoadingOverlay(slotElement);
 
                 if (data.error) {
+                    console.error('❌ Delete error from server:', data.error);
                     showAlert('danger', data.error);
                 } else {
-                    currentFaceImageCount = data.remainingCount;
+                    // Clear the specific slot
+                    updateSlotContent(slotIndex, null);
+
                     showAlert('success', 'Xóa ảnh thành công!');
-                    loadFaceImages();
+                    updateBiometricStatus();
+
+                    console.log('✅ Image deleted successfully from slot:', slotIndex);
                 }
             })
             .catch(error => {
-                removeImageLoadingOverlay(cardElement);
-                console.error('❌ Delete error:', error);
-                showAlert('danger', 'Có lỗi xảy ra khi xóa ảnh');
+                removeImageLoadingOverlay(slotElement);
+                console.error('❌ Delete network error:', error);
+                showAlert('danger', 'Có lỗi mạng khi xóa ảnh: ' + error.message);
             });
     }
 
@@ -1283,101 +1441,146 @@
         }
     }
 
-    // ===== FACE IMAGES FUNCTIONS =====
-    function createFaceImageCard(image, index, hasImage) {
-        const card = document.createElement('div');
-        card.className = `face-image-card ${hasImage ? 'has-image' : ''}`;
+    // Add this function to force show overlay and enable clicks
+    function forceShowOverlay(slotIndex) {
+        const slot = document.querySelector(`[data-slot-index="${slotIndex}"]`);
+        if (slot) {
+            const overlay = slot.querySelector('.face-image-overlay');
+            if (overlay) {
+                overlay.style.opacity = '1';
+                overlay.style.pointerEvents = 'auto';
+                console.log('👁️ Forced overlay to show for slot:', slotIndex);
 
-        if (hasImage) {
-            // Add overlay content first
-            card.innerHTML = `
-                <div class="face-image-overlay">
-                    <button class="delete-btn" onclick="deleteFaceImageByFilename('${image.filename}', this.closest('.face-image-card'))">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                    <button class="view-btn" onclick="viewFaceImage('${image.url}', '${image.filename}')">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </div>
-            `;
-
-            // Load image with skeleton
-            loadImageWithSkeleton(image.url, card, (img) => {
-                console.log('🖼️ Face image loaded successfully');
-            }, () => {
-                console.error('❌ Failed to load face image');
-            });
-
-        } else {
-            card.innerHTML = `
-                <div class="upload-placeholder">
-                    <i class="fas fa-plus fa-2x mb-2"></i>
-                    <div>Thêm ảnh ${index + 1}</div>
-                </div>
-            `;
-            card.onclick = () => {
-                console.log('🖱️ Empty slot clicked, triggering file input');
-                document.getElementById('faceUpload').click();
-            };
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    overlay.style.opacity = '';
+                    overlay.style.pointerEvents = '';
+                }, 3000);
+            }
         }
-
-        return card;
     }
 
+    // Add this function to manually trigger delete for any slot
+    function manualDeleteSlot(slotIndex) {
+        console.log('🔧 Manual delete triggered for slot:', slotIndex);
+        if (faceImagesData[slotIndex]) {
+            deleteFaceImageFromSlot(slotIndex);
+        } else {
+            console.log('❌ No image data found for slot:', slotIndex);
+            showAlert('warning', 'Slot ' + (slotIndex + 1) + ' không có ảnh để xóa');
+        }
+    }
+
+    /*
+     * ===== DEBUGGING INSTRUCTIONS =====
+     * Nếu không xóa được ảnh, mở Console (F12) và thử các lệnh sau:
+     *
+     * 1. Kiểm tra dữ liệu slot: debugSlotData(0)  // thay 0 bằng số slot
+     * 2. Test xóa slot: testDeleteSlot(0)         // thay 0 bằng số slot
+     * 3. Xóa trực tiếp: manualDeleteSlot(0)       // thay 0 bằng số slot
+     * 4. Hiện overlay: forceShowOverlay(0)        // thay 0 bằng số slot
+     * 5. Xem tất cả dữ liệu: console.log(window.faceImagesData)
+     *
+     * Alternative methods:
+     * - Double-click vào ảnh để xóa
+     * - Right-click vào ảnh để xóa
+     */
+
+    // Expose these functions to window for console debugging
+    window.forceShowOverlay = forceShowOverlay;
+    window.manualDeleteSlot = manualDeleteSlot;
+    function debugSlotData(slotIndex) {
+        console.log('🔍 Debug slot data for slot:', slotIndex);
+        console.log('📊 All faceImagesData:', faceImagesData);
+        console.log('📋 Slot', slotIndex, 'data:', faceImagesData[slotIndex]);
+
+        const slotElement = document.querySelector(`[data-slot-index="${slotIndex}"]`);
+        console.log('🎯 Slot element:', slotElement);
+
+        if (slotElement) {
+            const overlay = slotElement.querySelector('.face-image-overlay');
+            console.log('👁️ Overlay element:', overlay);
+
+            if (overlay) {
+                const deleteBtn = overlay.querySelector('.delete-btn');
+                const viewBtn = overlay.querySelector('.view-btn');
+                console.log('🗑️ Delete button:', deleteBtn);
+                console.log('👀 View button:', viewBtn);
+            }
+        }
+    }
+
+    // Add this to test delete functionality
+    function testDeleteSlot(slotIndex) {
+        console.log('🧪 Testing delete for slot:', slotIndex);
+        debugSlotData(slotIndex);
+        deleteFaceImageFromSlot(slotIndex);
+    }
+
+    // Expose debugging functions to window for console access
+    window.debugSlotData = debugSlotData;
+    window.testDeleteSlot = testDeleteSlot;
+    window.faceImagesData = faceImagesData;
     function loadFaceImages() {
         console.log('📋 Loading face images...');
 
         fetch('/student/api/get-face-images')
-            .then(response => response.json())
+            .then(response => {
+                console.log('🔄 Response status:', response.status);
+                return response.json();
+            })
             .then(data => {
                 console.log('📦 Face images data:', data);
-                currentFaceImageCount = data.images ? data.images.length : 0;
-                renderFaceImagesGrid(data.images || []);
+
+                // Clear all slots first
+                initializeFaceImageSlots();
+
+                // Load images based on current API response format
+                if (data.images && data.images.length > 0) {
+                    console.log('📸 Loading', data.images.length, 'face images');
+
+                    // Current API returns array of images, load them sequentially
+                    data.images.forEach((image, index) => {
+                        console.log(`📷 Loading image ${index}:`, image);
+
+                        if (index < maxFaceImages && image.filename && image.url) {
+                            updateSlotContent(index, {
+                                id: image.id,
+                                filename: image.filename,
+                                url: image.url
+                            });
+                        } else {
+                            console.warn('⚠️ Skipping invalid image data:', image);
+                        }
+                    });
+                } else {
+                    console.log('📷 No face images found');
+                }
+
                 updateBiometricStatus();
-                addProfileImageDeleteButton();
+                console.log('✅ Face images loaded successfully');
+                console.log('🔍 Current face images data:', faceImagesData);
             })
             .catch(error => {
                 console.error('❌ Error loading face images:', error);
-                renderFaceImagesGrid([]);
+                showAlert('danger', 'Không thể tải danh sách ảnh: ' + error.message);
                 updateBiometricStatus();
             });
-    }
-
-    function renderFaceImagesGrid(images) {
-        console.log('🎨 Rendering face images grid with', images.length, 'images');
-
-        const grid = document.getElementById('faceImagesGrid');
-        grid.innerHTML = '';
-
-        // Render existing images with loading
-        images.forEach((image, index) => {
-            const card = createFaceImageCard(image, index, true);
-            card.setAttribute('data-filename', image.filename);
-            grid.appendChild(card);
-        });
-
-        // Render empty slots
-        const emptySlots = maxFaceImages - images.length;
-        for (let i = 0; i < emptySlots; i++) {
-            const card = createFaceImageCard(null, images.length + i, false);
-            grid.appendChild(card);
-        }
-
-        console.log('✅ Face images grid rendered successfully');
     }
 
     function updateBiometricStatus() {
         const statusDiv = document.getElementById('biometricStatus');
         const statusText = document.getElementById('statusText');
+        const currentCount = getImageCount();
 
         statusDiv.className = 'biometric-status';
 
-        if (currentFaceImageCount >= 3) {
+        if (currentCount >= 3) {
             statusDiv.classList.add('status-completed');
             statusText.innerHTML = '<i class="fas fa-check-circle me-2"></i>Đã có đủ ảnh để nhận diện';
-        } else if (currentFaceImageCount > 0) {
+        } else if (currentCount > 0) {
             statusDiv.classList.add('status-partial');
-            statusText.innerHTML = `<i class="fas fa-clock me-2"></i>Cần thêm ${3 - currentFaceImageCount} ảnh nữa`;
+            statusText.innerHTML = `<i class="fas fa-clock me-2"></i>Cần thêm ${3 - currentCount} ảnh nữa`;
         } else {
             statusDiv.classList.add('status-empty');
             statusText.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Chưa có ảnh khuôn mặt nào';
@@ -1420,14 +1623,208 @@
         deleteBtn.onclick = () => {
             bootstrap.Modal.getInstance(modal).hide();
             setTimeout(() => {
-                const cardElement = document.querySelector(`[data-filename="${filename}"]`);
-                deleteFaceImageByFilename(filename, cardElement);
+                // Find which slot contains this filename
+                for (let i = 0; i < maxFaceImages; i++) {
+                    if (faceImagesData[i] && faceImagesData[i].filename === filename) {
+                        deleteFaceImageFromSlot(i);
+                        break;
+                    }
+                }
             }, 300);
         };
 
         const bsModal = new bootstrap.Modal(modal);
         bsModal.show();
     }
+
+    // ===== CHANGE PASSWORD FUNCTIONS =====
+
+    function openChangePasswordModal() {
+        const modal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+        modal.show();
+
+        // Reset form
+        document.getElementById('changePasswordForm').reset();
+        updatePasswordStrength('');
+    }
+
+    function togglePassword(inputId) {
+        const input = document.getElementById(inputId);
+        const button = input.nextElementSibling;
+        const icon = button.querySelector('i');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            input.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    }
+
+    function updatePasswordStrength(password) {
+        const strengthBar = document.getElementById('passwordStrength');
+        const strengthText = document.getElementById('passwordStrengthText');
+
+        let strength = 0;
+        let text = '';
+        let className = '';
+
+        if (password.length === 0) {
+            text = 'Nhập mật khẩu mới';
+        } else if (password.length < 6) {
+            strength = 25;
+            text = 'Quá ngắn';
+            className = 'password-weak';
+        } else {
+            // Check password strength
+            let score = 0;
+            if (password.length >= 8) score += 25;
+            if (/[a-z]/.test(password)) score += 25;
+            if (/[A-Z]/.test(password)) score += 25;
+            if (/[0-9]/.test(password)) score += 25;
+            if (/[^a-zA-Z0-9]/.test(password)) score += 25;
+
+            strength = Math.min(score, 100);
+
+            if (strength < 50) {
+                text = 'Yếu';
+                className = 'password-weak';
+            } else if (strength < 75) {
+                text = 'Trung bình';
+                className = 'password-medium';
+            } else {
+                text = 'Mạnh';
+                className = 'password-strong';
+            }
+        }
+
+        strengthBar.style.width = strength + '%';
+        strengthBar.className = 'progress-bar ' + className;
+        strengthText.textContent = text;
+        strengthText.className = 'form-text ' + className;
+    }
+
+    function validatePasswords() {
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (newPassword !== confirmPassword) {
+            showAlert('danger', 'Mật khẩu xác nhận không khớp');
+            return false;
+        }
+
+        if (newPassword.length < 6) {
+            showAlert('danger', 'Mật khẩu phải có ít nhất 6 ký tự');
+            return false;
+        }
+
+        return true;
+    }
+
+    function changePassword() {
+        console.log('🔐 Change password triggered');
+
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        // Validate inputs
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            showAlert('danger', 'Vui lòng điền đầy đủ thông tin');
+            return;
+        }
+
+        if (!validatePasswords()) {
+            return;
+        }
+
+        // Disable button during request
+        const changeBtn = document.getElementById('changePasswordBtn');
+        const originalText = changeBtn.innerHTML;
+        changeBtn.disabled = true;
+        changeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+
+        // Prepare request data
+        const requestData = {
+            currentPassword: currentPassword,
+            newPassword: newPassword,
+            confirmPassword: confirmPassword
+        };
+
+        console.log('📤 Sending change password request');
+
+        fetch('/student/api/change-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        })
+            .then(response => {
+                console.log('🔄 Change password response status:', response.status);
+                return response.json().then(data => ({
+                    status: response.status,
+                    ok: response.ok,
+                    data: data
+                }));
+            })
+            .then(result => {
+                console.log('📦 Change password response:', result);
+
+                // Re-enable button
+                changeBtn.disabled = false;
+                changeBtn.innerHTML = originalText;
+
+                if (result.ok && !result.data.error) {
+                    showAlert('success', 'Đổi mật khẩu thành công!');
+
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('changePasswordModal'));
+                    modal.hide();
+
+                    // Reset form
+                    document.getElementById('changePasswordForm').reset();
+                    updatePasswordStrength('');
+
+                } else {
+                    const errorMessage = result.data.error || result.data.message || 'Không thể đổi mật khẩu';
+                    showAlert('danger', errorMessage);
+                }
+            })
+            .catch(error => {
+                console.error('❌ Change password error:', error);
+
+                // Re-enable button
+                changeBtn.disabled = false;
+                changeBtn.innerHTML = originalText;
+
+                showAlert('danger', 'Có lỗi mạng khi đổi mật khẩu: ' + error.message);
+            });
+    }
+
+    // Add event listeners when document loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Password strength checker
+        const newPasswordInput = document.getElementById('newPassword');
+        if (newPasswordInput) {
+            newPasswordInput.addEventListener('input', function() {
+                updatePasswordStrength(this.value);
+            });
+        }
+
+        // Enter key to submit
+        const modal = document.getElementById('changePasswordModal');
+        if (modal) {
+            modal.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
+                    e.preventDefault();
+                    changePassword();
+                }
+            });
+        }
+    });
 
 </script>
 

@@ -1,27 +1,29 @@
 package com.tathanhloc.faceattendance.Config;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+@Slf4j
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
+    @Value("${app.upload.dir:uploads}")
+    private String uploadDir;
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Serve streams từ static directory
-        registry.addResourceHandler("/streams/**")
-                .addResourceLocations("classpath:/static/streams/")
-                .setCachePeriod(0) // No cache for live streams
-                .resourceChain(false);
-
-        // ✅ CẤU HÌNH CHO UPLOADS - GIẢI QUYẾT VẤN ĐỀ LOAD ẢNH
+        // Serve uploaded files
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("classpath:/static/uploads/")
-                .setCachePeriod(0) // No cache trong development
-                .resourceChain(false);
+                .addResourceLocations("file:" + uploadDir + "/")
+                .setCachePeriod(3600); // Cache for 1 hour
 
+        log.info("Configured static resource handler for uploads: /uploads/** -> file:{}/", uploadDir);
     }
+
+
 
 
 }

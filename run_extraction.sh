@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Đường dẫn tới virtual environment
-VENV_PATH="D:/LuanVan/face-attendance/scripts/face_recognition/.venv"
-SCRIPT_DIR="D:/LuanVan/face-attendance"
+VENV_PATH="D:\LuanVan\face-attendance\scripts\face_recognition\.venv"
+SCRIPT_DIR="D:\LuanVan\face-attendance"
 
 # Kiểm tra venv tồn tại
 if [ ! -d "$VENV_PATH" ]; then

@@ -337,4 +337,5 @@ public class FaceRecognitionService {
 
         Files.write(scriptDir.resolve("extract_features.py"), script.getBytes());
     }
+
 }

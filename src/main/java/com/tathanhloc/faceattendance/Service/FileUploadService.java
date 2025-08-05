@@ -1,396 +1,521 @@
 package com.tathanhloc.faceattendance.Service;
 
+import com.tathanhloc.faceattendance.Model.FaceImage;
+import com.tathanhloc.faceattendance.Model.SinhVien;
+import com.tathanhloc.faceattendance.Repository.FaceImageRepository;
+import com.tathanhloc.faceattendance.Repository.SinhVienRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class FileUploadService {
 
-    @Value("${app.upload.dir:src/main/resources/static/uploads}")
+    @Value("${app.upload.dir:uploads}")
     private String uploadDir;
 
-    @Value("${app.upload.max-file-size:5242880}") // 5MB
-    private long maxFileSize;
+    @Value("${app.upload.url-prefix:/uploads}")
+    private String urlPrefix;
 
-    private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
-            "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"
-    );
+    private final FaceImageRepository faceImageRepository;
+    private final SinhVienRepository sinhVienRepository;
 
-    private static final Set<String> ALLOWED_IMAGE_EXTENSIONS = Set.of(
-            ".jpg", ".jpeg", ".png", ".gif", ".webp"
-    );
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp");
+    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-    /**
-     * Tạo thư mục cho sinh viên
-     */
-    public void createStudentDirectory(String maSv) {
-        try {
-            Path studentDir = getStudentDirectory(maSv);
-            Path facesDir = studentDir.resolve("faces");
-
-            Files.createDirectories(studentDir);
-            Files.createDirectories(facesDir);
-
-            log.info("Created directories for student: {}", maSv);
-        } catch (IOException e) {
-            log.error("Error creating directories for student {}: ", maSv, e);
-            throw new RuntimeException("Không thể tạo thư mục cho sinh viên", e);
-        }
-    }
+    // ================== FILE VALIDATION ==================
 
     /**
-     * Xóa thư mục và tất cả file của sinh viên
-     */
-    public void deleteStudentDirectory(String maSv) {
-        try {
-            Path studentDir = getStudentDirectory(maSv);
-            if (Files.exists(studentDir)) {
-                deleteDirectoryRecursively(studentDir);
-                log.info("Deleted directory for student: {}", maSv);
-            }
-        } catch (IOException e) {
-            log.error("Error deleting directory for student {}: ", maSv, e);
-        }
-    }
-
-    /**
-     * Lưu ảnh đại diện sinh viên
-     */
-    public String saveStudentProfileImage(String maSv, MultipartFile file) {
-        try {
-            validateImageFile(file);
-
-            Path studentDir = getStudentDirectory(maSv);
-            Files.createDirectories(studentDir);
-
-            String fileExtension = getFileExtension(file.getOriginalFilename());
-            String fileName = "profile" + fileExtension;
-            Path filePath = studentDir.resolve(fileName);
-
-            // Xóa ảnh cũ nếu có
-            deleteExistingProfileImage(studentDir);
-
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            String relativePath = "/uploads/students/" + maSv + "/" + fileName;
-            log.info("Saved profile image for student {}: {}", maSv, relativePath);
-
-            return relativePath;
-
-        } catch (IOException e) {
-            log.error("Error saving profile image for student {}: ", maSv, e);
-            throw new RuntimeException("Không thể lưu ảnh đại diện", e);
-        }
-    }
-
-    /**
-     * Lưu ảnh khuôn mặt để trích xuất đặc trưng
-     */
-    public String saveFaceImage(String maSv, MultipartFile file) {
-        try {
-            validateImageFile(file);
-
-            Path facesDir = getStudentDirectory(maSv).resolve("faces");
-            Files.createDirectories(facesDir);
-
-            // Đếm số ảnh hiện tại
-            int currentCount = getFaceImageCount(maSv);
-            if (currentCount >= 5) {
-                throw new RuntimeException("Đã đạt giới hạn 5 ảnh khuôn mặt");
-            }
-
-            String fileExtension = getFileExtension(file.getOriginalFilename());
-            String fileName = "face_" + (currentCount + 1) + fileExtension;
-            Path filePath = facesDir.resolve(fileName);
-
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            String relativePath = "/uploads/students/" + maSv + "/faces/" + fileName;
-            log.info("Saved face image for student {}: {}", maSv, relativePath);
-
-            return relativePath;
-
-        } catch (IOException e) {
-            log.error("Error saving face image for student {}: ", maSv, e);
-            throw new RuntimeException("Không thể lưu ảnh khuôn mặt", e);
-        }
-    }
-
-    /**
-     * Lấy danh sách ảnh khuôn mặt của sinh viên
-     */
-    public List<Map<String, Object>> getFaceImages(String maSv) {
-        List<Map<String, Object>> images = new ArrayList<>();
-
-        try {
-            Path facesDir = getStudentDirectory(maSv).resolve("faces");
-            if (!Files.exists(facesDir)) {
-                return images;
-            }
-
-            try (Stream<Path> files = Files.list(facesDir)) {
-                files.filter(Files::isRegularFile)
-                        .filter(this::isImageFile)
-                        .sorted()
-                        .forEach(file -> {
-                            Map<String, Object> imageInfo = new HashMap<>();
-                            imageInfo.put("id", file.getFileName().toString());
-                            imageInfo.put("url", "/uploads/students/" + maSv + "/faces/" + file.getFileName());
-                            imageInfo.put("filename", file.getFileName().toString());
-                            imageInfo.put("size", getFileSize(file));
-                            images.add(imageInfo);
-                        });
-            }
-
-        } catch (IOException e) {
-            log.error("Error loading face images for student {}: ", maSv, e);
-        }
-
-        return images;
-    }
-
-    /**
-     * Đếm số ảnh khuôn mặt hiện tại
-     */
-    public int getFaceImageCount(String maSv) {
-        try {
-            Path facesDir = getStudentDirectory(maSv).resolve("faces");
-            if (!Files.exists(facesDir)) {
-                return 0;
-            }
-
-            try (Stream<Path> files = Files.list(facesDir)) {
-                return (int) files.filter(Files::isRegularFile)
-                        .filter(this::isImageFile)
-                        .count();
-            }
-
-        } catch (IOException e) {
-            log.error("Error counting face images for student {}: ", maSv, e);
-            return 0;
-        }
-    }
-
-    /**
-     * Xóa ảnh khuôn mặt
-     */
-    public void deleteFaceImage(String maSv, String filename) {
-        try {
-            Path filePath = getStudentDirectory(maSv).resolve("faces").resolve(filename);
-            if (Files.exists(filePath)) {
-                Files.delete(filePath);
-                log.info("Deleted face image: {}/{}", maSv, filename);
-            }
-        } catch (IOException e) {
-            log.error("Error deleting face image {}/{}: ", maSv, filename, e);
-            throw new RuntimeException("Không thể xóa ảnh khuôn mặt", e);
-        }
-    }
-
-    /**
-     * Lưu file embedding
-     */
-    public void saveEmbeddingFile(String maSv, String embeddingData) {
-        try {
-            Path studentDir = getStudentDirectory(maSv);
-            Files.createDirectories(studentDir);
-
-            Path embeddingFile = studentDir.resolve("embeddings.json");
-
-            Map<String, Object> embeddingInfo = new HashMap<>();
-            embeddingInfo.put("maSv", maSv);
-            embeddingInfo.put("embedding", embeddingData);
-            embeddingInfo.put("createdAt", LocalDateTime.now().toString());
-            embeddingInfo.put("faceCount", getFaceImageCount(maSv));
-
-            String jsonData = convertToJson(embeddingInfo);
-            Files.write(embeddingFile, jsonData.getBytes());
-
-            log.info("Saved embedding file for student: {}", maSv);
-
-        } catch (IOException e) {
-            log.error("Error saving embedding file for student {}: ", maSv, e);
-            throw new RuntimeException("Không thể lưu file embedding", e);
-        }
-    }
-
-    /**
-     * Kiểm tra file có phải ảnh hợp lệ không
+     * Validate image file
      */
     public boolean isValidImageFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             return false;
         }
 
-        String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType.toLowerCase())) {
+        if (file.getSize() > MAX_FILE_SIZE) {
+            log.warn("File size exceeds limit: {} bytes", file.getSize());
             return false;
         }
 
         String filename = file.getOriginalFilename();
-        if (filename == null) {
+        if (filename == null || filename.isEmpty()) {
             return false;
         }
 
         String extension = getFileExtension(filename).toLowerCase();
-        if (!ALLOWED_IMAGE_EXTENSIONS.contains(extension)) {
-            return false;
-        }
+        return ALLOWED_EXTENSIONS.contains(extension);
+    }
 
-        return file.getSize() <= maxFileSize;
+    // ================== PROFILE IMAGE METHODS ==================
+
+    /**
+     * Save student profile image
+     */
+    @Transactional
+    public String saveStudentProfileImage(String maSv, MultipartFile file) throws IOException {
+        String filename = "profile_" + maSv + "_" + System.currentTimeMillis() + "." + getFileExtension(file.getOriginalFilename());
+        Path uploadPath = Paths.get(uploadDir, "students", maSv, "profile");
+
+        Files.createDirectories(uploadPath);
+
+        // Delete old profile images if exists
+        deleteOldProfileImages(uploadPath);
+
+        Path filePath = uploadPath.resolve(filename);
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+        String imageUrl = urlPrefix + "/students/" + maSv + "/profile/" + filename;
+
+        // Update student profile
+        SinhVien sinhVien = sinhVienRepository.findById(maSv)
+                .orElseThrow(() -> new RuntimeException("Sinh viên không tồn tại"));
+        sinhVien.setHinhAnh(imageUrl);
+        sinhVienRepository.save(sinhVien);
+
+        log.info("Saved profile image for student {}: {}", maSv, filename);
+        return imageUrl;
     }
 
     /**
-     * Validate file ảnh và throw exception nếu không hợp lệ
+     * Delete student profile image
      */
-    private void validateImageFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("File không được để trống");
-        }
+    @Transactional
+    public void deleteStudentProfileImage(String maSv) throws IOException {
+        SinhVien sinhVien = sinhVienRepository.findById(maSv)
+                .orElseThrow(() -> new RuntimeException("Sinh viên không tồn tại"));
 
-        if (file.getSize() > maxFileSize) {
-            throw new IllegalArgumentException("Kích thước file vượt quá giới hạn cho phép");
-        }
+        if (sinhVien.getHinhAnh() != null && !sinhVien.getHinhAnh().isEmpty()) {
+            // Extract filename from URL
+            String imageUrl = sinhVien.getHinhAnh();
+            String filename = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
 
-        String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType.toLowerCase())) {
-            throw new IllegalArgumentException("Định dạng file không được hỗ trợ");
-        }
-    }
+            // Delete physical file
+            Path filePath = Paths.get(uploadDir, "students", maSv, "profile", filename);
+            Files.deleteIfExists(filePath);
 
-    /**
-     * Lấy đường dẫn thư mục của sinh viên
-     */
-    private Path getStudentDirectory(String maSv) {
-        return Paths.get(uploadDir, "students", maSv);
-    }
+            // Update database
+            sinhVien.setHinhAnh(null);
+            sinhVienRepository.save(sinhVien);
 
-    /**
-     * Lấy extension của file
-     */
-    private String getFileExtension(String filename) {
-        if (filename == null || filename.lastIndexOf('.') == -1) {
-            return "";
-        }
-        return filename.substring(filename.lastIndexOf('.'));
-    }
-
-    /**
-     * Kiểm tra file có phải ảnh không
-     */
-    private boolean isImageFile(Path file) {
-        try {
-            String contentType = Files.probeContentType(file);
-            return contentType != null && contentType.startsWith("image/");
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
-    /**
-     * Lấy kích thước file
-     */
-    private long getFileSize(Path file) {
-        try {
-            return Files.size(file);
-        } catch (IOException e) {
-            return 0;
+            log.info("Deleted profile image for student {}", maSv);
         }
     }
 
     /**
-     * Xóa ảnh đại diện cũ
+     * Delete old profile images in directory
      */
-    private void deleteExistingProfileImage(Path studentDir) throws IOException {
-        try (Stream<Path> files = Files.list(studentDir)) {
-            files.filter(Files::isRegularFile)
-                    .filter(file -> file.getFileName().toString().startsWith("profile"))
+    private void deleteOldProfileImages(Path profileDir) throws IOException {
+        if (Files.exists(profileDir)) {
+            Files.list(profileDir)
+                    .filter(Files::isRegularFile)
                     .forEach(file -> {
                         try {
                             Files.delete(file);
                         } catch (IOException e) {
-                            log.warn("Could not delete old profile image: {}", file);
+                            log.warn("Failed to delete old profile image: {}", file, e);
                         }
                     });
         }
     }
 
+    // ================== FACE IMAGE METHODS ==================
+
     /**
-     * Xóa thư mục đệ quy
+     * Save face image with slot index
      */
-    private void deleteDirectoryRecursively(Path directory) throws IOException {
-        try (Stream<Path> files = Files.walk(directory)) {
-            files.sorted(Comparator.reverseOrder())
-                    .map(Path::toFile)
-                    .forEach(File::delete);
+    @Transactional
+    public String saveFaceImage(String maSv, MultipartFile file, Integer slotIndex) throws IOException {
+        // Validate slot before saving
+        validateSlotAvailability(maSv, slotIndex);
+
+        SinhVien sinhVien = sinhVienRepository.findById(maSv)
+                .orElseThrow(() -> new RuntimeException("Sinh viên không tồn tại"));
+
+        // Check if slot is occupied and delete existing image
+        Optional<FaceImage> existingImage = faceImageRepository.findByMaSvAndSlotIndex(maSv, slotIndex);
+        if (existingImage.isPresent()) {
+            // Delete existing image in this slot
+            deleteFaceImageEntity(existingImage.get());
+        }
+
+        // Generate filename
+        String filename = "face_" + maSv + "_slot" + slotIndex + "_" + System.currentTimeMillis() + "." + getFileExtension(file.getOriginalFilename());
+        Path uploadPath = Paths.get(uploadDir, "students", maSv, "faces");
+
+        Files.createDirectories(uploadPath);
+
+        Path filePath = uploadPath.resolve(filename);
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+        String imageUrl = urlPrefix + "/students/" + maSv + "/faces/" + filename;
+
+        // Save to database
+        FaceImage faceImage = FaceImage.builder()
+                .filename(filename)
+                .filePath(filePath.toString())
+                .slotIndex(slotIndex)
+                .sinhVien(sinhVien)
+                .isActive(true)
+                .build();
+
+        faceImageRepository.save(faceImage);
+
+        log.info("Saved face image for student {} at slot {}: {}", maSv, slotIndex, filename);
+        return imageUrl;
+    }
+
+    /**
+     * Save face image without slot index (backward compatibility)
+     * Will find first empty slot automatically
+     */
+    @Transactional
+    public String saveFaceImage(String maSv, MultipartFile file) throws IOException {
+        // Find first empty slot
+        Integer emptySlot = findFirstEmptySlot(maSv);
+
+        if (emptySlot == null) {
+            throw new RuntimeException("Đã đạt giới hạn 5 ảnh khuôn mặt");
+        }
+
+        return saveFaceImage(maSv, file, emptySlot);
+    }
+
+    /**
+     * Save face image và trả về đầy đủ thông tin
+     */
+    @Transactional
+    public Map<String, Object> saveFaceImageWithDetails(String maSv, MultipartFile file, Integer slotIndex) throws IOException {
+        String imageUrl = saveFaceImage(maSv, file, slotIndex);
+        FaceImage savedImage = getFaceImageBySlot(maSv, slotIndex);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("url", imageUrl);
+        if (savedImage != null) {
+            result.put("id", savedImage.getId());
+            result.put("filename", savedImage.getFilename());
+            result.put("slotIndex", savedImage.getSlotIndex());
+            result.put("filePath", savedImage.getFilePath());
+            result.put("createdAt", savedImage.getCreatedAt());
+        }
+
+        return result;
+    }
+
+    /**
+     * Get face images with slot information
+     */
+    public List<Map<String, Object>> getFaceImages(String maSv) {
+        List<FaceImage> faceImages = faceImageRepository.findByMaSvAndActive(maSv);
+
+        return faceImages.stream()
+                .sorted(Comparator.comparing(FaceImage::getSlotIndex, Comparator.nullsLast(Comparator.naturalOrder())))
+                .map(image -> {
+                    Map<String, Object> imageMap = new HashMap<>();
+                    imageMap.put("id", image.getId());
+                    imageMap.put("filename", image.getFilename());
+                    imageMap.put("url", urlPrefix + "/students/" + maSv + "/faces/" + image.getFilename());
+                    imageMap.put("slotIndex", image.getSlotIndex());
+                    imageMap.put("createdAt", image.getCreatedAt());
+                    return imageMap;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get face images with slot-based mapping
+     */
+    public Map<String, Object> getFaceImagesWithSlotMapping(String maSv) {
+        List<FaceImage> faceImageEntities = getFaceImagesEntities(maSv);
+
+        // Create slot-based mapping
+        Map<Integer, Map<String, Object>> slotMapping = new HashMap<>();
+        List<Map<String, Object>> imagesList = new ArrayList<>();
+
+        for (FaceImage img : faceImageEntities) {
+            Map<String, Object> imageData = new HashMap<>();
+            imageData.put("id", img.getId());
+            imageData.put("filename", img.getFilename());
+            imageData.put("url", urlPrefix + "/students/" + maSv + "/faces/" + img.getFilename());
+            imageData.put("slotIndex", img.getSlotIndex());
+            imageData.put("createdAt", img.getCreatedAt());
+
+            // Add to slot mapping
+            if (img.getSlotIndex() != null) {
+                slotMapping.put(img.getSlotIndex(), imageData);
+            }
+
+            // Add to list (for backward compatibility)
+            imagesList.add(imageData);
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("images", imagesList);
+        result.put("slots", slotMapping);
+        result.put("count", faceImageEntities.size());
+        result.put("maxCount", 5);
+
+        return result;
+    }
+
+    /**
+     * Delete face image by filename
+     */
+    @Transactional
+    public void deleteFaceImage(String maSv, String filename) throws IOException {
+        FaceImage faceImage = faceImageRepository.findByMaSvAndFilename(maSv, filename)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ảnh"));
+
+        deleteFaceImageEntity(faceImage);
+    }
+
+    /**
+     * Delete face image by ID (more secure)
+     */
+    @Transactional
+    public void deleteFaceImageById(String maSv, Long imageId) throws IOException {
+        FaceImage faceImage = faceImageRepository.findById(imageId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ảnh"));
+
+        // Check ownership
+        if (!faceImage.getSinhVien().getMaSv().equals(maSv)) {
+            throw new RuntimeException("Không có quyền xóa ảnh này");
+        }
+
+        deleteFaceImageEntity(faceImage);
+    }
+
+    /**
+     * Delete face image entity and file
+     */
+    private void deleteFaceImageEntity(FaceImage faceImage) throws IOException {
+        // Soft delete in database
+        faceImage.setIsActive(false);
+        faceImageRepository.save(faceImage);
+
+        // Delete physical file
+        Path filePath = Paths.get(faceImage.getFilePath());
+        Files.deleteIfExists(filePath);
+
+        log.info("Deleted face image: {}", faceImage.getFilename());
+    }
+
+    // ================== SLOT MANAGEMENT METHODS ==================
+
+    /**
+     * Tìm slot trống đầu tiên
+     */
+    public Integer findFirstEmptySlot(String maSv) {
+        List<Integer> usedSlots = faceImageRepository.findUsedSlotsByMaSv(maSv);
+
+        for (int i = 0; i < 5; i++) {
+            if (!usedSlots.contains(i)) {
+                return i;
+            }
+        }
+
+        return null; // Không có slot trống
+    }
+
+    /**
+     * Validate slot availability
+     */
+    public void validateSlotAvailability(String maSv, Integer slotIndex) {
+        if (slotIndex < 0 || slotIndex > 4) {
+            throw new IllegalArgumentException("Slot index phải từ 0 đến 4");
+        }
+
+        if (!isSlotEmpty(maSv, slotIndex)) {
+            log.warn("Slot {} for student {} is already occupied, will replace existing image", slotIndex, maSv);
+            // Note: We don't throw exception here, just log warning
+            // The existing image will be replaced in saveFaceImage method
         }
     }
 
     /**
-     * Convert object to JSON string (simplified)
+     * Check if slot is empty
      */
-    private String convertToJson(Map<String, Object> data) {
-        StringBuilder json = new StringBuilder("{");
-        boolean first = true;
-        for (Map.Entry<String, Object> entry : data.entrySet()) {
-            if (!first) json.append(",");
-            json.append("\"").append(entry.getKey()).append("\":");
-            Object value = entry.getValue();
-            if (value instanceof String) {
-                json.append("\"").append(value).append("\"");
-            } else if (value instanceof Number) {
-                json.append(value);
-            } else {
-                json.append("\"").append(value.toString()).append("\"");
-            }
-            first = false;
-        }
-        json.append("}");
-        return json.toString();
+    public boolean isSlotEmpty(String maSv, Integer slotIndex) {
+        return faceImageRepository.isSlotEmpty(maSv, slotIndex);
     }
-    /**
-     * Xóa ảnh đại diện sinh viên
-     */
-    public void deleteStudentProfileImage(String maSv) {
-        try {
-            Path studentDir = getStudentDirectory(maSv);
-            if (!Files.exists(studentDir)) {
-                log.warn("Student directory does not exist: {}", maSv);
-                return;
-            }
 
-            // Tìm và xóa tất cả file profile
-            try (Stream<Path> files = Files.list(studentDir)) {
-                files.filter(Files::isRegularFile)
-                        .filter(file -> file.getFileName().toString().startsWith("profile"))
-                        .forEach(file -> {
-                            try {
-                                Files.delete(file);
-                                log.info("Deleted profile image for student {}: {}", maSv, file.getFileName());
-                            } catch (IOException e) {
-                                log.warn("Could not delete profile image: {}", file, e);
+    /**
+     * Get face image count
+     */
+    public int getFaceImageCount(String maSv) {
+        return faceImageRepository.countActiveByMaSv(maSv);
+    }
+
+    /**
+     * Get FaceImage entity by slot
+     */
+    public FaceImage getFaceImageBySlot(String maSv, Integer slotIndex) {
+        return faceImageRepository.findByMaSvAndSlotIndex(maSv, slotIndex)
+                .orElse(null);
+    }
+
+    /**
+     * Get list of FaceImage entities
+     */
+    public List<FaceImage> getFaceImagesEntities(String maSv) {
+        return faceImageRepository.findByMaSvAndActive(maSv);
+    }
+
+    // ================== DIRECTORY MANAGEMENT METHODS ==================
+
+    /**
+     * Create student directory structure
+     */
+    public void createStudentDirectory(String maSv) throws IOException {
+        Path studentDir = Paths.get(uploadDir, "students", maSv);
+        Path profileDir = studentDir.resolve("profile");
+        Path facesDir = studentDir.resolve("faces");
+        Path embeddingDir = studentDir.resolve("embeddings");
+
+        Files.createDirectories(profileDir);
+        Files.createDirectories(facesDir);
+        Files.createDirectories(embeddingDir);
+
+        log.info("Created directory structure for student: {}", maSv);
+    }
+
+    /**
+     * Delete entire student directory
+     */
+    public void deleteStudentDirectory(String maSv) throws IOException {
+        Path studentDir = Paths.get(uploadDir, "students", maSv);
+
+        if (Files.exists(studentDir)) {
+            // Delete all files and subdirectories recursively
+            Files.walk(studentDir)
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(path -> {
+                        try {
+                            Files.delete(path);
+                        } catch (IOException e) {
+                            log.error("Failed to delete: {}", path, e);
+                        }
+                    });
+
+            log.info("Deleted directory structure for student: {}", maSv);
+        }
+    }
+
+    // ================== EMBEDDING METHODS ==================
+
+    /**
+     * Save embedding file for face recognition
+     */
+    public void saveEmbeddingFile(String maSv, String embeddingData) throws IOException {
+        Path embeddingPath = Paths.get(uploadDir, "students", maSv, "embeddings");
+        Files.createDirectories(embeddingPath);
+
+        String filename = "embedding_" + System.currentTimeMillis() + ".txt";
+        Path filePath = embeddingPath.resolve(filename);
+
+        Files.writeString(filePath, embeddingData);
+
+        log.info("Saved embedding file for student {}: {}", maSv, filename);
+    }
+
+    // ================== UTILITY METHODS ==================
+
+    /**
+     * Get file extension
+     */
+    private String getFileExtension(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return "";
+        }
+        int lastDotIndex = filename.lastIndexOf('.');
+        return lastDotIndex > 0 ? filename.substring(lastDotIndex + 1) : "";
+    }
+
+    /**
+     * Clean up orphaned files (files without database records)
+     * This is a maintenance method
+     */
+    @Transactional
+    public void cleanupOrphanedFiles() throws IOException {
+        Path studentsDir = Paths.get(uploadDir, "students");
+
+        if (!Files.exists(studentsDir)) {
+            return;
+        }
+
+        Files.list(studentsDir).forEach(studentDir -> {
+            try {
+                String maSv = studentDir.getFileName().toString();
+
+                // Check if student exists
+                if (!sinhVienRepository.existsById(maSv)) {
+                    deleteStudentDirectory(maSv);
+                    log.warn("Deleted orphaned directory for non-existent student: {}", maSv);
+                } else {
+                    // Clean up face images
+                    Path facesDir = studentDir.resolve("faces");
+                    if (Files.exists(facesDir)) {
+                        List<FaceImage> dbImages = faceImageRepository.findByMaSvAndActive(maSv);
+                        Set<String> dbFilenames = dbImages.stream()
+                                .map(FaceImage::getFilename)
+                                .collect(Collectors.toSet());
+
+                        Files.list(facesDir).forEach(file -> {
+                            String filename = file.getFileName().toString();
+                            if (!dbFilenames.contains(filename)) {
+                                try {
+                                    Files.delete(file);
+                                    log.info("Deleted orphaned face image: {}", file);
+                                } catch (IOException e) {
+                                    log.error("Failed to delete orphaned file: {}", file, e);
+                                }
                             }
                         });
+                    }
+                }
+            } catch (IOException e) {
+                log.error("Error processing student directory: {}", studentDir, e);
             }
-
-        } catch (IOException e) {
-            log.error("Error deleting profile image for student {}: ", maSv, e);
-            throw new RuntimeException("Không thể xóa ảnh đại diện", e);
-        }
+        });
     }
 
+    /**
+     * Get upload statistics
+     */
+    public Map<String, Object> getUploadStatistics(String maSv) {
+        Map<String, Object> stats = new HashMap<>();
+
+        // Face images stats
+        int faceImageCount = getFaceImageCount(maSv);
+        List<Integer> usedSlots = faceImageRepository.findUsedSlotsByMaSv(maSv);
+
+        stats.put("faceImageCount", faceImageCount);
+        stats.put("maxFaceImages", 5);
+        stats.put("remainingSlots", 5 - faceImageCount);
+        stats.put("usedSlots", usedSlots);
+        stats.put("canUploadMore", faceImageCount < 5);
+
+        // Profile image stats
+        try {
+            SinhVien sinhVien = sinhVienRepository.findById(maSv).orElse(null);
+            stats.put("hasProfileImage", sinhVien != null && sinhVien.getHinhAnh() != null && !sinhVien.getHinhAnh().isEmpty());
+        } catch (Exception e) {
+            stats.put("hasProfileImage", false);
+        }
+
+        return stats;
+    }
 }

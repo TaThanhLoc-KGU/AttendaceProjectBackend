@@ -1,6 +1,9 @@
 package com.tathanhloc.faceattendance.Controller;
 
 import com.tathanhloc.faceattendance.DTO.*;
+import com.tathanhloc.faceattendance.Model.FaceImage;
+import com.tathanhloc.faceattendance.Repository.CameraRepository;
+import com.tathanhloc.faceattendance.Repository.FaceImageRepository;
 import com.tathanhloc.faceattendance.Security.CustomUserDetails;
 import com.tathanhloc.faceattendance.Service.DangKyHocService;
 import com.tathanhloc.faceattendance.Service.DiemDanhService;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/student")
@@ -35,6 +39,7 @@ public class StudentDashboardController {
     private final FileUploadService fileUploadService;
     private final TaiKhoanService taiKhoanService;
     private final PasswordEncoder passwordEncoder;
+    private final FaceImageRepository faceImageRepository;
 
 
     /**
@@ -219,67 +224,6 @@ public class StudentDashboardController {
                     .body(Map.of("error", "Không thể tải lên ảnh: " + e.getMessage()));
         }
     }
-    /**
-     * API đổi mật khẩu cho sinh viên
-     */
-    @PostMapping("/api/change-password")
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> changePassword(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestParam String oldPassword,
-            @RequestParam String newPassword,
-            @RequestParam String confirmPassword) {
-
-        if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Không có quyền truy cập"));
-        }
-
-        try {
-            log.info("Password change request for student user: {}", userDetails.getUsername());
-
-            // Validate input
-            if (oldPassword == null || oldPassword.trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Vui lòng nhập mật khẩu cũ"));
-            }
-
-            if (newPassword == null || newPassword.trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Vui lòng nhập mật khẩu mới"));
-            }
-
-            if (newPassword.length() < 6) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Mật khẩu mới phải có ít nhất 6 ký tự"));
-            }
-
-            if (!newPassword.equals(confirmPassword)) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Mật khẩu xác nhận không khớp"));
-            }
-
-            // Check old password
-            if (!passwordEncoder.matches(oldPassword, userDetails.getPassword())) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Mật khẩu cũ không đúng"));
-            }
-
-            // Change password
-            taiKhoanService.changePassword(userDetails.getUsername(), newPassword);
-
-            log.info("Password changed successfully for student user: {}", userDetails.getUsername());
-            return ResponseEntity.ok(Map.of(
-                    "status", "success",
-                    "message", "Đổi mật khẩu thành công"
-            ));
-
-        } catch (Exception e) {
-            log.error("Password change failed for user: {}", userDetails.getUsername(), e);
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Lỗi khi đổi mật khẩu: " + e.getMessage()));
-        }
-    }
 
     /**
      * API lấy thông tin sinh viên hiện tại
@@ -312,13 +256,14 @@ public class StudentDashboardController {
     // Thêm vào StudentDashboardController
 
     /**
-     * API upload ảnh khuôn mặt cho sinh viên (chính mình)
+     * API upload ảnh khuôn mặt cho sinh viên (chính mình) - HỖ TRỢ SLOT
      */
     @PostMapping("/api/upload-face-image")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> uploadFaceImage(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "slotIndex", required = false) Integer slotIndex) {
 
         if (userDetails == null || userDetails.getTaiKhoan().getSinhVien() == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -341,13 +286,33 @@ public class StudentDashboardController {
                         .body(Map.of("error", "Đã đạt giới hạn 5 ảnh khuôn mặt"));
             }
 
-            String imageUrl = fileUploadService.saveFaceImage(maSv, file);
+            // Validate slot index nếu được cung cấp
+            if (slotIndex != null && (slotIndex < 0 || slotIndex > 4)) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Slot index phải từ 0 đến 4"));
+            }
+
+            String imageUrl;
+            FaceImage savedImage;
+
+            if (slotIndex != null) {
+                // Upload vào slot cụ thể
+                imageUrl = fileUploadService.saveFaceImage(maSv, file, slotIndex);
+                savedImage = fileUploadService.getFaceImageBySlot(maSv, slotIndex);
+            } else {
+                // Tự động tìm slot trống
+                imageUrl = fileUploadService.saveFaceImage(maSv, file);
+                // Lấy ảnh vừa được thêm (ảnh mới nhất)
+                List<FaceImage> images = fileUploadService.getFaceImagesEntities(maSv);
+                savedImage = images.isEmpty() ? null : images.get(images.size() - 1);
+            }
 
             return ResponseEntity.ok(Map.of(
-                    "id", System.currentTimeMillis(),
+                    "id", savedImage != null ? savedImage.getId() : System.currentTimeMillis(),
                     "url", imageUrl,
-                    "filename", file.getOriginalFilename(),
-                    "currentCount", currentCount + 1
+                    "filename", savedImage != null ? savedImage.getFilename() : file.getOriginalFilename(),
+                    "slotIndex", savedImage != null ? savedImage.getSlotIndex() : -1,
+                    "currentCount", fileUploadService.getFaceImageCount(maSv)
             ));
 
         } catch (Exception e) {
@@ -357,8 +322,9 @@ public class StudentDashboardController {
         }
     }
 
+
     /**
-     * API xóa ảnh khuôn mặt
+     * API xóa ảnh khuôn mặt - IMPROVED VERSION
      */
     @DeleteMapping("/api/face-image/{filename}")
     @ResponseBody
@@ -366,24 +332,83 @@ public class StudentDashboardController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable String filename) {
 
+        log.info("🗑️ Delete face image request for filename: {}", filename);
+
         if (userDetails == null || userDetails.getTaiKhoan().getSinhVien() == null) {
+            log.warn("❌ Unauthorized delete attempt for filename: {}", filename);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Không có quyền truy cập"));
         }
 
         try {
             String maSv = userDetails.getTaiKhoan().getSinhVien().getMaSv();
-            fileUploadService.deleteFaceImage(maSv, filename);
+            log.info("🔍 Processing delete for student: {} - filename: {}", maSv, filename);
+
+            // Decode filename if needed (handle URL encoding)
+            String decodedFilename = java.net.URLDecoder.decode(filename, "UTF-8");
+            log.info("📝 Decoded filename: {}", decodedFilename);
+
+            // Check if image exists before attempting delete
+            Optional<FaceImage> faceImageOpt = faceImageRepository.findByMaSvAndFilename(maSv, decodedFilename);
+
+            if (faceImageOpt.isEmpty()) {
+                log.warn("⚠️ Face image not found - maSv: {}, filename: {}", maSv, decodedFilename);
+
+                // Try to find by original filename
+                faceImageOpt = faceImageRepository.findByMaSvAndFilename(maSv, filename);
+
+                if (faceImageOpt.isEmpty()) {
+                    log.error("❌ Face image not found with both filenames - maSv: {}, original: {}, decoded: {}",
+                            maSv, filename, decodedFilename);
+
+                    // List all images for debugging
+                    List<FaceImage> allImages = faceImageRepository.findByMaSvAndActive(maSv);
+                    log.info("📋 Available images for student {}: {}", maSv,
+                            allImages.stream().map(FaceImage::getFilename).collect(Collectors.toList()));
+
+                    return ResponseEntity.badRequest()
+                            .body(Map.of(
+                                    "error", "Không tìm thấy ảnh để xóa",
+                                    "filename", filename,
+                                    "decodedFilename", decodedFilename,
+                                    "availableImages", allImages.stream().map(FaceImage::getFilename).collect(Collectors.toList())
+                            ));
+                }
+            }
+
+            FaceImage faceImage = faceImageOpt.get();
+            log.info("✅ Found face image to delete: ID={}, filename={}, slot={}",
+                    faceImage.getId(), faceImage.getFilename(), faceImage.getSlotIndex());
+
+            // Delete the image
+            fileUploadService.deleteFaceImage(maSv, faceImage.getFilename());
 
             int remainingCount = fileUploadService.getFaceImageCount(maSv);
+
+            log.info("🎉 Successfully deleted face image for student: {} - remaining: {}", maSv, remainingCount);
+
             return ResponseEntity.ok(Map.of(
                     "message", "Đã xóa ảnh thành công",
-                    "remainingCount", remainingCount
+                    "remainingCount", remainingCount,
+                    "deletedFilename", faceImage.getFilename(),
+                    "slotIndex", faceImage.getSlotIndex()
             ));
+
         } catch (Exception e) {
-            log.error("Error deleting face image: ", e);
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Không thể xóa ảnh: " + e.getMessage()));
+            log.error("💥 Error deleting face image for filename: {} - Error: ", filename, e);
+
+            // More detailed error response
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Không thể xóa ảnh: " + e.getMessage());
+            errorResponse.put("filename", filename);
+            errorResponse.put("errorType", e.getClass().getSimpleName());
+            errorResponse.put("timestamp", System.currentTimeMillis());
+
+            if (e.getCause() != null) {
+                errorResponse.put("cause", e.getCause().getMessage());
+            }
+
+            return ResponseEntity.internalServerError().body(errorResponse);
         }
     }
     /**
@@ -577,7 +602,7 @@ public class StudentDashboardController {
     }
 
     /**
-     * API lấy danh sách ảnh khuôn mặt
+     * API lấy danh sách ảnh khuôn mặt - HỖ TRỢ SLOT MAPPING
      */
     @GetMapping("/api/get-face-images")
     @ResponseBody
@@ -591,17 +616,33 @@ public class StudentDashboardController {
 
         try {
             String maSv = userDetails.getTaiKhoan().getSinhVien().getMaSv();
+            List<FaceImage> faceImageEntities = fileUploadService.getFaceImagesEntities(maSv);
 
+            // Tạo slot-based mapping
+            Map<Integer, Map<String, Object>> slotMapping = new HashMap<>();
+            List<Map<String, Object>> imagesList = new ArrayList<>();
 
-            // Lấy số lượng ảnh hiện có
-            int faceImageCount = fileUploadService.getFaceImageCount(maSv);
+            for (FaceImage img : faceImageEntities) {
+                Map<String, Object> imageData = new HashMap<>();
+                imageData.put("id", img.getId());
+                imageData.put("filename", img.getFilename());
+                imageData.put("url", "/uploads/students/" + maSv + "/faces/" + img.getFilename());
+                imageData.put("slotIndex", img.getSlotIndex());
+                imageData.put("createdAt", img.getCreatedAt());
 
-            // Tạo danh sách ảnh giả để frontend render
-            List<Map<String, Object>> images = fileUploadService.getFaceImages(maSv);
+                // Thêm vào slot mapping
+                if (img.getSlotIndex() != null) {
+                    slotMapping.put(img.getSlotIndex(), imageData);
+                }
+
+                // Thêm vào danh sách (để tương thích với frontend cũ)
+                imagesList.add(imageData);
+            }
 
             return ResponseEntity.ok(Map.of(
-                    "images", images,
-                    "count", faceImageCount,
+                    "images", imagesList, // Tương thích với frontend hiện tại
+                    "slots", slotMapping,  // Hỗ trợ slot-based access
+                    "count", faceImageEntities.size(),
                     "maxCount", 5
             ));
 
@@ -611,7 +652,6 @@ public class StudentDashboardController {
                     .body(Map.of("error", "Không thể lấy danh sách ảnh"));
         }
     }
-
     /**
      * API xóa ảnh khuôn mặt
      */
@@ -690,6 +730,63 @@ public class StudentDashboardController {
                     "message", "Lỗi hệ thống: " + e.getMessage(),
                     "success", false
             ));
+        }
+    }
+    /**
+     * API đổi mật khẩu cho sinh viên
+     */
+    @PostMapping("/api/change-password")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> changePassword(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody Map<String, String> requestData) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Không có quyền truy cập"));
+        }
+
+        try {
+            String currentPassword = requestData.get("currentPassword");
+            String newPassword = requestData.get("newPassword");
+            String confirmPassword = requestData.get("confirmPassword");
+
+            // Validate inputs
+            if (currentPassword == null || newPassword == null || confirmPassword == null) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Thiếu thông tin cần thiết"));
+            }
+
+            if (!newPassword.equals(confirmPassword)) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Mật khẩu xác nhận không khớp"));
+            }
+
+            if (newPassword.length() < 6) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Mật khẩu phải có ít nhất 6 ký tự"));
+            }
+
+            // ✅ VALIDATE mật khẩu cũ trước khi gọi service
+            if (!passwordEncoder.matches(currentPassword, userDetails.getPassword())) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Mật khẩu cũ không đúng"));
+            }
+
+            // ✅ GỌI service với đúng 2 tham số
+            taiKhoanService.changePassword(userDetails.getUsername(), newPassword);
+
+            log.info("Password changed successfully for user: {}", userDetails.getUsername());
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Đổi mật khẩu thành công",
+                    "timestamp", System.currentTimeMillis()
+            ));
+
+        } catch (Exception e) {
+            log.error("Error changing password for user {}: ", userDetails.getUsername(), e);
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 
