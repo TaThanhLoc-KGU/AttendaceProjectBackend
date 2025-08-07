@@ -104,12 +104,12 @@ public class SecurityConfig {
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                         .requestMatchers("/uploads/**").permitAll()  // Cho phép truy cập tất cả uploads
                         .requestMatchers("/uploads/students/**").permitAll()  // Cụ thể cho students
+                        .requestMatchers("/streams/**").permitAll()  // ✅ THÊM DÒNG NÀY - Cho phép truy cập streams
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/forgot-password").permitAll()
                         .requestMatchers("/api/python/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
-
 
                         // ===== EXISTING ROLE-BASED ACCESS =====
                         .requestMatchers("/admin/**").hasRole("ADMIN")

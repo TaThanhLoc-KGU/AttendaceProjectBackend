@@ -19,6 +19,10 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+// Add required imports at top of file:
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 
 @RestController
 @RequestMapping("/api/stream")
@@ -219,18 +223,20 @@ public class StreamController {
     }
 
     @PostMapping("/start")
-    public ResponseEntity<Map<String, Object>> startStream(@RequestBody Map<String, String> request) {
+    public ResponseEntity<Map<String, Object>> startStream(@RequestBody Map<String, Object> request) {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            String rtspUrl = request.get("rtspUrl");
+            String rtspUrl = (String) request.get("rtspUrl");
+            Boolean forceStart = (Boolean) request.getOrDefault("forceStart", false); // THÊM force parameter
+
             if (rtspUrl == null || rtspUrl.trim().isEmpty()) {
                 response.put("status", "error");
                 response.put("message", "RTSP URL is required");
                 return ResponseEntity.badRequest().body(response);
             }
 
-            log.info("Starting stream for URL: {}", rtspUrl);
+            log.info("Starting stream for URL: {} (force: {})", rtspUrl, forceStart);
 
             // Validate URL format
             if (!isValidRTSPUrl(rtspUrl)) {
@@ -242,31 +248,44 @@ public class StreamController {
             String streamId = "camera_" + System.currentTimeMillis();
 
             try {
-                String hlsUrl = streamService.startHLSStream(rtspUrl, streamId);
+                // THÊM force mode logic
+                String hlsUrl;
+                if (forceStart) {
+                    log.info("Force mode: bypassing connection tests");
+                    hlsUrl = streamService.startHLSStreamForced(rtspUrl, streamId); // New method
+                } else {
+                    hlsUrl = streamService.startHLSStream(rtspUrl, streamId);
+                }
 
                 response.put("streamId", streamId);
                 response.put("hlsUrl", hlsUrl);
                 response.put("status", "started");
-                response.put("message", "Stream is starting, please wait 10-15 seconds for HLS segments");
+                response.put("message", forceStart ?
+                        "Stream is starting in force mode (tests bypassed), please wait 15-20 seconds" :
+                        "Stream is starting, please wait 10-15 seconds for HLS segments");
 
-                log.info("Stream started successfully: {} -> {}", streamId, hlsUrl);
+                log.info("Stream started successfully: {} -> {} (force: {})", streamId, hlsUrl, forceStart);
 
             } catch (RuntimeException e) {
-                log.error("Failed to start stream for URL: {}", rtspUrl, e);
+                log.error("Failed to start stream for URL: {} (force: {})", rtspUrl, forceStart, e);
 
                 response.put("status", "error");
                 response.put("message", "Cannot start stream: " + e.getMessage());
 
                 // Provide helpful suggestions based on error
                 if (e.getMessage().contains("Cannot connect")) {
-                    response.put("suggestion", "Check if camera is online and network is accessible");
+                    response.put("suggestion", forceStart ?
+                            "Even force mode failed - check camera network and credentials" :
+                            "Check if camera is online and network is accessible, or try Force mode");
                 } else if (e.getMessage().contains("FFmpeg")) {
                     response.put("suggestion", "FFmpeg may not be installed or accessible");
                 } else {
-                    response.put("suggestion", "Try testing the RTSP URL first");
+                    response.put("suggestion", forceStart ?
+                            "Force mode failed - try testing the RTSP URL first" :
+                            "Try testing the RTSP URL first or use Force mode");
                 }
 
-                return ResponseEntity.ok(response); // Return 200 but with error status
+                return ResponseEntity.ok(response);
             }
 
         } catch (Exception e) {
@@ -374,4 +393,215 @@ public class StreamController {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }
+    // Thêm vào StreamController.java
+    @GetMapping("/debug/{streamId}")
+    public ResponseEntity<Map<String, Object>> debugStream(@PathVariable String streamId) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            result.put("streamId", streamId);
+            result.put("timestamp", new Date());
+
+            // Check if FFmpeg process is running
+            boolean processActive = streamService.isStreamActive(streamId);
+            result.put("processActive", processActive);
+
+            // Check directories
+            Path targetDir = Paths.get("target/classes/static/streams", streamId);
+            Path srcDir = Paths.get("src/main/resources/static/streams", streamId);
+
+            result.put("targetDirExists", Files.exists(targetDir));
+            result.put("srcDirExists", Files.exists(srcDir));
+            result.put("targetDirPath", targetDir.toAbsolutePath().toString());
+            result.put("srcDirPath", srcDir.toAbsolutePath().toString());
+
+            // Check playlist files
+            Path targetPlaylist = targetDir.resolve("playlist.m3u8");
+            Path srcPlaylist = srcDir.resolve("playlist.m3u8");
+
+            result.put("targetPlaylistExists", Files.exists(targetPlaylist));
+            result.put("srcPlaylistExists", Files.exists(srcPlaylist));
+
+            // List files in directories
+            if (Files.exists(targetDir)) {
+                List<String> targetFiles = Files.list(targetDir)
+                        .map(p -> p.getFileName().toString())
+                        .collect(Collectors.toList());
+                result.put("targetFiles", targetFiles);
+            }
+
+            if (Files.exists(srcDir)) {
+                List<String> srcFiles = Files.list(srcDir)
+                        .map(p -> p.getFileName().toString())
+                        .collect(Collectors.toList());
+                result.put("srcFiles", srcFiles);
+            }
+
+            // Check FFmpeg availability
+            result.put("ffmpegAvailable", streamService.isFFmpegAvailable());
+
+            // Get all active streams
+            Map<String, Object> stats = streamService.getStreamStats();
+            result.put("allActiveStreams", stats.get("streamIds"));
+            result.put("totalActiveStreams", stats.get("activeStreams"));
+
+        } catch (Exception e) {
+            result.put("error", e.getMessage());
+            log.error("Debug stream error for {}: {}", streamId, e.getMessage());
+        }
+
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/debug/ffmpeg-test")
+    public ResponseEntity<Map<String, Object>> testFFmpeg() {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            // Test FFmpeg availability
+            ProcessBuilder pb = new ProcessBuilder("ffmpeg", "-version");
+            Process process = pb.start();
+            boolean finished = process.waitFor(5, TimeUnit.SECONDS);
+
+            if (finished && process.exitValue() == 0) {
+                result.put("ffmpegStatus", "Available");
+
+                // Read version
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    StringBuilder output = new StringBuilder();
+                    String line;
+                    int lineCount = 0;
+                    while ((line = reader.readLine()) != null && lineCount < 10) {
+                        output.append(line).append("\n");
+                        lineCount++;
+                    }
+                    result.put("ffmpegVersion", output.toString());
+                }
+            } else {
+                result.put("ffmpegStatus", "Not available or timeout");
+                result.put("exitCode", process.exitValue());
+            }
+
+            // Test working directory
+            result.put("workingDir", System.getProperty("user.dir"));
+            result.put("javaVersion", System.getProperty("java.version"));
+
+        } catch (Exception e) {
+            result.put("ffmpegStatus", "Error: " + e.getMessage());
+            result.put("error", e.getMessage());
+        }
+
+        return ResponseEntity.ok(result);
+    }
+    // Thêm vào StreamController.java
+
+    @GetMapping("/debug/file-system/{streamId}")
+    public ResponseEntity<Map<String, Object>> debugFileSystem(@PathVariable String streamId) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            log.info("🔍 Debugging file system for streamId: {}", streamId);
+
+            // Check target directory
+            Path targetDir = Paths.get("target/classes/static/streams", streamId);
+            result.put("targetDirExists", Files.exists(targetDir));
+            result.put("targetDirPath", targetDir.toAbsolutePath().toString());
+
+            if (Files.exists(targetDir)) {
+                Path playlist = targetDir.resolve("playlist.m3u8");
+                result.put("targetPlaylistExists", Files.exists(playlist));
+
+                if (Files.exists(playlist)) {
+                    result.put("targetPlaylistSize", Files.size(playlist));
+                    result.put("targetPlaylistContent", Files.readAllLines(playlist));
+                }
+
+                // List all files
+                List<String> files = Files.list(targetDir)
+                        .map(p -> p.getFileName().toString())
+                        .sorted()
+                        .collect(Collectors.toList());
+                result.put("targetFiles", files);
+            }
+
+            // Check src directory
+            Path srcDir = Paths.get("src/main/resources/static/streams", streamId);
+            result.put("srcDirExists", Files.exists(srcDir));
+            result.put("srcDirPath", srcDir.toAbsolutePath().toString());
+
+            if (Files.exists(srcDir)) {
+                Path playlist = srcDir.resolve("playlist.m3u8");
+                result.put("srcPlaylistExists", Files.exists(playlist));
+
+                if (Files.exists(playlist)) {
+                    result.put("srcPlaylistSize", Files.size(playlist));
+                    result.put("srcPlaylistContent", Files.readAllLines(playlist));
+                }
+
+                List<String> files = Files.list(srcDir)
+                        .map(p -> p.getFileName().toString())
+                        .sorted()
+                        .collect(Collectors.toList());
+                result.put("srcFiles", files);
+            }
+
+            // Test file access URLs
+            result.put("expectedURL", "/streams/" + streamId + "/playlist.m3u8");
+            result.put("suggestion", "Try accessing: http://localhost:8080/streams/" + streamId + "/playlist.m3u8");
+
+        } catch (Exception e) {
+            result.put("error", e.getMessage());
+            log.error("File system debug error: {}", e.getMessage());
+        }
+
+        return ResponseEntity.ok(result);
+    }
+
+    // Direct file serving endpoint as fallback
+    @GetMapping("/debug/serve-file/{streamId}/{fileName}")
+    public ResponseEntity<Resource> serveStreamFile(
+            @PathVariable String streamId,
+            @PathVariable String fileName) {
+
+        try {
+            log.info("🔍 Direct file serving: streamId={}, fileName={}", streamId, fileName);
+
+            // Try target directory first
+            Path targetFile = Paths.get("target/classes/static/streams", streamId, fileName);
+            if (Files.exists(targetFile)) {
+                Resource resource = new FileSystemResource(targetFile.toFile());
+
+                // Set content type based on file extension
+                String contentType = fileName.endsWith(".m3u8") ? "application/vnd.apple.mpegurl" :
+                        fileName.endsWith(".ts") ? "video/mp2t" : "application/octet-stream";
+
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_TYPE, contentType)
+                        .header(HttpHeaders.CACHE_CONTROL, "no-cache")
+                        .body(resource);
+            }
+
+            // Try src directory
+            Path srcFile = Paths.get("src/main/resources/static/streams", streamId, fileName);
+            if (Files.exists(srcFile)) {
+                Resource resource = new FileSystemResource(srcFile.toFile());
+
+                String contentType = fileName.endsWith(".m3u8") ? "application/vnd.apple.mpegurl" :
+                        fileName.endsWith(".ts") ? "video/mp2t" : "application/octet-stream";
+
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_TYPE, contentType)
+                        .header(HttpHeaders.CACHE_CONTROL, "no-cache")
+                        .body(resource);
+            }
+
+            return ResponseEntity.notFound().build();
+
+        } catch (Exception e) {
+            log.error("Direct file serving error: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+
 }
