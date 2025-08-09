@@ -109,6 +109,26 @@ public interface LopHocPhanRepository extends JpaRepository<LopHocPhan, String> 
             "AND d.isActive = true")
     boolean canAddStudentToSubject(@Param("maSv") String maSv, @Param("maMh") String maMh);
 
+    /**
+     * Đếm số lớp học phần theo mã học kỳ
+     */
+    @Query("SELECT COUNT(lhp) FROM LopHocPhan lhp WHERE lhp.hocKy = :hocKy")
+    long countByHocKy(@Param("hocKy") String hocKy);
 
+    /**
+     * Đếm số lớp học phần đang hoạt động theo mã học kỳ
+     */
+    @Query("SELECT COUNT(lhp) FROM LopHocPhan lhp WHERE lhp.hocKy = :hocKy AND lhp.isActive = true")
+    long countActiveByHocKy(@Param("hocKy") String hocKy);
+
+    /**
+     * Tìm lớp học phần theo học kỳ và trạng thái
+     */
+    List<LopHocPhan> findByHocKyAndIsActive(String hocKy, Boolean isActive);
+
+    /**
+     * Tìm lớp học phần theo học kỳ
+     */
+    List<LopHocPhan> findByHocKy(String hocKy);
 
 }

@@ -59,4 +59,24 @@ public interface DangKyHocRepository extends JpaRepository<DangKyHoc, DangKyHocI
             "AND lhp.monHoc.maMh = :maMh " +
             "AND d.isActive = true")
     Optional<String> findCurrentLhpByStudentAndSubject(@Param("maSv") String maSv, @Param("maMh") String maMh);
+
+
+    /**
+     * Đếm số đăng ký theo mã học kỳ
+     */
+    @Query("SELECT COUNT(dk) FROM DangKyHoc dk JOIN dk.lopHocPhan lhp WHERE lhp.hocKy = :hocKy AND dk.isActive = true")
+    long countByHocKy(@Param("hocKy") String hocKy);
+
+    /**
+     * Đếm số sinh viên duy nhất đăng ký trong học kỳ
+     */
+    @Query("SELECT COUNT(DISTINCT dk.sinhVien.maSv) FROM DangKyHoc dk JOIN dk.lopHocPhan lhp WHERE lhp.hocKy = :hocKy AND dk.isActive = true")
+    long countUniqueStudentsByHocKy(@Param("hocKy") String hocKy);
+
+    /**
+     * Tìm đăng ký theo học kỳ
+     */
+    @Query("SELECT dk FROM DangKyHoc dk JOIN dk.lopHocPhan lhp WHERE lhp.hocKy = :hocKy")
+    List<DangKyHoc> findByHocKy(@Param("hocKy") String hocKy);
+
 }

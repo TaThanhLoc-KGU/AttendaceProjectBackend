@@ -135,13 +135,10 @@ public class HocKyNamHocService {
 
         // Tính toán thời gian cho 3 học kỳ
         long totalDays = ChronoUnit.DAYS.between(startDate, endDate);
-
-        // Phân bổ thời gian: HK1 (35%), HK2 (40%), Hè (20%), nghỉ (5%)
-        long semester1Days = totalDays * 35 / 100;    // 35% cho học kỳ 1
-        long breakDays1 = totalDays * 2 / 100;        // 2% nghỉ giữa HK1 và HK2
-        long semester2Days = totalDays * 40 / 100;    // 40% cho học kỳ 2
-        long breakDays2 = totalDays * 3 / 100;        // 3% nghỉ giữa HK2 và Hè
-        // Học kỳ hè sẽ từ sau break2 đến hết năm học (20%)
+        long semester1Days = totalDays * 35 / 100;
+        long breakDays1 = totalDays * 2 / 100;
+        long semester2Days = totalDays * 40 / 100;
+        long breakDays2 = totalDays * 3 / 100;
 
         // Học kỳ 1
         LocalDate sem1Start = startDate;
@@ -153,8 +150,8 @@ public class HocKyNamHocService {
                 .ngayBatDau(sem1Start)
                 .ngayKetThuc(sem1End)
                 .moTa("Học kỳ 1 của " + namHoc.getTenNamHoc())
-                .thuTu(1)
                 .build();
+        semester1.setThuTu(1);
 
         // Học kỳ 2
         LocalDate sem2Start = sem1End.plusDays(breakDays1 + 1);
@@ -166,8 +163,8 @@ public class HocKyNamHocService {
                 .ngayBatDau(sem2Start)
                 .ngayKetThuc(sem2End)
                 .moTa("Học kỳ 2 của " + namHoc.getTenNamHoc())
-                .thuTu(2)
                 .build();
+        semester2.setThuTu(2);
 
         // Học kỳ hè
         LocalDate sem3Start = sem2End.plusDays(breakDays2 + 1);
@@ -179,8 +176,8 @@ public class HocKyNamHocService {
                 .ngayBatDau(sem3Start)
                 .ngayKetThuc(sem3End)
                 .moTa("Học kỳ hè của " + namHoc.getTenNamHoc())
-                .thuTu(3)
                 .build();
+        semester3.setThuTu(3);
 
         List<HocKyNamHocDTO> result = List.of(
                 createHocKyInNamHoc(maNamHoc, semester1),
@@ -253,7 +250,7 @@ public class HocKyNamHocService {
             }
         }
 
-        return HocKyDTO.builder()
+        HocKyDTO.HocKyDTOBuilder builder = HocKyDTO.builder()
                 .maHocKy(hocKy.getMaHocKy())
                 .tenHocKy(hocKy.getTenHocKy())
                 .ngayBatDau(hocKy.getNgayBatDau())
@@ -261,14 +258,19 @@ public class HocKyNamHocService {
                 .moTa(hocKy.getMoTa())
                 .isActive(hocKy.getIsActive())
                 .isCurrent(hocKy.getIsCurrent())
-                .maNamHoc(hocKyNamHoc.getNamHoc().getMaNamHoc())
-                .tenNamHoc(hocKyNamHoc.getNamHoc().getTenNamHoc())
-                .thuTu(hocKyNamHoc.getThuTu())
                 .trangThai(trangThai)
                 .soNgayConLai(soNgayConLai)
                 .tongSoNgay(tongSoNgay)
-                .tiLePhanTram(tiLePhanTram)
-                .build();
+                .tiLePhanTram(tiLePhanTram);
+
+        HocKyDTO dto = builder.build();
+
+        // Set additional fields
+        dto.setMaNamHoc(hocKyNamHoc.getNamHoc().getMaNamHoc());
+        dto.setTenNamHoc(hocKyNamHoc.getNamHoc().getTenNamHoc());
+        dto.setThuTu(hocKyNamHoc.getThuTu());
+
+        return dto;
     }
 
     /**
