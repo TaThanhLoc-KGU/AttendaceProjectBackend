@@ -200,7 +200,7 @@ public class RealtimeAttendanceService {
                 .maSv(attendanceData.getMaSv())
                 .maLich(attendanceData.getMaLich())
                 .ngayDiemDanh(attendanceData.getDetectionTime().toLocalDate())
-                .thoiGianVao(attendanceData.getDetectionTime().toLocalTime())
+                .thoiGianVao(attendanceData.getDetectionTime())
                 .trangThai(TrangThaiDiemDanhEnum.CO_MAT)
                 .build();
 

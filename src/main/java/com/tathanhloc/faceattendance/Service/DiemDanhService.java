@@ -2,6 +2,7 @@ package com.tathanhloc.faceattendance.Service;
 
 import com.tathanhloc.faceattendance.DTO.*;
 import com.tathanhloc.faceattendance.Enum.TrangThaiDiemDanhEnum;
+import com.tathanhloc.faceattendance.Exception.BusinessException;
 import com.tathanhloc.faceattendance.Exception.ResourceNotFoundException;
 import com.tathanhloc.faceattendance.Model.*;
 import com.tathanhloc.faceattendance.Repository.*;
@@ -12,6 +13,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,6 +35,8 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
     private final DangKyHocService dangKyHocService;
     private final LichHocService lichHocService;
     private final SinhVienService sinhVienService;
+    private final ScheduleInstanceRepository scheduleInstanceRepository;
+
     // Cấu hình thời gian cho phép điểm danh
     private static final int ATTENDANCE_BEFORE_CLASS_MINUTES = 60; // Cho phép điểm danh trước 60 phút
     private static final int ATTENDANCE_AFTER_CLASS_MINUTES = 30;  // Cho phép điểm danh sau 30 phút
@@ -123,20 +127,6 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
         diemDanhRepository.deleteById(id);
     }
 
-    // Mapping
-    @Override
-    protected DiemDanhDTO toDTO(DiemDanh d) {
-        return DiemDanhDTO.builder()
-                .id(d.getId())
-                .ngayDiemDanh(d.getNgayDiemDanh())
-                .trangThai(d.getTrangThai())
-                .thoiGianVao(d.getThoiGianVao())
-                .thoiGianRa(d.getThoiGianRa())
-                .maLich(d.getLichHoc().getMaLich())
-                .maSv(d.getSinhVien().getMaSv())
-                .maLhp(d.getLichHoc().getLopHocPhan().getMaLhp())
-                .build();
-    }
 
     @Override
     protected DiemDanh toEntity(DiemDanhDTO dto) {
@@ -201,7 +191,7 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
                 .maSv(maSv)
                 .maLich(maLich)
                 .ngayDiemDanh(LocalDate.now())
-                .thoiGianVao(LocalTime.now())
+                .thoiGianVao(LocalDateTime.now())
                 .trangThai(TrangThaiDiemDanhEnum.CO_MAT)
                 .build();
 
@@ -558,8 +548,8 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
                     // Cập nhật điểm danh hiện có
                     diemDanh = existing.get(0);
                     diemDanh.setTrangThai(request.getTrangThai());
-                    diemDanh.setThoiGianVao(request.getThoiGianVao());
-                    diemDanh.setThoiGianRa(request.getThoiGianRa());
+                    diemDanh.setThoiGianVao(LocalDateTime.now());
+                    diemDanh.setThoiGianRa(LocalDateTime.now());
                 } else {
                     // Tạo mới điểm danh
                     DiemDanhDTO dto = DiemDanhDTO.builder()
@@ -567,8 +557,8 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
                             .maSv(request.getMaSv())
                             .ngayDiemDanh(ngayDiemDanh)
                             .trangThai(request.getTrangThai())
-                            .thoiGianVao(request.getThoiGianVao())
-                            .thoiGianRa(request.getThoiGianRa())
+                            .thoiGianVao(LocalDateTime.now())
+                            .thoiGianRa(LocalDateTime.now())
                             .build();
 
                     diemDanh = toEntity(dto);
@@ -966,20 +956,27 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
             return result;
         }
     }
-    public List<DiemDanhDTO> getByLichHocAndDate(String maLich, LocalDate date) {
-        log.info("Getting attendance for schedule {} on date {}", maLich, date);
+    /**
+     * FIXED: Update existing methods to handle both schedule types
+     */
+    public List<DiemDanhDTO> getByLichHocAndDate(String scheduleId, LocalDate date) {
+        // Try week-based first
+        List<DiemDanh> weekBasedAttendance = diemDanhRepository
+                .findByScheduleInstanceMaInstanceAndNgayDiemDanh(scheduleId, date);
 
-        try {
-            List<DiemDanh> attendances = diemDanhRepository.findByLichHocMaLichAndNgayDiemDanh(maLich, date);
-
-            return attendances.stream()
-                    .map(this::toDTO)
+        if (!weekBasedAttendance.isEmpty()) {
+            return weekBasedAttendance.stream()
+                    .map(this::toEnhancedDTO)
                     .collect(Collectors.toList());
-
-        } catch (Exception e) {
-            log.error("Error getting attendance for schedule {} on date {}: ", maLich, date, e);
-            return new ArrayList<>();
         }
+
+        // Fallback to legacy
+        List<DiemDanh> legacyAttendance = diemDanhRepository
+                .findByLichHocMaLichAndNgayDiemDanh(scheduleId, date);
+
+        return legacyAttendance.stream()
+                .map(this::toEnhancedDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -1067,4 +1064,241 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
 
         return debugInfo;
     }
+
+
+    /**
+     * FIXED: Tạo điểm danh cho week-based schedule
+     */
+    @Transactional
+    public DiemDanhDTO createAttendanceForWeekBasedSchedule(String maInstance, LocalDate ngayDiemDanh, String createdBy) {
+        log.info("Creating attendance for week-based schedule: {} on {}", maInstance, ngayDiemDanh);
+
+        try {
+            // Validate schedule instance
+            ScheduleInstance scheduleInstance = scheduleInstanceRepository.findById(maInstance)
+                    .orElseThrow(() -> new ResourceNotFoundException("Schedule instance not found: " + maInstance));
+
+            if (!scheduleInstance.canTakeAttendance()) {
+                throw new BusinessException("Không thể điểm danh cho lịch học này ở trạng thái hiện tại");
+            }
+
+            // Check if attendance already exists
+            List<DiemDanh> existingAttendance = diemDanhRepository
+                    .findByScheduleInstanceMaInstanceAndNgayDiemDanh(maInstance, ngayDiemDanh);
+
+            if (!existingAttendance.isEmpty()) {
+                throw new BusinessException("Đã có điểm danh cho buổi học này");
+            }
+
+            // Get enrolled students
+            String maLhp = scheduleInstance.getWeeklySchedule().getLopHocPhan().getMaLhp();
+            List<DangKyHoc> enrolledStudents = getEnrolledStudents(maLhp);
+
+            if (enrolledStudents.isEmpty()) {
+                throw new BusinessException("Không có sinh viên nào đăng ký lớp này");
+            }
+
+            // Create attendance records
+            List<DiemDanh> attendanceRecords = enrolledStudents.stream()
+                    .map(dangKy -> DiemDanh.builder()
+                            .scheduleInstance(scheduleInstance)
+                            .sinhVien(dangKy.getSinhVien())
+                            .ngayDiemDanh(ngayDiemDanh)
+                            .trangThai(TrangThaiDiemDanhEnum.VANG_MAT)
+                            .ghiChu("Tạo tự động cho lịch week-based")
+                            .createdBy(createdBy)
+                            .build())
+                    .collect(Collectors.toList());
+
+            attendanceRecords = diemDanhRepository.saveAll(attendanceRecords);
+
+            // Update schedule instance status
+            scheduleInstance.setTrangThai(ScheduleInstance.TrangThaiInstance.IN_PROGRESS);
+            scheduleInstanceRepository.save(scheduleInstance);
+
+            log.info("Created {} attendance records for week-based schedule", attendanceRecords.size());
+
+            return DiemDanhDTO.builder()
+                    .maInstance(maInstance)
+                    .maLhp(maLhp)  // ← FIX: Thêm maLhp
+                    .ngayDiemDanh(ngayDiemDanh)
+                    .isWeekBased(true)
+                    .scheduleType("WEEK_BASED")
+                    .scheduleDisplayName("Tuần " + scheduleInstance.getTuanHoc())
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Error creating attendance for week-based schedule: {}", e.getMessage(), e);
+            throw new BusinessException("Lỗi khi tạo điểm danh: " + e.getMessage());
+        }
+    }
+
+    /**
+     * HELPER: Get enrolled students với fallback methods
+     */
+    private List<DangKyHoc> getEnrolledStudents(String maLhp) {
+        try {
+            return dangKyHocRepository.findByLopHocPhanMaLhpAndIsActiveTrue(maLhp);
+        } catch (Exception e) {
+            log.warn("Method findByLopHocPhanMaLhpAndIsActiveTrue not found, trying alternative");
+            try {
+                return dangKyHocRepository.findByLopHocPhanMaLhp(maLhp)
+                        .stream()
+                        .filter(dk -> Boolean.TRUE.equals(dk.isActive()))
+                        .collect(Collectors.toList());
+            } catch (Exception e2) {
+                log.error("All repository methods failed, trying manual query");
+                // Fallback to manual query if needed
+                return dangKyHocRepository.findAll()
+                        .stream()
+                        .filter(dk -> maLhp.equals(dk.getLopHocPhan().getMaLhp()) &&
+                                Boolean.TRUE.equals(dk.isActive()))
+                        .collect(Collectors.toList());
+            }
+        }
+    }
+
+    /**
+     * FIXED: Enhanced method that works with both schedule types
+     */
+    public List<DiemDanhDTO> getAttendanceBySchedule(String scheduleId, LocalDate ngayDiemDanh) {
+        List<DiemDanh> attendanceList = diemDanhRepository.findByScheduleIdAndDate(scheduleId, ngayDiemDanh);
+
+        return attendanceList.stream()
+                .map(this::toEnhancedDTO)
+                .collect(Collectors.toList());
+    }
+    /**
+     * FIXED: Convert entity to DTO với proper field mapping
+     */
+    private DiemDanhDTO toEnhancedDTO(DiemDanh entity) {
+        try {
+            DiemDanhDTO.DiemDanhDTOBuilder builder = DiemDanhDTO.builder()
+                    .id(entity.getId())
+                    .ngayDiemDanh(entity.getNgayDiemDanh())
+                    .trangThai(entity.getTrangThai())
+                    .thoiGianVao(entity.getThoiGianVao())    // ← FIX: Đã là LocalDateTime
+                    .thoiGianRa(entity.getThoiGianRa())      // ← FIX: Đã là LocalDateTime
+                    .isWeekBased(entity.isWeekBasedSchedule())
+                    .createdBy(entity.getCreatedBy())
+                    .createdAt(entity.getCreatedAt());
+
+            // Safe get SinhVien info
+            if (entity.getSinhVien() != null) {
+                builder.maSv(entity.getSinhVien().getMaSv())
+                        .hoTen(entity.getSinhVien().getHoTen());
+            }
+
+            // Safe get ghiChu
+            try {
+                builder.ghiChu(entity.getGhiChu());
+            } catch (Exception e) {
+                log.debug("ghiChu field not available");
+            }
+
+            // Handle week-based vs legacy schedule
+            if (entity.isWeekBasedSchedule() && entity.getScheduleInstance() != null) {
+                ScheduleInstance instance = entity.getScheduleInstance();
+                WeeklySchedule template = instance.getWeeklySchedule();
+
+                builder.maInstance(instance.getMaInstance())
+                        .tuanHoc(instance.getTuanHoc())
+                        .scheduleType("WEEK_BASED")
+                        .scheduleDisplayName("Tuần " + instance.getTuanHoc());
+
+                if (template != null && template.getLopHocPhan() != null) {
+                    LopHocPhan lhp = template.getLopHocPhan();
+                    builder.maLhp(lhp.getMaLhp());
+
+                    if (lhp.getMonHoc() != null) {
+                        builder.tenMonHoc(lhp.getMonHoc().getTenMh());
+                    }
+                    if (lhp.getGiangVien() != null) {
+                        builder.tenGiangVien(lhp.getGiangVien().getHoTen());
+                    }
+                }
+
+                // Get actual room info
+                PhongHoc phong = instance.getPhongHocThucTe();
+                if (phong != null) {
+                    builder.tenPhong(phong.getTenPhong());
+                }
+
+            } else if (entity.getLichHoc() != null) {
+                LichHoc lichHoc = entity.getLichHoc();
+                LopHocPhan lhp = lichHoc.getLopHocPhan();
+
+                builder.maLich(lichHoc.getMaLich())
+                        .scheduleType("LEGACY")
+                        .scheduleDisplayName("Lịch truyền thống");
+
+                if (lhp != null) {
+                    builder.maLhp(lhp.getMaLhp());  // ← FIX: Thêm maLhp cho legacy
+
+                    if (lhp.getMonHoc() != null) {
+                        builder.tenMonHoc(lhp.getMonHoc().getTenMh());
+                    }
+                    if (lhp.getGiangVien() != null) {
+                        builder.tenGiangVien(lhp.getGiangVien().getHoTen());
+                    }
+                }
+
+                if (lichHoc.getPhongHoc() != null) {
+                    builder.tenPhong(lichHoc.getPhongHoc().getTenPhong());
+                }
+            }
+
+            return builder.build();
+
+        } catch (Exception e) {
+            log.error("Error converting DiemDanh to DTO: {}", e.getMessage());
+            // Return minimal DTO on error
+            return DiemDanhDTO.builder()
+                    .id(entity.getId())
+                    .ngayDiemDanh(entity.getNgayDiemDanh())
+                    .scheduleType("ERROR")
+                    .scheduleDisplayName("Lỗi chuyển đổi dữ liệu")
+                    .build();
+        }
+    }
+
+    /**
+     * FIXED: Update existing toDTO method để tương thích
+     */
+    public DiemDanhDTO toDTO(DiemDanh entity) {
+        return toEnhancedDTO(entity);
+    }
+
+    /**
+     * NEW: Get attendance by LopHocPhan (both schedule types)
+     */
+    public List<DiemDanhDTO> getAttendanceByLopHocPhan(String maLhp) {
+        try {
+            List<DiemDanh> attendanceList = diemDanhRepository.findByLopHocPhanAllTypes(maLhp);
+            return attendanceList.stream()
+                    .map(this::toEnhancedDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error getting attendance by LHP: {}", e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * HELPER: Handle time conversion for existing methods
+     */
+    private LocalDateTime convertToLocalDateTime(Object timeObject) {
+        if (timeObject == null) return null;
+
+        if (timeObject instanceof LocalDateTime) {
+            return (LocalDateTime) timeObject;
+        } else if (timeObject instanceof LocalTime) {
+            LocalTime localTime = (LocalTime) timeObject;
+            return LocalDate.now().atTime(localTime);  // Combine with today's date
+        } else {
+            log.warn("Unknown time type: {}", timeObject.getClass());
+            return null;
+        }
+    }
+
 }

@@ -284,14 +284,15 @@ public interface DiemDanhRepository extends JpaRepository<DiemDanh, Long> {
     Long countAbsentByStudent(@Param("maSv") String maSv);
 
     /**
-     * Lấy thống kê theo môn học - RAW DATA
+     * Lấy thống kê theo môn học - RAW DATA (FIXED)
      */
     @Query("SELECT lhp.monHoc.maMh, lhp.monHoc.tenMh, lhp.maLhp, lhp.nhom, " +
             "COUNT(DISTINCT lh.maLich), " +
             "SUM(CASE WHEN d.trangThai = 'CO_MAT' THEN 1 ELSE 0 END), " +
             "SUM(CASE WHEN d.trangThai = 'VANG_MAT' THEN 1 ELSE 0 END), " +
-            "CAST(SUM(CASE WHEN d.trangThai = 'CO_MAT' THEN 1 ELSE 0 END) * 100.0 / " +
-            "NULLIF(COUNT(DISTINCT lh.maLich), 0) AS double) " +
+            "(CASE WHEN COUNT(DISTINCT lh.maLich) > 0 THEN " +
+            "SUM(CASE WHEN d.trangThai = 'CO_MAT' THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT lh.maLich) " +
+            "ELSE 0.0 END) " +
             "FROM DiemDanh d " +
             "RIGHT JOIN d.lichHoc lh " +
             "JOIN lh.lopHocPhan lhp " +
@@ -299,7 +300,6 @@ public interface DiemDanhRepository extends JpaRepository<DiemDanh, Long> {
             "AND lhp.isActive = true " +
             "GROUP BY lhp.monHoc.maMh, lhp.monHoc.tenMh, lhp.maLhp, lhp.nhom")
     List<Object[]> getAttendanceBySubjectAndStudentRaw(@Param("maSv") String maSv);
-
     /**
      * Lấy lịch sử điểm danh - RAW DATA
      */
@@ -325,4 +325,97 @@ public interface DiemDanhRepository extends JpaRepository<DiemDanh, Long> {
     List<Object[]> getAttendanceHistoryByStudentAndSubjectRaw(@Param("maSv") String maSv,
                                                               @Param("maMh") String maMh,
                                                               Pageable pageable);
+
+
+    List<DiemDanh> findByScheduleInstanceMaInstanceAndNgayDiemDanh(String maInstance, LocalDate ngayDiemDanh);
+
+    List<DiemDanh> findByScheduleInstanceMaInstance(String maInstance);
+
+
+
+    /**
+     * Find attendance by either legacy or week-based schedule ID
+     */
+    @Query("SELECT dd FROM DiemDanh dd WHERE " +
+            "(dd.scheduleInstance.maInstance = :scheduleId OR dd.lichHoc.maLich = :scheduleId) " +
+            "AND dd.ngayDiemDanh = :ngayDiemDanh")
+    List<DiemDanh> findByScheduleIdAndDate(@Param("scheduleId") String scheduleId,
+                                           @Param("ngayDiemDanh") LocalDate ngayDiemDanh);
+
+    /**
+     * Find all attendance for a LopHocPhan (both schedule types)
+     */
+    @Query("SELECT dd FROM DiemDanh dd WHERE " +
+            "(dd.scheduleInstance.weeklySchedule.lopHocPhan.maLhp = :maLhp OR " +
+            "dd.lichHoc.lopHocPhan.maLhp = :maLhp)")
+    List<DiemDanh> findByLopHocPhanAllTypes(@Param("maLhp") String maLhp);
+
+    /**
+     * Find attendance by student and LopHocPhan (both types)
+     */
+    @Query("SELECT dd FROM DiemDanh dd WHERE dd.sinhVien.maSv = :maSv AND " +
+            "(dd.scheduleInstance.weeklySchedule.lopHocPhan.maLhp = :maLhp OR " +
+            "dd.lichHoc.lopHocPhan.maLhp = :maLhp)")
+    List<DiemDanh> findByStudentAndLopHocPhan(@Param("maSv") String maSv, @Param("maLhp") String maLhp);
+
+    /**
+     * Count attendance by schedule type
+     */
+    @Query("SELECT COUNT(dd) FROM DiemDanh dd WHERE dd.scheduleInstance IS NOT NULL")
+    long countWeekBasedAttendance();
+
+    @Query("SELECT COUNT(dd) FROM DiemDanh dd WHERE dd.lichHoc IS NOT NULL")
+    long countLegacyAttendance();
+
+    /**
+     * Find today's attendance (both types)
+     */
+    @Query("SELECT dd FROM DiemDanh dd WHERE dd.ngayDiemDanh = :today " +
+            "ORDER BY dd.sinhVien.maSv")
+    List<DiemDanh> findTodayAttendance(@Param("today") LocalDate today);
+
+    /**
+     * Find attendance by date range (both types)
+     */
+    @Query("SELECT dd FROM DiemDanh dd WHERE dd.ngayDiemDanh >= :startDate " +
+            "AND dd.ngayDiemDanh <= :endDate " +
+            "ORDER BY dd.ngayDiemDanh DESC")
+    List<DiemDanh> findByDateRange(@Param("startDate") LocalDate startDate,
+                                   @Param("endDate") LocalDate endDate);
+
+    /**
+     * Find week-based attendance by week number
+     */
+    @Query("SELECT dd FROM DiemDanh dd WHERE dd.scheduleInstance.tuanHoc = :tuanHoc " +
+            "ORDER BY dd.ngayDiemDanh")
+    List<DiemDanh> findByWeekNumber(@Param("tuanHoc") Integer tuanHoc);
+
+    /**
+     * Get attendance statistics for a student in a class
+     */
+    @Query("SELECT COUNT(dd) as total, " +
+            "SUM(CASE WHEN dd.trangThai = 'CO_MAT' THEN 1 ELSE 0 END) as present, " +
+            "SUM(CASE WHEN dd.trangThai = 'VANG_MAT' THEN 1 ELSE 0 END) as absent, " +
+            "SUM(CASE WHEN dd.trangThai = 'MUON' THEN 1 ELSE 0 END) as late " +
+            "FROM DiemDanh dd WHERE dd.sinhVien.maSv = :maSv AND " +
+            "(dd.scheduleInstance.weeklySchedule.lopHocPhan.maLhp = :maLhp OR " +
+            "dd.lichHoc.lopHocPhan.maLhp = :maLhp)")
+    Object getAttendanceStatsByStudentAndClass(@Param("maSv") String maSv, @Param("maLhp") String maLhp);
+
+    /**
+     * Find attendance without time records (need manual entry)
+     */
+    @Query("SELECT dd FROM DiemDanh dd WHERE dd.thoiGianVao IS NULL " +
+            "AND dd.ngayDiemDanh = :date " +
+            "ORDER BY dd.sinhVien.maSv")
+    List<DiemDanh> findPendingTimeEntry(@Param("date") LocalDate date);
+
+    /**
+     * Find attendance by teacher (both schedule types)
+     */
+    @Query("SELECT dd FROM DiemDanh dd WHERE " +
+            "(dd.scheduleInstance.weeklySchedule.lopHocPhan.giangVien.maGv = :maGv OR " +
+            "dd.lichHoc.lopHocPhan.giangVien.maGv = :maGv) " +
+            "AND dd.ngayDiemDanh = :date")
+    List<DiemDanh> findByTeacherAndDate(@Param("maGv") String maGv, @Param("date") LocalDate date);
 }

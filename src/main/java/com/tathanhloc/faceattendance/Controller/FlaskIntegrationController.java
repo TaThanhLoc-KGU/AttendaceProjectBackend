@@ -147,7 +147,7 @@ public class FlaskIntegrationController {
                     .maSv(attendanceData.getMaSv())
                     .maLich(attendanceData.getMaLich())
                     .ngayDiemDanh(attendanceData.getDetectionTime().toLocalDate())
-                    .thoiGianVao(attendanceData.getDetectionTime().toLocalTime())
+                    .thoiGianVao(attendanceData.getDetectionTime())
                     .trangThai(com.tathanhloc.faceattendance.Enum.TrangThaiDiemDanhEnum.CO_MAT)
                     .build();
 

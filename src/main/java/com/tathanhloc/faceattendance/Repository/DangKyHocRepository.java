@@ -79,4 +79,12 @@ public interface DangKyHocRepository extends JpaRepository<DangKyHoc, DangKyHocI
     @Query("SELECT dk FROM DangKyHoc dk JOIN dk.lopHocPhan lhp WHERE lhp.hocKy = :hocKy")
     List<DangKyHoc> findByHocKy(@Param("hocKy") String hocKy);
 
+    // ← THÊM METHOD NÀY
+    @Query("SELECT dk FROM DangKyHoc dk WHERE dk.lopHocPhan.maLhp = :maLhp AND dk.isActive = true")
+    List<DangKyHoc> findByLopHocPhanMaLhpAndIsActiveTrue(@Param("maLhp") String maLhp);
+    List<DangKyHoc> findBySinhVienMaSvAndIsActiveTrue(String maSv);
+
+
+
+
 }

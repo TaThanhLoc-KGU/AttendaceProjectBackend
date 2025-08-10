@@ -360,24 +360,43 @@
         showLoading(true);
 
         try {
+            // ✅ Load tất cả data trước
             await Promise.all([
-                loadLhpData(),
-                loadSubjectData(),
-                loadTeacherData(),
-                loadSemesterData(),
-                loadYearData(),
-                loadStudentData()
+                loadLhpData(),      // Không render trong này nữa
+                loadSubjectData(),   // Cần có để hiển thị tên môn học
+                loadTeacherData(),   // Cần có để hiển thị tên giảng viên
+                loadSemesterData(),  // Cần có để hiển thị tên học kỳ (đã fix endpoint)
+                loadYearData(),      // Cần có để hiển thị năm học
+                loadStudentData()    // Cần có cho modal quản lý sinh viên
             ]);
 
+            // ✅ Sau khi tất cả data đã load xong, mới populate filters và render table
             populateFilters();
+
+            // 🎯 CHỈ render table SAU KHI tất cả data đã sẵn sàng
+            renderLhpTable();
+
             console.log('✅ Page initialized successfully');
+            console.log('📊 Data summary:', {
+                lhpData: lhpData.length,
+                subjectData: subjectData.length,
+                teacherData: teacherData.length,
+                semesterData: semesterData.length,
+                yearData: yearData.length,
+                studentData: studentData.length
+            });
+
         } catch (error) {
             console.error('❌ Error initializing page:', error);
             showNotification('Lỗi khi tải dữ liệu: ' + error.message, 'error');
+
+            // Vẫn render table dù có lỗi để tránh màn hình trống
+            renderLhpTable();
         } finally {
             showLoading(false);
         }
     }
+
 
     function setupEventListeners() {
         // Search
@@ -405,12 +424,15 @@
 
             lhpData = await response.json();
             filteredData = [...lhpData];
-            renderLhpTable();
+            // ❌ KHÔNG gọi renderLhpTable() ở đây nữa
+            // renderLhpTable(); // <-- Xóa dòng này
             console.log('✅ LHP data loaded:', lhpData.length);
         } catch (error) {
             console.error('❌ Error loading LHP:', error);
             lhpData = [];
-            renderLhpTable();
+            filteredData = [];
+            // ❌ KHÔNG gọi renderLhpTable() ở đây nữa
+            // renderLhpTable(); // <-- Xóa dòng này
         }
     }
 
@@ -443,16 +465,61 @@
 
     async function loadSemesterData() {
         try {
-            const response = await fetch(`${API_BASE}/hocky`);
+            // 🔧 Fix: Sử dụng endpoint /hocky/all thay vì /hocky
+            const response = await fetch(`${API_BASE}/hocky/all`);
             if (!response.ok) throw new Error('Failed to load semesters');
 
             semesterData = await response.json();
             console.log('✅ Semester data loaded:', semesterData.length);
+
+            // Debug log để kiểm tra dữ liệu học kỳ week-based
+            console.log('📅 Sample semester data:', semesterData.slice(0, 2));
+
+            // Kiểm tra có học kỳ week-based không
+            const weekBasedSemesters = semesterData.filter(s => s.isWeekBasedConfig);
+            console.log(`📊 Found ${weekBasedSemesters.length} week-based semesters out of ${semesterData.length} total`);
+
         } catch (error) {
             console.error('❌ Error loading semesters:', error);
             semesterData = [];
+
+            // Thử phương án dự phòng: load qua hockynamhoc API
+            console.log('🔄 Trying fallback method via hockynamhoc API...');
+            try {
+                const fallbackResponse = await fetch(`${API_BASE}/hockynamhoc`);
+                if (fallbackResponse.ok) {
+                    const semesterRelations = await fallbackResponse.json();
+
+                    // Lấy thông tin chi tiết từng học kỳ
+                    const semesterPromises = semesterRelations.map(async (rel) => {
+                        try {
+                            const hocKyResponse = await fetch(`${API_BASE}/hocky/${rel.maHocKy}`);
+                            if (hocKyResponse.ok) {
+                                const hocKy = await hocKyResponse.json();
+                                return {
+                                    ...hocKy,
+                                    maNamHoc: rel.maNamHoc,
+                                    tenNamHoc: rel.tenNamHoc,
+                                    thuTu: rel.thuTu
+                                };
+                            }
+                        } catch (error) {
+                            console.warn(`Could not load semester ${rel.maHocKy}:`, error);
+                        }
+                        return null;
+                    });
+
+                    const semesterResults = await Promise.all(semesterPromises);
+                    semesterData = semesterResults.filter(s => s !== null);
+
+                    console.log('✅ Semester data loaded via fallback:', semesterData.length);
+                }
+            } catch (fallbackError) {
+                console.error('❌ Fallback method also failed:', fallbackError);
+            }
         }
     }
+
 
     async function loadYearData() {
         try {
@@ -467,15 +534,13 @@
         }
     }
 
+
     async function loadStudentData() {
         try {
-            // Sử dụng endpoint /all để lấy tất cả sinh viên
             const response = await fetch(`${API_BASE}/sinhvien/all`);
             if (!response.ok) throw new Error('Failed to load students');
 
             const allStudents = await response.json();
-
-            // Filter chỉ lấy sinh viên đang hoạt động
             studentData = allStudents.filter(s => s.isActive);
             console.log('✅ Student data loaded:', studentData.length);
         } catch (error) {
@@ -561,55 +626,68 @@
         emptyState.style.display = 'none';
 
         tbody.innerHTML = filteredData.map(lhp => {
-            const subject = subjectData.find(s => s.maMh === lhp.maMh) || {};
-            const teacher = teacherData.find(t => t.maGv === lhp.maGv) || {};
-            const semester = semesterData.find(s => s.maHocKy === lhp.hocKy) || {};
+            // 🔧 Improved data lookup với fallback values
+            const subject = subjectData.find(s => s.maMh === lhp.maMh) || {
+                tenMh: lhp.tenMonHoc || lhp.maMh || 'Đang tải...'
+            };
+            const teacher = teacherData.find(t => t.maGv === lhp.maGv) || {
+                hoTen: lhp.tenGiangVien || lhp.maGv || 'Đang tải...'
+            };
+            const semester = semesterData.find(s => s.maHocKy === lhp.hocKy) || {
+                tenHocKy: lhp.hocKy || 'Đang tải...'
+            };
 
             return `
-                <tr>
-                    <td>
-                        <strong class="text-primary">${lhp.maLhp}</strong>
-                    </td>
-                    <td>
-                        <div class="d-flex flex-column">
-                            <span class="fw-medium">${subject.tenMh || 'N/A'}</span>
-                            <small class="text-muted">${lhp.maMh}</small>
-                        </div>
-                    </td>
-                    <td>
-                        <span class="badge bg-primary">Nhóm ${lhp.nhom}</span>
-                    </td>
-                    <td>${semester.tenHocKy || lhp.hocKy}</td>
-                    <td>${lhp.namHoc}</td>
-                    <td>
-                        <div class="d-flex flex-column">
-                            <span class="fw-medium">${teacher.hoTen || 'N/A'}</span>
-                            <small class="text-muted">${lhp.maGv}</small>
-                        </div>
-                    </td>
-                    <td>
-                        <span class="badge bg-info">${lhp.soLuongSinhVien || 0} SV</span>
-                    </td>
-                    <td>
-                        <span class="status-badge ${lhp.isActive ? 'status-active' : 'status-inactive'}">
-                            ${lhp.isActive ? 'Hoạt động' : 'Ngừng hoạt động'}
-                        </span>
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="btn-action btn-view" onclick="manageStudents('${lhp.maLhp}')" title="Quản lý sinh viên">
-                                <i class="fas fa-users"></i>
-                            </button>
-                            <button class="btn-action btn-edit" onclick="editLhp('${lhp.maLhp}')" title="Sửa">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn-action btn-delete" onclick="deleteLhp('${lhp.maLhp}')" title="Xóa">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
+            <tr>
+                <td>
+                    <strong class="text-primary">${lhp.maLhp}</strong>
+                </td>
+                <td>
+                    <div class="d-flex flex-column">
+                        <span class="fw-medium">${subject.tenMh}</span>
+                        <small class="text-muted">${lhp.maMh}</small>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-primary">Nhóm ${lhp.nhom}</span>
+                </td>
+                <td>${semester.tenHocKy}</td>
+                <td>${lhp.namHoc}</td>
+                <td>
+                    <div class="d-flex flex-column">
+                        <span class="fw-medium">${teacher.hoTen}</span>
+                        <small class="text-muted">${lhp.maGv}</small>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-info">${lhp.soLuongSinhVien || 0} SV</span>
+                </td>
+                <td>
+                    <span class="status-badge ${lhp.isActive ? 'status-active' : 'status-inactive'}">
+                        ${lhp.isActive ? '<i class="fas fa-check-circle me-1"></i>Hoạt động' : '<i class="fas fa-times-circle me-1"></i>Ngưng'}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn btn-sm btn-outline-info" onclick="viewLhpDetails('${lhp.maLhp}')" title="Xem chi tiết">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editLhp('${lhp.maLhp}')" title="Chỉnh sửa">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="manageLhpStudents('${lhp.maLhp}')" title="Quản lý SV">
+                            <i class="fas fa-users"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="transferStudents('${lhp.maLhp}')" title="Chuyển nhóm">
+                            <i class="fas fa-exchange-alt"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteLhp('${lhp.maLhp}')" title="Xóa">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
         }).join('');
     }
 
