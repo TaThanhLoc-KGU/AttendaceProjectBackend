@@ -16,7 +16,110 @@
     <link th:href="@{/css/admin.css}" rel="stylesheet">
 
     <style>
-        /* Thêm vào phần <style> */
+
+        /* Modal improvements */
+        .modal-xl .modal-content {
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            border: none;
+            padding: 1.5rem;
+        }
+
+        .modal-title {
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        /* Card styling */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px 12px 0 0;
+            padding: 1rem 1.5rem;
+        }
+
+        .card-header h6 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Form enhancements */
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .form-select {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            padding: 0.75rem 1rem;
+            background-size: 16px;
+        }
+
+        .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        /* Switch styling */
+        .form-check-input {
+            width: 3rem;
+            height: 1.5rem;
+            border-radius: 1rem;
+            background-color: #e9ecef;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-check-input:checked {
+            background-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        .form-check-label {
+            font-weight: 500;
+            margin-left: 0.5rem;
+        }
+
+
         .semester-timeline {
             position: relative;
             padding-left: 2rem;
@@ -382,7 +485,397 @@
             padding-top: 20px;
         }
 
+        /* Week-based configuration styling */
+        #weekBasedConfig {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
 
+        #weekBasedConfig::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        #weekBasedConfig.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.05) 100%);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        #weekBasedConfig.active::before {
+            transform: scaleX(1);
+        }
+
+        #dateBasedConfig {
+            background: linear-gradient(135deg, rgba(108, 117, 125, 0.05) 0%, rgba(108, 117, 125, 0.02) 100%);
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        /* Preset button styling */
+        .preset-btn {
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            border: 2px solid #e9ecef;
+            background: white;
+            color: #495057;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preset-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .preset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+            border-color: #667eea;
+        }
+
+        .preset-btn:hover::before {
+            left: 100%;
+        }
+
+        .preset-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .preset-btn.active:hover {
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        /* Alert styling */
+        .alert {
+            border: none;
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .alert::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: currentColor;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 110, 253, 0.05) 100%);
+            color: #0c63e4;
+            border-left: 4px solid #0d6efd;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, rgba(25, 135, 84, 0.1) 0%, rgba(25, 135, 84, 0.05) 100%);
+            color: #0f5132;
+            border-left: 4px solid #198754;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+            color: #664d03;
+            border-left: 4px solid #ffc107;
+        }
+
+        /* Week preview styling */
+        #weekPreview {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid #e9ecef;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        #weekPreviewContent {
+            max-height: 250px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #667eea #f1f3f4;
+        }
+
+        #weekPreviewContent::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #weekPreviewContent::-webkit-scrollbar-track {
+            background: #f1f3f4;
+            border-radius: 3px;
+        }
+
+        #weekPreviewContent::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 3px;
+        }
+
+        .week-item {
+            padding: 0.75rem 1rem;
+            margin: 0.5rem 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #0d6efd;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .week-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .week-item.current {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%);
+            border-left-color: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        .week-item.past {
+            background: linear-gradient(135deg, rgba(108, 117, 125, 0.1) 0%, rgba(108, 117, 125, 0.05) 100%);
+            border-left-color: #6c757d;
+            opacity: 0.8;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+        }
+
+        /* Button styling */
+        .btn {
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            border: none;
+            color: white;
+        }
+
+        /* Table styling for preview */
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table td {
+            padding: 0.5rem 0.75rem;
+            vertical-align: middle;
+            border: none;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Badge styling */
+        .badge {
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        /* Input group styling */
+        .input-group {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .input-group-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+        }
+
+        /* Loading spinner styling */
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        /* Responsive improvements */
+        @media (max-width: 768px) {
+            .modal-xl .modal-dialog {
+                margin: 0.5rem;
+                max-width: calc(100% - 1rem);
+            }
+
+            .card-body {
+                padding: 1rem;
+            }
+
+            .preset-btn {
+                display: block;
+                width: 100%;
+                margin: 0.25rem 0;
+            }
+
+            #weekPreviewContent {
+                max-height: 200px;
+            }
+
+            .week-item {
+                padding: 0.5rem 0.75rem;
+            }
+        }
+
+        /* Animation for config mode toggle */
+        #dateBasedConfig, #weekBasedConfig {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Small text styling */
+        .form-text {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Required field indicator */
+        .text-danger {
+            color: #dc3545 !important;
+        }
+
+        /* Success/Error text colors */
+        .text-success {
+            color: #198754 !important;
+            font-weight: 600;
+        }
+
+        .text-danger {
+            color: #dc3545 !important;
+            font-weight: 600;
+        }
+
+        .text-warning {
+            color: #fd7e14 !important;
+            font-weight: 600;
+        }
+
+        /* Enhanced focus states */
+        .form-control:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        /* Modal footer improvements */
+        .modal-footer {
+            border-top: 1px solid #e9ecef;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 0 0 15px 15px;
+        }
+
+        /* Improved spacing */
+        .mb-3 {
+            margin-bottom: 1.5rem !important;
+        }
+
+        .mt-3 {
+            margin-top: 1.5rem !important;
+        }
+
+        /* Icon improvements */
+        .fas, .far {
+            margin-right: 0.5rem;
+        }
+
+        /* Container improvements */
+        .container-fluid {
+            padding: 0 1.5rem;
+        }
+
+        .row {
+            margin: 0 -0.75rem;
+        }
+
+        .col-md-6, .col-md-4 {
+            padding: 0 0.75rem;
+        }
     </style>
 </head>
 <body>
@@ -624,70 +1117,267 @@
     </div>
 </div>
 
-<!-- Modal Tạo/Sửa Học kỳ -->
+<!-- Modal Tạo/Sửa Học kỳ với Week-based Config -->
 <div class="modal fade" id="semesterModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="semesterModalTitle">Tạo học kỳ</h5>
+                <h5 class="modal-title" id="semesterModalTitle">
+                    <i class="fas fa-calendar-plus me-2"></i>Tạo học kỳ
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="semesterForm">
-                    <input type="hidden" id="semesterId">
-                    <div class="row">
-                        <div class="col-md-6">
+                <!-- Basic Information -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">📝 Thông tin cơ bản</h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="semesterForm">
+                            <input type="hidden" id="semesterId">
+
+                            <!-- Chọn năm học (chỉ hiện khi tạo mới) -->
+                            <div class="mb-3" id="namHocSelectContainer">
+                                <label for="chonNamHocChoHocKy" class="form-label">
+                                    <i class="fas fa-calendar me-2"></i>Năm học <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <select class="form-select" id="chonNamHocChoHocKy" required>
+                                        <option value="">Đang tải danh sách năm học...</option>
+                                    </select>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="forceReloadAcademicYears()" title="Tải lại danh sách năm học">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>Học kỳ sẽ được tạo trong năm học này
+                                </small>
+                                <div id="academicYearDebugInfo" class="mt-2" style="display: none;">
+                                    <button type="button" class="btn btn-sm btn-outline-info" onclick="debugAcademicYears()">
+                                        <i class="fas fa-bug me-1"></i>Debug Info
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="maHocKy" class="form-label">
+                                            Mã học kỳ <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" id="maHocKy"
+                                               placeholder="2024-2025_HK1" required>
+                                        <small class="form-text text-muted">
+                                            Ví dụ: 2024-2025_HK1, 2024-2025_HE
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="tenHocKy" class="form-label">
+                                            Tên học kỳ <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" id="tenHocKy"
+                                               placeholder="Học kỳ 1 - Năm học 2024-2025" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="loaiHocKy" class="form-label">Loại học kỳ</label>
+                                        <select class="form-select" id="loaiHocKy">
+                                            <option value="CHINH_QUY">Chính quy</option>
+                                            <option value="HE">Hè</option>
+                                            <option value="TAP_TRUNG">Tập trung</option>
+                                            <option value="DAC_BIET">Đặc biệt</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="thuTuHocKy" class="form-label">Thứ tự học kỳ</label>
+                                        <select class="form-select" id="thuTuHocKy">
+                                            <option value="">Tự động</option>
+                                            <option value="1">Học kỳ 1</option>
+                                            <option value="2">Học kỳ 2</option>
+                                            <option value="3">Học kỳ 3</option>
+                                            <option value="4">Học kỳ hè</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="mb-3">
-                                <label for="maHocKy" class="form-label">Mã học kỳ <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="maHocKy" placeholder="2024-2025_HK1" required>
-                                <small class="form-text text-muted">Ví dụ: 2024-2025_HK1</small>
+                                <label for="moTaHocKy" class="form-label">Mô tả</label>
+                                <textarea class="form-control" id="moTaHocKy" rows="2"
+                                          placeholder="Mô tả về học kỳ..."></textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="isActiveHocKy" checked>
+                                        <label class="form-check-label" for="isActiveHocKy">Kích hoạt</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="isCurrentHocKy">
+                                        <label class="form-check-label" for="isCurrentHocKy">Đặt làm hiện tại</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Time Configuration -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">⏰ Cấu hình thời gian học kỳ</h6>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="useWeekBasedConfig"
+                                   onchange="toggleConfigMode()">
+                            <label class="form-check-label" for="useWeekBasedConfig">
+                                <strong>Sử dụng cấu hình theo tuần (Week-based)</strong>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Date-based Config (Mặc định) -->
+                        <div id="dateBasedConfig">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Cấu hình theo ngày:</strong> Chọn ngày bắt đầu và kết thúc cụ thể cho học kỳ
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="ngayBatDauHocKy" class="form-label">
+                                        Ngày bắt đầu <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="date" class="form-control" id="ngayBatDauHocKy" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="ngayKetThucHocKy" class="form-label">
+                                        Ngày kết thúc <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="date" class="form-control" id="ngayKetThucHocKy" required>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+
+                        <!-- Week-based Config -->
+                        <div id="weekBasedConfig" style="display: none;">
+                            <div class="alert alert-success">
+                                <i class="fas fa-calendar-week me-2"></i>
+                                <strong>Cấu hình theo tuần:</strong> Tự động tính ngày dựa trên tuần trong năm học
+                            </div>
+
+                            <!-- Preset Buttons -->
                             <div class="mb-3">
-                                <label for="tenHocKy" class="form-label">Tên học kỳ <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="tenHocKy" placeholder="Học kỳ 1 - Năm học 2024-2025" required>
+                                <label class="form-label">🚀 Preset nhanh:</label>
+                                <div class="btn-group d-block" role="group">
+                                    <button type="button" class="btn btn-outline-primary btn-sm preset-btn"
+                                            onclick="setWeekPreset('standard')">
+                                        📚 Chuẩn (15 tuần)
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success btn-sm preset-btn"
+                                            onclick="setWeekPreset('extended')">
+                                        📖 Mở rộng (18 tuần)
+                                    </button>
+                                    <button type="button" class="btn btn-outline-warning btn-sm preset-btn"
+                                            onclick="setWeekPreset('summer')">
+                                        ☀️ Hè (8 tuần)
+                                    </button>
+                                    <button type="button" class="btn btn-outline-info btn-sm preset-btn"
+                                            onclick="setWeekPreset('intensive')">
+                                        ⚡ Tập trung (6 tuần)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Week Configuration -->
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="ngayBatDauTuan1" class="form-label">
+                                        Ngày bắt đầu tuần 1 <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="date" class="form-control" id="ngayBatDauTuan1"
+                                           onchange="validateMondayAndCalculate()">
+                                    <small class="form-text text-muted">
+                                        Phải là thứ Hai của tuần đầu tiên trong năm học
+                                    </small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="tuanBatDau" class="form-label">
+                                        Tuần bắt đầu <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-control" id="tuanBatDau" onchange="updateThongTinTinhToan()">
+                                        <option value="1">Tuần 1 (Học kỳ 1)</option>
+                                        <option value="18">Tuần 18 (Học kỳ 2)</option>
+                                        <option value="34">Tuần 34 (Học kỳ hè)</option>
+                                        <option value="40">Tuần 40 (Khóa đặc biệt)</option>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Tuần thứ mấy trong năm học (1-52)
+                                    </small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="soTuanHoc" class="form-label">
+                                        Số tuần học <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="soTuanHoc"
+                                               min="4" max="20" value="15" onchange="updateThongTinTinhToan()">
+                                        <span class="input-group-text">tuần</span>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        Từ 4 đến 20 tuần
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Auto-calculated Information -->
+                            <div class="alert alert-info mt-3" id="thongTinTinhToan" style="display: none;">
+                                <strong>📊 Thông tin học kỳ được tính tự động:</strong>
+                                <div class="row mt-2">
+                                    <div class="col-md-6">
+                                        <small>🗓️ <strong>Khoảng thời gian:</strong> <span id="khoangThoiGian">-</span></small><br>
+                                        <small>📅 <strong>Bắt đầu:</strong> <span id="ngayBatDauThucTe">-</span></small><br>
+                                        <small>🏁 <strong>Kết thúc:</strong> <span id="ngayKetThucThucTe">-</span></small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <small>📈 <strong>Tổng số tuần:</strong> <span id="tongSoTuan">-</span></small><br>
+                                        <small>📚 <strong>Số buổi học dự kiến:</strong> <span id="soBuoiHoc">-</span></small><br>
+                                        <small>⚠️ <strong>Trạng thái:</strong> <span id="trangThaiValidation">-</span></small>
+                                    </div>
+                                </div>
+
+                                <!-- Week Preview -->
+                                <div class="mt-3" id="weekPreview">
+                                    <h6 class="mb-2">📅 Preview tuần học:</h6>
+                                    <div id="weekPreviewContent" class="small"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="ngayBatDauHocKy" class="form-label">Ngày bắt đầu <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="ngayBatDauHocKy" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="ngayKetThucHocKy" class="form-label">Ngày kết thúc <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="ngayKetThucHocKy" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="moTaHocKy" class="form-label">Mô tả</label>
-                        <textarea class="form-control" id="moTaHocKy" rows="3" placeholder="Mô tả về học kỳ..."></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="isActiveHocKy" checked>
-                                <label class="form-check-label" for="isActiveHocKy">Kích hoạt</label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="isCurrentHocKy">
-                                <label class="form-check-label" for="isCurrentHocKy">Đặt làm hiện tại</label>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+                </div>
             </div>
+
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Hủy
+                </button>
+                <button type="button" class="btn btn-info" onclick="previewSemester()" id="previewBtn">
+                    <i class="fas fa-eye me-2"></i>Xem trước
+                </button>
                 <button type="button" class="btn btn-primary" onclick="saveSemester()">
-                    <span class="btn-text">Lưu</span>
+                    <span class="btn-text">
+                        <i class="fas fa-save me-2"></i>Lưu học kỳ
+                    </span>
                     <div class="spinner-border spinner-border-sm d-none ms-2" role="status"></div>
                 </button>
             </div>
@@ -718,46 +1408,1258 @@
         setupEventListeners();
     });
 
+    /**
+     * Enhanced initializePage to ensure academic years are loaded
+     */
     async function initializePage() {
         console.log('🚀 Initializing Academic Configuration page...');
 
         try {
+            // Load data with proper sequencing
             await Promise.all([
                 loadAcademicYears(),
                 loadSemesters(),
                 loadCurrentStatus()
             ]);
 
+            // Render components
             renderTimeline();
             renderAcademicYearsList();
             renderSemestersList();
 
+            // Initialize academic year selector functionality
+            initializeAcademicYearSelector();
+
             console.log('✅ Page initialized successfully');
+
         } catch (error) {
             console.error('❌ Error initializing page:', error);
             showNotification('Lỗi khi tải dữ liệu: ' + error.message, 'error');
+
+            // Try to initialize academic year selector even if other data failed
+            initializeAcademicYearSelector();
         }
     }
 
     // Thêm vào function setupEventListeners()
     function setupEventListeners() {
-        // Date validation
-        document.getElementById('ngayBatDauNamHoc').addEventListener('change', validateAcademicYearDates);
-        document.getElementById('ngayKetThucNamHoc').addEventListener('change', validateAcademicYearDates);
-        document.getElementById('ngayBatDauHocKy').addEventListener('change', validateSemesterDates);
-        document.getElementById('ngayKetThucHocKy').addEventListener('change', validateSemesterDates);
+        console.log('🔧 Setting up event listeners...');
 
-        // Sidebar toggle
-        document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+        // Original event listeners
+        document.getElementById('ngayBatDauNamHoc')?.addEventListener('change', validateAcademicYearDates);
+        document.getElementById('ngayKetThucNamHoc')?.addEventListener('change', validateAcademicYearDates);
+        document.getElementById('ngayBatDauHocKy')?.addEventListener('change', validateSemesterDates);
+        document.getElementById('ngayKetThucHocKy')?.addEventListener('change', validateSemesterDates);
+        document.getElementById('sidebarToggle')?.addEventListener('click', toggleSidebar);
 
-        // Auto-sync progress when semester data changes
+        // Academic year specific listeners
         document.addEventListener('semesterUpdated', async (event) => {
             if (event.detail.maNamHoc) {
                 await updateAcademicYearStatus(event.detail.maNamHoc);
                 await loadCurrentStatus();
             }
         });
+
+        // Add academic year reload functionality
+        document.addEventListener('academicYearsReloaded', () => {
+            console.log('📡 Academic years reloaded event received');
+            populateAcademicYearSelector();
+        });
+
+        console.log('✅ Event listeners set up complete');
     }
+
+    // Thêm vào function renderSemestersTable
+    function renderSemesterRow(semester) {
+        const configType = semester.isWeekBasedConfig ?
+            `<span class="badge bg-info">Week-based</span>` :
+            `<span class="badge bg-secondary">Date-based</span>`;
+
+        const weekInfo = semester.isWeekBasedConfig ?
+            `<small class="text-muted">Tuần ${semester.tuanBatDau}-${semester.tuanKetThuc} (${semester.soTuanHoc} tuần)</small>` :
+            `<small class="text-muted">Tính từ ngày</small>`;
+
+        const typeColor = {
+            'CHINH_QUY': 'primary',
+            'HE': 'warning',
+            'TAP_TRUNG': 'info',
+            'DAC_BIET': 'success'
+        };
+
+        return `
+        <tr>
+            <td>
+                <strong>${semester.maHocKy}</strong><br>
+                <small class="text-muted">${semester.tenHocKy}</small>
+            </td>
+            <td>
+                ${configType}<br>
+                ${weekInfo}
+            </td>
+            <td>
+                <span class="badge bg-${typeColor[semester.loaiHocKy] || 'secondary'}">
+                    ${getLoaiHocKyDisplay(semester.loaiHocKy)}
+                </span>
+            </td>
+            <td>
+                ${semester.khoangThoiGianDisplay}<br>
+                <small class="text-muted">${semester.tongSoNgay} ngày</small>
+            </td>
+            <td>
+                <span class="badge bg-${semester.trangThaiColor}">${semester.trangThai}</span>
+                ${semester.tienDoPercent ? `<br><small>${semester.tienDoDisplay}</small>` : ''}
+            </td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" onclick="editSemester('${semester.maHocKy}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    ${semester.isCanSetCurrent ?
+            `<button class="btn btn-outline-success" onclick="setCurrentSemester('${semester.maHocKy}')">
+                            <i class="fas fa-star"></i>
+                        </button>` : ''
+        }
+                    ${semester.isCanDelete ?
+            `<button class="btn btn-outline-danger" onclick="deleteSemester('${semester.maHocKy}')">
+                            <i class="fas fa-trash"></i>
+                        </button>` : ''
+        }
+                </div>
+            </td>
+        </tr>`;
+    }
+    // Week-based preset configurations
+    const WEEK_PRESETS = {
+        standard: {
+            soTuan: 15,
+            tuanBatDau: 1,
+            loaiHocKy: 'CHINH_QUY',
+            description: 'Học kỳ chính quy tiêu chuẩn (15 tuần)'
+        },
+        extended: {
+            soTuan: 18,
+            tuanBatDau: 1,
+            loaiHocKy: 'CHINH_QUY',
+            description: 'Học kỳ chính quy mở rộng (18 tuần)'
+        },
+        summer: {
+            soTuan: 8,
+            tuanBatDau: 34,
+            loaiHocKy: 'HE',
+            description: 'Học kỳ hè (8 tuần)'
+        },
+        intensive: {
+            soTuan: 6,
+            tuanBatDau: 40,
+            loaiHocKy: 'TAP_TRUNG',
+            description: 'Khóa học tập trung (6 tuần)'
+        }
+    };
+
+    /**
+     * Toggle between date-based and week-based configuration
+     */
+    function toggleConfigMode() {
+        const useWeekBased = document.getElementById('useWeekBasedConfig').checked;
+        const dateBasedConfig = document.getElementById('dateBasedConfig');
+        const weekBasedConfig = document.getElementById('weekBasedConfig');
+
+        if (useWeekBased) {
+            // Switch to week-based
+            dateBasedConfig.style.display = 'none';
+            weekBasedConfig.style.display = 'block';
+            weekBasedConfig.classList.add('active');
+
+            // Set default values
+            setDefaultWeekValues();
+            updateThongTinTinhToan();
+
+            // Make date fields not required
+            document.getElementById('ngayBatDauHocKy').removeAttribute('required');
+            document.getElementById('ngayKetThucHocKy').removeAttribute('required');
+
+            // Make week fields required
+            document.getElementById('ngayBatDauTuan1').setAttribute('required', 'required');
+
+            showNotification('Đã chuyển sang cấu hình theo tuần', 'info');
+        } else {
+            // Switch to date-based
+            dateBasedConfig.style.display = 'block';
+            weekBasedConfig.style.display = 'none';
+            weekBasedConfig.classList.remove('active');
+
+            // Make date fields required
+            document.getElementById('ngayBatDauHocKy').setAttribute('required', 'required');
+            document.getElementById('ngayKetThucHocKy').setAttribute('required', 'required');
+
+            // Make week fields not required
+            document.getElementById('ngayBatDauTuan1').removeAttribute('required');
+
+            // Hide calculation info
+            document.getElementById('thongTinTinhToan').style.display = 'none';
+
+            showNotification('Đã chuyển sang cấu hình theo ngày', 'info');
+        }
+    }
+
+    /**
+     * Set default values for week-based configuration
+     */
+    function setDefaultWeekValues() {
+        const currentDate = new Date();
+        const currentYear = currentDate.getMonth() >= 8 ? currentDate.getFullYear() : currentDate.getFullYear() - 1;
+
+        // Set default start of week 1 (first Monday of August)
+        const defaultStartDate = getFirstMondayOfAugust(currentYear);
+        document.getElementById('ngayBatDauTuan1').value = defaultStartDate;
+
+        // Set default semester type based on current month
+        const currentMonth = currentDate.getMonth() + 1;
+        if (currentMonth >= 9 || currentMonth <= 1) {
+            // Semester 1 (September - January)
+            document.getElementById('tuanBatDau').value = '1';
+            document.getElementById('soTuanHoc').value = '15';
+            document.getElementById('loaiHocKy').value = 'CHINH_QUY';
+        } else if (currentMonth >= 2 && currentMonth <= 6) {
+            // Semester 2 (February - June)
+            document.getElementById('tuanBatDau').value = '18';
+            document.getElementById('soTuanHoc').value = '15';
+            document.getElementById('loaiHocKy').value = 'CHINH_QUY';
+        } else {
+            // Summer semester (July - August)
+            document.getElementById('tuanBatDau').value = '34';
+            document.getElementById('soTuanHoc').value = '8';
+            document.getElementById('loaiHocKy').value = 'HE';
+        }
+    }
+
+    /**
+     * Get first Monday of August for a given year
+     */
+    function getFirstMondayOfAugust(year) {
+        const augustFirst = new Date(year, 7, 1); // August 1st
+        const dayOfWeek = augustFirst.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        const daysToMonday = dayOfWeek === 1 ? 0 : (8 - dayOfWeek) % 7;
+        const firstMonday = new Date(augustFirst);
+        firstMonday.setDate(augustFirst.getDate() + daysToMonday);
+        return firstMonday.toISOString().split('T')[0];
+    }
+
+    /**
+     * Update auto-calculated information for week-based config
+     */
+    async function updateThongTinTinhToan() {
+        const tuanBatDau = parseInt(document.getElementById('tuanBatDau').value);
+        const soTuanHoc = parseInt(document.getElementById('soTuanHoc').value);
+        const ngayBatDauTuan1 = document.getElementById('ngayBatDauTuan1').value;
+
+        // Clear previous content
+        const infoContainer = document.getElementById('thongTinTinhToan');
+        if (!tuanBatDau || !soTuanHoc || !ngayBatDauTuan1) {
+            infoContainer.style.display = 'none';
+            return;
+        }
+
+        try {
+            // Show loading
+            document.getElementById('khoangThoiGian').textContent = 'Đang tính toán...';
+            infoContainer.style.display = 'block';
+
+            // Calculate semester information
+            const result = await calculateSemesterInfo({
+                mode: 'week',
+                tuanBatDau,
+                soTuanHoc,
+                ngayBatDauTuan1
+            });
+
+            if (result.success) {
+                // Update calculated info
+                document.getElementById('khoangThoiGian').textContent = result.khoangThoiGian;
+                document.getElementById('ngayBatDauThucTe').textContent = formatDate(result.ngayBatDauThucTe);
+                document.getElementById('ngayKetThucThucTe').textContent = formatDate(result.ngayKetThucThucTe);
+                document.getElementById('tongSoTuan').textContent = `${result.soTuanHoc} tuần`;
+                document.getElementById('soBuoiHoc').textContent = `${result.soBuoiHocDuKien} buổi`;
+
+                // Validation status
+                const isValid = result.isValidWeekRange && result.isValidStartDate;
+                document.getElementById('trangThaiValidation').innerHTML = isValid ?
+                    '<span class="text-success">✅ Hợp lệ</span>' :
+                    '<span class="text-danger">❌ Không hợp lệ</span>';
+
+                // Generate week preview
+                generateWeekPreview(result);
+
+                // Auto-fill date fields for backup
+                document.getElementById('ngayBatDauHocKy').value = result.ngayBatDauThucTe;
+                document.getElementById('ngayKetThucHocKy').value = result.ngayKetThucThucTe;
+
+            } else {
+                document.getElementById('trangThaiValidation').innerHTML =
+                    '<span class="text-danger">❌ Lỗi tính toán</span>';
+            }
+
+        } catch (error) {
+            console.error('Error calculating semester info:', error);
+            document.getElementById('trangThaiValidation').innerHTML =
+                '<span class="text-danger">❌ Lỗi kết nối</span>';
+        }
+    }
+
+    /**
+     * Generate week preview for the semester
+     */
+    function generateWeekPreview(semesterInfo) {
+        const previewContainer = document.getElementById('weekPreviewContent');
+        const startDate = new Date(semesterInfo.ngayBatDauThucTe);
+        const tuanBatDau = parseInt(document.getElementById('tuanBatDau').value);
+        const soTuanHoc = parseInt(document.getElementById('soTuanHoc').value);
+
+        let previewHtml = '';
+        const today = new Date();
+
+        for (let i = 0; i < soTuanHoc; i++) {
+            const weekNumber = tuanBatDau + i;
+            const weekStart = new Date(startDate);
+            weekStart.setDate(startDate.getDate() + (i * 7));
+
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+
+            // Determine week status
+            let weekClass = '';
+            let statusIcon = '';
+            if (weekEnd < today) {
+                weekClass = 'past';
+                statusIcon = '✅';
+            } else if (weekStart <= today && today <= weekEnd) {
+                weekClass = 'current';
+                statusIcon = '🔵';
+            } else {
+                statusIcon = '⏳';
+            }
+
+            previewHtml += `
+            <div class="week-item ${weekClass}">
+                <strong>${statusIcon} Tuần ${weekNumber} (Tuần ${i + 1} của học kỳ)</strong><br>
+                <small>${formatDate(weekStart.toISOString().split('T')[0])} - ${formatDate(weekEnd.toISOString().split('T')[0])}</small>
+            </div>
+        `;
+        }
+
+        previewContainer.innerHTML = previewHtml;
+    }
+
+    /**
+     * Preview semester before saving
+     */
+    async function previewSemester() {
+        const useWeekBased = document.getElementById('useWeekBasedConfig').checked;
+        const semesterData = collectSemesterData();
+
+        if (!validateSemesterData(semesterData, useWeekBased)) {
+            return;
+        }
+
+        try {
+            showLoading('Đang tạo preview...');
+
+            let previewData;
+            if (useWeekBased) {
+                // Calculate actual dates from week config
+                previewData = await calculateSemesterInfo({
+                    mode: 'week',
+                    tuanBatDau: semesterData.tuanBatDau,
+                    soTuanHoc: semesterData.soTuanHoc,
+                    ngayBatDauTuan1: semesterData.ngayBatDauTuan1
+                });
+
+                if (!previewData.success) {
+                    throw new Error(previewData.message);
+                }
+            } else {
+                // Use direct dates
+                previewData = {
+                    ngayBatDauThucTe: semesterData.ngayBatDau,
+                    ngayKetThucThucTe: semesterData.ngayKetThuc,
+                    soTuanHoc: calculateWeeksBetweenDates(semesterData.ngayBatDau, semesterData.ngayKetThuc),
+                    soBuoiHocDuKien: Math.floor(calculateWeeksBetweenDates(semesterData.ngayBatDau, semesterData.ngayKetThuc) * 5 * 2.5) // Estimate
+                };
+            }
+
+            showSemesterPreviewModal(semesterData, previewData, useWeekBased);
+
+        } catch (error) {
+            console.error('Error creating preview:', error);
+            showNotification('Lỗi khi tạo preview: ' + error.message, 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    /**
+     * Calculate weeks between two dates
+     */
+    function calculateWeeksBetweenDates(startDate, endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return Math.ceil(diffDays / 7);
+    }
+
+
+
+    /**
+     * Validate semester data
+     */
+    function validateSemesterData(data, isWeekBased) {
+        if (!data.maHocKy || !data.tenHocKy) {
+            showNotification('Vui lòng nhập mã và tên học kỳ!', 'warning');
+            return false;
+        }
+
+        if (isWeekBased) {
+            if (!data.tuanBatDau || !data.soTuanHoc || !data.ngayBatDauTuan1) {
+                showNotification('Vui lòng điền đầy đủ thông tin week-based config!', 'warning');
+                return false;
+            }
+
+            if (data.soTuanHoc < 4 || data.soTuanHoc > 20) {
+                showNotification('Số tuần học phải từ 4 đến 20 tuần!', 'warning');
+                return false;
+            }
+
+            if (data.tuanBatDau < 1 || data.tuanBatDau > 52) {
+                showNotification('Tuần bắt đầu phải từ 1 đến 52!', 'warning');
+                return false;
+            }
+        } else {
+            if (!data.ngayBatDau || !data.ngayKetThuc) {
+                showNotification('Vui lòng chọn ngày bắt đầu và kết thúc!', 'warning');
+                return false;
+            }
+
+            if (new Date(data.ngayKetThuc) <= new Date(data.ngayBatDau)) {
+                showNotification('Ngày kết thúc phải sau ngày bắt đầu!', 'warning');
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Collect semester data from form
+     */
+    function collectSemesterData() {
+        const useWeekBased = document.getElementById('useWeekBasedConfig').checked;
+
+        const data = {
+            maHocKy: document.getElementById('maHocKy').value,
+            tenHocKy: document.getElementById('tenHocKy').value,
+            moTa: document.getElementById('moTaHocKy').value,
+            loaiHocKy: document.getElementById('loaiHocKy').value || 'CHINH_QUY',
+            thuTu: document.getElementById('thuTuHocKy').value ? parseInt(document.getElementById('thuTuHocKy').value) : null,
+            isActive: document.getElementById('isActiveHocKy').checked,
+            isCurrent: document.getElementById('isCurrentHocKy').checked
+        };
+
+        if (useWeekBased) {
+            // Week-based data
+            data.tuanBatDau = parseInt(document.getElementById('tuanBatDau').value);
+            data.soTuanHoc = parseInt(document.getElementById('soTuanHoc').value);
+            data.ngayBatDauTuan1 = document.getElementById('ngayBatDauTuan1').value;
+            data.isWeekBasedConfig = true;
+        } else {
+            // Date-based data
+            data.ngayBatDau = document.getElementById('ngayBatDauHocKy').value;
+            data.ngayKetThuc = document.getElementById('ngayKetThucHocKy').value;
+            data.isWeekBasedConfig = false;
+        }
+
+        return data;
+    }
+
+
+    /**
+     * Show semester preview modal
+     */
+    function showSemesterPreviewModal(semesterData, calculatedData, isWeekBased) {
+        const configType = isWeekBased ? 'Week-based' : 'Date-based';
+        const configTypeClass = isWeekBased ? 'info' : 'secondary';
+
+        const modalContent = `
+        <div class="modal fade" id="semesterPreviewModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-eye me-2"></i>Preview Học kỳ
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-${configTypeClass}">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Loại cấu hình:</strong> ${configType}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3">📝 Thông tin cơ bản</h6>
+                                <table class="table table-sm">
+                                    <tr><td><strong>Mã học kỳ:</strong></td><td>${semesterData.maHocKy}</td></tr>
+                                    <tr><td><strong>Tên học kỳ:</strong></td><td>${semesterData.tenHocKy}</td></tr>
+                                    <tr><td><strong>Loại học kỳ:</strong></td><td>${getLoaiHocKyDisplay(semesterData.loaiHocKy)}</td></tr>
+                                    <tr><td><strong>Thứ tự:</strong></td><td>${semesterData.thuTu || 'Tự động'}</td></tr>
+                                    <tr><td><strong>Trạng thái:</strong></td><td>
+                                        <span class="badge bg-${semesterData.isActive ? 'success' : 'secondary'}">
+                                            ${semesterData.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                                        </span>
+                                        ${semesterData.isCurrent ? '<span class="badge bg-primary ms-1">Hiện tại</span>' : ''}
+                                    </td></tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-success mb-3">⏰ Thông tin thời gian</h6>
+                                <table class="table table-sm">
+                                    <tr><td><strong>Ngày bắt đầu:</strong></td><td>${formatDate(calculatedData.ngayBatDauThucTe)}</td></tr>
+                                    <tr><td><strong>Ngày kết thúc:</strong></td><td>${formatDate(calculatedData.ngayKetThucThucTe)}</td></tr>
+                                    <tr><td><strong>Số tuần học:</strong></td><td>${calculatedData.soTuanHoc} tuần</td></tr>
+                                    <tr><td><strong>Số buổi học dự kiến:</strong></td><td>${calculatedData.soBuoiHocDuKien} buổi</td></tr>
+                                    ${isWeekBased ? `
+                                        <tr><td><strong>Tuần bắt đầu:</strong></td><td>Tuần ${semesterData.tuanBatDau}</td></tr>
+                                        <tr><td><strong>Tuần kết thúc:</strong></td><td>Tuần ${semesterData.tuanBatDau + semesterData.soTuanHoc - 1}</td></tr>
+                                    ` : ''}
+                                </table>
+                            </div>
+                        </div>
+
+                        ${semesterData.moTa ? `
+                            <h6 class="text-info mb-2">💬 Mô tả</h6>
+                            <p class="alert alert-light">${semesterData.moTa}</p>
+                        ` : ''}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Đóng
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="saveSemesterFromPreview()">
+                            <i class="fas fa-save me-2"></i>Lưu học kỳ này
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+        // Remove existing modal
+        const existingModal = document.getElementById('semesterPreviewModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Add new modal
+        document.body.insertAdjacentHTML('beforeend', modalContent);
+        const modal = new bootstrap.Modal(document.getElementById('semesterPreviewModal'));
+        modal.show();
+
+        // Cleanup on close
+        document.getElementById('semesterPreviewModal').addEventListener('hidden.bs.modal', function() {
+            this.remove();
+        });
+    }
+
+    /**
+     * Save semester from preview modal
+     */
+    function saveSemesterFromPreview() {
+        // Close preview modal
+        const previewModal = bootstrap.Modal.getInstance(document.getElementById('semesterPreviewModal'));
+        if (previewModal) {
+            previewModal.hide();
+        }
+
+        // Save semester
+        saveSemester();
+    }
+
+
+    /**
+     * Fixed calculateSemesterInfo function
+     */
+    async function calculateSemesterInfo(config) {
+        console.log('🔢 Calculating semester info:', config);
+
+        try {
+            const response = await fetch(`${API_BASE}/hocky/calculate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+
+            const result = await response.json();
+            console.log('✅ Calculation result:', result);
+            return result;
+
+        } catch (error) {
+            console.error('❌ Error calculating semester info:', error);
+            return {
+                success: false,
+                message: error.message
+            };
+        }
+    }
+
+    /**
+     * Set week-based preset configuration
+     */
+    function setWeekPreset(type) {
+        const preset = WEEK_PRESETS[type];
+        if (!preset) {
+            console.error('Unknown preset type:', type);
+            return;
+        }
+
+        // Update form values
+        document.getElementById('soTuanHoc').value = preset.soTuan;
+        document.getElementById('tuanBatDau').value = preset.tuanBatDau;
+        document.getElementById('loaiHocKy').value = preset.loaiHocKy;
+
+        // Update active preset button
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+
+        // Update calculations
+        updateThongTinTinhToan();
+
+        showNotification(`Đã áp dụng preset: ${preset.description}`, 'success');
+    }
+
+    /**
+     * Validate that selected date is a Monday and update calculations
+     */
+    function validateMondayAndCalculate() {
+        const selectedDate = document.getElementById('ngayBatDauTuan1').value;
+        if (!selectedDate) return;
+
+        const date = new Date(selectedDate);
+        const dayOfWeek = date.getDay();
+
+        if (dayOfWeek !== 1) { // 1 = Monday
+            showNotification('Ngày bắt đầu tuần 1 phải là thứ Hai!', 'warning');
+
+            // Auto-correct to nearest Monday
+            const daysToMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek) % 7;
+            const correctedDate = new Date(date);
+            correctedDate.setDate(date.getDate() + daysToMonday);
+
+            document.getElementById('ngayBatDauTuan1').value = correctedDate.toISOString().split('T')[0];
+
+            showNotification('Đã tự động điều chỉnh thành thứ Hai gần nhất', 'info');
+        }
+
+        updateThongTinTinhToan();
+    }
+
+
+    // Get current academic year start (Monday of first week of August)
+    function getCurrentAcademicYearStart() {
+        const currentYear = new Date().getMonth() >= 8 ? new Date().getFullYear() : new Date().getFullYear() - 1;
+        const augustFirst = new Date(currentYear, 7, 1); // August 1st
+        const dayOfWeek = augustFirst.getDay();
+        const daysToMonday = dayOfWeek === 1 ? 0 : (8 - dayOfWeek) % 7;
+        const firstMonday = new Date(augustFirst);
+        firstMonday.setDate(augustFirst.getDate() + daysToMonday);
+        return firstMonday.toISOString().split('T')[0];
+    }
+
+    // Utility: Get loại học kỳ display name
+    function getLoaiHocKyDisplay(loaiHocKy) {
+        const displayNames = {
+            'CHINH_QUY': 'Chính quy',
+            'HE': 'Hè',
+            'TAP_TRUNG': 'Tập trung',
+            'DAC_BIET': 'Đặc biệt'
+        };
+        return displayNames[loaiHocKy] || loaiHocKy;
+    }
+
+    /**
+     * ULTIMATE Fixed saveSemester function - handles both CREATE and UPDATE với đầy đủ validation
+     */
+    async function saveSemester() {
+        console.log('💾 Starting save semester (ULTIMATE FIX)...');
+
+        const form = document.getElementById('semesterForm');
+        if (!form.checkValidity()) {
+            console.warn('❌ Form validation failed');
+            form.reportValidity();
+            return;
+        }
+
+        const useWeekBased = document.getElementById('useWeekBasedConfig').checked;
+        const semesterId = document.getElementById('semesterId').value;
+
+        console.log('📅 Week-based config:', useWeekBased);
+        console.log('🆔 Semester ID (for update):', semesterId);
+
+        // Collect base semester data
+        const semesterData = await collectAndValidateSemesterData(useWeekBased);
+        if (!semesterData) {
+            return; // Validation failed
+        }
+
+        console.log('📊 Final semester data to send:', JSON.stringify(semesterData, null, 2));
+
+        const btnText = document.querySelector('#semesterModal .btn-text');
+        const spinner = document.querySelector('#semesterModal .spinner-border');
+
+        btnText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang lưu...';
+        spinner.classList.remove('d-none');
+
+        try {
+            let response;
+
+            if (semesterId) {
+                // ===== UPDATE EXISTING SEMESTER =====
+                console.log('🔄 Updating existing semester:', semesterId);
+
+                response = await fetch(`${API_BASE}/hocky/${semesterId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(semesterData)
+                });
+
+            } else {
+                // ===== CREATE NEW SEMESTER =====
+                const selectedNamHoc = document.getElementById('chonNamHocChoHocKy').value;
+                if (!selectedNamHoc) {
+                    showNotification('Vui lòng chọn năm học cho học kỳ!', 'warning');
+                    return;
+                }
+
+                console.log('🆕 Creating new semester for academic year:', selectedNamHoc);
+
+                response = await fetch(`${API_BASE}/hockynamhoc/namhoc/${selectedNamHoc}/hocky`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(semesterData)
+                });
+            }
+
+            console.log('📡 Response status:', response.status);
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ Save successful:', result);
+
+                showNotification(
+                    semesterId ? 'Cập nhật học kỳ thành công!' : 'Tạo học kỳ thành công!',
+                    'success'
+                );
+
+                bootstrap.Modal.getInstance(document.getElementById('semesterModal')).hide();
+
+                // Reload page data
+                await initializePage();
+
+                // Trigger semester updated event
+                if (result.data && result.data.maNamHoc) {
+                    triggerSemesterUpdated(result.data.maNamHoc);
+                }
+            } else {
+                // Handle error response
+                const errorText = await response.text();
+                console.error('❌ Server error response:', errorText);
+
+                let errorMessage = 'Lỗi từ server';
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    errorMessage = errorJson.message || errorJson.error || 'Yêu cầu không hợp lệ';
+
+                    // Log validation details
+                    if (errorJson.debug) {
+                        console.error('🐛 Debug info:', errorJson.debug);
+                    }
+                } catch (e) {
+                    errorMessage = errorText || 'Lỗi không xác định';
+                }
+
+                throw new Error(errorMessage);
+            }
+
+        } catch (error) {
+            console.error('❌ Error saving semester:', error);
+            showNotification('Lỗi khi lưu học kỳ: ' + error.message, 'error');
+        } finally {
+            btnText.innerHTML = '<i class="fas fa-save me-2"></i>Lưu học kỳ';
+            spinner.classList.add('d-none');
+        }
+    }
+
+    /**
+     * Collect and validate complete semester data - ENSURES ALL REQUIRED FIELDS
+     */
+    async function collectAndValidateSemesterData(useWeekBased) {
+        console.log('📋 Collecting and validating semester data...');
+
+        // ===== COLLECT BASE DATA =====
+        const data = {
+            maHocKy: document.getElementById('maHocKy').value.trim(),
+            tenHocKy: document.getElementById('tenHocKy').value.trim(),
+            moTa: document.getElementById('moTaHocKy').value.trim() || null,
+            isActive: document.getElementById('isActiveHocKy').checked,
+            isCurrent: document.getElementById('isCurrentHocKy').checked,
+            loaiHocKy: document.getElementById('loaiHocKy').value || 'CHINH_QUY',
+            thuTu: document.getElementById('thuTuHocKy')?.value ?
+                parseInt(document.getElementById('thuTuHocKy').value) : null
+        };
+
+        // ===== BASIC VALIDATION =====
+        if (!data.maHocKy) {
+            showNotification('Mã học kỳ không được để trống!', 'warning');
+            return null;
+        }
+
+        if (!data.tenHocKy) {
+            showNotification('Tên học kỳ không được để trống!', 'warning');
+            return null;
+        }
+
+        // Validate mã học kỳ format
+        if (!/^[A-Z0-9_-]+$/i.test(data.maHocKy)) {
+            showNotification('Mã học kỳ chỉ được chứa chữ cái, số, dấu gạch ngang và gạch dưới!', 'warning');
+            return null;
+        }
+
+        if (useWeekBased) {
+            // ===== WEEK-BASED CONFIGURATION =====
+            const tuanBatDau = parseInt(document.getElementById('tuanBatDau').value);
+            const soTuanHoc = parseInt(document.getElementById('soTuanHoc').value);
+            const ngayBatDauTuan1 = document.getElementById('ngayBatDauTuan1').value;
+
+            console.log('📅 Week-based inputs:', { tuanBatDau, soTuanHoc, ngayBatDauTuan1 });
+
+            // Validate week-based inputs
+            if (!tuanBatDau || !soTuanHoc || !ngayBatDauTuan1) {
+                showNotification('Vui lòng điền đầy đủ thông tin cấu hình theo tuần!', 'warning');
+                return null;
+            }
+
+            if (soTuanHoc < 4 || soTuanHoc > 20) {
+                showNotification('Số tuần học phải từ 4 đến 20 tuần!', 'warning');
+                return null;
+            }
+
+            if (tuanBatDau < 1 || tuanBatDau > 52) {
+                showNotification('Tuần bắt đầu phải từ 1 đến 52!', 'warning');
+                return null;
+            }
+
+            // Validate Monday
+            const date = new Date(ngayBatDauTuan1);
+            if (date.getDay() !== 1) {
+                showNotification('Ngày bắt đầu tuần 1 phải là thứ Hai!', 'warning');
+                return null;
+            }
+
+            // Validate week range doesn't exceed year
+            if ((tuanBatDau + soTuanHoc - 1) > 52) {
+                showNotification('Học kỳ vượt quá 52 tuần trong năm!', 'warning');
+                return null;
+            }
+
+            // Calculate actual dates from week config
+            console.log('🔢 Calculating dates from week config...');
+            const calcResult = await calculateSemesterDates({
+                mode: 'week',
+                tuanBatDau: tuanBatDau,
+                soTuanHoc: soTuanHoc,
+                ngayBatDauTuan1: ngayBatDauTuan1
+            });
+
+            if (!calcResult.success) {
+                showNotification('Lỗi tính toán ngày từ cấu hình tuần: ' + calcResult.message, 'error');
+                return null;
+            }
+
+            // Add week-based fields
+            data.tuanBatDau = tuanBatDau;
+            data.soTuanHoc = soTuanHoc;
+            data.ngayBatDauTuan1 = ngayBatDauTuan1;
+            data.isWeekBasedConfig = true;
+
+            // *** CRITICAL: Always include calculated dates for backend validation ***
+            data.ngayBatDau = calcResult.ngayBatDauThucTe;
+            data.ngayKetThuc = calcResult.ngayKetThucThucTe;
+
+            console.log('✅ Week-based data with calculated dates:', {
+                tuanBatDau: data.tuanBatDau,
+                soTuanHoc: data.soTuanHoc,
+                ngayBatDauTuan1: data.ngayBatDauTuan1,
+                ngayBatDau: data.ngayBatDau,
+                ngayKetThuc: data.ngayKetThuc
+            });
+
+        } else {
+            // ===== DATE-BASED CONFIGURATION =====
+            const ngayBatDau = document.getElementById('ngayBatDauHocKy').value;
+            const ngayKetThuc = document.getElementById('ngayKetThucHocKy').value;
+
+            console.log('📅 Date-based inputs:', { ngayBatDau, ngayKetThuc });
+
+            // Validate date inputs
+            if (!ngayBatDau || !ngayKetThuc) {
+                showNotification('Vui lòng chọn ngày bắt đầu và kết thúc!', 'warning');
+                return null;
+            }
+
+            const startDate = new Date(ngayBatDau);
+            const endDate = new Date(ngayKetThuc);
+
+            if (endDate <= startDate) {
+                showNotification('Ngày kết thúc phải sau ngày bắt đầu!', 'warning');
+                return null;
+            }
+
+            // Validate duration (4-20 weeks)
+            const diffWeeks = Math.ceil((endDate - startDate) / (7 * 24 * 60 * 60 * 1000));
+            if (diffWeeks < 4) {
+                showNotification('Học kỳ phải kéo dài ít nhất 4 tuần!', 'warning');
+                return null;
+            }
+            if (diffWeeks > 20) {
+                showNotification('Học kỳ không được quá 20 tuần!', 'warning');
+                return null;
+            }
+
+            // Add date-based fields
+            data.ngayBatDau = ngayBatDau;
+            data.ngayKetThuc = ngayKetThuc;
+            data.isWeekBasedConfig = false;
+
+            // Clear week-based fields to avoid confusion
+            data.tuanBatDau = null;
+            data.soTuanHoc = null;
+            data.ngayBatDauTuan1 = null;
+
+            console.log('✅ Date-based data:', {
+                ngayBatDau: data.ngayBatDau,
+                ngayKetThuc: data.ngayKetThuc
+            });
+        }
+
+        console.log('✅ Data collection and validation completed successfully');
+        return data;
+    }
+    /**
+     * Enhanced calculateSemesterDates function with better error handling
+     */
+    async function calculateSemesterDates(config) {
+        console.log('🔢 Calculating semester dates:', config);
+
+        try {
+            const response = await fetch(`${API_BASE}/hocky/calculate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+
+            console.log('📡 Calculate API response status:', response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Calculate API error:', errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+
+            const result = await response.json();
+            console.log('✅ Calculation result:', result);
+
+            // Validate result structure
+            if (!result.ngayBatDauThucTe || !result.ngayKetThucThucTe) {
+                throw new Error('Invalid calculation result: missing dates');
+            }
+
+            return {
+                success: true,
+                ngayBatDauThucTe: result.ngayBatDauThucTe,
+                ngayKetThucThucTe: result.ngayKetThucThucTe,
+                ...result
+            };
+
+        } catch (error) {
+            console.error('❌ Error in calculateSemesterDates:', error);
+            return {
+                success: false,
+                message: error.message || 'Lỗi tính toán ngày học kỳ'
+            };
+        }
+    }
+
+    /**
+     * Validate complete semester data
+     */
+    function validateCompleteSemesterData(data, useWeekBased) {
+        console.log('✅ Validating semester data...');
+
+        // Basic validation
+        if (!data.maHocKy || !data.tenHocKy) {
+            showNotification('Vui lòng nhập mã và tên học kỳ!', 'warning');
+            return false;
+        }
+
+        // Validate mã học kỳ format
+        if (!/^[A-Z0-9_-]+$/i.test(data.maHocKy)) {
+            showNotification('Mã học kỳ chỉ được chứa chữ cái, số, dấu gạch ngang và gạch dưới!', 'warning');
+            return false;
+        }
+
+        if (useWeekBased) {
+            // Week-based validation
+            if (!data.tuanBatDau || !data.soTuanHoc || !data.ngayBatDauTuan1) {
+                showNotification('Vui lòng điền đầy đủ thông tin cấu hình theo tuần!', 'warning');
+                return false;
+            }
+
+            if (data.soTuanHoc < 4 || data.soTuanHoc > 20) {
+                showNotification('Số tuần học phải từ 4 đến 20 tuần!', 'warning');
+                return false;
+            }
+
+            if (data.tuanBatDau < 1 || data.tuanBatDau > 52) {
+                showNotification('Tuần bắt đầu phải từ 1 đến 52!', 'warning');
+                return false;
+            }
+
+            // Validate Monday
+            const date = new Date(data.ngayBatDauTuan1);
+            if (date.getDay() !== 1) {
+                showNotification('Ngày bắt đầu tuần 1 phải là thứ Hai!', 'warning');
+                return false;
+            }
+
+            // Validate week range doesn't exceed year
+            if ((data.tuanBatDau + data.soTuanHoc - 1) > 52) {
+                showNotification('Học kỳ vượt quá 52 tuần trong năm!', 'warning');
+                return false;
+            }
+        } else {
+            // Date-based validation
+            if (!data.ngayBatDau || !data.ngayKetThuc) {
+                showNotification('Vui lòng chọn ngày bắt đầu và kết thúc!', 'warning');
+                return false;
+            }
+
+            const startDate = new Date(data.ngayBatDau);
+            const endDate = new Date(data.ngayKetThuc);
+
+            if (endDate <= startDate) {
+                showNotification('Ngày kết thúc phải sau ngày bắt đầu!', 'warning');
+                return false;
+            }
+
+            // Validate duration
+            const diffWeeks = Math.ceil((endDate - startDate) / (7 * 24 * 60 * 60 * 1000));
+            if (diffWeeks < 4) {
+                showNotification('Học kỳ phải kéo dài ít nhất 4 tuần!', 'warning');
+                return false;
+            }
+            if (diffWeeks > 20) {
+                showNotification('Học kỳ không được quá 20 tuần!', 'warning');
+                return false;
+            }
+        }
+
+        console.log('✅ Validation passed');
+        return true;
+    }
+
+
+    // ===== FIXED SAVE SEMESTER FUNCTION WITH WEEK-BASED SUPPORT =====
+
+    /**
+     * Enhanced saveSemester function với đầy đủ hỗ trợ week-based configuration
+     */
+    async function saveSemester() {
+        console.log('💾 Starting save semester...');
+
+        const form = document.getElementById('semesterForm');
+        if (!form.checkValidity()) {
+            console.warn('❌ Form validation failed');
+            form.reportValidity();
+            return;
+        }
+
+        const useWeekBased = document.getElementById('useWeekBasedConfig').checked;
+        console.log('📅 Week-based config:', useWeekBased);
+
+        // Collect complete semester data
+        const semesterData = collectCompleteSemesterData(useWeekBased);
+        console.log('📊 Semester data collected:', semesterData);
+
+        // Validate data
+        if (!validateCompleteSemesterData(semesterData, useWeekBased)) {
+            return;
+        }
+
+        const btnText = document.querySelector('#semesterModal .btn-text');
+        const spinner = document.querySelector('#semesterModal .spinner-border');
+
+        btnText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang lưu...';
+        spinner.classList.remove('d-none');
+
+        try {
+            const semesterId = document.getElementById('semesterId').value;
+
+            if (useWeekBased && !semesterId) {
+                // For new week-based semesters, calculate actual dates first
+                console.log('🔄 Calculating dates from week-based config...');
+                const calcResult = await calculateSemesterInfo({
+                    mode: 'week',
+                    tuanBatDau: semesterData.tuanBatDau,
+                    soTuanHoc: semesterData.soTuanHoc,
+                    ngayBatDauTuan1: semesterData.ngayBatDauTuan1
+                });
+
+                if (calcResult.success) {
+                    semesterData.ngayBatDau = calcResult.ngayBatDauThucTe;
+                    semesterData.ngayKetThuc = calcResult.ngayKetThucThucTe;
+                    console.log('✅ Calculated dates:', {
+                        ngayBatDau: semesterData.ngayBatDau,
+                        ngayKetThuc: semesterData.ngayKetThuc
+                    });
+                } else {
+                    throw new Error('Lỗi tính toán ngày từ week-based config: ' + calcResult.message);
+                }
+            }
+
+            let response;
+
+            if (semesterId) {
+                // Update existing semester
+                console.log('🔄 Updating existing semester:', semesterId);
+                response = await fetch(`${API_BASE}/hocky/${semesterId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(semesterData)
+                });
+            } else {
+                // Create new semester - need to specify academic year
+                const selectedNamHoc = document.getElementById('chonNamHocChoHocKy').value;
+                if (!selectedNamHoc) {
+                    showNotification('Vui lòng chọn năm học cho học kỳ!', 'warning');
+                    return;
+                }
+
+                console.log('🆕 Creating new semester for academic year:', selectedNamHoc);
+                console.log('📤 Sending semester data:', JSON.stringify(semesterData, null, 2));
+
+                response = await fetch(`${API_BASE}/hockynamhoc/namhoc/${selectedNamHoc}/hocky`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(semesterData)
+                });
+            }
+
+            console.log('📡 Response status:', response.status);
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ Save successful:', result);
+
+                showNotification(
+                    semesterId ? 'Cập nhật học kỳ thành công!' : 'Tạo học kỳ thành công!',
+                    'success'
+                );
+
+                bootstrap.Modal.getInstance(document.getElementById('semesterModal')).hide();
+
+                // Reload page data
+                await initializePage();
+
+                // Trigger semester updated event
+                if (result.data && result.data.maNamHoc) {
+                    triggerSemesterUpdated(result.data.maNamHoc);
+                }
+            } else {
+                const errorText = await response.text();
+                console.error('❌ Server error:', errorText);
+
+                let errorMessage = 'Lỗi từ server';
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    errorMessage = errorJson.message || errorJson.error || errorText;
+                } catch (e) {
+                    errorMessage = errorText;
+                }
+
+                throw new Error(errorMessage);
+            }
+
+        } catch (error) {
+            console.error('❌ Error saving semester:', error);
+            showNotification('Lỗi khi lưu học kỳ: ' + error.message, 'error');
+        } finally {
+            btnText.innerHTML = '<i class="fas fa-save me-2"></i>Lưu học kỳ';
+            spinner.classList.add('d-none');
+        }
+    }
+
+    /**
+     * Collect complete semester data including week-based fields
+     */
+    function collectCompleteSemesterData(useWeekBased) {
+        const data = {
+            // Basic fields
+            maHocKy: document.getElementById('maHocKy').value.trim(),
+            tenHocKy: document.getElementById('tenHocKy').value.trim(),
+            moTa: document.getElementById('moTaHocKy').value.trim(),
+            isActive: document.getElementById('isActiveHocKy').checked,
+            isCurrent: document.getElementById('isCurrentHocKy').checked,
+
+            // Advanced fields
+            loaiHocKy: document.getElementById('loaiHocKy').value || 'CHINH_QUY',
+            thuTu: document.getElementById('thuTuHocKy')?.value ?
+                parseInt(document.getElementById('thuTuHocKy').value) : null
+        };
+
+        if (useWeekBased) {
+            // Week-based configuration
+            data.tuanBatDau = parseInt(document.getElementById('tuanBatDau').value);
+            data.soTuanHoc = parseInt(document.getElementById('soTuanHoc').value);
+            data.ngayBatDauTuan1 = document.getElementById('ngayBatDauTuan1').value;
+            data.isWeekBasedConfig = true;
+
+            console.log('📅 Week-based data added:', {
+                tuanBatDau: data.tuanBatDau,
+                soTuanHoc: data.soTuanHoc,
+                ngayBatDauTuan1: data.ngayBatDauTuan1
+            });
+        } else {
+            // Date-based configuration
+            data.ngayBatDau = document.getElementById('ngayBatDauHocKy').value;
+            data.ngayKetThuc = document.getElementById('ngayKetThucHocKy').value;
+            data.isWeekBasedConfig = false;
+
+            console.log('📅 Date-based data added:', {
+                ngayBatDau: data.ngayBatDau,
+                ngayKetThuc: data.ngayKetThuc
+            });
+        }
+
+        return data;
+    }
+
 
     // Trigger custom event khi có thay đổi học kỳ
     function triggerSemesterUpdated(maNamHoc) {
@@ -767,19 +2669,92 @@
         document.dispatchEvent(event);
     }
 
-    // Data Loading Functions
+
     async function loadAcademicYears() {
+        console.log('📡 Loading academic years...');
+
         try {
             const response = await fetch(`${API_BASE}/namhoc/all`);
-            if (!response.ok) throw new Error('Failed to load academic years');
 
-            academicYears = await response.json();
-            console.log('✅ Academic years loaded:', academicYears.length);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+
+            if (!Array.isArray(data)) {
+                throw new Error('Invalid response format - expected array');
+            }
+
+            academicYears = data;
+            console.log(`✅ Academic years loaded: ${academicYears.length} items`);
+            console.log('📊 Academic years data:', academicYears);
+
+            // Auto-populate selector if it exists
+            const selector = document.getElementById('chonNamHocChoHocKy');
+            if (selector) {
+                populateAcademicYearSelector();
+            }
+
+            return academicYears;
+
         } catch (error) {
             console.error('❌ Error loading academic years:', error);
             academicYears = [];
+
+            // Show error in selector if exists
+            const selector = document.getElementById('chonNamHocChoHocKy');
+            if (selector) {
+                selector.innerHTML = `
+                <option value="">Lỗi tải dữ liệu năm học</option>
+                <option value="" disabled>Vui lòng thử lại</option>
+            `;
+            }
+
+            throw error;
         }
     }
+
+    /**
+     * Initialize academic year functionality
+     */
+    function initializeAcademicYearSelector() {
+        console.log('🔧 Initializing academic year selector functionality...');
+
+        // Ensure academic years are loaded
+        if (!academicYears || academicYears.length === 0) {
+            console.log('📡 Academic years not loaded, loading now...');
+            loadAcademicYears().catch(error => {
+                console.error('Failed to load academic years:', error);
+            });
+        } else {
+            console.log('✅ Academic years already loaded, populating selector...');
+            populateAcademicYearSelector();
+        }
+    }
+
+    /**
+     * Debug function to check academic year data
+     */
+    function debugAcademicYears() {
+        console.log('🔍 Debug Academic Years:');
+        console.log('- academicYears variable:', academicYears);
+        console.log('- Is array?', Array.isArray(academicYears));
+        console.log('- Length:', academicYears ? academicYears.length : 'undefined');
+        console.log('- Sample data:', academicYears ? academicYears.slice(0, 2) : 'none');
+
+        const selector = document.getElementById('chonNamHocChoHocKy');
+        console.log('- Selector element:', selector);
+        console.log('- Selector options count:', selector ? selector.options.length : 'selector not found');
+
+        if (selector && selector.options.length > 1) {
+            console.log('- Sample options:');
+            for (let i = 1; i < Math.min(selector.options.length, 3); i++) {
+                console.log(`  [${i}] value: "${selector.options[i].value}", text: "${selector.options[i].textContent}"`);
+            }
+        }
+    }
+
 
     async function loadSemesters() {
         try {
@@ -818,27 +2793,60 @@
         }
     }
 
+    /**
+     * Fixed loadCurrentStatus function with proper error handling
+     */
     async function loadCurrentStatus() {
-        try {
-            // Load current academic year
-            const currentYearResponse = await fetch(`${API_BASE}/namhoc/current`);
-            const currentSemesterResponse = await fetch(`${API_BASE}/hocky/current`);
+        console.log('📊 Loading current status...');
 
-            if (currentYearResponse.ok) {
-                const currentYear = await currentYearResponse.json();
-                renderCurrentAcademicYear(currentYear);
-            } else {
+        try {
+            // Load current academic year with error handling
+            try {
+                const currentYearResponse = await fetch(`${API_BASE}/namhoc/current`);
+                if (currentYearResponse.ok) {
+                    const responseText = await currentYearResponse.text();
+                    if (responseText && responseText.trim()) {
+                        const currentYear = JSON.parse(responseText);
+                        renderCurrentAcademicYear(currentYear);
+                    } else {
+                        console.warn('⚠️ Empty response from current academic year API');
+                        renderCurrentAcademicYear(null);
+                    }
+                } else {
+                    console.warn('⚠️ Current academic year API returned:', currentYearResponse.status);
+                    renderCurrentAcademicYear(null);
+                }
+            } catch (error) {
+                console.warn('⚠️ Error loading current academic year:', error.message);
                 renderCurrentAcademicYear(null);
             }
 
-            if (currentSemesterResponse.ok) {
-                const currentSemester = await currentSemesterResponse.json();
-                renderCurrentSemester(currentSemester);
-            } else {
+            // Load current semester with error handling
+            try {
+                const currentSemesterResponse = await fetch(`${API_BASE}/hocky/current`);
+                if (currentSemesterResponse.ok) {
+                    const responseText = await currentSemesterResponse.text();
+                    if (responseText && responseText.trim()) {
+                        const currentSemester = JSON.parse(responseText);
+                        renderCurrentSemester(currentSemester);
+                    } else {
+                        console.warn('⚠️ Empty response from current semester API');
+                        renderCurrentSemester(null);
+                    }
+                } else {
+                    console.warn('⚠️ Current semester API returned:', currentSemesterResponse.status);
+                    renderCurrentSemester(null);
+                }
+            } catch (error) {
+                console.warn('⚠️ Error loading current semester:', error.message);
                 renderCurrentSemester(null);
             }
+
+            console.log('✅ Current status loaded successfully');
+
         } catch (error) {
-            console.error('❌ Error loading current status:', error);
+            console.error('❌ Error in loadCurrentStatus:', error);
+            // Don't throw error, just render null states
             renderCurrentAcademicYear(null);
             renderCurrentSemester(null);
         }
@@ -1229,73 +3237,7 @@
         }).join('');
     }
 
-    function renderAcademicYearsList() {
-        const container = document.getElementById('academicYearsList');
-        let filteredYears = academicYears;
 
-        // Apply filter
-        if (currentFilter !== 'all') {
-            filteredYears = academicYears.filter(year => {
-                switch(currentFilter) {
-                    case 'ongoing': return year.trangThai === 'Đang diễn ra';
-                    case 'upcoming': return year.trangThai === 'Chưa bắt đầu';
-                    case 'finished': return year.trangThai === 'Đã kết thúc';
-                    default: return true;
-                }
-            });
-        }
-
-        if (filteredYears.length === 0) {
-            container.innerHTML = `
-               <div class="text-center py-5">
-                   <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
-                   <h5>Không có năm học nào</h5>
-                   <p class="text-muted">Vui lòng tạo năm học mới</p>
-               </div>
-           `;
-            return;
-        }
-
-        container.innerHTML = filteredYears.map(year => `
-           <div class="semester-card ${getStatusClass(year.trangThai)}">
-               <div class="row align-items-center">
-                   <div class="col-md-8">
-                       <div class="d-flex justify-content-between align-items-start mb-2">
-                           <h6 class="text-primary">
-                               ${year.tenNamHoc}
-                               ${year.isCurrent ? '<span class="badge bg-success ms-2">Hiện tại</span>' : ''}
-                           </h6>
-                           <span class="status-badge status-${getStatusClass(year.trangThai)}">${year.trangThai}</span>
-                       </div>
-                       <p class="mb-1"><strong>Mã:</strong> ${year.maNamHoc}</p>
-                       <p class="mb-1"><strong>Thời gian:</strong> ${formatDate(year.ngayBatDau)} - ${formatDate(year.ngayKetThuc)}</p>
-                       <p class="mb-1"><strong>Số học kỳ:</strong> ${year.soHocKy || 0}</p>
-                       ${year.moTa ? `<p class="mb-2 text-muted">${year.moTa}</p>` : ''}
-                   </div>
-                   <div class="col-md-4 text-end">
-                       <div class="progress mb-2" style="height: 8px;">
-                           <div class="progress-bar" style="width: ${year.tiLePhanTram || 0}%"></div>
-                       </div>
-                       <small class="text-muted d-block mb-3">Tiến độ: ${Math.round(year.tiLePhanTram || 0)}%</small>
-
-                       <div class="btn-group-vertical btn-group-sm">
-                           <button class="btn btn-outline-primary" onclick="editAcademicYear('${year.maNamHoc}')">
-                               <i class="fas fa-edit"></i> Sửa
-                           </button>
-                           ${!year.isCurrent ? `
-                               <button class="btn btn-outline-warning" onclick="setAsCurrentAcademicYear('${year.maNamHoc}')">
-                                   <i class="fas fa-star"></i> Đặt hiện tại
-                               </button>
-                           ` : ''}
-                           <button class="btn btn-outline-danger" onclick="deleteAcademicYear('${year.maNamHoc}')">
-                               <i class="fas fa-trash"></i> Xóa
-                           </button>
-                       </div>
-                   </div>
-               </div>
-           </div>
-       `).join('');
-    }
 
     function renderSemestersList() {
         const container = document.getElementById('semestersList');
@@ -1400,52 +3342,138 @@
         modal.show();
     }
 
+    /**
+     * Enhanced openCreateSemesterModal with proper academic year loading
+     */
     function openCreateSemesterModal() {
-        document.getElementById('semesterModalTitle').textContent = 'Tạo học kỳ';
+        console.log('🚀 Opening create semester modal...');
+
+        // Set modal title and reset form
+        document.getElementById('semesterModalTitle').innerHTML =
+            '<i class="fas fa-calendar-plus me-2"></i>Tạo học kỳ mới';
         document.getElementById('semesterForm').reset();
         document.getElementById('semesterId').value = '';
+
+        // Reset to default values
         document.getElementById('isActiveHocKy').checked = true;
         document.getElementById('isCurrentHocKy').checked = false;
+        document.getElementById('useWeekBasedConfig').checked = false;
+        document.getElementById('loaiHocKy').value = 'CHINH_QUY';
 
-        // Thêm dropdown chọn năm học nếu chưa có
+        // Reset config mode to date-based
+        if (typeof toggleConfigMode === 'function') {
+            toggleConfigMode();
+        }
+
+        // Show and populate academic year selector
+        const namHocContainer = document.getElementById('namHocSelectContainer');
+        if (namHocContainer) {
+            namHocContainer.style.display = 'block';
+        }
+
+        // Always ensure academic year selector is available and populated
         addNamHocSelectToSemesterModal();
 
+        // If no academic years loaded, try to reload
+        if (!academicYears || academicYears.length === 0) {
+            console.warn('⚠️ No academic years loaded, attempting to reload...');
+            forceReloadAcademicYears();
+        }
+
+        // Show modal
         const modal = new bootstrap.Modal(document.getElementById('semesterModal'));
         modal.show();
+
+        console.log('✅ Create semester modal opened');
     }
+
+    /**
+     * Add academic year selector to semester modal - FIXED VERSION
+     */
     function addNamHocSelectToSemesterModal() {
+        console.log('🔄 Adding academic year selector to semester modal...');
+
+        // Check if already exists
         const existingSelect = document.getElementById('chonNamHocChoHocKy');
-        if (existingSelect) return; // Đã có rồi
+        if (existingSelect) {
+            console.log('✅ Academic year selector already exists, just populating...');
+            populateAcademicYearSelector();
+            return;
+        }
 
+        // Find the form and the reference element
         const form = document.getElementById('semesterForm');
-        const moTaDiv = form.querySelector('#moTaHocKy').closest('.mb-3');
+        if (!form) {
+            console.error('❌ Semester form not found!');
+            return;
+        }
 
-        // Tạo div chọn năm học
+        // Find reference element to insert before
+        const moTaDiv = form.querySelector('#moTaHocKy')?.closest('.mb-3');
+        if (!moTaDiv) {
+            console.error('❌ Reference element for inserting academic year selector not found!');
+            return;
+        }
+
+        // Create academic year selector div
         const namHocDiv = document.createElement('div');
         namHocDiv.className = 'mb-3';
+        namHocDiv.id = 'namHocSelectContainer';
         namHocDiv.innerHTML = `
-        <label for="chonNamHocChoHocKy" class="form-label">Năm học <span class="text-danger">*</span></label>
+        <label for="chonNamHocChoHocKy" class="form-label">
+            <i class="fas fa-calendar me-2"></i>Năm học <span class="text-danger">*</span>
+        </label>
         <select class="form-select" id="chonNamHocChoHocKy" required>
-            <option value="">Chọn năm học</option>
+            <option value="">Đang tải danh sách năm học...</option>
         </select>
-        <small class="form-text text-muted">Học kỳ sẽ được tạo trong năm học này</small>
+        <small class="form-text text-muted">
+            <i class="fas fa-info-circle me-1"></i>Học kỳ sẽ được tạo trong năm học này
+        </small>
     `;
 
-        // Thêm vào trước phần mô tả
+        // Insert before the description field
         form.insertBefore(namHocDiv, moTaDiv);
+        console.log('✅ Academic year selector element created');
 
-        // Populate năm học options
+        // Populate the selector
+        populateAcademicYearSelector();
+
+        // Add change event listener for auto-generation
         const select = document.getElementById('chonNamHocChoHocKy');
-        academicYears.filter(year => year.isActive).forEach(year => {
-            const option = document.createElement('option');
-            option.value = year.maNamHoc;
-            option.textContent = year.tenNamHoc;
-            if (year.isCurrent) {
-                option.selected = true;
-            }
-            select.appendChild(option);
-        });
+        if (select) {
+            select.addEventListener('change', function() {
+                console.log('📝 Academic year changed:', this.value);
+                autoGenerateSemesterCode();
+            });
+        }
     }
+
+    /**
+     * Force reload academic years and populate selector
+     */
+    async function forceReloadAcademicYears() {
+        console.log('🔄 Force reloading academic years...');
+
+        try {
+            showLoading('Đang tải danh sách năm học...');
+
+            // Reload academic years
+            await loadAcademicYears();
+
+            // Re-populate selector
+            populateAcademicYearSelector();
+
+            console.log('✅ Academic years reloaded successfully');
+            showNotification('Đã tải lại danh sách năm học!', 'success');
+
+        } catch (error) {
+            console.error('❌ Error reloading academic years:', error);
+            showNotification('Lỗi khi tải danh sách năm học: ' + error.message, 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
 
     function addThuTuFieldToSemesterModal() {
         const existingField = document.getElementById('thuTuHocKy');
@@ -1584,83 +3612,6 @@
         }
     }
 
-    async function saveSemester() {
-        const form = document.getElementById('semesterForm');
-        if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
-        }
-
-        const btnText = document.querySelector('#semesterModal .btn-text');
-        const spinner = document.querySelector('#semesterModal .spinner-border');
-
-        btnText.textContent = 'Đang lưu...';
-        spinner.classList.remove('d-none');
-
-        const semesterData = {
-            maHocKy: document.getElementById('maHocKy').value,
-            tenHocKy: document.getElementById('tenHocKy').value,
-            ngayBatDau: document.getElementById('ngayBatDauHocKy').value,
-            ngayKetThuc: document.getElementById('ngayKetThucHocKy').value,
-            moTa: document.getElementById('moTaHocKy').value,
-            thuTu: document.getElementById('thuTuHocKy') ? parseInt(document.getElementById('thuTuHocKy').value) : null
-        };
-
-        try {
-            const semesterId = document.getElementById('semesterId').value;
-
-            if (semesterId) {
-                // Cập nhật học kỳ hiện có
-                const response = await fetch(`${API_BASE}/hocky/${semesterId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        ...semesterData,
-                        isActive: document.getElementById('isActiveHocKy').checked,
-                        isCurrent: document.getElementById('isCurrentHocKy').checked
-                    })
-                });
-
-                if (response.ok) {
-                    showNotification('Cập nhật học kỳ thành công!', 'success');
-                } else {
-                    throw new Error(await response.text());
-                }
-            } else {
-                // Tạo học kỳ mới - cần chọn năm học
-                const selectedNamHoc = document.getElementById('chonNamHocChoHocKy').value;
-                if (!selectedNamHoc) {
-                    showNotification('Vui lòng chọn năm học cho học kỳ!', 'warning');
-                    return;
-                }
-
-                const response = await fetch(`${API_BASE}/hockynamhoc/namhoc/${selectedNamHoc}/hocky`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(semesterData)
-                });
-
-                if (response.ok) {
-                    showNotification('Tạo học kỳ thành công!', 'success');
-                } else {
-                    throw new Error(await response.text());
-                }
-            }
-
-            bootstrap.Modal.getInstance(document.getElementById('semesterModal')).hide();
-            await initializePage();
-        } catch (error) {
-            console.error('Error saving semester:', error);
-            showNotification('Lỗi khi lưu: ' + error.message, 'error');
-        } finally {
-            btnText.textContent = 'Lưu';
-            spinner.classList.add('d-none');
-        }
-    }
 
     // Edit Functions
     function editAcademicYear(maNamHoc) {
@@ -1681,35 +3632,112 @@
         modal.show();
     }
 
+    /**
+     * Enhanced editSemester function với proper data loading
+     */
     function editSemester(maHocKy) {
-        const semester = semesters.find(s => s.maHocKy === maHocKy);
-        if (!semester) return;
+        console.log('✏️ Editing semester (ULTIMATE VERSION):', maHocKy);
 
-        document.getElementById('semesterModalTitle').textContent = 'Sửa học kỳ';
+        const semester = semesters.find(s => s.maHocKy === maHocKy);
+        if (!semester) {
+            console.error('❌ Semester not found:', maHocKy);
+            showNotification('Không tìm thấy học kỳ!', 'error');
+            return;
+        }
+
+        console.log('📊 Semester data found:', semester);
+
+        // Set modal title and basic info
+        document.getElementById('semesterModalTitle').innerHTML =
+            '<i class="fas fa-edit me-2"></i>Sửa học kỳ';
         document.getElementById('semesterId').value = semester.maHocKy;
         document.getElementById('maHocKy').value = semester.maHocKy;
         document.getElementById('tenHocKy').value = semester.tenHocKy;
-        document.getElementById('ngayBatDauHocKy').value = semester.ngayBatDau;
-        document.getElementById('ngayKetThucHocKy').value = semester.ngayKetThuc;
         document.getElementById('moTaHocKy').value = semester.moTa || '';
+        document.getElementById('loaiHocKy').value = semester.loaiHocKy || 'CHINH_QUY';
         document.getElementById('isActiveHocKy').checked = semester.isActive;
         document.getElementById('isCurrentHocKy').checked = semester.isCurrent;
 
-        // Thêm các fields nếu chưa có
-        addNamHocSelectToSemesterModal();
-        addThuTuFieldToSemesterModal();
-
-        // Set values cho fields mới
-        if (semester.maNamHoc) {
-            document.getElementById('chonNamHocChoHocKy').value = semester.maNamHoc;
-            document.getElementById('chonNamHocChoHocKy').disabled = true; // Không cho đổi năm học khi edit
+        // Hide academic year selector when editing
+        const namHocContainer = document.getElementById('namHocSelectContainer');
+        if (namHocContainer) {
+            namHocContainer.style.display = 'none';
         }
+
+        // Determine if week-based (check multiple conditions)
+        const isWeekBased = semester.isWeekBasedConfig ||
+            (semester.tuanBatDau && semester.soTuanHoc && semester.ngayBatDauTuan1);
+
+        console.log('📅 Is week-based configuration:', isWeekBased);
+        console.log('📅 Week-based fields:', {
+            tuanBatDau: semester.tuanBatDau,
+            soTuanHoc: semester.soTuanHoc,
+            ngayBatDauTuan1: semester.ngayBatDauTuan1,
+            isWeekBasedConfig: semester.isWeekBasedConfig
+        });
+
+        if (isWeekBased) {
+            // ===== SETUP WEEK-BASED MODE =====
+            document.getElementById('useWeekBasedConfig').checked = true;
+
+            // Trigger config mode change
+            if (typeof toggleConfigMode === 'function') {
+                toggleConfigMode();
+            }
+
+            // Set week-based values with validation
+            if (semester.tuanBatDau) {
+                document.getElementById('tuanBatDau').value = semester.tuanBatDau;
+            }
+            if (semester.soTuanHoc) {
+                document.getElementById('soTuanHoc').value = semester.soTuanHoc;
+            }
+            if (semester.ngayBatDauTuan1) {
+                document.getElementById('ngayBatDauTuan1').value = semester.ngayBatDauTuan1;
+            }
+
+            console.log('✅ Week-based values set');
+
+            // Update calculations after setting values
+            setTimeout(() => {
+                if (typeof updateThongTinTinhToan === 'function') {
+                    updateThongTinTinhToan();
+                }
+            }, 100);
+
+        } else {
+            // ===== SETUP DATE-BASED MODE =====
+            document.getElementById('useWeekBasedConfig').checked = false;
+
+            // Trigger config mode change
+            if (typeof toggleConfigMode === 'function') {
+                toggleConfigMode();
+            }
+
+            // Set date-based values
+            if (semester.ngayBatDau) {
+                document.getElementById('ngayBatDauHocKy').value = semester.ngayBatDau;
+            }
+            if (semester.ngayKetThuc) {
+                document.getElementById('ngayKetThucHocKy').value = semester.ngayKetThuc;
+            }
+
+            console.log('✅ Date-based values set');
+        }
+
+        // Set other advanced fields if they exist
         if (semester.thuTu) {
-            document.getElementById('thuTuHocKy').value = semester.thuTu;
+            const thuTuField = document.getElementById('thuTuHocKy');
+            if (thuTuField) {
+                thuTuField.value = semester.thuTu;
+            }
         }
 
+        // Show modal
         const modal = new bootstrap.Modal(document.getElementById('semesterModal'));
         modal.show();
+
+        console.log('✅ Edit semester modal opened successfully');
     }
 
     // Set Current Functions
@@ -2978,6 +5006,1775 @@
             default: return 'secondary';
         }
     }
+
+    // ===== UTILITY FUNCTIONS AND EVENT HANDLERS =====
+
+    /**
+     * Initialize week-based configuration
+     */
+    function initializeWeekBasedConfig() {
+        // Add event listeners for week-based configuration
+        const useWeekBasedCheckbox = document.getElementById('useWeekBasedConfig');
+        if (useWeekBasedCheckbox) {
+            useWeekBasedCheckbox.addEventListener('change', toggleConfigMode);
+        }
+
+        // Add event listeners for automatic calculation
+        const weekInputs = ['tuanBatDau', 'soTuanHoc', 'ngayBatDauTuan1'];
+        weekInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('change', updateThongTinTinhToan);
+                input.addEventListener('input', debounce(updateThongTinTinhToan, 300));
+            }
+        });
+
+        // Auto-populate academic year selector
+        populateAcademicYearSelector();
+
+        // Set up form validation
+        setupFormValidation();
+    }
+
+    /**
+     * Populate academic year selector - FIXED VERSION
+     */
+    function populateAcademicYearSelector() {
+        const select = document.getElementById('chonNamHocChoHocKy');
+        if (!select) {
+            console.warn('⚠️ Academic year selector not found!');
+            return;
+        }
+
+        console.log('🔄 Populating academic year selector...');
+        console.log('📊 Available academic years:', academicYears);
+
+        // Clear existing options (except first one)
+        while (select.children.length > 1) {
+            select.removeChild(select.lastChild);
+        }
+
+        // Check if academicYears is available and is an array
+        if (!academicYears || !Array.isArray(academicYears)) {
+            console.error('❌ academicYears is not available or not an array:', academicYears);
+            const errorOption = document.createElement('option');
+            errorOption.value = '';
+            errorOption.textContent = 'Không có dữ liệu năm học';
+            errorOption.disabled = true;
+            select.appendChild(errorOption);
+            return;
+        }
+
+        if (academicYears.length === 0) {
+            console.warn('⚠️ No academic years available');
+            const emptyOption = document.createElement('option');
+            emptyOption.value = '';
+            emptyOption.textContent = 'Chưa có năm học nào';
+            emptyOption.disabled = true;
+            select.appendChild(emptyOption);
+            return;
+        }
+
+        // Filter and sort academic years
+        const activeYears = academicYears.filter(year => year.isActive !== false);
+        const sortedYears = activeYears.sort((a, b) => {
+            // Sort by start date (newest first)
+            return new Date(b.ngayBatDau || 0) - new Date(a.ngayBatDau || 0);
+        });
+
+        console.log(`📚 Adding ${sortedYears.length} active academic years to selector`);
+
+        // Add academic year options
+        sortedYears.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year.maNamHoc;
+
+            // Format display text
+            let displayText = year.tenNamHoc;
+            if (year.isCurrent) {
+                displayText += ' (Hiện tại)';
+            }
+            option.textContent = displayText;
+
+            // Auto-select current academic year
+            if (year.isCurrent) {
+                option.selected = true;
+            }
+
+            select.appendChild(option);
+            console.log(`✅ Added academic year: ${year.maNamHoc} - ${year.tenNamHoc}`);
+        });
+
+        console.log(`✅ Academic year selector populated with ${sortedYears.length} options`);
+    }
+
+    /**
+     * Setup form validation
+     */
+    function setupFormValidation() {
+        const form = document.getElementById('semesterForm');
+        if (!form) return;
+
+        // Custom validation for week-based config
+        form.addEventListener('submit', function(e) {
+            const useWeekBased = document.getElementById('useWeekBasedConfig').checked;
+
+            if (useWeekBased) {
+                if (!validateWeekBasedConfig()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            } else {
+                if (!validateDateBasedConfig()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            }
+        });
+
+        // Real-time validation
+        const inputs = form.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                validateField(this);
+            });
+        });
+    }
+
+    /**
+     * Validate week-based configuration
+     */
+    function validateWeekBasedConfig() {
+        const tuanBatDau = parseInt(document.getElementById('tuanBatDau').value);
+        const soTuanHoc = parseInt(document.getElementById('soTuanHoc').value);
+        const ngayBatDauTuan1 = document.getElementById('ngayBatDauTuan1').value;
+
+        let isValid = true;
+
+        // Validate tuanBatDau
+        if (!tuanBatDau || tuanBatDau < 1 || tuanBatDau > 52) {
+            showFieldError('tuanBatDau', 'Tuần bắt đầu phải từ 1 đến 52');
+            isValid = false;
+        } else {
+            clearFieldError('tuanBatDau');
+        }
+
+        // Validate soTuanHoc
+        if (!soTuanHoc || soTuanHoc < 4 || soTuanHoc > 20) {
+            showFieldError('soTuanHoc', 'Số tuần học phải từ 4 đến 20');
+            isValid = false;
+        } else {
+            clearFieldError('soTuanHoc');
+        }
+
+        // Validate ngayBatDauTuan1
+        if (!ngayBatDauTuan1) {
+            showFieldError('ngayBatDauTuan1', 'Vui lòng chọn ngày bắt đầu tuần 1');
+            isValid = false;
+        } else {
+            const date = new Date(ngayBatDauTuan1);
+            if (date.getDay() !== 1) {
+                showFieldError('ngayBatDauTuan1', 'Ngày bắt đầu tuần 1 phải là thứ Hai');
+                isValid = false;
+            } else {
+                clearFieldError('ngayBatDauTuan1');
+            }
+        }
+
+        // Validate week range doesn't exceed year
+        if (tuanBatDau && soTuanHoc && (tuanBatDau + soTuanHoc - 1) > 52) {
+            showFieldError('soTuanHoc', 'Học kỳ vượt quá 52 tuần trong năm');
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    /**
+     * Validate date-based configuration
+     */
+    function validateDateBasedConfig() {
+        const ngayBatDau = document.getElementById('ngayBatDauHocKy').value;
+        const ngayKetThuc = document.getElementById('ngayKetThucHocKy').value;
+
+        let isValid = true;
+
+        if (!ngayBatDau) {
+            showFieldError('ngayBatDauHocKy', 'Vui lòng chọn ngày bắt đầu');
+            isValid = false;
+        } else {
+            clearFieldError('ngayBatDauHocKy');
+        }
+
+        if (!ngayKetThuc) {
+            showFieldError('ngayKetThucHocKy', 'Vui lòng chọn ngày kết thúc');
+            isValid = false;
+        } else {
+            clearFieldError('ngayKetThucHocKy');
+        }
+
+        if (ngayBatDau && ngayKetThuc) {
+            const start = new Date(ngayBatDau);
+            const end = new Date(ngayKetThuc);
+
+            if (end <= start) {
+                showFieldError('ngayKetThucHocKy', 'Ngày kết thúc phải sau ngày bắt đầu');
+                isValid = false;
+            } else {
+                const diffWeeks = Math.ceil((end - start) / (7 * 24 * 60 * 60 * 1000));
+                if (diffWeeks < 4) {
+                    showFieldError('ngayKetThucHocKy', 'Học kỳ phải kéo dài ít nhất 4 tuần');
+                    isValid = false;
+                } else if (diffWeeks > 20) {
+                    showFieldError('ngayKetThucHocKy', 'Học kỳ không được quá 20 tuần');
+                    isValid = false;
+                } else {
+                    clearFieldError('ngayKetThucHocKy');
+                }
+            }
+        }
+
+        return isValid;
+    }
+
+    /**
+     * Validate individual field
+     */
+    function validateField(field) {
+        const value = field.value.trim();
+
+        switch (field.id) {
+            case 'maHocKy':
+                if (!value) {
+                    showFieldError(field.id, 'Mã học kỳ không được để trống');
+                } else if (!/^[A-Z0-9_-]+$/.test(value)) {
+                    showFieldError(field.id, 'Mã học kỳ chỉ được chứa chữ hoa, số, dấu gạch ngang và gạch dưới');
+                } else {
+                    clearFieldError(field.id);
+                }
+                break;
+
+            case 'tenHocKy':
+                if (!value) {
+                    showFieldError(field.id, 'Tên học kỳ không được để trống');
+                } else if (value.length < 5) {
+                    showFieldError(field.id, 'Tên học kỳ phải có ít nhất 5 ký tự');
+                } else {
+                    clearFieldError(field.id);
+                }
+                break;
+
+            case 'chonNamHocChoHocKy':
+                if (!value) {
+                    showFieldError(field.id, 'Vui lòng chọn năm học');
+                } else {
+                    clearFieldError(field.id);
+                }
+                break;
+        }
+    }
+
+    /**
+     * Show field error
+     */
+    function showFieldError(fieldId, message) {
+        const field = document.getElementById(fieldId);
+        if (!field) return;
+
+        // Add error class
+        field.classList.add('is-invalid');
+
+        // Remove existing error message
+        const existingError = field.parentNode.querySelector('.invalid-feedback');
+        if (existingError) {
+            existingError.remove();
+        }
+
+        // Add error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'invalid-feedback';
+        errorDiv.textContent = message;
+        field.parentNode.appendChild(errorDiv);
+    }
+
+    /**
+     * Clear field error
+     */
+    function clearFieldError(fieldId) {
+        const field = document.getElementById(fieldId);
+        if (!field) return;
+
+        field.classList.remove('is-invalid');
+
+        const errorDiv = field.parentNode.querySelector('.invalid-feedback');
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+    }
+
+    /**
+     * Auto-generate semester code based on academic year and type
+     */
+    function autoGenerateSemesterCode() {
+        const namHoc = document.getElementById('chonNamHocChoHocKy').value;
+        const loaiHocKy = document.getElementById('loaiHocKy').value;
+        const thuTu = document.getElementById('thuTuHocKy').value;
+
+        if (!namHoc) return;
+
+        let suffix = '';
+        switch (loaiHocKy) {
+            case 'CHINH_QUY':
+                suffix = thuTu ? `HK${thuTu}` : 'HK1';
+                break;
+            case 'HE':
+                suffix = 'HE';
+                break;
+            case 'TAP_TRUNG':
+                suffix = 'TC';
+                break;
+            case 'DAC_BIET':
+                suffix = 'DB';
+                break;
+        }
+
+        const maHocKy = `${namHoc}_${suffix}`;
+        document.getElementById('maHocKy').value = maHocKy;
+
+        // Auto-generate name
+        const tenNamHoc = academicYears.find(y => y.maNamHoc === namHoc)?.tenNamHoc || namHoc;
+        let tenHocKy = '';
+
+        switch (loaiHocKy) {
+            case 'CHINH_QUY':
+                tenHocKy = `Học kỳ ${thuTu || '1'} - ${tenNamHoc}`;
+                break;
+            case 'HE':
+                tenHocKy = `Học kỳ hè - ${tenNamHoc}`;
+                break;
+            case 'TAP_TRUNG':
+                tenHocKy = `Khóa tập trung - ${tenNamHoc}`;
+                break;
+            case 'DAC_BIET':
+                tenHocKy = `Khóa đặc biệt - ${tenNamHoc}`;
+                break;
+        }
+
+        document.getElementById('tenHocKy').value = tenHocKy;
+    }
+
+    /**
+     * Debounce function for performance
+     */
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    /**
+     * Format date for display
+     */
+    function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+
+        const date = new Date(dateString);
+        return date.toLocaleDateString('vi-VN', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+
+    /**
+     * Get display name for semester type
+     */
+    function getLoaiHocKyDisplay(loaiHocKy) {
+        const displayNames = {
+            'CHINH_QUY': 'Chính quy',
+            'HE': 'Hè',
+            'TAP_TRUNG': 'Tập trung',
+            'DAC_BIET': 'Đặc biệt'
+        };
+        return displayNames[loaiHocKy] || loaiHocKy;
+    }
+
+    /**
+     * Show loading overlay
+     */
+    function showLoading(message = 'Đang xử lý...') {
+        // Remove existing loading
+        hideLoading();
+
+        const loadingHtml = `
+        <div id="globalLoading" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+             style="background: rgba(0,0,0,0.5); z-index: 9999;">
+            <div class="bg-white p-4 rounded-3 shadow-lg text-center" style="min-width: 300px;">
+                <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h6 class="mb-2">${message}</h6>
+                <small class="text-muted">Vui lòng đợi...</small>
+            </div>
+        </div>
+    `;
+
+        document.body.insertAdjacentHTML('beforeend', loadingHtml);
+    }
+
+    /**
+     * Hide loading overlay
+     */
+    function hideLoading() {
+        const loading = document.getElementById('globalLoading');
+        if (loading) {
+            loading.remove();
+        }
+    }
+
+    /**
+     * Show notification
+     */
+    function showNotification(message, type = 'info', duration = 5000) {
+        const container = document.getElementById('notificationContainer');
+        if (!container) {
+            // Create notification container if it doesn't exist
+            const notificationHtml = `
+            <div id="notificationContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
+        `;
+            document.body.insertAdjacentHTML('beforeend', notificationHtml);
+        }
+
+        const alertClass = type === 'error' ? 'danger' : type;
+        const iconClass = {
+            success: 'check-circle',
+            error: 'exclamation-triangle',
+            warning: 'exclamation-circle',
+            info: 'info-circle'
+        }[type] || 'info-circle';
+
+        const alertId = 'alert-' + Date.now();
+        const alertHtml = `
+        <div id="${alertId}" class="alert alert-${alertClass} alert-dismissible fade show shadow" role="alert" style="min-width: 300px;">
+            <i class="fas fa-${iconClass} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+
+        document.getElementById('notificationContainer').insertAdjacentHTML('beforeend', alertHtml);
+
+        // Auto remove after duration
+        if (duration > 0) {
+            setTimeout(() => {
+                const alert = document.getElementById(alertId);
+                if (alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
+            }, duration);
+        }
+    }
+
+    /**
+     * Trigger semester updated event
+     */
+    function triggerSemesterUpdated(maNamHoc) {
+        const event = new CustomEvent('semesterUpdated', {
+            detail: { maNamHoc: maNamHoc }
+        });
+        document.dispatchEvent(event);
+    }
+
+    /**
+     * Enhanced semester list rendering with week-based info
+     */
+    function renderEnhancedSemestersList() {
+        const container = document.getElementById('semestersList');
+        let filteredSemesters = semesters;
+
+        // Apply filter
+        if (currentFilter !== 'all') {
+            filteredSemesters = semesters.filter(semester => {
+                switch(currentFilter) {
+                    case 'ongoing': return semester.trangThai === 'Đang diễn ra';
+                    case 'upcoming': return semester.trangThai === 'Chưa bắt đầu';
+                    case 'finished': return semester.trangThai === 'Đã kết thúc';
+                    default: return true;
+                }
+            });
+        }
+
+        if (filteredSemesters.length === 0) {
+            container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                <h5>Không có học kỳ nào</h5>
+                <p class="text-muted">Vui lòng tạo học kỳ mới</p>
+                <button class="btn btn-primary" onclick="openCreateSemesterModal()">
+                    <i class="fas fa-plus me-2"></i>Tạo học kỳ
+                </button>
+            </div>
+        `;
+            return;
+        }
+
+        container.innerHTML = filteredSemesters.map(semester => {
+            const configType = semester.isWeekBasedConfig ?
+                `<span class="badge bg-info">Week-based</span>` :
+                `<span class="badge bg-secondary">Date-based</span>`;
+
+            const weekInfo = semester.isWeekBasedConfig ?
+                `<small class="text-muted">Tuần ${semester.tuanBatDau}-${semester.tuanKetThuc} (${semester.soTuanHoc} tuần)</small>` :
+                `<small class="text-muted">Theo ngày cụ thể</small>`;
+
+            const typeColor = {
+                'CHINH_QUY': 'primary',
+                'HE': 'warning',
+                'TAP_TRUNG': 'info',
+                'DAC_BIET': 'success'
+            };
+
+            return `
+            <div class="semester-card ${getStatusClass(semester.trangThai)}">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="text-success">
+                                ${semester.tenHocKy}
+                                ${semester.isCurrent ? '<span class="badge bg-success ms-2">Hiện tại</span>' : ''}
+                                ${semester.thuTu ? '<span class="badge bg-info ms-2">Thứ tự ' + semester.thuTu + '</span>' : ''}
+                            </h6>
+                            <span class="status-badge status-${getStatusClass(semester.trangThai)}">${semester.trangThai}</span>
+                        </div>
+                        <p class="mb-1"><strong>Mã:</strong> ${semester.maHocKy}</p>
+                        <p class="mb-1"><strong>Năm học:</strong> ${semester.tenNamHoc || 'N/A'} (${semester.maNamHoc || 'N/A'})</p>
+                        <p class="mb-1">
+                            <strong>Cấu hình:</strong> ${configType} - ${weekInfo}
+                        </p>
+                        <p class="mb-1">
+                            <strong>Loại:</strong>
+                            <span class="badge bg-${typeColor[semester.loaiHocKy] || 'secondary'}">
+                                ${getLoaiHocKyDisplay(semester.loaiHocKy)}
+                            </span>
+                        </p>
+                        <p class="mb-1"><strong>Thời gian:</strong> ${formatDate(semester.ngayBatDau)} - ${formatDate(semester.ngayKetThuc)}</p>
+                        <p class="mb-1"><strong>Tổng số ngày:</strong> ${semester.tongSoNgay || 0}</p>
+                        ${semester.moTa ? `<p class="mb-2 text-muted">${semester.moTa}</p>` : ''}
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="progress mb-2" style="height: 8px;">
+                            <div class="progress-bar bg-success" style="width: ${semester.tiLePhanTram || 0}%"></div>
+                        </div>
+                        <small class="text-muted d-block mb-3">Tiến độ: ${Math.round(semester.tiLePhanTram || 0)}%</small>
+
+                        <div class="btn-group-vertical btn-group-sm">
+                            <button class="btn btn-outline-success" onclick="editSemester('${semester.maHocKy}')">
+                                <i class="fas fa-edit"></i> Sửa
+                            </button>
+                            ${semester.isWeekBasedConfig ? `
+                                <button class="btn btn-outline-info" onclick="viewSemesterWeeks('${semester.maHocKy}')">
+                                    <i class="fas fa-calendar-week"></i> Xem tuần học
+                                </button>
+                            ` : ''}
+                            ${!semester.isCurrent ? `
+                                <button class="btn btn-outline-warning" onclick="setAsCurrentSemester('${semester.maHocKy}')">
+                                    <i class="fas fa-star"></i> Đặt hiện tại
+                                </button>
+                            ` : ''}
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-danger dropdown-toggle" type="button"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="softDeleteSemester('${semester.maHocKy}')">
+                                            <i class="fas fa-trash-alt me-2 text-warning"></i>Xóa mềm
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="removeSemesterFromYear('${semester.maNamHoc}', '${semester.maHocKy}')">
+                                            <i class="fas fa-unlink me-2 text-info"></i>Xóa khỏi năm học
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item text-danger" href="#" onclick="hardDeleteSemester('${semester.maHocKy}')">
+                                            <i class="fas fa-trash me-2"></i>Xóa vĩnh viễn
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        }).join('');
+    }
+
+    /**
+     * View semester weeks for week-based semesters
+     */
+    async function viewSemesterWeeks(maHocKy) {
+        try {
+            showLoading('Đang tải tuần học...');
+
+            const response = await fetch(`${API_BASE}/hocky/${maHocKy}/weeks`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const result = await response.json();
+
+            if (result.success && result.isWeekBased) {
+                showSemesterWeeksModal(maHocKy, result.data);
+            } else {
+                showNotification('Học kỳ này không sử dụng cấu hình week-based', 'info');
+            }
+
+        } catch (error) {
+            console.error('Error viewing semester weeks:', error);
+            showNotification('Lỗi khi tải tuần học: ' + error.message, 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    /**
+     * Show semester weeks modal
+     */
+    function showSemesterWeeksModal(maHocKy, weeks) {
+        const semester = semesters.find(s => s.maHocKy === maHocKy);
+
+        const weeksHtml = weeks.map(week => {
+            const statusClass = week.isPast ? 'past' : (week.isCurrent ? 'current' : '');
+            const statusIcon = week.isPast ? '✅' : (week.isCurrent ? '🔵' : '⏳');
+
+            return `
+            <div class="week-item ${statusClass}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${statusIcon} Tuần ${week.tuanSo} (${week.tenTuan})</strong>
+                        <div class="small text-muted">
+                            ${formatDate(week.ngayBatDau)} - ${formatDate(week.ngayKetThuc)}
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <small class="badge bg-${week.isPast ? 'secondary' : (week.isCurrent ? 'success' : 'primary')}">
+                            ${week.trangThai}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        `;
+        }).join('');
+
+        const modalContent = `
+        <div class="modal fade" id="semesterWeeksModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-calendar-week me-2"></i>Tuần học - ${semester?.tenHocKy || maHocKy}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Tổng cộng <strong>${weeks.length}</strong> tuần học
+                        </div>
+                        <div style="max-height: 400px; overflow-y: auto;">
+                            ${weeksHtml}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Đóng
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+        // Remove existing modal
+        const existingModal = document.getElementById('semesterWeeksModal');
+        if (existingModal) existingModal.remove();
+
+        // Add new modal
+        document.body.insertAdjacentHTML('beforeend', modalContent);
+        const modal = new bootstrap.Modal(document.getElementById('semesterWeeksModal'));
+        modal.show();
+
+        // Cleanup on close
+        document.getElementById('semesterWeeksModal').addEventListener('hidden.bs.modal', function() {
+            this.remove();
+        });
+    }
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeWeekBasedConfig();
+
+        // Add auto-generation event listeners
+        const autoGenerateFields = ['chonNamHocChoHocKy', 'loaiHocKy', 'thuTuHocKy'];
+        autoGenerateFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.addEventListener('change', autoGenerateSemesterCode);
+            }
+        });
+    });
+
+
+
+    // Export functions for global use
+    window.weekBasedConfig = {
+        toggleConfigMode,
+        setWeekPreset,
+        validateMondayAndCalculate,
+        updateThongTinTinhToan,
+        previewSemester,
+        viewSemesterWeeks,
+        initializeWeekBasedConfig
+    };
+    const originalInitializePage = window.initializePage || initializePage;
+    window.initializePage = async function() {
+        console.log('🚀 Initializing Academic Configuration page (ENHANCED VERSION)...');
+
+        try {
+            // Load data với proper sequencing
+            await Promise.all([
+                loadAcademicYears(),
+                loadSemesters(),
+                loadCurrentStatus()
+            ]);
+
+            // Render components
+            renderTimeline();
+            renderAcademicYearsList();
+            renderSemestersList();
+
+            // Initialize academic year selector functionality
+            initializeAcademicYearSelector();
+
+            console.log('✅ Page initialized successfully (ENHANCED)');
+
+        } catch (error) {
+            console.error('❌ Error initializing page:', error);
+            showNotification('Lỗi khi tải dữ liệu: ' + error.message, 'error');
+
+            // Try to initialize academic year selector even if other data failed
+            initializeAcademicYearSelector();
+        }
+    };
+
+    // Override openCreateSemesterModal function
+    window.openCreateSemesterModal = function() {
+        console.log('🚀 Opening create semester modal (ENHANCED VERSION)...');
+
+        // Set modal title and reset form
+        document.getElementById('semesterModalTitle').innerHTML =
+            '<i class="fas fa-calendar-plus me-2"></i>Tạo học kỳ mới';
+        document.getElementById('semesterForm').reset();
+        document.getElementById('semesterId').value = '';
+
+        // Reset to default values
+        document.getElementById('isActiveHocKy').checked = true;
+        document.getElementById('isCurrentHocKy').checked = false;
+        document.getElementById('useWeekBasedConfig').checked = false;
+        document.getElementById('loaiHocKy').value = 'CHINH_QUY';
+
+        // Reset config mode to date-based
+        const weekCheckbox = document.getElementById('useWeekBasedConfig');
+        if (weekCheckbox) {
+            weekCheckbox.checked = false;
+            if (typeof toggleConfigMode === 'function') {
+                toggleConfigMode();
+            }
+        }
+
+        // Show and populate academic year selector
+        const namHocContainer = document.getElementById('namHocSelectContainer');
+        if (namHocContainer) {
+            namHocContainer.style.display = 'block';
+        }
+
+        // Always ensure academic year selector is available and populated
+        addNamHocSelectToSemesterModal();
+
+        // If no academic years loaded, try to reload
+        if (!academicYears || academicYears.length === 0) {
+            console.warn('⚠️ No academic years loaded, attempting to reload...');
+            forceReloadAcademicYears();
+        }
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('semesterModal'));
+        modal.show();
+
+        console.log('✅ Create semester modal opened (ENHANCED)');
+    };
+
+    // Override addNamHocSelectToSemesterModal function
+    window.addNamHocSelectToSemesterModal = function() {
+        console.log('🔄 Adding academic year selector to semester modal (ENHANCED VERSION)...');
+
+        // Check if already exists
+        const existingSelect = document.getElementById('chonNamHocChoHocKy');
+        if (existingSelect) {
+            console.log('✅ Academic year selector already exists, just populating...');
+            populateAcademicYearSelector();
+            return;
+        }
+
+        console.error('❌ Academic year selector element not found in DOM!');
+        showNotification('Lỗi: Không tìm thấy dropdown năm học trong form', 'error');
+    };
+
+    // Override populateAcademicYearSelector
+    window.populateAcademicYearSelector = function() {
+        const select = document.getElementById('chonNamHocChoHocKy');
+        if (!select) {
+            console.warn('⚠️ Academic year selector not found!');
+            return;
+        }
+
+        console.log('🔄 Populating academic year selector (ENHANCED VERSION)...');
+        console.log('📊 Available academic years:', academicYears);
+
+        // Clear existing options (except first one)
+        while (select.children.length > 1) {
+            select.removeChild(select.lastChild);
+        }
+
+        // Check if academicYears is available and is an array
+        if (!academicYears || !Array.isArray(academicYears)) {
+            console.error('❌ academicYears is not available or not an array:', academicYears);
+            select.innerHTML = `
+            <option value="">Không có dữ liệu năm học</option>
+            <option value="" disabled>Vui lòng thử lại sau</option>
+        `;
+            return;
+        }
+
+        if (academicYears.length === 0) {
+            console.warn('⚠️ No academic years available');
+            select.innerHTML = `
+            <option value="">Chưa có năm học nào</option>
+            <option value="" disabled>Vui lòng tạo năm học trước</option>
+        `;
+            return;
+        }
+
+        // Filter and sort academic years
+        const activeYears = academicYears.filter(year => year.isActive !== false);
+        const sortedYears = activeYears.sort((a, b) => {
+            // Sort by start date (newest first)
+            return new Date(b.ngayBatDau || 0) - new Date(a.ngayBatDau || 0);
+        });
+
+        console.log(`📚 Adding ${sortedYears.length} active academic years to selector`);
+
+        // Set first option
+        select.innerHTML = '<option value="">Chọn năm học</option>';
+
+        // Add academic year options
+        sortedYears.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year.maNamHoc;
+
+            // Format display text
+            let displayText = year.tenNamHoc;
+            if (year.isCurrent) {
+                displayText += ' (Hiện tại)';
+            }
+            option.textContent = displayText;
+
+            // Auto-select current academic year
+            if (year.isCurrent) {
+                option.selected = true;
+            }
+
+            select.appendChild(option);
+            console.log(`✅ Added academic year: ${year.maNamHoc} - ${year.tenNamHoc}`);
+        });
+
+        console.log(`✅ Academic year selector populated with ${sortedYears.length} options`);
+
+        // Trigger change event to auto-generate semester code
+        if (sortedYears.length > 0) {
+            select.dispatchEvent(new Event('change'));
+        }
+    };
+
+    // Add force reload function
+    window.forceReloadAcademicYears = async function() {
+        console.log('🔄 Force reloading academic years...');
+
+        try {
+            showLoading('Đang tải danh sách năm học...');
+
+            // Reload academic years
+            await loadAcademicYears();
+
+            // Re-populate selector
+            populateAcademicYearSelector();
+
+            console.log('✅ Academic years reloaded successfully');
+            showNotification('Đã tải lại danh sách năm học!', 'success');
+
+        } catch (error) {
+            console.error('❌ Error reloading academic years:', error);
+            showNotification('Lỗi khi tải danh sách năm học: ' + error.message, 'error');
+        } finally {
+            hideLoading();
+        }
+    };
+
+    // Add debug function
+    window.debugAcademicYears = function() {
+        console.log('🔍 Debug Academic Years:');
+        console.log('- academicYears variable:', academicYears);
+        console.log('- Is array?', Array.isArray(academicYears));
+        console.log('- Length:', academicYears ? academicYears.length : 'undefined');
+        console.log('- Sample data:', academicYears ? academicYears.slice(0, 2) : 'none');
+
+        const selector = document.getElementById('chonNamHocChoHocKy');
+        console.log('- Selector element:', selector);
+        console.log('- Selector options count:', selector ? selector.options.length : 'selector not found');
+
+        if (selector && selector.options.length > 1) {
+            console.log('- Sample options:');
+            for (let i = 1; i < Math.min(selector.options.length, 3); i++) {
+                console.log(`  [${i}] value: "${selector.options[i].value}", text: "${selector.options[i].textContent}"`);
+            }
+        }
+
+        // Show debug info
+        showNotification(`Debug: ${academicYears ? academicYears.length : 0} năm học, Selector: ${selector ? selector.options.length : 'N/A'} options`, 'info');
+    };
+
+    // Initialize academic year selector functionality
+    function initializeAcademicYearSelector() {
+        console.log('🔧 Initializing academic year selector functionality...');
+
+        // Wait a bit for DOM to be ready
+        setTimeout(() => {
+            // Ensure academic years are loaded
+            if (!academicYears || academicYears.length === 0) {
+                console.log('📡 Academic years not loaded, loading now...');
+                loadAcademicYears().then(() => {
+                    populateAcademicYearSelector();
+                }).catch(error => {
+                    console.error('Failed to load academic years:', error);
+                });
+            } else {
+                console.log('✅ Academic years already loaded, populating selector...');
+                populateAcademicYearSelector();
+            }
+        }, 100);
+    }
+
+    // Enhanced DOMContentLoaded event
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 DOM Content Loaded - Initializing enhanced features...');
+
+        // Original initialization
+        initializePage();
+        setupEventListeners();
+
+        // Enhanced academic year functionality
+        initializeAcademicYearSelector();
+
+        // Add auto-generation event listeners
+        setTimeout(() => {
+            const autoGenerateFields = ['chonNamHocChoHocKy', 'loaiHocKy', 'thuTuHocKy'];
+            autoGenerateFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('change', function() {
+                        console.log(`📝 Field ${fieldId} changed:`, this.value);
+                        if (typeof autoGenerateSemesterCode === 'function') {
+                            autoGenerateSemesterCode();
+                        }
+                    });
+                }
+            });
+        }, 500);
+
+        console.log('✅ Enhanced features initialized');
+    });
+
+    // Auto-generate semester code function (if not exists)
+    if (typeof autoGenerateSemesterCode === 'undefined') {
+        window.autoGenerateSemesterCode = function() {
+            const namHoc = document.getElementById('chonNamHocChoHocKy')?.value;
+            const loaiHocKy = document.getElementById('loaiHocKy')?.value;
+            const thuTu = document.getElementById('thuTuHocKy')?.value;
+
+            if (!namHoc) return;
+
+            let suffix = '';
+            switch (loaiHocKy) {
+                case 'CHINH_QUY':
+                    suffix = thuTu ? `HK${thuTu}` : 'HK1';
+                    break;
+                case 'HE':
+                    suffix = 'HE';
+                    break;
+                case 'TAP_TRUNG':
+                    suffix = 'TC';
+                    break;
+                case 'DAC_BIET':
+                    suffix = 'DB';
+                    break;
+            }
+
+            const maHocKy = `${namHoc}_${suffix}`;
+            document.getElementById('maHocKy').value = maHocKy;
+
+            // Auto-generate name
+            const tenNamHoc = academicYears?.find(y => y.maNamHoc === namHoc)?.tenNamHoc || namHoc;
+            let tenHocKy = '';
+
+            switch (loaiHocKy) {
+                case 'CHINH_QUY':
+                    tenHocKy = `Học kỳ ${thuTu || '1'} - ${tenNamHoc}`;
+                    break;
+                case 'HE':
+                    tenHocKy = `Học kỳ hè - ${tenNamHoc}`;
+                    break;
+                case 'TAP_TRUNG':
+                    tenHocKy = `Khóa tập trung - ${tenNamHoc}`;
+                    break;
+                case 'DAC_BIET':
+                    tenHocKy = `Khóa đặc biệt - ${tenNamHoc}`;
+                    break;
+            }
+
+            document.getElementById('tenHocKy').value = tenHocKy;
+
+            console.log(`✅ Auto-generated semester: ${maHocKy} - ${tenHocKy}`);
+        };
+    }
+
+    console.log('🎯 Enhanced Academic Year Selector Integration Loaded');
+    console.log('🔧 Loading Week-based Configuration Fix...');
+
+    /**
+     * ULTIMATE Save Semester Function - Fixed tất cả validation issues
+     */
+    window.saveSemester = async function() {
+        console.log('💾 Starting save semester (ULTIMATE FIX)...');
+
+        const form = document.getElementById('semesterForm');
+        if (!form.checkValidity()) {
+            console.warn('❌ Form validation failed');
+            form.reportValidity();
+            return;
+        }
+
+        const useWeekBased = document.getElementById('useWeekBasedConfig').checked;
+        const semesterId = document.getElementById('semesterId').value;
+
+        console.log('📅 Week-based config:', useWeekBased);
+        console.log('🆔 Semester ID (for update):', semesterId);
+
+        // Collect base semester data
+        const semesterData = await collectAndValidateSemesterData(useWeekBased);
+        if (!semesterData) {
+            return; // Validation failed
+        }
+
+        console.log('📊 Final semester data to send:', JSON.stringify(semesterData, null, 2));
+
+        const btnText = document.querySelector('#semesterModal .btn-text');
+        const spinner = document.querySelector('#semesterModal .spinner-border');
+
+        btnText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang lưu...';
+        spinner.classList.remove('d-none');
+
+        try {
+            let response;
+
+            if (semesterId) {
+                // ===== UPDATE EXISTING SEMESTER =====
+                console.log('🔄 Updating existing semester:', semesterId);
+
+                response = await fetch(`${API_BASE}/hocky/${semesterId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(semesterData)
+                });
+
+            } else {
+                // ===== CREATE NEW SEMESTER =====
+                const selectedNamHoc = document.getElementById('chonNamHocChoHocKy').value;
+                if (!selectedNamHoc) {
+                    showNotification('Vui lòng chọn năm học cho học kỳ!', 'warning');
+                    return;
+                }
+
+                console.log('🆕 Creating new semester for academic year:', selectedNamHoc);
+
+                response = await fetch(`${API_BASE}/hockynamhoc/namhoc/${selectedNamHoc}/hocky`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(semesterData)
+                });
+            }
+
+            console.log('📡 Response status:', response.status);
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ Save successful:', result);
+
+                showNotification(
+                    semesterId ? 'Cập nhật học kỳ thành công!' : 'Tạo học kỳ thành công!',
+                    'success'
+                );
+
+                bootstrap.Modal.getInstance(document.getElementById('semesterModal')).hide();
+
+                // Reload page data
+                await initializePage();
+
+                // Trigger semester updated event
+                if (result.data && result.data.maNamHoc) {
+                    triggerSemesterUpdated(result.data.maNamHoc);
+                }
+            } else {
+                // Handle error response
+                const errorText = await response.text();
+                console.error('❌ Server error response:', errorText);
+
+                let errorMessage = 'Lỗi từ server';
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    errorMessage = errorJson.message || errorJson.error || 'Yêu cầu không hợp lệ';
+
+                    // Log validation details
+                    if (errorJson.debug) {
+                        console.error('🐛 Debug info:', errorJson.debug);
+                    }
+                } catch (e) {
+                    errorMessage = errorText || 'Lỗi không xác định';
+                }
+
+                throw new Error(errorMessage);
+            }
+
+        } catch (error) {
+            console.error('❌ Error saving semester:', error);
+            showNotification('Lỗi khi lưu học kỳ: ' + error.message, 'error');
+        } finally {
+            btnText.innerHTML = '<i class="fas fa-save me-2"></i>Lưu học kỳ';
+            spinner.classList.add('d-none');
+        }
+    };
+
+    /**
+     * Collect and validate complete semester data - ENSURES ALL REQUIRED FIELDS
+     */
+    async function collectAndValidateSemesterData(useWeekBased) {
+        console.log('📋 Collecting and validating semester data...');
+
+        // ===== COLLECT BASE DATA =====
+        const data = {
+            maHocKy: document.getElementById('maHocKy').value.trim(),
+            tenHocKy: document.getElementById('tenHocKy').value.trim(),
+            moTa: document.getElementById('moTaHocKy').value.trim() || null,
+            isActive: document.getElementById('isActiveHocKy').checked,
+            isCurrent: document.getElementById('isCurrentHocKy').checked,
+            loaiHocKy: document.getElementById('loaiHocKy').value || 'CHINH_QUY',
+            thuTu: document.getElementById('thuTuHocKy')?.value ?
+                parseInt(document.getElementById('thuTuHocKy').value) : null
+        };
+
+        // ===== BASIC VALIDATION =====
+        if (!data.maHocKy) {
+            showNotification('Mã học kỳ không được để trống!', 'warning');
+            return null;
+        }
+
+        if (!data.tenHocKy) {
+            showNotification('Tên học kỳ không được để trống!', 'warning');
+            return null;
+        }
+
+        // Validate mã học kỳ format
+        if (!/^[A-Z0-9_-]+$/i.test(data.maHocKy)) {
+            showNotification('Mã học kỳ chỉ được chứa chữ cái, số, dấu gạch ngang và gạch dưới!', 'warning');
+            return null;
+        }
+
+        if (useWeekBased) {
+            // ===== WEEK-BASED CONFIGURATION =====
+            const tuanBatDau = parseInt(document.getElementById('tuanBatDau').value);
+            const soTuanHoc = parseInt(document.getElementById('soTuanHoc').value);
+            const ngayBatDauTuan1 = document.getElementById('ngayBatDauTuan1').value;
+
+            console.log('📅 Week-based inputs:', { tuanBatDau, soTuanHoc, ngayBatDauTuan1 });
+
+            // Validate week-based inputs
+            if (!tuanBatDau || !soTuanHoc || !ngayBatDauTuan1) {
+                showNotification('Vui lòng điền đầy đủ thông tin cấu hình theo tuần!', 'warning');
+                return null;
+            }
+
+            if (soTuanHoc < 4 || soTuanHoc > 20) {
+                showNotification('Số tuần học phải từ 4 đến 20 tuần!', 'warning');
+                return null;
+            }
+
+            if (tuanBatDau < 1 || tuanBatDau > 52) {
+                showNotification('Tuần bắt đầu phải từ 1 đến 52!', 'warning');
+                return null;
+            }
+
+            // Validate Monday
+            const date = new Date(ngayBatDauTuan1);
+            if (date.getDay() !== 1) {
+                showNotification('Ngày bắt đầu tuần 1 phải là thứ Hai!', 'warning');
+                return null;
+            }
+
+            // Validate week range doesn't exceed year
+            if ((tuanBatDau + soTuanHoc - 1) > 52) {
+                showNotification('Học kỳ vượt quá 52 tuần trong năm!', 'warning');
+                return null;
+            }
+
+            // Calculate actual dates from week config
+            console.log('🔢 Calculating dates from week config...');
+            const calcResult = await calculateSemesterDates({
+                mode: 'week',
+                tuanBatDau: tuanBatDau,
+                soTuanHoc: soTuanHoc,
+                ngayBatDauTuan1: ngayBatDauTuan1
+            });
+
+            if (!calcResult.success) {
+                showNotification('Lỗi tính toán ngày từ cấu hình tuần: ' + calcResult.message, 'error');
+                return null;
+            }
+
+            // Add week-based fields
+            data.tuanBatDau = tuanBatDau;
+            data.soTuanHoc = soTuanHoc;
+            data.ngayBatDauTuan1 = ngayBatDauTuan1;
+            data.isWeekBasedConfig = true;
+
+            // *** CRITICAL: Always include calculated dates for backend validation ***
+            data.ngayBatDau = calcResult.ngayBatDauThucTe;
+            data.ngayKetThuc = calcResult.ngayKetThucThucTe;
+
+            console.log('✅ Week-based data with calculated dates:', {
+                tuanBatDau: data.tuanBatDau,
+                soTuanHoc: data.soTuanHoc,
+                ngayBatDauTuan1: data.ngayBatDauTuan1,
+                ngayBatDau: data.ngayBatDau,
+                ngayKetThuc: data.ngayKetThuc
+            });
+
+        } else {
+            // ===== DATE-BASED CONFIGURATION =====
+            const ngayBatDau = document.getElementById('ngayBatDauHocKy').value;
+            const ngayKetThuc = document.getElementById('ngayKetThucHocKy').value;
+
+            console.log('📅 Date-based inputs:', { ngayBatDau, ngayKetThuc });
+
+            // Validate date inputs
+            if (!ngayBatDau || !ngayKetThuc) {
+                showNotification('Vui lòng chọn ngày bắt đầu và kết thúc!', 'warning');
+                return null;
+            }
+
+            const startDate = new Date(ngayBatDau);
+            const endDate = new Date(ngayKetThuc);
+
+            if (endDate <= startDate) {
+                showNotification('Ngày kết thúc phải sau ngày bắt đầu!', 'warning');
+                return null;
+            }
+
+            // Validate duration (4-20 weeks)
+            const diffWeeks = Math.ceil((endDate - startDate) / (7 * 24 * 60 * 60 * 1000));
+            if (diffWeeks < 4) {
+                showNotification('Học kỳ phải kéo dài ít nhất 4 tuần!', 'warning');
+                return null;
+            }
+            if (diffWeeks > 20) {
+                showNotification('Học kỳ không được quá 20 tuần!', 'warning');
+                return null;
+            }
+
+            // Add date-based fields
+            data.ngayBatDau = ngayBatDau;
+            data.ngayKetThuc = ngayKetThuc;
+            data.isWeekBasedConfig = false;
+
+            // Clear week-based fields to avoid confusion
+            data.tuanBatDau = null;
+            data.soTuanHoc = null;
+            data.ngayBatDauTuan1 = null;
+
+            console.log('✅ Date-based data:', {
+                ngayBatDau: data.ngayBatDau,
+                ngayKetThuc: data.ngayKetThuc
+            });
+        }
+
+        console.log('✅ Data collection and validation completed successfully');
+        return data;
+    }
+
+    /**
+     * Enhanced calculateSemesterDates function with better error handling
+     */
+    async function calculateSemesterDates(config) {
+        console.log('🔢 Calculating semester dates:', config);
+
+        try {
+            const response = await fetch(`${API_BASE}/hocky/calculate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+
+            console.log('📡 Calculate API response status:', response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Calculate API error:', errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+
+            const result = await response.json();
+            console.log('✅ Calculation result:', result);
+
+            // Validate result structure
+            if (!result.ngayBatDauThucTe || !result.ngayKetThucThucTe) {
+                throw new Error('Invalid calculation result: missing dates');
+            }
+
+            return {
+                success: true,
+                ngayBatDauThucTe: result.ngayBatDauThucTe,
+                ngayKetThucThucTe: result.ngayKetThucThucTe,
+                ...result
+            };
+
+        } catch (error) {
+            console.error('❌ Error in calculateSemesterDates:', error);
+            return {
+                success: false,
+                message: error.message || 'Lỗi tính toán ngày học kỳ'
+            };
+        }
+    }
+
+    /**
+     * Enhanced editSemester function với proper data loading
+     */
+    window.editSemester = function(maHocKy) {
+        console.log('✏️ Editing semester (ULTIMATE VERSION):', maHocKy);
+
+        const semester = semesters.find(s => s.maHocKy === maHocKy);
+        if (!semester) {
+            console.error('❌ Semester not found:', maHocKy);
+            showNotification('Không tìm thấy học kỳ!', 'error');
+            return;
+        }
+
+        console.log('📊 Semester data found:', semester);
+
+        // Set modal title and basic info
+        document.getElementById('semesterModalTitle').innerHTML =
+            '<i class="fas fa-edit me-2"></i>Sửa học kỳ';
+        document.getElementById('semesterId').value = semester.maHocKy;
+        document.getElementById('maHocKy').value = semester.maHocKy;
+        document.getElementById('tenHocKy').value = semester.tenHocKy;
+        document.getElementById('moTaHocKy').value = semester.moTa || '';
+        document.getElementById('loaiHocKy').value = semester.loaiHocKy || 'CHINH_QUY';
+        document.getElementById('isActiveHocKy').checked = semester.isActive;
+        document.getElementById('isCurrentHocKy').checked = semester.isCurrent;
+
+        // Hide academic year selector when editing
+        const namHocContainer = document.getElementById('namHocSelectContainer');
+        if (namHocContainer) {
+            namHocContainer.style.display = 'none';
+        }
+
+        // Determine if week-based (check multiple conditions)
+        const isWeekBased = semester.isWeekBasedConfig ||
+            (semester.tuanBatDau && semester.soTuanHoc && semester.ngayBatDauTuan1);
+
+        console.log('📅 Is week-based configuration:', isWeekBased);
+        console.log('📅 Week-based fields:', {
+            tuanBatDau: semester.tuanBatDau,
+            soTuanHoc: semester.soTuanHoc,
+            ngayBatDauTuan1: semester.ngayBatDauTuan1,
+            isWeekBasedConfig: semester.isWeekBasedConfig
+        });
+
+        if (isWeekBased) {
+            // ===== SETUP WEEK-BASED MODE =====
+            document.getElementById('useWeekBasedConfig').checked = true;
+
+            // Trigger config mode change
+            if (typeof toggleConfigMode === 'function') {
+                toggleConfigMode();
+            }
+
+            // Set week-based values with validation
+            if (semester.tuanBatDau) {
+                document.getElementById('tuanBatDau').value = semester.tuanBatDau;
+            }
+            if (semester.soTuanHoc) {
+                document.getElementById('soTuanHoc').value = semester.soTuanHoc;
+            }
+            if (semester.ngayBatDauTuan1) {
+                document.getElementById('ngayBatDauTuan1').value = semester.ngayBatDauTuan1;
+            }
+
+            console.log('✅ Week-based values set');
+
+            // Update calculations after setting values
+            setTimeout(() => {
+                if (typeof updateThongTinTinhToan === 'function') {
+                    updateThongTinTinhToan();
+                }
+            }, 100);
+
+        } else {
+            // ===== SETUP DATE-BASED MODE =====
+            document.getElementById('useWeekBasedConfig').checked = false;
+
+            // Trigger config mode change
+            if (typeof toggleConfigMode === 'function') {
+                toggleConfigMode();
+            }
+
+            // Set date-based values
+            if (semester.ngayBatDau) {
+                document.getElementById('ngayBatDauHocKy').value = semester.ngayBatDau;
+            }
+            if (semester.ngayKetThuc) {
+                document.getElementById('ngayKetThucHocKy').value = semester.ngayKetThuc;
+            }
+
+            console.log('✅ Date-based values set');
+        }
+
+        // Set other advanced fields if they exist
+        if (semester.thuTu) {
+            const thuTuField = document.getElementById('thuTuHocKy');
+            if (thuTuField) {
+                thuTuField.value = semester.thuTu;
+            }
+        }
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('semesterModal'));
+        modal.show();
+
+        console.log('✅ Edit semester modal opened successfully');
+    };
+
+    /**
+     * Fixed loadCurrentStatus function with proper JSON error handling
+     */
+    window.loadCurrentStatus = async function() {
+        console.log('📊 Loading current status (ULTIMATE FIX)...');
+
+        try {
+            // Load current academic year with error handling
+            try {
+                const currentYearResponse = await fetch(`${API_BASE}/namhoc/current`);
+                if (currentYearResponse.ok) {
+                    const responseText = await currentYearResponse.text();
+                    if (responseText && responseText.trim() && responseText !== 'null') {
+                        try {
+                            const currentYear = JSON.parse(responseText);
+                            renderCurrentAcademicYear(currentYear);
+                        } catch (parseError) {
+                            console.warn('⚠️ Failed to parse current academic year JSON:', responseText);
+                            renderCurrentAcademicYear(null);
+                        }
+                    } else {
+                        console.warn('⚠️ Empty or null response from current academic year API');
+                        renderCurrentAcademicYear(null);
+                    }
+                } else {
+                    console.warn('⚠️ Current academic year API returned:', currentYearResponse.status);
+                    renderCurrentAcademicYear(null);
+                }
+            } catch (error) {
+                console.warn('⚠️ Error loading current academic year:', error.message);
+                renderCurrentAcademicYear(null);
+            }
+
+            // Load current semester with error handling
+            try {
+                const currentSemesterResponse = await fetch(`${API_BASE}/hocky/current`);
+                if (currentSemesterResponse.ok) {
+                    const responseText = await currentSemesterResponse.text();
+                    if (responseText && responseText.trim() && responseText !== 'null') {
+                        try {
+                            const currentSemester = JSON.parse(responseText);
+                            renderCurrentSemester(currentSemester);
+                        } catch (parseError) {
+                            console.warn('⚠️ Failed to parse current semester JSON:', responseText);
+                            renderCurrentSemester(null);
+                        }
+                    } else {
+                        console.warn('⚠️ Empty or null response from current semester API');
+                        renderCurrentSemester(null);
+                    }
+                } else {
+                    console.warn('⚠️ Current semester API returned:', currentSemesterResponse.status);
+                    renderCurrentSemester(null);
+                }
+            } catch (error) {
+                console.warn('⚠️ Error loading current semester:', error.message);
+                renderCurrentSemester(null);
+            }
+
+            console.log('✅ Current status loaded successfully');
+
+        } catch (error) {
+            console.error('❌ Error in loadCurrentStatus:', error);
+            // Don't throw error, just render null states
+            renderCurrentAcademicYear(null);
+            renderCurrentSemester(null);
+        }
+    };
+
+    // ===== ENHANCED TOGGLE CONFIG MODE =====
+    if (typeof toggleConfigMode === 'undefined') {
+        window.toggleConfigMode = function() {
+            const useWeekBased = document.getElementById('useWeekBasedConfig').checked;
+            const dateBasedConfig = document.getElementById('dateBasedConfig');
+            const weekBasedConfig = document.getElementById('weekBasedConfig');
+
+            console.log('🔄 Toggling config mode. Week-based:', useWeekBased);
+
+            if (useWeekBased) {
+                // Switch to week-based
+                dateBasedConfig.style.display = 'none';
+                weekBasedConfig.style.display = 'block';
+                weekBasedConfig.classList.add('active');
+
+                // Set default values
+                setDefaultWeekValues();
+                if (typeof updateThongTinTinhToan === 'function') {
+                    setTimeout(updateThongTinTinhToan, 100);
+                }
+
+                // Make date fields not required
+                document.getElementById('ngayBatDauHocKy').removeAttribute('required');
+                document.getElementById('ngayKetThucHocKy').removeAttribute('required');
+
+                // Make week fields required
+                document.getElementById('ngayBatDauTuan1').setAttribute('required', 'required');
+
+                showNotification('Đã chuyển sang cấu hình theo tuần', 'info');
+            } else {
+                // Switch to date-based
+                dateBasedConfig.style.display = 'block';
+                weekBasedConfig.style.display = 'none';
+                weekBasedConfig.classList.remove('active');
+
+                // Make date fields required
+                document.getElementById('ngayBatDauHocKy').setAttribute('required', 'required');
+                document.getElementById('ngayKetThucHocKy').setAttribute('required', 'required');
+
+                // Make week fields not required
+                document.getElementById('ngayBatDauTuan1').removeAttribute('required');
+
+                // Hide calculation info
+                document.getElementById('thongTinTinhToan').style.display = 'none';
+
+                showNotification('Đã chuyển sang cấu hình theo ngày', 'info');
+            }
+        };
+    }
+
+    // ===== SET DEFAULT WEEK VALUES =====
+    function setDefaultWeekValues() {
+        const currentDate = new Date();
+        const currentYear = currentDate.getMonth() >= 8 ? currentDate.getFullYear() : currentDate.getFullYear() - 1;
+
+        // Set default start of week 1 (first Monday of August)
+        const defaultStartDate = getFirstMondayOfAugust(currentYear);
+        document.getElementById('ngayBatDauTuan1').value = defaultStartDate;
+
+        // Set default semester type based on current month
+        const currentMonth = currentDate.getMonth() + 1;
+        if (currentMonth >= 9 || currentMonth <= 1) {
+            // Semester 1 (September - January)
+            document.getElementById('tuanBatDau').value = '1';
+            document.getElementById('soTuanHoc').value = '15';
+            document.getElementById('loaiHocKy').value = 'CHINH_QUY';
+        } else if (currentMonth >= 2 && currentMonth <= 6) {
+            // Semester 2 (February - June)
+            document.getElementById('tuanBatDau').value = '18';
+            document.getElementById('soTuanHoc').value = '15';
+            document.getElementById('loaiHocKy').value = 'CHINH_QUY';
+        } else {
+            // Summer semester (July - August)
+            document.getElementById('tuanBatDau').value = '34';
+            document.getElementById('soTuanHoc').value = '8';
+            document.getElementById('loaiHocKy').value = 'HE';
+        }
+    }
+
+    /**
+     * Get first Monday of August for a given year
+     */
+    function getFirstMondayOfAugust(year) {
+        const augustFirst = new Date(year, 7, 1); // August 1st
+        const dayOfWeek = augustFirst.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        const daysToMonday = dayOfWeek === 1 ? 0 : (8 - dayOfWeek) % 7;
+        const firstMonday = new Date(augustFirst);
+        firstMonday.setDate(augustFirst.getDate() + daysToMonday);
+        return firstMonday.toISOString().split('T')[0];
+    }
+
+    // ===== WEEK PRESET FUNCTIONS =====
+    if (typeof setWeekPreset === 'undefined') {
+        window.setWeekPreset = function(type) {
+            const presets = {
+                standard: { soTuan: 15, tuanBatDau: 1, loaiHocKy: 'CHINH_QUY' },
+                extended: { soTuan: 18, tuanBatDau: 1, loaiHocKy: 'CHINH_QUY' },
+                summer: { soTuan: 8, tuanBatDau: 34, loaiHocKy: 'HE' },
+                intensive: { soTuan: 6, tuanBatDau: 40, loaiHocKy: 'TAP_TRUNG' }
+            };
+
+            const preset = presets[type];
+            if (!preset) return;
+
+            document.getElementById('soTuanHoc').value = preset.soTuan;
+            document.getElementById('tuanBatDau').value = preset.tuanBatDau;
+            document.getElementById('loaiHocKy').value = preset.loaiHocKy;
+
+            // Update active preset button
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+
+            // Update calculations
+            if (typeof updateThongTinTinhToan === 'function') {
+                setTimeout(updateThongTinTinhToan, 100);
+            }
+
+            showNotification(`Đã áp dụng preset: ${type}`, 'success');
+        };
+    }
+
+    // ===== UPDATE CALCULATION FUNCTION =====
+    if (typeof updateThongTinTinhToan === 'undefined') {
+        window.updateThongTinTinhToan = async function() {
+            const tuanBatDau = parseInt(document.getElementById('tuanBatDau').value);
+            const soTuanHoc = parseInt(document.getElementById('soTuanHoc').value);
+            const ngayBatDauTuan1 = document.getElementById('ngayBatDauTuan1').value;
+
+            const infoContainer = document.getElementById('thongTinTinhToan');
+            if (!tuanBatDau || !soTuanHoc || !ngayBatDauTuan1) {
+                infoContainer.style.display = 'none';
+                return;
+            }
+
+            try {
+                document.getElementById('khoangThoiGian').textContent = 'Đang tính toán...';
+                infoContainer.style.display = 'block';
+
+                const result = await calculateSemesterDates({
+                    mode: 'week',
+                    tuanBatDau,
+                    soTuanHoc,
+                    ngayBatDauTuan1
+                });
+
+                if (result.success) {
+                    document.getElementById('khoangThoiGian').textContent = `${soTuanHoc} tuần`;
+                    document.getElementById('ngayBatDauThucTe').textContent = formatDate(result.ngayBatDauThucTe);
+                    document.getElementById('ngayKetThucThucTe').textContent = formatDate(result.ngayKetThucThucTe);
+                    document.getElementById('tongSoTuan').textContent = `${soTuanHoc} tuần`;
+                    document.getElementById('soBuoiHoc').textContent = `${soTuanHoc * 5} buổi (dự kiến)`;
+                    document.getElementById('trangThaiValidation').innerHTML = '<span class="text-success">✅ Hợp lệ</span>';
+
+                    // Auto-fill date fields for backup
+                    document.getElementById('ngayBatDauHocKy').value = result.ngayBatDauThucTe;
+                    document.getElementById('ngayKetThucHocKy').value = result.ngayKetThucThucTe;
+                } else {
+                    document.getElementById('trangThaiValidation').innerHTML = '<span class="text-danger">❌ Lỗi tính toán</span>';
+                }
+            } catch (error) {
+                console.error('Error calculating semester info:', error);
+                document.getElementById('trangThaiValidation').innerHTML = '<span class="text-danger">❌ Lỗi kết nối</span>';
+            }
+        };
+    }
+
+    // ===== HELPER FUNCTIONS =====
+    function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        return new Date(dateString).toLocaleDateString('vi-VN');
+    }
+
+    // ===== INITIALIZE ENHANCED FUNCTIONALITY =====
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🎯 Initializing ULTIMATE Week-based Configuration...');
+
+        // Setup event listeners for week-based config
+        const weekInputs = ['tuanBatDau', 'soTuanHoc', 'ngayBatDauTuan1'];
+        weekInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('change', updateThongTinTinhToan);
+                input.addEventListener('input', debounce(updateThongTinTinhToan, 300));
+            }
+        });
+
+        // Setup toggle config mode
+        const toggleCheckbox = document.getElementById('useWeekBasedConfig');
+        if (toggleCheckbox) {
+            toggleCheckbox.addEventListener('change', toggleConfigMode);
+        }
+
+        console.log('✅ ULTIMATE Week-based Configuration initialized successfully!');
+    });
+
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    console.log('🎯 ULTIMATE Week-based Semester Fix Loaded Successfully!');
+    console.log('🔥 All validation issues fixed - Ready to use!');
 </script>
 </body>
 </html>
