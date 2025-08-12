@@ -801,6 +801,60 @@
         .select2-container--bootstrap-5 .filter-dropdown {
             z-index: 1030 !important;
         }
+
+        .schedule-type-tabs .nav-pills {
+            background: rgba(255,255,255,0.1);
+            padding: 0.25rem;
+            border-radius: 2rem;
+        }
+
+        .schedule-type-tabs .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .schedule-type-tabs .nav-link.active {
+            background: rgba(255,255,255,0.9);
+            color: var(--primary-color);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .weekly-actions-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .weekly-semester-selector {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .weekly-view-controls {
+            margin-bottom: 2rem;
+        }
+
+        .weekly-view-controls .btn-group {
+            background: white;
+            border-radius: 12px;
+            padding: 0.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .loading-state {
+            background: white;
+            border-radius: 12px;
+            padding: 3rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -814,376 +868,373 @@
         <div class="header">
             <div class="header-content">
                 <div class="header-left">
-                    <h1 class="page-title">
-                        <i class="fas fa-calendar-alt me-2"></i>Quản lý Lịch học
-                    </h1>
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Quản lý Lịch học</h1>
+                    <!-- THÊM SCHEDULE TYPE TABS -->
+                    <div class="schedule-type-tabs ms-4">
+                        <ul class="nav nav-pills" id="scheduleTypeTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="legacy-schedule-tab" data-bs-toggle="pill"
+                                        data-bs-target="#legacy-schedule" type="button" role="tab">
+                                    <i class="fas fa-calendar me-2"></i>Lịch truyền thống
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="weekly-schedule-tab" data-bs-toggle="pill"
+                                        data-bs-target="#weekly-schedule" type="button" role="tab">
+                                    <i class="fas fa-calendar-week me-2"></i>Lịch theo tuần
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="header-right">
-                    <button class="btn btn-success me-2" onclick="openSemesterScheduleModal()">
-                        <i class="fas fa-calendar-plus me-2"></i>Sắp lịch học kỳ
-                    </button>
-                    <button class="btn btn-primary me-2" onclick="openCreateModal()">
-                        <i class="fas fa-plus me-2"></i>Tạo lịch học
-                    </button>
-                    <button class="btn btn-warning me-2" onclick="checkAllConflicts()">
-                        <i class="fas fa-exclamation-triangle me-2"></i>Kiểm tra trùng lịch
-                    </button>
-                    <button class="btn btn-info" onclick="exportSchedule()">
-                        <i class="fas fa-download me-2"></i>Xuất lịch
-                    </button>
+                    <div class="header-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Tổng lịch học:</span>
+                            <span class="stat-value" id="totalSchedules">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Templates:</span>
+                            <span class="stat-value" id="totalTemplates">0</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Content -->
-        <div class="content">
-            <!-- Semester Selector -->
-            <div class="semester-selector">
-                <div class="row align-items-center">
-                    <div class="col-md-3">
-                        <h5 class="mb-0 text-white">
-                            <i class="fas fa-graduation-cap me-2"></i>Chọn học kỳ
-                        </h5>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select" id="semesterSelect">
-                            <option value="">Tất cả học kỳ</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select" id="yearSelect">
-                            <option value="">Tất cả năm học</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <button class="btn btn-light" onclick="loadCurrentSemester()">
-                            <i class="fas fa-sync-alt me-2"></i>Học kỳ hiện tại
-                        </button>
-                    </div>
-                </div>
-            </div>
+        <!-- TAB CONTENT -->
+        <div class="tab-content" id="scheduleTypeTabsContent">
 
-            <!-- Current Semester Info -->
-            <div id="semesterInfo" class="semester-info" style="display: none;">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h6 class="mb-1 text-white">
-                            <i class="fas fa-info-circle me-2"></i>Thông tin học kỳ hiện tại
-                        </h6>
-                        <div id="semesterDetails"></div>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <button class="btn btn-light btn-sm" onclick="manageSemesterSchedule()">
-                            <i class="fas fa-cog me-2"></i>Quản lý lịch học kỳ
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Statistics Cards -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="stats-card">
-                        <i class="fas fa-calendar-alt stats-icon text-primary"></i>
-                        <div class="stats-number" id="totalSchedules">0</div>
-                        <div class="stats-label">Tổng lịch học</div>
-                        <div class="stats-change positive" id="scheduleChange">+0%</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stats-card">
-                        <i class="fas fa-chalkboard-teacher stats-icon text-success"></i>
-                        <div class="stats-number" id="activeTeachers">0</div>
-                        <div class="stats-label">Giảng viên có lịch</div>
-                        <div class="stats-change positive" id="teacherChange">+0%</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stats-card">
-                        <i class="fas fa-door-open stats-icon text-warning"></i>
-                        <div class="stats-number" id="usedRooms">0</div>
-                        <div class="stats-label">Phòng học sử dụng</div>
-                        <div class="stats-change positive" id="roomChange">+0%</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stats-card">
-                        <i class="fas fa-exclamation-triangle stats-icon text-danger"></i>
-                        <div class="stats-number" id="conflicts">0</div>
-                        <div class="stats-label">Trùng lịch</div>
-                        <div class="stats-change negative" id="conflictChange">0</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bulk Actions -->
-            <div class="bulk-actions">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <h6 class="mb-0">
-                            <i class="fas fa-tasks me-2"></i>Thao tác hàng loạt
-                        </h6>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="d-flex gap-2 justify-content-end">
-                            <button class="btn btn-outline-primary btn-sm" onclick="selectAllSchedules()">
-                                <i class="fas fa-check-square me-1"></i>Chọn tất cả
-                            </button>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
-                                <i class="fas fa-times me-1"></i>Bỏ chọn
-                            </button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="deleteSelectedSchedules()" disabled id="deleteSelectedBtn">
-                                <i class="fas fa-trash me-1"></i>Xóa đã chọn
-                            </button>
-                            <button class="btn btn-outline-warning btn-sm" onclick="moveSelectedSchedules()" disabled id="moveSelectedBtn">
-                                <i class="fas fa-exchange-alt me-1"></i>Chuyển phòng
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- View Toggle -->
-            <div class="view-toggle">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-eye me-2"></i>Chế độ xem
-                    </h5>
-                    <div class="btn-group" role="group">
-                        <input type="radio" class="btn-check" name="viewMode" id="calendarView" checked>
-                        <label class="btn btn-outline-primary" for="calendarView">
-                            <i class="fas fa-calendar me-2"></i>Lịch tuần
-                        </label>
-
-                        <input type="radio" class="btn-check" name="viewMode" id="gridView">
-                        <label class="btn btn-outline-primary" for="gridView">
-                            <i class="fas fa-th me-2"></i>Lưới
-                        </label>
-
-                        <input type="radio" class="btn-check" name="viewMode" id="listView">
-                        <label class="btn btn-outline-primary" for="listView">
-                            <i class="fas fa-list me-2"></i>Danh sách
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Filter Section -->
-            <div class="filter-section">
-                <h5 class="mb-3">
-                    <i class="fas fa-filter me-2"></i>Bộ lọc
-                </h5>
-                <div class="row">
-                    <div class="col-md-3">
-                        <label for="filterGiangVien" class="form-label">Giảng viên:</label>
-                        <select class="form-select" id="filterGiangVien">
-                            <option value="">Tất cả giảng viên</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label for="filterPhongHoc" class="form-label">Phòng học:</label>
-                        <select class="form-select" id="filterPhongHoc">
-                            <option value="">Tất cả phòng học</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="filterThu" class="form-label">Thứ:</label>
-                        <select class="form-select" id="filterThu">
-                            <option value="">Tất cả</option>
-                            <option value="2">Thứ 2</option>
-                            <option value="3">Thứ 3</option>
-                            <option value="4">Thứ 4</option>
-                            <option value="5">Thứ 5</option>
-                            <option value="6">Thứ 6</option>
-                            <option value="7">Thứ 7</option>
-                            <option value="8">Chủ nhật</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="filterMonHoc" class="form-label">Môn học:</label>
-                        <select class="form-select" id="filterMonHoc">
-                            <option value="">Tất cả môn học</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="filterKhoa" class="form-label">Khoa:</label>
-                        <select class="form-select" id="filterKhoa">
-                            <option value="">Tất cả khoa</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-md-4">
-                        <input type="text" class="form-control" id="searchInput" placeholder="Tìm kiếm theo tên môn học, mã lớp học phần, giảng viên...">
-                    </div>
-                    <div class="col-md-8">
-                        <div class="d-flex gap-3">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="showConflictsOnly">
-                                <label class="form-check-label" for="showConflictsOnly">
-                                    Chỉ hiển thị lịch có trùng
-                                </label>
+            <!-- LEGACY SCHEDULE TAB (existing content) -->
+            <div class="tab-pane fade show active" id="legacy-schedule" role="tabpanel">
+                <!-- ĐOẠN NÀY CHỨA TẤT CẢ CONTENT CŨ -->
+                <!-- Statistics Cards -->
+                <div class="stats-container">
+                    <div class="stat-card primary">
+                        <div class="stat-header">
+                            <div class="stat-info">
+                                <h3 class="stat-title">Tổng lịch học</h3>
+                                <div class="stat-number" id="totalSchedulesLegacy">0</div>
                             </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="showActiveOnly" checked>
-                                <label class="form-check-label" for="showActiveOnly">
-                                    Chỉ hiển thị lịch đang hoạt động
-                                </label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="groupByTeacher">
-                                <label class="form-check-label" for="groupByTeacher">
-                                    Nhóm theo giảng viên
-                                </label>
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar"></i>
                             </div>
                         </div>
+                        <div class="stat-footer">
+                            <span class="stat-change positive" id="scheduleChange">+5.2%</span>
+                            <span class="stat-label">So với tuần trước</span>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Calendar View -->
-            <div id="calendarViewContainer" class="schedule-calendar">
-                <div class="calendar-header">
-                    <h4 class="mb-0">
-                        <span id="currentWeekTitle "><p class="text-white">Lịch học tuần</p></span>
-                        <p class="text-white"><small class="ms-2" id="weekDateRange"></small></p>
-                    </h4>
-                    <div class="calendar-controls">
-                        <div class="btn-group me-3">
-                            <button class="btn btn-light btn-sm" onclick="showSemesterView()">
-                                <i class="fas fa-calendar-alt me-1"></i>Cả học kỳ
-                            </button>
-                            <button class="btn btn-light btn-sm" onclick="showMonthView()">
-                                <i class="fas fa-calendar me-1"></i>Tháng
-                            </button>
-                            <button class="btn btn-light btn-sm active" onclick="showWeekView()">
-                                <i class="fas fa-calendar-week me-1"></i>Tuần
-                            </button>
+                    <div class="stat-card success">
+                        <div class="stat-header">
+                            <div class="stat-info">
+                                <h3 class="stat-title">Giảng viên</h3>
+                                <div class="stat-number" id="activeTeachers">0</div>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
                         </div>
-                        <button class="btn btn-light btn-sm me-2" onclick="previousWeek()">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <button class="btn btn-light btn-sm me-2" onclick="currentWeek()">
-                            Tuần hiện tại
-                        </button>
-                        <button class="btn btn-light btn-sm" onclick="nextWeek()">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="d-flex">
-                    <!-- Time Column -->
-                    <div class="time-column">
-                        <div class="day-header">Tiết học</div>
-                        <div id="timeSlots"></div>
-                    </div>
-                    <!-- Days Columns -->
-                    <div class="flex-grow-1 d-flex">
-                        <div class="day-column" data-day="2">
-                            <div class="day-header">Thứ 2</div>
-                            <div class="day-content" id="day-2"></div>
-                        </div>
-                        <div class="day-column" data-day="3">
-                            <div class="day-header">Thứ 3</div>
-                            <div class="day-content" id="day-3"></div>
-                        </div>
-                        <div class="day-column" data-day="4">
-                            <div class="day-header">Thứ 4</div>
-                            <div class="day-content" id="day-4"></div>
-                        </div>
-                        <div class="day-column" data-day="5">
-                            <div class="day-header">Thứ 5</div>
-                            <div class="day-content" id="day-5"></div>
-                        </div>
-                        <div class="day-column" data-day="6">
-                            <div class="day-header">Thứ 6</div>
-                            <div class="day-content" id="day-6"></div>
-                        </div>
-                        <div class="day-column" data-day="7">
-                            <div class="day-header">Thứ 7</div>
-                            <div class="day-content" id="day-7"></div>
-                        </div>
-                        <div class="day-column" data-day="8">
-                            <div class="day-header">Chủ nhật</div>
-                            <div class="day-content" id="day-8"></div>
+                        <div class="stat-footer">
+                            <span class="stat-change positive" id="teacherChange">+2.1%</span>
+                            <span class="stat-label">So với tuần trước</span>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Grid View -->
-            <div id="gridViewContainer" class="schedule-calendar" style="display: none;">
-                <div class="calendar-header">
-                    <h4 class="mb-1">Lưới lịch học</h4>
-                </div>
-                <div id="scheduleGrid" class="schedule-grid">
-                    <!-- Grid will be populated by JavaScript -->
-                </div>
-            </div>
+                    <div class="stat-card warning">
+                        <div class="stat-header">
+                            <div class="stat-info">
+                                <h3 class="stat-title">Phòng học</h3>
+                                <div class="stat-number" id="usedRooms">0</div>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-door-open"></i>
+                            </div>
+                        </div>
+                        <div class="stat-footer">
+                            <span class="stat-change neutral" id="roomChange">+1.3%</span>
+                            <span class="stat-label">So với tuần trước</span>
+                        </div>
+                    </div>
 
-            <!-- List View -->
-            <div id="listViewContainer" class="admin-table-wrapper" style="display: none;">
-                <div class="admin-table-header">
-                    <h5 class="admin-table-title">
-                        <i class="fas fa-list me-2"></i>Danh sách lịch học
-                    </h5>
-                    <div class="table-actions">
-                        <button class="btn btn-success btn-sm me-2" onclick="refreshData()">
-                            <i class="fas fa-sync-alt me-1"></i>Làm mới
-                        </button>
-                        <button class="btn btn-primary btn-sm" onclick="exportToExcel()">
-                            <i class="fas fa-file-excel me-1"></i>Xuất Excel
-                        </button>
+                    <div class="stat-card danger">
+                        <div class="stat-header">
+                            <div class="stat-info">
+                                <h3 class="stat-title">Xung đột</h3>
+                                <div class="stat-number" id="conflicts">0</div>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                        <div class="stat-footer">
+                            <span class="stat-change negative" id="conflictChange">-2.1%</span>
+                            <span class="stat-label">So với tuần trước</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table admin-table list-view-table">
-                        <thead>
-                        <tr>
-                            <th width="40">
-                                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
-                            </th>
-                            <th>Mã lịch</th>
-                            <th>Môn học</th>
-                            <th>Lớp HP</th>
-                            <th>Giảng viên</th>
-                            <th>Phòng học</th>
-                            <th>Thứ</th>
-                            <th>Tiết</th>
-                            <th>Thời gian</th>
-                            <th>Học kỳ</th>
-                            <th>Trạng thái</th>
-                            <th width="120">Thao tác</th>
-                        </tr>
-                        </thead>
-                        <tbody id="scheduleTableBody">
-                        <tr>
-                            <td colspan="12" class="text-center py-4">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Đang tải...</span>
+                <!-- Semester Selector (existing) -->
+                <div class="semester-selector">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-graduation-cap me-2"></i>Chọn học kỳ và năm học</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <select class="form-select" id="semesterFilter">
+                                        <option value="">Tất cả học kỳ</option>
+                                    </select>
                                 </div>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+                                <div class="col-md-6">
+                                    <select class="form-select" id="yearFilter">
+                                        <option value="">Tất cả năm học</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-eye me-2"></i>Chế độ xem</h5>
+                            <div class="btn-group w-100" role="group">
+                                <button type="button" class="btn btn-outline-light" id="calendarViewBtn" onclick="switchView('calendar')">
+                                    <i class="fas fa-calendar-alt me-1"></i>Lịch
+                                </button>
+                                <button type="button" class="btn btn-outline-light" id="listViewBtn" onclick="switchView('list')">
+                                    <i class="fas fa-list me-1"></i>Danh sách
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Pagination -->
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                    <div>
-                        <span class="text-muted">Hiển thị <span id="showingFrom">0</span> - <span id="showingTo">0</span> trong tổng số <span id="totalRecords">0</span> bản ghi</span>
+                <!-- Filter Section (existing) -->
+                <div class="filter-section">
+                    <div class="filter-header">
+                        <h4><i class="fas fa-filter me-2"></i>Bộ lọc</h4>
                     </div>
-                    <nav>
-                        <ul class="pagination pagination-sm mb-0" id="pagination">
-                            <!-- Pagination will be populated by JavaScript -->
-                        </ul>
-                    </nav>
+                    <div class="filter-content">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label>Khoa</label>
+                                <select class="form-select" id="khoaFilter">
+                                    <option value="">Tất cả khoa</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Môn học</label>
+                                <select class="form-select" id="monHocFilter">
+                                    <option value="">Tất cả môn học</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Giảng viên</label>
+                                <select class="form-select" id="giangVienFilter">
+                                    <option value="">Tất cả giảng viên</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Phòng học</label>
+                                <select class="form-select" id="phongHocFilter">
+                                    <option value="">Tất cả phòng học</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="showActiveOnly" checked>
+                                    <label class="form-check-label" for="showActiveOnly">
+                                        Chỉ hiển thị lịch đang hoạt động
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="groupByTeacher">
+                                    <label class="form-check-label" for="groupByTeacher">
+                                        Nhóm theo giảng viên
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calendar và List View containers (existing) -->
+                <div id="calendarViewContainer" class="schedule-calendar">
+                    <!-- Calendar content sẽ được render bằng JavaScript -->
+                </div>
+
+                <div id="listViewContainer" style="display: none;">
+                    <!-- List content sẽ được render bằng JavaScript -->
+                </div>
+            </div>
+
+            <!-- NEW WEEKLY SCHEDULE TAB -->
+            <div class="tab-pane fade" id="weekly-schedule" role="tabpanel">
+                <!-- WEEKLY SCHEDULE CONTENT -->
+                <div class="weekly-schedule-content">
+
+                    <!-- Weekly Schedule Stats -->
+                    <div class="stats-container">
+                        <div class="stat-card info">
+                            <div class="stat-header">
+                                <div class="stat-info">
+                                    <h3 class="stat-title">Templates</h3>
+                                    <div class="stat-number" id="totalWeeklyTemplates">0</div>
+                                </div>
+                                <div class="stat-icon">
+                                    <i class="fas fa-layer-group"></i>
+                                </div>
+                            </div>
+                            <div class="stat-footer">
+                                <span class="stat-change positive" id="templateChange">+3 templates</span>
+                                <span class="stat-label">Tuần này</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card success">
+                            <div class="stat-header">
+                                <div class="stat-info">
+                                    <h3 class="stat-title">Instances</h3>
+                                    <div class="stat-number" id="totalInstances">0</div>
+                                </div>
+                                <div class="stat-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                            </div>
+                            <div class="stat-footer">
+                                <span class="stat-change positive" id="instanceChange">+15 instances</span>
+                                <span class="stat-label">Tuần này</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card primary">
+                            <div class="stat-header">
+                                <div class="stat-info">
+                                    <h3 class="stat-title">Lớp đã sắp lịch</h3>
+                                    <div class="stat-number" id="scheduledClasses">0</div>
+                                </div>
+                                <div class="stat-icon">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </div>
+                            </div>
+                            <div class="stat-footer">
+                                <span class="stat-change positive" id="classChange">85% hoàn thành</span>
+                                <span class="stat-label">Tiến độ</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card warning">
+                            <div class="stat-header">
+                                <div class="stat-info">
+                                    <h3 class="stat-title">Chờ duyệt</h3>
+                                    <div class="stat-number" id="pendingTemplates">0</div>
+                                </div>
+                                <div class="stat-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                            </div>
+                            <div class="stat-footer">
+                                <span class="stat-change neutral" id="pendingChange">5 templates</span>
+                                <span class="stat-label">Cần xem xét</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weekly Schedule Actions -->
+                    <div class="weekly-actions-bar">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h4><i class="fas fa-calendar-week me-2"></i>Quản lý Lịch theo tuần</h4>
+                                <p class="text-muted mb-0">Tạo và quản lý lịch học theo template tuần</p>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <div class="btn-group">
+                                    <button class="btn btn-primary" onclick="createWeeklyTemplate()">
+                                        <i class="fas fa-plus me-2"></i>Tạo Template
+                                    </button>
+                                    <button class="btn btn-success" onclick="generateInstancesModal()">
+                                        <i class="fas fa-magic me-2"></i>Tạo lịch tuần
+                                    </button>
+                                    <button class="btn btn-info" onclick="copyFromSemester()">
+                                        <i class="fas fa-copy me-2"></i>Copy từ kỳ khác
+                                    </button>
+                                    <button class="btn btn-warning" onclick="bulkScheduleModal()">
+                                        <i class="fas fa-layer-group me-2"></i>Sắp lịch hàng loạt
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Semester Selector for Weekly Schedule -->
+                    <div class="weekly-semester-selector">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Học kỳ</label>
+                                <select class="form-select" id="weeklySemesterFilter">
+                                    <option value="">Chọn học kỳ</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Trạng thái Template</label>
+                                <select class="form-select" id="templateStatusFilter">
+                                    <option value="">Tất cả trạng thái</option>
+                                    <option value="DRAFT">Bản nháp</option>
+                                    <option value="ACTIVE">Đang áp dụng</option>
+                                    <option value="PAUSED">Tạm dừng</option>
+                                    <option value="COMPLETED">Đã hoàn thành</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Loại lịch</label>
+                                <select class="form-select" id="scheduleTypeFilter">
+                                    <option value="">Tất cả loại</option>
+                                    <option value="LY_THUYET">Lý thuyết</option>
+                                    <option value="THUC_HANH">Thực hành</option>
+                                    <option value="SEMINAR">Seminar</option>
+                                    <option value="THI_CUOI_KY">Thi cuối kỳ</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weekly Schedule View Modes -->
+                    <div class="weekly-view-controls">
+                        <div class="btn-group w-100" role="group">
+                            <button type="button" class="btn btn-outline-primary active" id="templateViewBtn" onclick="switchWeeklyView('templates')">
+                                <i class="fas fa-layer-group me-1"></i>Templates
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="instanceViewBtn" onclick="switchWeeklyView('instances')">
+                                <i class="fas fa-calendar-day me-1"></i>Instances
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="weeklyCalendarViewBtn" onclick="switchWeeklyView('calendar')">
+                                <i class="fas fa-calendar-alt me-1"></i>Calendar View
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="weeklyTimelineViewBtn" onclick="switchWeeklyView('timeline')">
+                                <i class="fas fa-timeline me-1"></i>Timeline
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Weekly Schedule Content Container -->
+                    <div id="weeklyScheduleContent">
+                        <!-- Content will be dynamically loaded here -->
+                        <div class="loading-state text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Đang tải...</span>
+                            </div>
+                            <p class="mt-3">Đang tải dữ liệu lịch học theo tuần...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
 <!-- Modal Tạo/Sửa Lịch học -->
 <div class="modal fade" id="scheduleModal" tabindex="-1">
@@ -1568,7 +1619,7 @@
         </div>
     </div>
 </div>
-
+</div>
 <!-- Notification Container -->
 <div id="notificationContainer" class="notification-container"></div>
 
@@ -1606,7 +1657,7 @@
         // GLOBAL STATE
         // ========================================
         let globalState = {
-            // Data
+            // === LEGACY SCHEDULE DATA ===
             scheduleData: [],
             lopHocPhanData: [],
             phongHocData: [],
@@ -1616,49 +1667,64 @@
             khoaData: [],
             monHocData: [],
 
-            // Filtered and paginated data
+            // === WEEKLY SCHEDULE DATA ===
+            weeklyTemplates: [],
+            scheduleInstances: [],
+            weekBasedSemesters: [],
+
+            // === FILTERED DATA ===
             filteredData: [],
+            filteredTemplates: [],
+            filteredInstances: [],
+
+            // === PAGINATION ===
             currentPage: 1,
             totalPages: 1,
+            itemsPerPage: 20,
 
-            // UI State
-            currentViewMode: 'calendar',
+            // === UI STATE ===
+            currentViewMode: 'calendar', // 'calendar', 'list'
+            currentWeeklyViewMode: 'templates', // 'templates', 'instances', 'calendar', 'timeline'
+            currentScheduleType: 'legacy', // 'legacy', 'weekly'
             currentScheduleId: null,
             selectedSchedules: new Set(),
+            selectedTemplates: new Set(),
             currentSemester: null,
             currentYear: null,
 
-            // Loading states
+            // === LOADING STATES ===
             isLoading: false,
             isInitialized: false,
+            loadingComponents: new Set(),
 
-            // Auto-refresh
+            // === AUTO-REFRESH ===
             refreshInterval: null,
-            lastRefresh: null
+            lastRefresh: null,
+
+            // === WEEKLY SCHEDULE SPECIFIC ===
+            currentTemplate: null,
+            selectedWeek: null,
+            previewMode: false,
+            conflictCheckEnabled: true
         };
 
         // ========================================
         // INITIALIZATION
         // ========================================
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Initializing Enhanced Schedule Management System...');
             initializePage();
-
+            setupEventListeners();
+            setupTabSwitching();
         });
 
         async function initializePage() {
-            console.log('🚀 Initializing LichHoc page...');
-            showLoading(true);
-
             try {
-                // Setup event listeners first
-                setupEventListeners();
+                showLoading(true);
+                console.log('📊 Loading initial data...');
 
-                // Initialize calendar state
-                initializeCalendarState();
-
-                // Load all required data
+                // Load common data needed for both schedule types
                 await Promise.all([
-                    loadScheduleData(),
                     loadLopHocPhanData(),
                     loadPhongHocData(),
                     loadGiangVienData(),
@@ -1668,30 +1734,149 @@
                     loadMonHocData()
                 ]);
 
-                // Enrich data after all loaded
-                await enrichLopHocPhanData();
+                // Load schedule-specific data based on current tab
+                await loadScheduleTypeData();
 
-                // Initialize UI components
-                initializeUI();
+                // Populate UI components
+                populateDropdowns();
+                updateStatistics();
 
-                // Load current semester
-                await loadCurrentSemester();
-
-                // Initial render
+                // Render initial view
                 await refreshDisplay();
 
-                // Setup auto-refresh
-                setupAutoRefresh();
-
                 globalState.isInitialized = true;
-                console.log('✅ Page initialized successfully');
+                console.log('✅ Page initialization completed');
 
             } catch (error) {
-                console.error('❌ Error initializing page:', error);
+                console.error('❌ Error during initialization:', error);
                 showNotification('Lỗi khi khởi tạo trang: ' + error.message, 'error');
             } finally {
                 showLoading(false);
             }
+        }
+
+        async function loadScheduleTypeData() {
+            console.log(`📅 Loading data for schedule type: ${globalState.currentScheduleType}`);
+
+            if (globalState.currentScheduleType === 'legacy') {
+                await loadLegacyScheduleData();
+            } else {
+                await loadWeeklyScheduleData();
+            }
+        }
+        async function loadLegacyScheduleData() {
+            try {
+                setLoadingComponent('legacy-schedules', true);
+
+                const response = await apiCall('/lichhoc');
+                globalState.scheduleData = Array.isArray(response) ? response : [];
+                globalState.filteredData = [...globalState.scheduleData];
+
+                console.log('✅ Legacy schedule data loaded:', globalState.scheduleData.length);
+
+            } catch (error) {
+                console.error('❌ Error loading legacy schedules:', error);
+                globalState.scheduleData = [];
+                globalState.filteredData = [];
+            } finally {
+                setLoadingComponent('legacy-schedules', false);
+            }
+        }
+
+        async function loadWeeklyScheduleData() {
+            try {
+                setLoadingComponent('weekly-schedules', true);
+
+                // Load weekly templates
+                const templatesPromise = apiCall('/weekly-schedule/templates').then(response => {
+                    globalState.weeklyTemplates = Array.isArray(response) ? response : [];
+                    console.log('✅ Weekly templates loaded:', globalState.weeklyTemplates.length);
+                });
+
+                // Load schedule instances
+                const instancesPromise = apiCall('/weekly-schedule/instances').then(response => {
+                    globalState.scheduleInstances = Array.isArray(response) ? response : [];
+                    console.log('✅ Schedule instances loaded:', globalState.scheduleInstances.length);
+                });
+
+                await Promise.all([templatesPromise, instancesPromise]);
+
+                // Filter data
+                globalState.filteredTemplates = [...globalState.weeklyTemplates];
+                globalState.filteredInstances = [...globalState.scheduleInstances];
+
+            } catch (error) {
+                console.error('❌ Error loading weekly schedules:', error);
+                globalState.weeklyTemplates = [];
+                globalState.scheduleInstances = [];
+                globalState.filteredTemplates = [];
+                globalState.filteredInstances = [];
+            } finally {
+                setLoadingComponent('weekly-schedules', false);
+            }
+        }
+
+        function setLoadingComponent(component, isLoading) {
+            if (isLoading) {
+                globalState.loadingComponents.add(component);
+            } else {
+                globalState.loadingComponents.delete(component);
+            }
+
+            // Update global loading state
+            globalState.isLoading = globalState.loadingComponents.size > 0;
+
+            // Update UI loading indicators if needed
+            updateLoadingIndicators();
+        }
+
+        function updateLoadingIndicators() {
+            const loadingElement = document.querySelector('.loading-state');
+            if (loadingElement) {
+                loadingElement.style.display = globalState.isLoading ? 'block' : 'none';
+            }
+        }
+
+
+        // ========================================
+        // TAB SWITCHING FUNCTIONALITY
+        // ========================================
+        function setupTabSwitching() {
+            const tabButtons = document.querySelectorAll('#scheduleTypeTabs button');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', async function() {
+                    const targetTab = this.getAttribute('data-bs-target');
+                    const scheduleType = targetTab === '#weekly-schedule' ? 'weekly' : 'legacy';
+
+                    console.log(`🔄 Switching to ${scheduleType} schedule mode`);
+
+                    // Update global state
+                    const previousType = globalState.currentScheduleType;
+                    globalState.currentScheduleType = scheduleType;
+
+                    // Only reload data if switching to a different type
+                    if (previousType !== scheduleType) {
+                        await loadScheduleTypeData();
+                        populateDropdowns();
+                        updateStatistics();
+                        await refreshDisplay();
+                    }
+
+                    // Update UI
+                    updateActiveTabButton(this);
+                });
+            });
+        }
+
+        function updateActiveTabButton(activeButton) {
+            // Remove active class from all buttons
+            document.querySelectorAll('#scheduleTypeTabs button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Add active class to clicked button
+            activeButton.classList.add('active');
         }
 
         function setupEventListeners() {
@@ -1718,6 +1903,25 @@
                 });
             });
 
+            // Setup legacy filter listeners
+            const legacyFilterIds = [
+                'semesterFilter', 'yearFilter', 'khoaFilter',
+                'monHocFilter', 'giangVienFilter', 'phongHocFilter', 'showActiveOnly'
+            ];
+
+            legacyFilterIds.forEach(filterId => {
+                const element = document.getElementById(filterId);
+                if (element) {
+                    const eventType = element.type === 'checkbox' ? 'change' : 'change';
+                    element.addEventListener(eventType, () => {
+                        if (globalState.currentScheduleType === 'legacy') {
+                            applyLegacyFilters();
+                            refreshLegacyDisplay();
+                        }
+                    });
+                }
+            });
+
             // Semester and year selectors
             document.getElementById('semesterSelect').addEventListener('change', onSemesterChange);
             document.getElementById('yearSelect').addEventListener('change', onYearChange);
@@ -1732,6 +1936,12 @@
             document.getElementById('showConflictsOnly').addEventListener('change', filterData);
             document.getElementById('showActiveOnly').addEventListener('change', filterData);
             document.getElementById('groupByTeacher').addEventListener('change', filterData);
+            // Setup view mode buttons
+            document.getElementById('calendarViewBtn')?.addEventListener('click', () => switchView('calendar'));
+            document.getElementById('listViewBtn')?.addEventListener('click', () => switchView('list'));
+
+            // Setup refresh interval
+            setupAutoRefresh();
 
             // Modal form fields with auto-conflict checking
             const formFields = ['thu', 'tietBatDau', 'soTiet', 'maPhong', 'maLhp'];
@@ -1745,6 +1955,7 @@
             // Keyboard shortcuts
             document.addEventListener('keydown', handleKeyboardShortcuts);
         }
+
 
         function initializeUI() {
             // Initialize Select2 cho filter dropdowns với z-index thấp
@@ -1775,6 +1986,8 @@
             });
         }
 
+
+
         // ========================================
         // DATA LOADING FUNCTIONS
         // ========================================
@@ -1796,20 +2009,20 @@
                 const response = await apiCall('/lophocphan');
                 let lopHocPhanData = Array.isArray(response) ? response : [];
 
-                // Load thêm thông tin số sinh viên cho từng lớp học phần
+                // Enhanced data with student count
                 for (let lhp of lopHocPhanData) {
                     try {
-                        // Gọi API để lấy số sinh viên đã đăng ký
                         const studentResponse = await apiCall(`/lophocphan/${lhp.maLhp}/sinhvien`);
                         lhp.soSinhVien = Array.isArray(studentResponse) ? studentResponse.length : 0;
                     } catch (error) {
-                        console.warn(`Không thể tải số sinh viên cho LHP ${lhp.maLhp}:`, error);
+                        console.warn(`Cannot load student count for ${lhp.maLhp}:`, error);
                         lhp.soSinhVien = 0;
                     }
                 }
 
                 globalState.lopHocPhanData = lopHocPhanData;
                 console.log('✅ LHP data loaded with student count:', globalState.lopHocPhanData.length);
+
             } catch (error) {
                 console.error('❌ Error loading LHP:', error);
                 globalState.lopHocPhanData = [];
@@ -1818,37 +2031,22 @@
 
         async function loadPhongHocData() {
             try {
-                console.log('📡 Loading phòng học data...');
-
-                // Sử dụng endpoint /all để lấy tất cả phòng học active
                 const response = await apiCall('/phonghoc/all');
 
                 if (Array.isArray(response)) {
-                    // Filter chỉ lấy phòng học active và khả dụng
-                    globalState.phongHocData = response.filter(room => {
-                        return room.isActive !== false && room.trangThai !== 'INACTIVE';
-                    });
+                    globalState.phongHocData = response.filter(room =>
+                        room.isActive !== false && room.trangThai !== 'INACTIVE'
+                    );
                 } else {
-                    console.warn('⚠️ API response is not an array:', response);
+                    console.warn('⚠️ PhongHoc API response is not an array:', response);
                     globalState.phongHocData = [];
                 }
 
-                console.log(`✅ Phòng học data loaded: ${globalState.phongHocData.length} rooms`);
-
-                // Populate dropdown ngay sau khi load xong
-                populatePhongHocDropdowns();
+                console.log('✅ PhongHoc data loaded:', globalState.phongHocData.length);
 
             } catch (error) {
-                console.error('❌ Error loading phòng học:', error);
+                console.error('❌ Error loading PhongHoc:', error);
                 globalState.phongHocData = [];
-
-                // Vẫn gọi populate để hiển thị thông báo lỗi
-                populatePhongHocDropdowns();
-
-                // Hiển thị thông báo lỗi cho user
-                if (typeof showNotification === 'function') {
-                    showNotification('Không thể tải danh sách phòng học. Vui lòng thử lại.', 'error');
-                }
             }
         }
 
@@ -1969,22 +2167,33 @@
         async function loadGiangVienData() {
             try {
                 const response = await apiCall('/giangvien');
-                globalState.giangVienData = Array.isArray(response) ? response.filter(g => g.isActive !== false) : [];
-                console.log('✅ Teacher data loaded:', globalState.giangVienData.length);
+                globalState.giangVienData = Array.isArray(response) ? response.filter(gv => gv.isActive !== false) : [];
+                console.log('✅ GiangVien data loaded:', globalState.giangVienData.length);
             } catch (error) {
-                console.error('❌ Error loading teachers:', error);
+                console.error('❌ Error loading GiangVien:', error);
                 globalState.giangVienData = [];
             }
         }
 
         async function loadSemesterData() {
             try {
-                const response = await apiCall('/hocky');
-                globalState.semesterData = Array.isArray(response) ? response.filter(s => s.isActive !== false) : [];
-                console.log('✅ Semester data loaded:', globalState.semesterData.length);
+                const response = await apiCall('/hocky/all');
+                globalState.semesterData = Array.isArray(response) ? response : [];
+
+                // Separate week-based semesters
+                globalState.weekBasedSemesters = globalState.semesterData.filter(semester =>
+                    semester.isWeekBasedConfig === true
+                );
+
+                console.log('✅ Semester data loaded:', {
+                    total: globalState.semesterData.length,
+                    weekBased: globalState.weekBasedSemesters.length
+                });
+
             } catch (error) {
                 console.error('❌ Error loading semesters:', error);
                 globalState.semesterData = [];
+                globalState.weekBasedSemesters = [];
             }
         }
 
@@ -2002,10 +2211,10 @@
         async function loadKhoaData() {
             try {
                 const response = await apiCall('/khoa');
-                globalState.khoaData = Array.isArray(response) ? response.filter(k => k.isActive !== false) : [];
-                console.log('✅ Faculty data loaded:', globalState.khoaData.length);
+                globalState.khoaData = Array.isArray(response) ? response : [];
+                console.log('✅ Khoa data loaded:', globalState.khoaData.length);
             } catch (error) {
-                console.error('❌ Error loading faculties:', error);
+                console.error('❌ Error loading Khoa:', error);
                 globalState.khoaData = [];
             }
         }
@@ -2013,10 +2222,10 @@
         async function loadMonHocData() {
             try {
                 const response = await apiCall('/monhoc');
-                globalState.monHocData = Array.isArray(response) ? response.filter(m => m.isActive !== false) : [];
-                console.log('✅ Subject data loaded:', globalState.monHocData.length);
+                globalState.monHocData = Array.isArray(response) ? response : [];
+                console.log('✅ MonHoc data loaded:', globalState.monHocData.length);
             } catch (error) {
-                console.error('❌ Error loading subjects:', error);
+                console.error('❌ Error loading MonHoc:', error);
                 globalState.monHocData = [];
             }
         }
@@ -2292,25 +2501,62 @@
         // DISPLAY AND RENDERING FUNCTIONS
         // ========================================
         async function refreshDisplay() {
-            showLoading(true);
+            console.log(`🔄 Refreshing display for ${globalState.currentScheduleType} schedule`);
+
             try {
-                // Apply current filters
-                await filterData();
-
-                // Update statistics
-                updateStatistics();
-
-                // Render current view
-                renderCurrentView();
+                if (globalState.currentScheduleType === 'legacy') {
+                    await refreshLegacyDisplay();
+                } else {
+                    await refreshWeeklyDisplay();
+                }
 
                 globalState.lastRefresh = new Date();
+                console.log('✅ Display refreshed successfully');
+
             } catch (error) {
-                console.error('Error refreshing display:', error);
-                showNotification('Lỗi khi làm mới dữ liệu', 'error');
-            } finally {
-                showLoading(false);
+                console.error('❌ Error refreshing display:', error);
+                showNotification('Lỗi khi làm mới hiển thị: ' + error.message, 'error');
             }
         }
+
+        async function refreshLegacyDisplay() {
+            // Apply filters
+            applyLegacyFilters();
+
+            // Render based on current view mode
+            if (globalState.currentViewMode === 'calendar') {
+                renderLegacyCalendar();
+            } else {
+                renderLegacyList();
+            }
+
+            // Update statistics
+            updateLegacyStatistics();
+        }
+        async function refreshWeeklyDisplay() {
+            // Apply filters
+            applyWeeklyFilters();
+
+            // Render based on current weekly view mode
+            switch (globalState.currentWeeklyViewMode) {
+                case 'templates':
+                    renderWeeklyTemplates();
+                    break;
+                case 'instances':
+                    renderWeeklyInstances();
+                    break;
+                case 'calendar':
+                    renderWeeklyCalendar();
+                    break;
+                case 'timeline':
+                    renderWeeklyTimeline();
+                    break;
+            }
+
+            // Update statistics
+            updateWeeklyStatistics();
+        }
+
 
         function toggleView() {
             const calendarView = document.getElementById('calendarViewContainer');
@@ -3747,18 +3993,6 @@
         // ========================================
         // UTILITY FUNCTIONS
         // ========================================
-        function getDayName(dayNumber) {
-            const days = {
-                2: 'Thứ 2',
-                3: 'Thứ 3',
-                4: 'Thứ 4',
-                5: 'Thứ 5',
-                6: 'Thứ 6',
-                7: 'Thứ 7',
-                8: 'Chủ nhật'
-            };
-            return days[dayNumber] || 'N/A';
-        }
 
         function groupSchedulesByTeacher(schedules) {
             // Group schedules by teacher for better visualization
@@ -3800,6 +4034,12 @@
                 }
             });
 
+            if (globalState.currentScheduleType === 'legacy') {
+                updateLegacyStatistics();
+            } else {
+                updateWeeklyStatistics();
+            }
+
             // Update DOM
             document.getElementById('totalSchedules').textContent = totalSchedules;
             document.getElementById('activeTeachers').textContent = uniqueTeachers;
@@ -3812,6 +4052,332 @@
             document.getElementById('roomChange').textContent = `${uniqueRooms} phòng`;
             document.getElementById('conflictChange').textContent = conflictCount > 0 ? `${conflictCount} trùng lịch` : 'Không có';
         }
+
+        function updateLegacyStatistics() {
+            console.log('📊 Updating legacy statistics');
+
+            const totalSchedules = globalState.scheduleData.length;
+            const activeSchedules = globalState.scheduleData.filter(s => s.isActive !== false).length;
+            const uniqueTeachers = new Set(globalState.scheduleData.map(s => s.maGv)).size;
+            const uniqueRooms = new Set(globalState.scheduleData.map(s => s.maPhong)).size;
+
+            // Calculate conflicts
+            let conflictCount = 0;
+            globalState.scheduleData.forEach(schedule => {
+                if (checkLegacyScheduleConflicts(schedule).length > 0) {
+                    conflictCount++;
+                }
+            });
+
+            // Update DOM elements
+            updateStatElement('totalSchedules', totalSchedules);
+            updateStatElement('totalSchedulesLegacy', totalSchedules);
+            updateStatElement('activeTeachers', uniqueTeachers);
+            updateStatElement('usedRooms', uniqueRooms);
+            updateStatElement('conflicts', conflictCount);
+
+            // Update change indicators
+            updateStatElement('scheduleChange', `${activeSchedules} hoạt động`);
+            updateStatElement('teacherChange', `${uniqueTeachers} giảng viên`);
+            updateStatElement('roomChange', `${uniqueRooms} phòng`);
+            updateStatElement('conflictChange', conflictCount > 0 ? 'Cần xử lý' : 'Không có');
+        }
+
+        function updateWeeklyStatistics() {
+            console.log('📊 Updating weekly statistics');
+
+            const totalTemplates = globalState.weeklyTemplates.length;
+            const activeTemplates = globalState.weeklyTemplates.filter(t => t.trangThai === 'ACTIVE').length;
+            const draftTemplates = globalState.weeklyTemplates.filter(t => t.trangThai === 'DRAFT').length;
+            const totalInstances = globalState.scheduleInstances.length;
+            const completedInstances = globalState.scheduleInstances.filter(i => i.trangThai === 'COMPLETED').length;
+
+            // Calculate scheduled classes
+            const scheduledClasses = new Set(globalState.weeklyTemplates.map(t => t.maLhp)).size;
+            const totalClasses = globalState.lopHocPhanData.length;
+            const scheduledPercentage = totalClasses > 0 ? Math.round((scheduledClasses / totalClasses) * 100) : 0;
+
+            // Update DOM elements
+            updateStatElement('totalWeeklyTemplates', totalTemplates);
+            updateStatElement('totalTemplates', totalTemplates);
+            updateStatElement('totalInstances', totalInstances);
+            updateStatElement('scheduledClasses', scheduledClasses);
+            updateStatElement('pendingTemplates', draftTemplates);
+
+            // Update change indicators
+            updateStatElement('templateChange', `+${getRecentTemplateCount()} templates`);
+            updateStatElement('instanceChange', `+${getRecentInstanceCount()} instances`);
+            updateStatElement('classChange', `${scheduledPercentage}% hoàn thành`);
+            updateStatElement('pendingChange', `${draftTemplates} templates`);
+
+            // Update progress indicators
+            updateProgressIndicators(scheduledPercentage, completedInstances, totalInstances);
+        }
+
+        function updateStatElement(elementId, value) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = value;
+            }
+        }
+        function updateProgressIndicators(scheduledPercentage, completedInstances, totalInstances) {
+            // Update schedule completion progress
+            const completionPercentage = totalInstances > 0 ? Math.round((completedInstances / totalInstances) * 100) : 0;
+
+            // Create or update progress bars if they exist
+            updateProgressBar('scheduleProgress', scheduledPercentage);
+            updateProgressBar('completionProgress', completionPercentage);
+        }
+
+        function updateProgressBar(elementId, percentage) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.style.width = `${percentage}%`;
+                element.setAttribute('aria-valuenow', percentage);
+            }
+        }
+
+        function getRecentTemplateCount() {
+            // Count templates created in the last 7 days
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+
+            return globalState.weeklyTemplates.filter(template => {
+                if (!template.createdAt) return false;
+                const createdDate = new Date(template.createdAt);
+                return createdDate >= weekAgo;
+            }).length;
+        }
+
+        function getRecentInstanceCount() {
+            // Count instances created in the last 7 days
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+
+            return globalState.scheduleInstances.filter(instance => {
+                if (!instance.createdAt) return false;
+                const createdDate = new Date(instance.createdAt);
+                return createdDate >= weekAgo;
+            }).length;
+        }
+
+        // ========================================
+        // FILTER FUNCTIONS
+        // ========================================
+
+        function populateDropdowns() {
+            console.log('📋 Populating dropdown filters');
+
+            if (globalState.currentScheduleType === 'legacy') {
+                populateLegacyDropdowns();
+            } else {
+                populateWeeklyDropdowns();
+            }
+        }
+
+        function populateLegacyDropdowns() {
+            // Populate semester filter
+            populateSelect('semesterFilter', globalState.semesterData, 'maHocKy', 'tenHocKy');
+
+            // Populate year filter
+            populateSelect('yearFilter', globalState.yearData, 'maNamHoc', 'maNamHoc');
+
+            // Populate khoa filter
+            populateSelect('khoaFilter', globalState.khoaData, 'maKhoa', 'tenKhoa');
+
+            // Populate mon hoc filter
+            populateSelect('monHocFilter', globalState.monHocData, 'maMh', 'tenMh');
+
+            // Populate giang vien filter
+            populateSelect('giangVienFilter', globalState.giangVienData, 'maGv', 'hoTen');
+
+            // Populate phong hoc filter
+            populateSelect('phongHocFilter', globalState.phongHocData, 'maPhong', 'tenPhong');
+        }
+
+        function populateWeeklyDropdowns() {
+            // Populate semester filter for weekly schedules (only week-based semesters)
+            populateSelect('weeklySemesterFilter', globalState.weekBasedSemesters, 'maHocKy', 'tenHocKy');
+
+            // Add event listeners for weekly filters
+            setupWeeklyFilterListeners();
+        }
+
+        function populateSelect(selectId, data, valueField, textField) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+
+            // Store current value
+            const currentValue = select.value;
+
+            // Keep first option (usually "Tất cả...")
+            const firstOption = select.querySelector('option[value=""]');
+            select.innerHTML = '';
+            if (firstOption) {
+                select.appendChild(firstOption);
+            }
+
+            // Add data options
+            data.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item[valueField];
+                option.textContent = item[textField];
+                select.appendChild(option);
+            });
+
+            // Restore previous value
+            select.value = currentValue;
+        }
+
+        function setupWeeklyFilterListeners() {
+            const filterIds = ['weeklySemesterFilter', 'templateStatusFilter', 'scheduleTypeFilter'];
+
+            filterIds.forEach(filterId => {
+                const filterElement = document.getElementById(filterId);
+                if (filterElement) {
+                    filterElement.addEventListener('change', applyWeeklyFilters);
+                }
+            });
+        }
+
+        function applyLegacyFilters() {
+            console.log('🔍 Applying legacy filters');
+
+            let filtered = [...globalState.scheduleData];
+
+            // Apply semester filter
+            const semesterFilter = document.getElementById('semesterFilter')?.value;
+            if (semesterFilter) {
+                filtered = filtered.filter(schedule => schedule.hocKy === semesterFilter);
+            }
+
+            // Apply year filter
+            const yearFilter = document.getElementById('yearFilter')?.value;
+            if (yearFilter) {
+                filtered = filtered.filter(schedule => schedule.namHoc === yearFilter);
+            }
+
+            // Apply khoa filter
+            const khoaFilter = document.getElementById('khoaFilter')?.value;
+            if (khoaFilter) {
+                filtered = filtered.filter(schedule => schedule.maKhoa === khoaFilter);
+            }
+
+            // Apply mon hoc filter
+            const monHocFilter = document.getElementById('monHocFilter')?.value;
+            if (monHocFilter) {
+                filtered = filtered.filter(schedule => schedule.maMh === monHocFilter);
+            }
+
+            // Apply giang vien filter
+            const giangVienFilter = document.getElementById('giangVienFilter')?.value;
+            if (giangVienFilter) {
+                filtered = filtered.filter(schedule => schedule.maGv === giangVienFilter);
+            }
+
+            // Apply phong hoc filter
+            const phongHocFilter = document.getElementById('phongHocFilter')?.value;
+            if (phongHocFilter) {
+                filtered = filtered.filter(schedule => schedule.maPhong === phongHocFilter);
+            }
+
+            // Apply active only filter
+            const showActiveOnly = document.getElementById('showActiveOnly')?.checked;
+            if (showActiveOnly) {
+                filtered = filtered.filter(schedule => schedule.isActive !== false);
+            }
+
+            globalState.filteredData = filtered;
+        }
+
+        function applyWeeklyFilters() {
+            console.log('🔍 Applying weekly filters');
+
+            let filteredTemplates = [...globalState.weeklyTemplates];
+            let filteredInstances = [...globalState.scheduleInstances];
+
+            // Apply semester filter
+            const semesterFilter = document.getElementById('weeklySemesterFilter')?.value;
+            if (semesterFilter) {
+                filteredTemplates = filteredTemplates.filter(template => template.hocKy === semesterFilter);
+                filteredInstances = filteredInstances.filter(instance =>
+                    instance.weeklySchedule && instance.weeklySchedule.hocKy === semesterFilter
+                );
+            }
+
+            // Apply template status filter
+            const statusFilter = document.getElementById('templateStatusFilter')?.value;
+            if (statusFilter) {
+                filteredTemplates = filteredTemplates.filter(template => template.trangThai === statusFilter);
+            }
+
+            // Apply schedule type filter
+            const typeFilter = document.getElementById('scheduleTypeFilter')?.value;
+            if (typeFilter) {
+                filteredTemplates = filteredTemplates.filter(template => template.loaiLich === typeFilter);
+                filteredInstances = filteredInstances.filter(instance =>
+                    instance.weeklySchedule && instance.weeklySchedule.loaiLich === typeFilter
+                );
+            }
+
+            globalState.filteredTemplates = filteredTemplates;
+            globalState.filteredInstances = filteredInstances;
+
+            // Refresh display after filtering
+            refreshWeeklyDisplay();
+        }
+
+        // ========================================
+        // CONFLICT DETECTION
+        // ========================================
+
+        function checkLegacyScheduleConflicts(schedule) {
+            const conflicts = [];
+
+            globalState.scheduleData.forEach(otherSchedule => {
+                if (otherSchedule.maLich === schedule.maLich) return; // Skip self
+
+                // Check time conflicts
+                if (otherSchedule.thu === schedule.thu &&
+                    otherSchedule.isActive !== false && schedule.isActive !== false) {
+
+                    const isTimeOverlap = checkTimeOverlap(
+                        schedule.tietBatDau, schedule.soTiet,
+                        otherSchedule.tietBatDau, otherSchedule.soTiet
+                    );
+
+                    if (isTimeOverlap) {
+                        // Check teacher conflict
+                        if (otherSchedule.maGv === schedule.maGv) {
+                            conflicts.push({
+                                type: 'teacher',
+                                conflictWith: otherSchedule.maLich,
+                                message: `Giảng viên bị trùng lịch với ${otherSchedule.tenMonHoc}`
+                            });
+                        }
+
+                        // Check room conflict
+                        if (otherSchedule.maPhong === schedule.maPhong) {
+                            conflicts.push({
+                                type: 'room',
+                                conflictWith: otherSchedule.maLich,
+                                message: `Phòng học bị trùng với ${otherSchedule.tenMonHoc}`
+                            });
+                        }
+                    }
+                }
+            });
+
+            return conflicts;
+        }
+
+        function checkTimeOverlap(start1, duration1, start2, duration2) {
+            const end1 = start1 + duration1 - 1;
+            const end2 = start2 + duration2 - 1;
+
+            return !(end1 < start2 || start1 > end2);
+        }
+
 
         function showCurrentSemesterInfo() {
             const semesterInfo = document.getElementById('semesterInfo');
@@ -3924,15 +4490,62 @@
         }
 
         function setupAutoRefresh() {
-            // Refresh data every 5 minutes
+            // Clear existing interval
+            if (globalState.refreshInterval) {
+                clearInterval(globalState.refreshInterval);
+            }
+
+            // Set up new interval (refresh every 5 minutes)
             globalState.refreshInterval = setInterval(async () => {
                 if (!globalState.isLoading && globalState.isInitialized) {
                     console.log('🔄 Auto-refreshing data...');
-                    await loadScheduleData();
-                    await refreshDisplay();
+                    await loadScheduleTypeData();
+                    updateStatistics();
+                    // Don't refresh display to avoid interrupting user interactions
                 }
-            }, 5 * 60 * 1000);
+            }, 5 * 60 * 1000); // 5 minutes
         }
+
+
+        // ========================================
+        // VIEW SWITCHING
+        // ========================================
+
+        function switchView(viewMode) {
+            console.log(`🔄 Switching legacy view to: ${viewMode}`);
+
+            globalState.currentViewMode = viewMode;
+
+            // Update button states
+            document.querySelectorAll('#calendarViewBtn, #listViewBtn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            if (viewMode === 'calendar') {
+                document.getElementById('calendarViewBtn')?.classList.add('active');
+                document.getElementById('calendarViewContainer').style.display = 'block';
+                document.getElementById('listViewContainer').style.display = 'none';
+            } else {
+                document.getElementById('listViewBtn')?.classList.add('active');
+                document.getElementById('calendarViewContainer').style.display = 'none';
+                document.getElementById('listViewContainer').style.display = 'block';
+            }
+
+            // Refresh display
+            refreshLegacyDisplay();
+        }
+
+
+        // ========================================
+        // CLEANUP
+        // ========================================
+
+        // Cleanup when page unloads
+        window.addEventListener('beforeunload', function() {
+            if (globalState.refreshInterval) {
+                clearInterval(globalState.refreshInterval);
+            }
+        });
 
         // ========================================
         // EXPORT FUNCTIONS
@@ -4069,29 +4682,22 @@
         }
 
         function previousWeek() {
-            calendarState.currentWeekStart.setDate(calendarState.currentWeekStart.getDate() - 7);
-            updateWeekDisplay();
-            renderCurrentView();
-            showNotification('Đã chuyển sang tuần trước', 'info');
-        }
-
-        function currentWeek() {
-            const today = new Date();
-            const dayOfWeek = today.getDay();
-            const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-            calendarState.currentWeekStart = new Date(today);
-            calendarState.currentWeekStart.setDate(today.getDate() + mondayOffset);
-
-            updateWeekDisplay();
-            renderCurrentView();
-            showNotification('Đã chuyển về tuần hiện tại', 'success');
+            if (globalState.selectedWeek > 1) {
+                globalState.selectedWeek--;
+                refreshWeeklyDisplay();
+            }
         }
 
         function nextWeek() {
-            calendarState.currentWeekStart.setDate(calendarState.currentWeekStart.getDate() + 7);
-            updateWeekDisplay();
-            renderCurrentView();
-            showNotification('Đã chuyển sang tuần sau', 'info');
+            if (globalState.selectedWeek < 20) { // Assume max 20 weeks
+                globalState.selectedWeek++;
+                refreshWeeklyDisplay();
+            }
+        }
+
+        function currentWeek() {
+            globalState.selectedWeek = getCurrentWeek();
+            refreshWeeklyDisplay();
         }
 
         function showWeekView() {
@@ -4358,6 +4964,470 @@
             setTimeout(() => {
                 document.addEventListener('click', removeMenu);
             }, 100);
+        }
+
+        // ========================================
+        // WEEKLY SCHEDULE RENDERING FUNCTIONS
+        // ========================================
+
+        // Switch between weekly view modes
+        function switchWeeklyView(viewMode) {
+            console.log(`🔄 Switching to weekly view mode: ${viewMode}`);
+
+            globalState.currentWeeklyViewMode = viewMode;
+
+            // Update active button
+            document.querySelectorAll('.weekly-view-controls .btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`${viewMode}ViewBtn`) || document.getElementById(`weekly${viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}ViewBtn`)?.classList.add('active');
+
+            // Refresh display
+            refreshWeeklyDisplay();
+        }
+
+        // Render weekly templates view
+        function renderWeeklyTemplates() {
+            console.log('🎨 Rendering weekly templates view');
+
+            const container = document.getElementById('weeklyScheduleContent');
+
+            if (globalState.filteredTemplates.length === 0) {
+                container.innerHTML = `
+            <div class="empty-state text-center py-5">
+                <div class="empty-icon mb-3">
+                    <i class="fas fa-layer-group fa-4x text-muted"></i>
+                </div>
+                <h5 class="text-muted">Chưa có template nào</h5>
+                <p class="text-muted">Tạo template đầu tiên để bắt đầu sắp xếp lịch theo tuần</p>
+                <button class="btn btn-primary" onclick="createWeeklyTemplate()">
+                    <i class="fas fa-plus me-2"></i>Tạo Template đầu tiên
+                </button>
+            </div>
+        `;
+                return;
+            }
+
+            const templatesHtml = globalState.filteredTemplates.map(template => `
+        <div class="template-card" data-template-id="${template.maTemplate}">
+            <div class="template-header">
+                <div class="template-info">
+                    <h6 class="template-title">${template.tenMonHoc || 'N/A'}</h6>
+                    <p class="template-subtitle mb-1">${template.maLhp} - Nhóm ${template.nhom || 'N/A'}</p>
+                    <p class="template-instructor mb-0">
+                        <i class="fas fa-user me-1"></i>${template.tenGiangVien || 'N/A'}
+                    </p>
+                </div>
+                <div class="template-status">
+                    <span class="status-badge ${getStatusClass(template.trangThai)}">
+                        ${getStatusDisplayName(template.trangThai)}
+                    </span>
+                </div>
+            </div>
+
+            <div class="template-body">
+                <div class="template-schedule-info">
+                    <div class="schedule-time">
+                        <i class="fas fa-clock me-2"></i>
+                        ${template.thoiGianHienThi || `${getDayName(template.thu)}, tiết ${template.tietBatDau}-${template.tietBatDau + template.soTiet - 1}`}
+                    </div>
+                    <div class="schedule-weeks">
+                        <i class="fas fa-calendar-week me-2"></i>
+                        ${template.phamViTuan || `Tuần ${template.tuanBatDau}-${template.tuanKetThuc}`}
+                    </div>
+                    <div class="schedule-room">
+                        <i class="fas fa-door-open me-2"></i>
+                        ${template.tenPhongMacDinh || template.maPhongMacDinh || 'Chưa xác định'}
+                    </div>
+                </div>
+
+                <div class="template-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">${template.tongSoTuan || 0}</span>
+                        <span class="stat-label">Tuần</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">${template.soInstanceDaTao || 0}</span>
+                        <span class="stat-label">Instances</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">${template.soInstanceHoanThanh || 0}</span>
+                        <span class="stat-label">Hoàn thành</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="template-actions">
+                <button class="btn btn-sm btn-outline-primary" onclick="viewTemplateDetails('${template.maTemplate}')" title="Xem chi tiết">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-success" onclick="editTemplate('${template.maTemplate}')" title="Chỉnh sửa">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-warning" onclick="generateInstances('${template.maTemplate}')" title="Tạo instances">
+                    <i class="fas fa-magic"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-info" onclick="duplicateTemplate('${template.maTemplate}')" title="Nhân bản">
+                    <i class="fas fa-copy"></i>
+                </button>
+                ${template.trangThai === 'DRAFT' ? `
+                    <button class="btn btn-sm btn-outline-success" onclick="activateTemplate('${template.maTemplate}')" title="Kích hoạt">
+                        <i class="fas fa-play"></i>
+                    </button>
+                ` : template.trangThai === 'ACTIVE' ? `
+                    <button class="btn btn-sm btn-outline-warning" onclick="pauseTemplate('${template.maTemplate}')" title="Tạm dừng">
+                        <i class="fas fa-pause"></i>
+                    </button>
+                ` : ''}
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteTemplate('${template.maTemplate}')" title="Xóa">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+
+            container.innerHTML = `
+        <div class="templates-grid">
+            ${templatesHtml}
+        </div>
+    `;
+        }
+
+        // Render weekly instances view
+        function renderWeeklyInstances() {
+            console.log('🎨 Rendering weekly instances view');
+
+            const container = document.getElementById('weeklyScheduleContent');
+
+            if (globalState.filteredInstances.length === 0) {
+                container.innerHTML = `
+            <div class="empty-state text-center py-5">
+                <div class="empty-icon mb-3">
+                    <i class="fas fa-calendar-day fa-4x text-muted"></i>
+                </div>
+                <h5 class="text-muted">Chưa có instance nào</h5>
+                <p class="text-muted">Tạo instances từ templates để có lịch học cụ thể</p>
+                <button class="btn btn-primary" onclick="generateInstancesModal()">
+                    <i class="fas fa-magic me-2"></i>Tạo Instances
+                </button>
+            </div>
+        `;
+                return;
+            }
+
+            // Group instances by week
+            const instancesByWeek = groupInstancesByWeek(globalState.filteredInstances);
+
+            const instancesHtml = Object.keys(instancesByWeek)
+                .sort((a, b) => parseInt(a) - parseInt(b))
+                .map(week => {
+                    const weekInstances = instancesByWeek[week];
+                    return `
+                <div class="week-section" data-week="${week}">
+                    <div class="week-header">
+                        <h5><i class="fas fa-calendar-week me-2"></i>Tuần ${week}</h5>
+                        <div class="week-stats">
+                            <span class="badge bg-primary">${weekInstances.length} buổi học</span>
+                            <span class="badge bg-success">${weekInstances.filter(i => i.trangThai === 'COMPLETED').length} hoàn thành</span>
+                            <span class="badge bg-warning">${weekInstances.filter(i => i.trangThai === 'SCHEDULED').length} chờ học</span>
+                        </div>
+                    </div>
+
+                    <div class="instances-list">
+                        ${weekInstances.map(instance => `
+                            <div class="instance-card ${getInstanceStatusClass(instance.trangThai)}" data-instance-id="${instance.maInstance}">
+                                <div class="instance-date">
+                                    <div class="date-number">${formatDate(instance.ngayCuThe, 'DD')}</div>
+                                    <div class="date-month">${formatDate(instance.ngayCuThe, 'MMM')}</div>
+                                    <div class="date-day">${formatDate(instance.ngayCuThe, 'ddd')}</div>
+                                </div>
+
+                                <div class="instance-info">
+                                    <h6 class="instance-title">${getInstanceTitle(instance)}</h6>
+                                    <p class="instance-time">
+                                        <i class="fas fa-clock me-1"></i>
+                                        Tiết ${instance.tietBatDauThucTe}-${instance.tietKetThucThucTe}
+                                    </p>
+                                    <p class="instance-location">
+                                        <i class="fas fa-door-open me-1"></i>
+                                        ${instance.tenPhongThucTe || 'Chưa xác định phòng'}
+                                    </p>
+                                    ${instance.hasOverrides ? '<span class="badge bg-info">Đã chỉnh sửa</span>' : ''}
+                                </div>
+
+                                <div class="instance-status">
+                                    <span class="status-badge ${getInstanceStatusClass(instance.trangThai)}">
+                                        ${getInstanceStatusDisplayName(instance.trangThai)}
+                                    </span>
+                                </div>
+
+                                <div class="instance-actions">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewInstanceDetails('${instance.maInstance}')" title="Xem chi tiết">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="editInstance('${instance.maInstance}')" title="Chỉnh sửa">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    ${instance.canTakeAttendance ? `
+                                        <button class="btn btn-sm btn-outline-info" onclick="takeAttendance('${instance.maInstance}')" title="Điểm danh">
+                                            <i class="fas fa-check-circle"></i>
+                                        </button>
+                                    ` : ''}
+                                    <button class="btn btn-sm btn-outline-warning" onclick="rescheduleInstance('${instance.maInstance}')" title="Đổi lịch">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+                }).join('');
+
+            container.innerHTML = `
+        <div class="instances-timeline">
+            ${instancesHtml}
+        </div>
+    `;
+        }
+
+        // Render weekly calendar view
+        function renderWeeklyCalendar() {
+            console.log('🎨 Rendering weekly calendar view');
+
+            const container = document.getElementById('weeklyScheduleContent');
+
+            // Create calendar header
+            const calendarHeader = `
+        <div class="weekly-calendar-header">
+            <div class="calendar-navigation">
+                <button class="btn btn-outline-primary" onclick="previousWeek()">
+                    <i class="fas fa-chevron-left"></i> Tuần trước
+                </button>
+                <h5 class="current-week-title">
+                    Tuần ${globalState.selectedWeek || getCurrentWeek()} - ${getCurrentWeekDateRange()}
+                </h5>
+                <button class="btn btn-outline-primary" onclick="nextWeek()">
+                    Tuần sau <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            <div class="calendar-actions">
+                <button class="btn btn-success" onclick="createInstancesForWeek()">
+                    <i class="fas fa-plus me-2"></i>Tạo lịch tuần này
+                </button>
+            </div>
+        </div>
+    `;
+
+            // Create calendar grid
+            const calendarGrid = renderWeeklyCalendarGrid();
+
+            container.innerHTML = `
+        <div class="weekly-calendar-view">
+            ${calendarHeader}
+            ${calendarGrid}
+        </div>
+    `;
+        }
+
+        function renderWeeklyCalendarGrid() {
+            const timeSlots = TIME_SLOTS;
+            const days = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
+
+            // Filter instances for selected week
+            const weekInstances = globalState.filteredInstances.filter(instance =>
+                instance.tuanHoc === (globalState.selectedWeek || getCurrentWeek())
+            );
+
+            let gridHtml = `
+        <div class="weekly-calendar-grid">
+            <div class="grid-header">
+                <div class="time-header">Giờ học</div>
+                ${days.map((day, index) => `
+                    <div class="day-header" data-day="${index + 2}">
+                        <div class="day-name">${day}</div>
+                        <div class="day-date">${getDateForDay(index + 2)}</div>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="grid-body">
+                ${timeSlots.map(slot => `
+                    <div class="time-row" data-tiet="${slot.tiet}">
+                        <div class="time-cell">
+                            <div class="time-number">Tiết ${slot.tiet}</div>
+                            <div class="time-range">${slot.time}</div>
+                        </div>
+                        ${days.map((day, dayIndex) => {
+                const dayInstances = weekInstances.filter(instance =>
+                    instance.ngayCuThe && new Date(instance.ngayCuThe).getDay() === (dayIndex + 1) % 7 &&
+                    instance.tietBatDauThucTe <= slot.tiet &&
+                    instance.tietKetThucThucTe >= slot.tiet
+                );
+
+                return `
+                                <div class="schedule-cell" data-day="${dayIndex + 2}" data-tiet="${slot.tiet}">
+                                    ${dayInstances.map(instance =>
+                    renderInstanceCard(instance, slot.tiet === instance.tietBatDauThucTe)
+                ).join('')}
+                                </div>
+                            `;
+            }).join('')}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+            return gridHtml;
+        }
+
+        function renderInstanceCard(instance, isFirstSlot) {
+            if (!isFirstSlot) return ''; // Only render on first slot of the instance
+
+            const height = (instance.soTietThucTe || 1) * 60 - 4; // 60px per slot minus margin
+
+            return `
+        <div class="calendar-instance-card"
+             style="height: ${height}px"
+             data-instance-id="${instance.maInstance}"
+             onclick="viewInstanceDetails('${instance.maInstance}')">
+            <div class="instance-card-content">
+                <div class="instance-subject">${getInstanceTitle(instance)}</div>
+                <div class="instance-room">${instance.tenPhongThucTe || 'TBD'}</div>
+                <div class="instance-time">
+                    ${instance.tietBatDauThucTe}-${instance.tietKetThucThucTe}
+                </div>
+            </div>
+            <div class="instance-card-status ${getInstanceStatusClass(instance.trangThai)}"></div>
+        </div>
+    `;
+        }
+
+        // ========================================
+        // UTILITY FUNCTIONS FOR WEEKLY SCHEDULE
+        // ========================================
+
+        function groupInstancesByWeek(instances) {
+            return instances.reduce((groups, instance) => {
+                const week = instance.tuanHoc || 'Unknown';
+                if (!groups[week]) groups[week] = [];
+                groups[week].push(instance);
+                return groups;
+            }, {});
+        }
+
+        function getStatusClass(status) {
+            const statusClasses = {
+                'DRAFT': 'status-draft',
+                'ACTIVE': 'status-active',
+                'PAUSED': 'status-paused',
+                'COMPLETED': 'status-completed',
+                'CANCELLED': 'status-cancelled'
+            };
+            return statusClasses[status] || 'status-unknown';
+        }
+
+        function getStatusDisplayName(status) {
+            const statusNames = {
+                'DRAFT': 'Bản nháp',
+                'ACTIVE': 'Đang áp dụng',
+                'PAUSED': 'Tạm dừng',
+                'COMPLETED': 'Đã hoàn thành',
+                'CANCELLED': 'Đã hủy'
+            };
+            return statusNames[status] || status;
+        }
+
+        function getInstanceStatusClass(status) {
+            const statusClasses = {
+                'SCHEDULED': 'instance-scheduled',
+                'CONFIRMED': 'instance-confirmed',
+                'IN_PROGRESS': 'instance-in-progress',
+                'COMPLETED': 'instance-completed',
+                'CANCELLED': 'instance-cancelled',
+                'POSTPONED': 'instance-postponed'
+            };
+            return statusClasses[status] || 'instance-unknown';
+        }
+
+        function getInstanceStatusDisplayName(status) {
+            const statusNames = {
+                'SCHEDULED': 'Đã lên lịch',
+                'CONFIRMED': 'Đã xác nhận',
+                'IN_PROGRESS': 'Đang diễn ra',
+                'COMPLETED': 'Đã hoàn thành',
+                'CANCELLED': 'Đã hủy',
+                'POSTPONED': 'Hoãn lại'
+            };
+            return statusNames[status] || status;
+        }
+
+        function getInstanceTitle(instance) {
+            // Try to get subject name from various sources
+            return instance.tenMonHoc ||
+                (instance.weeklySchedule && instance.weeklySchedule.tenMonHoc) ||
+                instance.maLhp ||
+                'Môn học';
+        }
+
+        function getDayName(dayNumber) {
+            const dayNames = {
+                2: 'Thứ 2', 3: 'Thứ 3', 4: 'Thứ 4',
+                5: 'Thứ 5', 6: 'Thứ 6', 7: 'Thứ 7', 8: 'CN'
+            };
+            return dayNames[dayNumber] || 'N/A';
+        }
+
+        function getCurrentWeek() {
+            // Calculate current week number in semester
+            // This is a simplified calculation, should be based on semester week-based config
+            const now = new Date();
+            const weekNumber = Math.ceil((now.getDate()) / 7);
+            return Math.min(weekNumber, 15); // Assume max 15 weeks
+        }
+
+        function getCurrentWeekDateRange() {
+            // Calculate date range for current week
+            const now = new Date();
+            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 1));
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+            return `${formatDate(startOfWeek, 'DD/MM')} - ${formatDate(endOfWeek, 'DD/MM/YYYY')}`;
+        }
+
+        function getDateForDay(dayNumber) {
+            // Get actual date for a day in current week
+            const now = new Date();
+            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 1));
+            const targetDate = new Date(startOfWeek);
+            targetDate.setDate(startOfWeek.getDate() + dayNumber - 2); // dayNumber is 2-8, we want 0-6
+
+            return formatDate(targetDate, 'DD/MM');
+        }
+
+        function formatDate(date, format) {
+            if (!date) return '';
+
+            const d = new Date(date);
+            const day = d.getDate().toString().padStart(2, '0');
+            const month = (d.getMonth() + 1).toString().padStart(2, '0');
+            const year = d.getFullYear();
+
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+
+            switch (format) {
+                case 'DD': return day;
+                case 'MM': return month;
+                case 'MMM': return monthNames[d.getMonth()];
+                case 'ddd': return dayNames[d.getDay()];
+                case 'DD/MM': return `${day}/${month}`;
+                case 'DD/MM/YYYY': return `${day}/${month}/${year}`;
+                default: return d.toLocaleDateString('vi-VN');
+            }
         }
 
         // Make functions globally available
