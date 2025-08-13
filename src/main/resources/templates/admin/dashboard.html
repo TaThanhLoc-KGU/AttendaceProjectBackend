@@ -297,27 +297,6 @@
                 </div>
 
                 <div class="header-right">
-                    <!-- Real-time Status -->
-                    <div class="me-3">
-                        <span class="badge bg-success">
-                            <i class="fas fa-circle me-1"></i>
-                            System Online
-                        </span>
-                    </div>
-
-                    <!-- Notifications -->
-                    <div class="dropdown me-3">
-                        <button class="btn btn-outline-secondary position-relative" type="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-bell"></i>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">
-                                0
-                            </span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" id="notificationList">
-                            <li><h6 class="dropdown-header">Thông báo mới</h6></li>
-                            <li><span class="dropdown-item-text text-muted">Đang tải...</span></li>
-                        </ul>
-                    </div>
 
                     <!-- User Menu -->
                     <div class="user-info">
@@ -454,41 +433,6 @@
                             </div>
                         </div>
                         <div class="real-time-indicator"></div>
-                    </div>
-                </div>
-
-                <!-- Charts Section -->
-                <div class="row">
-                    <!-- Attendance Chart -->
-                    <div class="col-lg-8">
-                        <div class="admin-table-card">
-                            <div class="card-header">
-                                <h5 class="card-title">
-                                    <i class="fas fa-chart-line me-2"></i>
-                                    Thống kê điểm danh 7 ngày qua
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <canvas id="attendanceChart" height="100"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- System Status -->
-                    <div class="col-lg-4">
-                        <div class="admin-table-card">
-                            <div class="card-header">
-                                <h5 class="card-title">
-                                    <i class="fas fa-server me-2"></i>
-                                    Trạng thái hệ thống
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="system-status" id="systemStatus">
-                                    <!-- Status items will be populated here -->
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -633,7 +577,7 @@
 
         async init() {
             await this.loadDashboardData();
-            this.initCharts();
+            // this.initCharts();
             this.startAutoRefresh();
             this.setupEventListeners();
         }
@@ -650,7 +594,7 @@
                 // Load statistics
                 await Promise.all([
                     this.loadBasicStats(),
-                    this.loadSystemStatus(),
+                    // this.loadSystemStatus(),
                     this.loadRecentActivities(),
                     this.loadRecentLogs()
                 ]);
@@ -697,56 +641,56 @@
             }
         }
 
-        async loadSystemStatus() {
-            try {
-                const response = await fetch('/api/logs/statistics');
-                const data = await response.json();
-
-                const statusContainer = document.getElementById('systemStatus');
-                const statusItems = [
-                    {
-                        icon: 'fas fa-database',
-                        label: 'Cơ sở dữ liệu',
-                        status: 'online',
-                        text: 'Hoạt động'
-                    },
-                    {
-                        icon: 'fas fa-video',
-                        label: 'Camera System',
-                        status: data.errorsLast24h > 5 ? 'warning' : 'online',
-                        text: data.errorsLast24h > 5 ? `${data.errorsLast24h} lỗi` : 'Hoạt động'
-                    },
-                    {
-                        icon: 'fas fa-brain',
-                        label: 'AI Recognition',
-                        status: 'online',
-                        text: 'Hoạt động'
-                    },
-                    {
-                        icon: 'fas fa-server',
-                        label: 'System Logs',
-                        status: 'online',
-                        text: `${data.logsLast24h || 0} logs hôm nay`
-                    }
-                ];
-
-                statusContainer.innerHTML = statusItems.map(item => `
-                    <div class="status-item">
-                        <div class="status-label">
-                            <i class="${item.icon} me-2"></i>
-                            ${item.label}
-                        </div>
-                        <div class="status-value ${item.status}">
-                            <i class="fas fa-circle"></i>
-                            ${item.text}
-                        </div>
-                    </div>
-                `).join('');
-
-            } catch (error) {
-                console.error('Error loading system status:', error);
-            }
-        }
+        // async loadSystemStatus() {
+        //     try {
+        //         const response = await fetch('/api/logs/statistics');
+        //         const data = await response.json();
+        //
+        //         const statusContainer = document.getElementById('systemStatus');
+        //         const statusItems = [
+        //             {
+        //                 icon: 'fas fa-database',
+        //                 label: 'Cơ sở dữ liệu',
+        //                 status: 'online',
+        //                 text: 'Hoạt động'
+        //             },
+        //             {
+        //                 icon: 'fas fa-video',
+        //                 label: 'Camera System',
+        //                 status: data.errorsLast24h > 5 ? 'warning' : 'online',
+        //                 text: data.errorsLast24h > 5 ? `${data.errorsLast24h} lỗi` : 'Hoạt động'
+        //             },
+        //             {
+        //                 icon: 'fas fa-brain',
+        //                 label: 'AI Recognition',
+        //                 status: 'online',
+        //                 text: 'Hoạt động'
+        //             },
+        //             {
+        //                 icon: 'fas fa-server',
+        //                 label: 'System Logs',
+        //                 status: 'online',
+        //                 text: `${data.logsLast24h || 0} logs hôm nay`
+        //             }
+        //         ];
+        //
+        //         statusContainer.innerHTML = statusItems.map(item => `
+        //             <div class="status-item">
+        //                 <div class="status-label">
+        //                     <i class="${item.icon} me-2"></i>
+        //                     ${item.label}
+        //                 </div>
+        //                 <div class="status-value ${item.status}">
+        //                     <i class="fas fa-circle"></i>
+        //                     ${item.text}
+        //                 </div>
+        //             </div>
+        //         `).join('');
+        //
+        //     } catch (error) {
+        //         console.error('Error loading system status:', error);
+        //     }
+        // }
 
         async loadRecentActivities() {
             try {
@@ -927,7 +871,7 @@
             // Refresh dashboard every 30 seconds
             this.refreshInterval = setInterval(async () => {
                 await this.loadBasicStats();
-                await this.loadSystemStatus();
+                // await this.loadSystemStatus();
                 await this.loadRecentActivities();
                 await this.loadRecentLogs();
             }, 30000);
