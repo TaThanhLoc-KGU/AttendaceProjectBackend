@@ -398,4 +398,60 @@ public class WeeklyScheduleController {
             ));
         }
     }
+
+    // Add these endpoints to WeeklyScheduleController.java
+
+    /**
+     * Xóa instance cụ thể
+     */
+    @DeleteMapping("/instances/{maInstance}")
+    public ResponseEntity<?> deleteInstance(@PathVariable String maInstance) {
+        log.info("API: Deleting instance: {}", maInstance);
+
+        try {
+            weeklyScheduleService.deleteInstance(maInstance);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Xóa lịch học thành công!"
+            ));
+        } catch (BusinessException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            log.error("Error deleting instance: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Lỗi khi xóa lịch học: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Xóa template
+     */
+    @DeleteMapping("/templates/{maTemplate}")
+    public ResponseEntity<?> deleteTemplate(@PathVariable String maTemplate) {
+        log.info("API: Deleting template: {}", maTemplate);
+
+        try {
+            weeklyScheduleService.deleteTemplate(maTemplate);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Xóa template thành công!"
+            ));
+        } catch (BusinessException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            log.error("Error deleting template: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Lỗi khi xóa template: " + e.getMessage()
+            ));
+        }
+    }
 }

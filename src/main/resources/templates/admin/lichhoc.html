@@ -138,10 +138,21 @@
             background: #fafafa;
             transition: background-color 0.3s ease;
             cursor: pointer;
+            vertical-align: top;
         }
 
         .schedule-cell:hover {
             background: #e3f2fd;
+        }
+
+        .schedule-cell.occupied {
+            background: rgba(102, 126, 234, 0.05);
+            border: 1px dashed rgba(102, 126, 234, 0.3);
+            cursor: not-allowed;
+        }
+
+        .schedule-cell.occupied:hover {
+            background: rgba(102, 126, 234, 0.1);
         }
 
         .schedule-instance {
@@ -465,9 +476,12 @@
 
         // UI state
         currentView: 'timetable', // 'timetable', 'templates'
-        currentWeek: getCurrentWeek(),
+        currentWeek: 1, // Tuần học kỳ, bắt đầu từ 1
         selectedSemester: null,
         selectedClass: null,
+
+        // Current semester info
+        currentSemester: null,
 
         // Loading state
         isLoading: false
@@ -485,11 +499,19 @@
         try {
             showLoading(true);
 
-            // Load all required data
+            // Clear any existing context menu actions
+            window.contextMenuActions = {};
+
+            // Load supporting data first
+            await loadSupportingData();
+
+            // Set default semester to current or first available
+            setDefaultSemester();
+
+            // Load main data
             await Promise.all([
                 loadTemplates(),
-                loadInstances(),
-                loadSupportingData()
+                loadInstances()
             ]);
 
             // Setup UI
@@ -512,8 +534,28 @@
     async function loadTemplates() {
         try {
             console.log('📡 Loading templates...');
-            const response = await apiCall('/weekly-schedule/templates');
-            globalState.templates = Array.isArray(response) ? response : [];
+
+            let templates = [];
+
+            // Load templates by current semester if available
+            if (globalState.selectedSemester) {
+                const response = await apiCall(`/weekly-schedule/templates/by-semester/${globalState.selectedSemester}`);
+                templates = Array.isArray(response) ? response : [];
+            } else {
+                // Load templates for all available semesters
+                for (const semester of globalState.semesterData) {
+                    try {
+                        const response = await apiCall(`/weekly-schedule/templates/by-semester/${semester.maHocKy}`);
+                        if (Array.isArray(response)) {
+                            templates = templates.concat(response);
+                        }
+                    } catch (error) {
+                        console.warn(`Failed to load templates for semester ${semester.maHocKy}:`, error);
+                    }
+                }
+            }
+
+            globalState.templates = templates;
             globalState.filteredTemplates = [...globalState.templates];
             console.log('✅ Templates loaded:', globalState.templates.length);
         } catch (error) {
@@ -525,11 +567,14 @@
 
     async function loadInstances() {
         try {
-            console.log('📡 Loading instances...');
-            const response = await apiCall('/weekly-schedule/instances');
+            console.log('📡 Loading instances for week:', globalState.currentWeek);
+
+            // Load instances by current week
+            const response = await apiCall(`/weekly-schedule/by-week/${globalState.currentWeek}`);
             globalState.instances = Array.isArray(response) ? response : [];
             globalState.filteredInstances = [...globalState.instances];
-            console.log('✅ Instances loaded:', globalState.instances.length);
+
+            console.log('✅ Instances loaded for week', globalState.currentWeek + ':', globalState.instances.length);
         } catch (error) {
             console.error('❌ Error loading instances:', error);
             globalState.instances = [];
@@ -559,6 +604,26 @@
 
         } catch (error) {
             console.error('❌ Error loading supporting data:', error);
+        }
+    }
+
+    function setDefaultSemester() {
+        if (globalState.semesterData.length > 0) {
+            // Find current semester or use the first one
+            const currentDate = new Date();
+            const currentSemester = globalState.semesterData.find(sem => {
+                if (sem.ngayBatDau && sem.ngayKetThuc) {
+                    const startDate = new Date(sem.ngayBatDau);
+                    const endDate = new Date(sem.ngayKetThuc);
+                    return currentDate >= startDate && currentDate <= endDate;
+                }
+                return false;
+            });
+
+            globalState.currentSemester = currentSemester || globalState.semesterData[0];
+            globalState.selectedSemester = globalState.currentSemester.maHocKy;
+
+            console.log('📅 Using semester:', globalState.currentSemester);
         }
     }
 
@@ -641,53 +706,82 @@
     // ========================================
     // WEEK NAVIGATION
     // ========================================
-    function getCurrentWeek() {
-        const now = new Date();
-        const start = new Date(now.getFullYear(), 0, 1);
-        const diff = now - start;
-        const oneWeek = 1000 * 60 * 60 * 24 * 7;
-        return Math.ceil(diff / oneWeek);
-    }
-
     function updateWeekDisplay() {
         document.getElementById('currentWeekNumber').textContent = globalState.currentWeek;
 
-        // Calculate week start and end dates
-        const now = new Date();
-        const startOfYear = new Date(now.getFullYear(), 0, 1);
-        const weekStart = new Date(startOfYear);
-        weekStart.setDate(startOfYear.getDate() + (globalState.currentWeek - 1) * 7);
+        // Calculate actual dates based on semester
+        let weekStartDate = '';
+        let weekEndDate = '';
 
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6);
+        if (globalState.currentSemester && globalState.currentSemester.ngayBatDauTuan1) {
+            const semesterStart = new Date(globalState.currentSemester.ngayBatDauTuan1);
+            const weekStart = new Date(semesterStart);
+            weekStart.setDate(semesterStart.getDate() + (globalState.currentWeek - 1) * 7);
 
-        document.getElementById('weekStartDate').textContent = formatDate(weekStart);
-        document.getElementById('weekEndDate').textContent = formatDate(weekEnd);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+
+            weekStartDate = formatDate(weekStart);
+            weekEndDate = formatDate(weekEnd);
+        } else {
+            // Fallback calculation
+            const now = new Date();
+            const startOfYear = new Date(now.getFullYear(), 0, 1);
+            const weekStart = new Date(startOfYear);
+            weekStart.setDate(startOfYear.getDate() + (globalState.currentWeek - 1) * 7);
+
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+
+            weekStartDate = formatDate(weekStart);
+            weekEndDate = formatDate(weekEnd);
+        }
+
+        document.getElementById('weekStartDate').textContent = weekStartDate;
+        document.getElementById('weekEndDate').textContent = weekEndDate;
     }
 
     function previousWeek() {
         if (globalState.currentWeek > 1) {
             globalState.currentWeek--;
             updateWeekDisplay();
-            applyFilters();
-            renderCurrentView();
+            loadInstances().then(() => {
+                applyFilters();
+                renderCurrentView();
+            });
         }
     }
 
     function nextWeek() {
-        if (globalState.currentWeek < 52) {
+        const maxWeek = globalState.currentSemester?.soTuanHoc || 20;
+        if (globalState.currentWeek < maxWeek) {
             globalState.currentWeek++;
             updateWeekDisplay();
-            applyFilters();
-            renderCurrentView();
+            loadInstances().then(() => {
+                applyFilters();
+                renderCurrentView();
+            });
         }
     }
 
     function goToCurrentWeek() {
-        globalState.currentWeek = getCurrentWeek();
+        // Calculate current week within semester
+        if (globalState.currentSemester && globalState.currentSemester.ngayBatDauTuan1) {
+            const semesterStart = new Date(globalState.currentSemester.ngayBatDauTuan1);
+            const now = new Date();
+            const diffTime = now - semesterStart;
+            const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7)) + 1;
+
+            globalState.currentWeek = Math.max(1, Math.min(diffWeeks, globalState.currentSemester.soTuanHoc || 20));
+        } else {
+            globalState.currentWeek = 1;
+        }
+
         updateWeekDisplay();
-        applyFilters();
-        renderCurrentView();
+        loadInstances().then(() => {
+            applyFilters();
+            renderCurrentView();
+        });
     }
 
     function formatDate(date) {
@@ -710,8 +804,9 @@
             const tenHocKy = semester.tenHocKy || 'Học kỳ';
             const namHoc = semester.namHoc || '';
             const displayText = namHoc ? `${tenHocKy} - ${namHoc}` : tenHocKy;
+            const selected = semester.maHocKy === globalState.selectedSemester ? 'selected' : '';
 
-            options += `<option value="${semester.maHocKy}">${displayText}</option>`;
+            options += `<option value="${semester.maHocKy}" ${selected}>${displayText}</option>`;
         });
 
         select.innerHTML = options;
@@ -803,7 +898,8 @@
                                     id="cell-${day.value}-${slot.tiet}"
                                     data-day="${day.value}"
                                     data-period="${slot.tiet}"
-                                    onclick="openCreateTemplateModal(${day.value}, ${slot.tiet})">
+                                    onclick="openCellContextMenu(${day.value}, ${slot.tiet}, event)"
+                                    oncontextmenu="openCellContextMenu(${day.value}, ${slot.tiet}, event); return false;">
                                 </td>
                             `).join('')}
                         </tr>
@@ -818,20 +914,27 @@
     }
 
     function renderScheduleInstances(instances) {
-        console.log('📝 Rendering schedule instances:', instances.length);
+        console.log('📄 Rendering schedule instances:', instances.length);
 
         // Clear all cells first
         document.querySelectorAll('.schedule-cell').forEach(cell => {
             cell.innerHTML = '';
+            cell.style.position = 'relative';
+            cell.classList.remove('occupied');
         });
 
         instances.forEach(instance => {
-            if (!instance.weeklySchedule || !instance.weeklySchedule.thu || !instance.weeklySchedule.tietBatDau) {
-                console.warn('⚠️ Invalid instance:', instance);
+            // Calculate day of week from ngayCuThe
+            const dayOfWeek = getDayOfWeekFromDate(instance.ngayCuThe);
+            const tietBatDau = instance.tietBatDauThucTe;
+            const soTiet = instance.soTietThucTe;
+
+            if (!dayOfWeek || !tietBatDau || !soTiet) {
+                console.warn('⚠️ Invalid instance - missing day or period:', instance);
                 return;
             }
 
-            const cellId = `cell-${instance.weeklySchedule.thu}-${instance.weeklySchedule.tietBatDau}`;
+            const cellId = `cell-${dayOfWeek}-${tietBatDau}`;
             const cell = document.getElementById(cellId);
 
             if (!cell) {
@@ -839,27 +942,56 @@
                 return;
             }
 
-            // Extract data from instance
-            const lopHocPhan = instance.weeklySchedule.lopHocPhanData || {};
-            const phongHoc = instance.weeklySchedule.phongHocData || {};
-            const giangVien = instance.weeklySchedule.giangVien || {};
+            // Extract data from computed fields
+            const tenPhong = instance.tenPhongThucTe || 'TBA';
+            const tenGiangVien = instance.tenGvThucTe || 'TBA';
 
-            const monHoc = lopHocPhan.tenMonHoc || lopHocPhan.tenMonHoc?.tenMh || 'Môn học';
-            const maLhp = lopHocPhan.maLhp || 'N/A';
-            const tenPhong = phongHoc.tenPhong || 'TBA';
-            const tenGiangVien = giangVien.hoTen || 'TBA';
+            // Try to get LHP info from the instance
+            let monHoc = 'Môn học';
+            let maLhp = 'N/A';
+
+            // If template ID contains LHP code, extract it
+            if (instance.maTemplate) {
+                const templateParts = instance.maTemplate.split('_');
+                if (templateParts.length > 1) {
+                    maLhp = templateParts[1]; // Extract LHP code from template ID
+
+                    // Try to find LHP data from globalState
+                    const lhpData = globalState.lopHocPhanData.find(lhp => lhp.maLhp === maLhp);
+                    if (lhpData) {
+                        monHoc = lhpData.monHoc?.tenMh || lhpData.tenMonHoc || 'Môn học';
+                    }
+                }
+            }
+
+            // Calculate height for multiple periods
+            const cellHeight = 80; // Base height per cell
+            const totalHeight = cellHeight * soTiet - 4; // Remove border spacing
 
             const instanceElement = document.createElement('div');
             instanceElement.className = `schedule-instance status-${instance.trangThai?.toLowerCase() || 'scheduled'}`;
+            instanceElement.style.cssText = `
+                position: absolute;
+                top: 2px;
+                left: 2px;
+                right: 2px;
+                height: ${totalHeight}px;
+                z-index: 10;
+                min-height: ${totalHeight}px;
+            `;
+
             instanceElement.innerHTML = `
-            <div class="subject-name">${monHoc}</div>
-            <div class="instance-details">
+            <div class="subject-name" style="font-size: ${soTiet > 2 ? '0.9rem' : '0.85rem'}">${monHoc}</div>
+            <div class="instance-details" style="font-size: ${soTiet > 2 ? '0.75rem' : '0.7rem'}">
                 <div class="mb-1"><strong>${maLhp}</strong></div>
                 <div><i class="fas fa-map-marker-alt me-1"></i>${tenPhong}</div>
                 <div><i class="fas fa-user me-1"></i>${tenGiangVien}</div>
                 <div class="mt-1">
                     <span class="badge badge-sm bg-light text-dark">Tuần ${instance.tuanHoc}</span>
-                    ${instance.weeklySchedule.soTiet > 1 ? `<span class="badge badge-sm bg-light text-dark">${instance.weeklySchedule.soTiet} tiết</span>` : ''}
+                    <span class="badge badge-sm bg-light text-dark">${soTiet} tiết</span>
+                </div>
+                <div class="mt-1">
+                    <small class="text-light opacity-75">Tiết ${tietBatDau}-${instance.tietKetThucThucTe}</small>
                 </div>
             </div>
         `;
@@ -871,7 +1003,48 @@
             instanceElement.title = `${monHoc} - ${tenPhong} - ${tenGiangVien} (Tuần ${instance.tuanHoc})`;
 
             cell.appendChild(instanceElement);
+
+            // Mark subsequent cells as occupied (for visual purposes)
+            for (let i = 1; i < soTiet; i++) {
+                const nextCellId = `cell-${dayOfWeek}-${tietBatDau + i}`;
+                const nextCell = document.getElementById(nextCellId);
+                if (nextCell) {
+                    nextCell.classList.add('occupied');
+
+                    // Add a small indicator
+                    const indicator = document.createElement('div');
+                    indicator.style.cssText = `
+                        position: absolute;
+                        top: 5px;
+                        right: 5px;
+                        width: 8px;
+                        height: 8px;
+                        background: rgba(102, 126, 234, 0.5);
+                        border-radius: 50%;
+                        font-size: 8px;
+                        color: white;
+                    `;
+                    indicator.textContent = '↑';
+                    indicator.title = 'Tiếp tục từ tiết trên';
+                    nextCell.appendChild(indicator);
+                }
+            }
         });
+    }
+
+    // Helper function to calculate day of week from date
+    function getDayOfWeekFromDate(dateString) {
+        try {
+            const date = new Date(dateString);
+            const jsDay = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
+            // Convert to Vietnamese system: 2 = Monday, 3 = Tuesday, ..., 8 = Sunday
+            if (jsDay === 0) return 8; // Sunday
+            return jsDay + 1; // Monday = 2, Tuesday = 3, etc.
+        } catch (error) {
+            console.error('Error parsing date:', dateString, error);
+            return null;
+        }
     }
 
     // ========================================
@@ -897,17 +1070,17 @@
         }
 
         const templatesHtml = globalState.filteredTemplates.map(template => {
-            const lopHocPhan = template.lopHocPhanData || {};
-            const phongHoc = template.phongHocData || {};
-            const giangVien = template.giangVien || {};
+            const lopHocPhan = template.lopHocPhan || {};
+            const phongHoc = template.phongHocMacDinh || {};
+            const giangVien = template.lopHocPhan?.giangVien || {};
             const dayLabel = DAYS_OF_WEEK.find(d => d.value === template.thu)?.label || 'N/A';
 
             return `
             <div class="template-card">
                 <div class="template-header">
                     <div>
-                        <div class="template-title">${lopHocPhan.tenMonHoc || lopHocPhan.tenMonHoc?.tenMh || 'Môn học'}</div>
-                        <div class="text-muted">${lopHocPhan.maLhp || 'N/A'}</div>
+                        <div class="template-title">${lopHocPhan.monHoc?.tenMh || template.tenMonHoc || 'Môn học'}</div>
+                        <div class="text-muted">${template.maLhp || 'N/A'}</div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <span class="status-badge status-${template.trangThai?.toLowerCase() || 'draft'}">${template.trangThai || 'DRAFT'}</span>
@@ -977,43 +1150,51 @@
         const semesterFilter = document.getElementById('semesterFilter').value;
         const classFilter = document.getElementById('classFilter').value;
 
+        // Update selected semester and reload if changed
+        if (semesterFilter !== globalState.selectedSemester) {
+            globalState.selectedSemester = semesterFilter;
+
+            // Update current semester object
+            if (semesterFilter) {
+                globalState.currentSemester = globalState.semesterData.find(sem => sem.maHocKy === semesterFilter);
+            }
+
+            // Reload templates for new semester
+            loadTemplates().then(() => {
+                applyCurrentFilters();
+                renderCurrentView();
+            });
+            return;
+        }
+
+        applyCurrentFilters();
+        renderCurrentView();
+    }
+
+    function applyCurrentFilters() {
+        const classFilter = document.getElementById('classFilter').value;
+
         // Filter templates
         let filteredTemplates = [...globalState.templates];
-        if (semesterFilter) {
-            filteredTemplates = filteredTemplates.filter(template =>
-                template.hocKy === semesterFilter ||
-                template.lopHocPhan?.hocKy === semesterFilter
-            );
-        }
         if (classFilter) {
             filteredTemplates = filteredTemplates.filter(template =>
-                template.maLhp === classFilter ||
-                template.lopHocPhan?.maLhp === classFilter
+                template.maLhp === classFilter
             );
         }
 
         // Filter instances
         let filteredInstances = [...globalState.instances];
-        if (semesterFilter) {
-            filteredInstances = filteredInstances.filter(instance =>
-                instance.weeklySchedule?.hocKy === semesterFilter ||
-                instance.weeklySchedule?.lopHocPhan?.hocKy === semesterFilter
-            );
-        }
         if (classFilter) {
             filteredInstances = filteredInstances.filter(instance =>
-                instance.weeklySchedule?.maLhp === classFilter ||
                 instance.weeklySchedule?.lopHocPhan?.maLhp === classFilter
             );
         }
 
         globalState.filteredTemplates = filteredTemplates;
         globalState.filteredInstances = filteredInstances;
-        globalState.selectedSemester = semesterFilter;
         globalState.selectedClass = classFilter;
 
         console.log(`🔍 Filtered results - Templates: ${filteredTemplates.length}, Instances: ${filteredInstances.length}`);
-        renderCurrentView();
     }
 
     // ========================================
@@ -1046,7 +1227,7 @@
                                                 <select class="form-select" id="templateClass" required onchange="onClassChange()">
                                                     <option value="">Chọn lớp học phần...</option>
                                                     ${globalState.lopHocPhanData.map(lhp => {
-            const tenMon = lhp.tenMonHoc || lhp.tenMonHoc?.tenMh || 'Không có tên';
+            const tenMon = lhp.monHoc?.tenMh || lhp.tenMonHoc || 'Không có tên';
             return `<option value="${lhp.maLhp}" data-class='${JSON.stringify(lhp)}'>${tenMon} (${lhp.maLhp})</option>`;
         }).join('')}
                                                 </select>
@@ -1060,7 +1241,8 @@
             const tenHocKy = sem.tenHocKy || 'Học kỳ';
             const namHoc = sem.namHoc || '';
             const displayText = namHoc ? `${tenHocKy} - ${namHoc}` : tenHocKy;
-            return `<option value="${sem.maHocKy}">${displayText}</option>`;
+            const selected = sem.maHocKy === globalState.selectedSemester ? 'selected' : '';
+            return `<option value="${sem.maHocKy}" ${selected}>${displayText}</option>`;
         }).join('')}
                                                 </select>
                                             </div>
@@ -1249,7 +1431,6 @@
         try {
             const formData = {
                 maLhp: document.getElementById('templateClass').value,
-                hocKy: document.getElementById('templateSemester').value,
                 thu: parseInt(document.getElementById('templateDay').value),
                 tietBatDau: parseInt(document.getElementById('templateStartPeriod').value),
                 soTiet: parseInt(document.getElementById('templatePeriods').value),
@@ -1257,12 +1438,12 @@
                 loaiLich: document.getElementById('templateType').value,
                 tuanBatDau: parseInt(document.getElementById('templateStartWeek').value),
                 tuanKetThuc: parseInt(document.getElementById('templateEndWeek').value),
-                ghiChu: document.getElementById('templateNotes').value || null,
+                moTa: document.getElementById('templateNotes').value || null,
                 createdBy: 'admin' // TODO: Get from session
             };
 
             // Validation
-            if (!formData.maLhp || !formData.hocKy || !formData.thu ||
+            if (!formData.maLhp || !formData.thu ||
                 !formData.tietBatDau || !formData.soTiet ||
                 !formData.tuanBatDau || !formData.tuanKetThuc) {
                 showNotification('Vui lòng điền đầy đủ thông tin bắt buộc', 'error');
@@ -1359,7 +1540,237 @@
 
     function editTemplate(templateId) {
         console.log('✏️ Editing template:', templateId);
-        showNotification('Chức năng chỉnh sửa template đang được phát triển', 'info');
+
+        const template = globalState.templates.find(t => t.maTemplate === templateId);
+        if (!template) {
+            showNotification('Không tìm thấy thông tin template', 'error');
+            return;
+        }
+
+        // Open edit modal
+        const modalHtml = `
+        <div class="modal fade" id="editTemplateModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-edit me-2"></i>Chỉnh sửa Template lịch học
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editTemplateForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Thông tin môn học</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label class="form-label">Lớp học phần</label>
+                                                <input type="text" class="form-control" value="${template.maLhp || ''}" readonly>
+                                                <div class="form-text">Không thể thay đổi lớp học phần sau khi tạo</div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Tên môn học</label>
+                                                <input type="text" class="form-control" value="${template.tenMonHoc || 'N/A'}" readonly>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Giảng viên</label>
+                                                <input type="text" class="form-control" value="${template.tenGiangVien || 'N/A'}" readonly>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Trạng thái Template</label>
+                                                <select class="form-select" id="editTemplateTrangThai">
+                                                    <option value="DRAFT" ${template.trangThai === 'DRAFT' ? 'selected' : ''}>Bản nháp</option>
+                                                    <option value="ACTIVE" ${template.trangThai === 'ACTIVE' ? 'selected' : ''}>Đang áp dụng</option>
+                                                    <option value="PAUSED" ${template.trangThai === 'PAUSED' ? 'selected' : ''}>Tạm dừng</option>
+                                                    <option value="CANCELLED" ${template.trangThai === 'CANCELLED' ? 'selected' : ''}>Đã hủy</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Thời gian & Địa điểm</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Thứ</label>
+                                                        <select class="form-select" id="editTemplateThu">
+                                                            ${DAYS_OF_WEEK.map(day =>
+            `<option value="${day.value}" ${template.thu === day.value ? 'selected' : ''}>${day.label}</option>`
+        ).join('')}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Phòng học</label>
+                                                        <select class="form-select" id="editTemplatePhong">
+                                                            <option value="">Chọn phòng học...</option>
+                                                            ${globalState.phongHocData.map(room =>
+            `<option value="${room.maPhong}" ${template.maPhongMacDinh === room.maPhong ? 'selected' : ''}>${room.tenPhong}</option>`
+        ).join('')}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Tiết bắt đầu</label>
+                                                        <select class="form-select" id="editTemplateTietBatDau">
+                                                            ${TIME_SLOTS.map(slot =>
+            `<option value="${slot.tiet}" ${template.tietBatDau === slot.tiet ? 'selected' : ''}>Tiết ${slot.tiet} (${slot.time})</option>`
+        ).join('')}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Số tiết</label>
+                                                        <select class="form-select" id="editTemplateSoTiet">
+                                                            ${[1,2,3,4,5].map(num =>
+            `<option value="${num}" ${template.soTiet === num ? 'selected' : ''}>${num} tiết</option>`
+        ).join('')}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Loại lịch</label>
+                                                <select class="form-select" id="editTemplateLoaiLich">
+                                                    <option value="LY_THUYET" ${template.loaiLich === 'LY_THUYET' ? 'selected' : ''}>Lý thuyết</option>
+                                                    <option value="THUC_HANH" ${template.loaiLich === 'THUC_HANH' ? 'selected' : ''}>Thực hành</option>
+                                                    <option value="BAI_TAP" ${template.loaiLich === 'BAI_TAP' ? 'selected' : ''}>Bài tập</option>
+                                                    <option value="SEMINAR" ${template.loaiLich === 'SEMINAR' ? 'selected' : ''}>Seminar</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Phạm vi áp dụng</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Tuần bắt đầu</label>
+                                                        <input type="number" class="form-control" id="editTemplateTuanBatDau"
+                                                               min="1" max="52" value="${template.tuanBatDau || 1}">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Tuần kết thúc</label>
+                                                        <input type="number" class="form-control" id="editTemplateTuanKetThuc"
+                                                               min="1" max="52" value="${template.tuanKetThuc || 16}">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Ghi chú</label>
+                                                        <input type="text" class="form-control" id="editTemplateMoTa"
+                                                               value="${template.moTa || ''}" placeholder="Ghi chú thêm...">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            ${template.trangThai === 'ACTIVE' ? `
+                                            <div class="alert alert-warning">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                <strong>Lưu ý:</strong> Template đang hoạt động. Thay đổi thời gian sẽ tái tạo lại tất cả instances.
+                                            </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Hủy
+                        </button>
+                        <button type="button" class="btn btn-warning" onclick="submitEditTemplate('${templateId}')">
+                            <i class="fas fa-save me-2"></i>Lưu thay đổi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+        document.getElementById('modalContainer').innerHTML = modalHtml;
+        const modal = new bootstrap.Modal(document.getElementById('editTemplateModal'));
+        modal.show();
+    }
+
+    async function submitEditTemplate(templateId) {
+        try {
+            const formData = {
+                thu: parseInt(document.getElementById('editTemplateThu').value),
+                tietBatDau: parseInt(document.getElementById('editTemplateTietBatDau').value),
+                soTiet: parseInt(document.getElementById('editTemplateSoTiet').value),
+                maPhongMacDinh: document.getElementById('editTemplatePhong').value || null,
+                loaiLich: document.getElementById('editTemplateLoaiLich').value,
+                tuanBatDau: parseInt(document.getElementById('editTemplateTuanBatDau').value),
+                tuanKetThuc: parseInt(document.getElementById('editTemplateTuanKetThuc').value),
+                moTa: document.getElementById('editTemplateMoTa').value || null,
+                trangThai: document.getElementById('editTemplateTrangThai').value,
+                updatedBy: 'admin' // TODO: Get from session
+            };
+
+            // Validation
+            if (formData.tuanKetThuc < formData.tuanBatDau) {
+                showNotification('Tuần kết thúc phải lớn hơn hoặc bằng tuần bắt đầu', 'error');
+                return;
+            }
+
+            console.log('📤 Updating template:', templateId, formData);
+
+            const response = await apiCall(`/weekly-schedule/templates/${templateId}`, {
+                method: 'PUT',
+                body: JSON.stringify(formData)
+            });
+
+            console.log('📨 Update template response:', response);
+
+            if (response && (response.success === true || response.success === undefined)) {
+                showNotification('Cập nhật template thành công!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('editTemplateModal')).hide();
+
+                // Reload data and refresh display
+                await Promise.all([loadTemplates(), loadInstances()]);
+                applyFilters();
+                renderCurrentView();
+            } else {
+                const errorMessage = response?.message || 'Không có phản hồi từ server';
+                showNotification('Lỗi: ' + errorMessage, 'error');
+            }
+
+        } catch (error) {
+            console.error('Error updating template:', error);
+            showNotification('Lỗi khi cập nhật template: ' + error.message, 'error');
+        }
     }
 
     async function deleteTemplate(templateId) {
@@ -1400,10 +1811,29 @@
             return;
         }
 
-        const lopHocPhan = instance.weeklySchedule?.lopHocPhan || {};
-        const phongHoc = instance.weeklySchedule?.phongHoc || {};
-        const giangVien = instance.weeklySchedule?.giangVien || {};
-        const dayLabel = DAYS_OF_WEEK.find(d => d.value === instance.weeklySchedule?.thu)?.label || 'N/A';
+        // Calculate day of week from date
+        const dayOfWeek = getDayOfWeekFromDate(instance.ngayCuThe);
+        const dayLabel = DAYS_OF_WEEK.find(d => d.value === dayOfWeek)?.label || 'N/A';
+
+        // Extract info from computed fields
+        const tenPhong = instance.tenPhongThucTe || 'TBA';
+        const tenGiangVien = instance.tenGvThucTe || 'TBA';
+
+        // Try to get LHP info
+        let monHoc = 'Môn học';
+        let maLhp = 'N/A';
+
+        if (instance.maTemplate) {
+            const templateParts = instance.maTemplate.split('_');
+            if (templateParts.length > 1) {
+                maLhp = templateParts[1];
+
+                const lhpData = globalState.lopHocPhanData.find(lhp => lhp.maLhp === maLhp);
+                if (lhpData) {
+                    monHoc = lhpData.monHoc?.tenMh || lhpData.tenMonHoc || 'Môn học';
+                }
+            }
+        }
 
         const modalHtml = `
         <div class="modal fade" id="instanceDetailsModal" tabindex="-1">
@@ -1419,18 +1849,18 @@
                         <div class="row">
                             <div class="col-6">
                                 <strong>Môn học:</strong><br>
-                                <span class="text-primary">${lopHocPhan.tenMonHoc || lopHocPhan.tenMonHoc?.tenMh || 'N/A'}</span>
+                                <span class="text-primary">${monHoc}</span>
                             </div>
                             <div class="col-6">
                                 <strong>Mã LHP:</strong><br>
-                                <span class="text-muted">${lopHocPhan.maLhp || 'N/A'}</span>
+                                <span class="text-muted">${maLhp}</span>
                             </div>
                         </div>
                         <hr>
                         <div class="row">
                             <div class="col-6">
                                 <strong>Ngày học:</strong><br>
-                                <span class="badge bg-primary">${formatDate(new Date(instance.ngayHoc))}</span>
+                                <span class="badge bg-primary">${formatDate(new Date(instance.ngayCuThe))}</span>
                             </div>
                             <div class="col-6">
                                 <strong>Tuần học:</strong><br>
@@ -1445,18 +1875,18 @@
                             </div>
                             <div class="col-6">
                                 <strong>Tiết học:</strong><br>
-                                <span class="badge bg-secondary">Tiết ${instance.weeklySchedule?.tietBatDau} - ${instance.weeklySchedule?.tietBatDau + instance.weeklySchedule?.soTiet - 1}</span>
+                                <span class="badge bg-secondary">Tiết ${instance.tietBatDauThucTe} - ${instance.tietKetThucThucTe}</span>
                             </div>
                         </div>
                         <hr>
                         <div class="row">
                             <div class="col-6">
                                 <strong>Phòng học:</strong><br>
-                                <span class="text-warning"><i class="fas fa-map-marker-alt me-1"></i>${phongHoc.tenPhong || 'TBA'}</span>
+                                <span class="text-warning"><i class="fas fa-map-marker-alt me-1"></i>${tenPhong}</span>
                             </div>
                             <div class="col-6">
                                 <strong>Giảng viên:</strong><br>
-                                <span class="text-success"><i class="fas fa-user me-1"></i>${giangVien.hoTen || 'TBA'}</span>
+                                <span class="text-success"><i class="fas fa-user me-1"></i>${tenGiangVien}</span>
                             </div>
                         </div>
                         <hr>
@@ -1468,6 +1898,15 @@
                                 </span>
                             </div>
                         </div>
+                        ${instance.ghiChu ? `
+                        <hr>
+                        <div class="row">
+                            <div class="col-12">
+                                <strong>Ghi chú:</strong><br>
+                                <span class="text-muted">${instance.ghiChu}</span>
+                            </div>
+                        </div>
+                        ` : ''}
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
@@ -1476,6 +1915,12 @@
                                 <i class="fas fa-check me-2"></i>Điểm danh
                             </button>
                         ` : ''}
+                        <button type="button" class="btn btn-warning" onclick="editInstance('${instanceId}')">
+                            <i class="fas fa-edit me-2"></i>Chỉnh sửa
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="deleteInstanceFromModal('${instanceId}')">
+                            <i class="fas fa-trash me-2"></i>Xóa
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1490,6 +1935,566 @@
     function takeAttendance(instanceId) {
         console.log('✅ Taking attendance for instance:', instanceId);
         showNotification('Chức năng điểm danh đang được phát triển', 'info');
+    }
+
+    function editInstance(instanceId) {
+        console.log('✏️ Editing instance:', instanceId);
+
+        const instance = globalState.instances.find(i => i.maInstance === instanceId);
+        if (!instance) {
+            showNotification('Không tìm thấy thông tin lịch học', 'error');
+            return;
+        }
+
+        // Close current modal
+        bootstrap.Modal.getInstance(document.getElementById('instanceDetailsModal')).hide();
+
+        // Open edit modal
+        const modalHtml = `
+        <div class="modal fade" id="editInstanceModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-edit me-2"></i>Chỉnh sửa lịch học
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editInstanceForm">
+                            <div class="mb-3">
+                                <label class="form-label">Tiết bắt đầu (Override)</label>
+                                <select class="form-select" id="editTietBatDau">
+                                    <option value="">Sử dụng từ template</option>
+                                    ${TIME_SLOTS.map(slot =>
+            `<option value="${slot.tiet}" ${instance.tietBatDauOverride === slot.tiet ? 'selected' : ''}>Tiết ${slot.tiet} (${slot.time})</option>`
+        ).join('')}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Số tiết (Override)</label>
+                                <select class="form-select" id="editSoTiet">
+                                    <option value="">Sử dụng từ template</option>
+                                    ${[1,2,3,4,5].map(num =>
+            `<option value="${num}" ${instance.soTietOverride === num ? 'selected' : ''}>${num} tiết</option>`
+        ).join('')}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Phòng học (Override)</label>
+                                <select class="form-select" id="editPhongHoc">
+                                    <option value="">Sử dụng từ template</option>
+                                    ${globalState.phongHocData.map(room =>
+            `<option value="${room.maPhong}" ${instance.maPhongOverride === room.maPhong ? 'selected' : ''}>${room.tenPhong}</option>`
+        ).join('')}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Trạng thái</label>
+                                <select class="form-select" id="editTrangThai">
+                                    <option value="SCHEDULED" ${instance.trangThai === 'SCHEDULED' ? 'selected' : ''}>Đã lên lịch</option>
+                                    <option value="CONFIRMED" ${instance.trangThai === 'CONFIRMED' ? 'selected' : ''}>Đã xác nhận</option>
+                                    <option value="IN_PROGRESS" ${instance.trangThai === 'IN_PROGRESS' ? 'selected' : ''}>Đang diễn ra</option>
+                                    <option value="COMPLETED" ${instance.trangThai === 'COMPLETED' ? 'selected' : ''}>Hoàn thành</option>
+                                    <option value="CANCELLED" ${instance.trangThai === 'CANCELLED' ? 'selected' : ''}>Đã hủy</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Ghi chú</label>
+                                <textarea class="form-control" id="editGhiChu" rows="3" placeholder="Nhập ghi chú...">${instance.ghiChu || ''}</textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-warning" onclick="submitEditInstance('${instanceId}')">
+                            <i class="fas fa-save me-2"></i>Lưu thay đổi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+        document.getElementById('modalContainer').innerHTML = modalHtml;
+        const modal = new bootstrap.Modal(document.getElementById('editInstanceModal'));
+        modal.show();
+    }
+
+    async function submitEditInstance(instanceId) {
+        try {
+            const formData = {
+                tietBatDauOverride: document.getElementById('editTietBatDau').value || null,
+                soTietOverride: document.getElementById('editSoTiet').value || null,
+                maPhongOverride: document.getElementById('editPhongHoc').value || null,
+                trangThai: document.getElementById('editTrangThai').value,
+                ghiChu: document.getElementById('editGhiChu').value || null,
+                updatedBy: 'admin' // TODO: Get from session
+            };
+
+            // Convert string to number for numeric fields
+            if (formData.tietBatDauOverride) {
+                formData.tietBatDauOverride = parseInt(formData.tietBatDauOverride);
+            }
+            if (formData.soTietOverride) {
+                formData.soTietOverride = parseInt(formData.soTietOverride);
+            }
+
+            console.log('📤 Updating instance:', instanceId, formData);
+
+            const response = await apiCall(`/weekly-schedule/instances/${instanceId}`, {
+                method: 'PUT',
+                body: JSON.stringify(formData)
+            });
+
+            console.log('📨 Update response:', response);
+
+            if (response && (response.success === true || response.success === undefined)) {
+                showNotification('Cập nhật lịch học thành công!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('editInstanceModal')).hide();
+
+                // Reload instances and refresh display
+                await loadInstances();
+                applyFilters();
+                renderCurrentView();
+            } else {
+                const errorMessage = response?.message || 'Không có phản hồi từ server';
+                showNotification('Lỗi: ' + errorMessage, 'error');
+            }
+
+        } catch (error) {
+            console.error('Error updating instance:', error);
+            showNotification('Lỗi khi cập nhật lịch học: ' + error.message, 'error');
+        }
+    }
+
+    async function deleteInstanceFromModal(instanceId) {
+        if (!confirm('Bạn có chắc chắn muốn xóa lịch học này?')) {
+            return;
+        }
+
+        try {
+            console.log('🗑️ Deleting instance from modal:', instanceId);
+
+            const response = await apiCall(`/weekly-schedule/instances/${instanceId}`, {
+                method: 'DELETE'
+            });
+
+            console.log('📨 Delete instance response:', response);
+
+            if (response && (response.success === true || response.success === undefined)) {
+                showNotification('Xóa lịch học thành công!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('instanceDetailsModal')).hide();
+
+                // Reload instances and refresh display
+                await loadInstances();
+                applyFilters();
+                renderCurrentView();
+            } else {
+                const errorMessage = response?.message || 'Không có phản hồi từ server';
+                showNotification('Lỗi: ' + errorMessage, 'error');
+            }
+
+        } catch (error) {
+            console.error('Error deleting instance:', error);
+            showNotification('Lỗi khi xóa lịch học: ' + error.message, 'error');
+        }
+    }
+
+    async function deleteInstance(instanceId) {
+        if (!confirm('Bạn có chắc chắn muốn xóa lịch học này?')) {
+            return;
+        }
+
+        try {
+            console.log('🗑️ Deleting instance:', instanceId);
+
+            const response = await apiCall(`/weekly-schedule/instances/${instanceId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.success) {
+                showNotification('Xóa lịch học thành công!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('instanceDetailsModal')).hide();
+
+                // Reload instances and refresh display
+                await loadInstances();
+                applyFilters();
+                renderCurrentView();
+            } else {
+                showNotification('Lỗi: ' + response.message, 'error');
+            }
+
+        } catch (error) {
+            console.error('Error deleting instance:', error);
+            showNotification('Lỗi khi xóa lịch học: ' + error.message, 'error');
+        }
+    }
+
+    // ========================================
+    // CELL CONTEXT MENU
+    // ========================================
+    function openCellContextMenu(dayValue, period, event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        console.log('📋 Opening context menu for cell:', dayValue, period);
+
+        // Check if cell is occupied by part of a multi-period instance
+        const cell = document.getElementById(`cell-${dayValue}-${period}`);
+        const isOccupied = cell && cell.classList.contains('occupied');
+
+        // Find existing instance in this cell
+        const existingInstance = globalState.filteredInstances.find(instance => {
+            const instanceDay = getDayOfWeekFromDate(instance.ngayCuThe);
+            return instanceDay === dayValue &&
+                instance.tietBatDauThucTe <= period &&
+                instance.tietKetThucThucTe >= period;
+        });
+
+        const dayLabel = DAYS_OF_WEEK.find(d => d.value === dayValue)?.label || 'N/A';
+        const timeSlot = TIME_SLOTS.find(t => t.tiet === period);
+
+        let menuItems = [];
+
+        if (existingInstance) {
+            // Cell has an instance
+            let monHoc = 'Môn học';
+            if (existingInstance.maTemplate) {
+                const templateParts = existingInstance.maTemplate.split('_');
+                if (templateParts.length > 1) {
+                    const maLhp = templateParts[1];
+                    const lhpData = globalState.lopHocPhanData.find(lhp => lhp.maLhp === maLhp);
+                    if (lhpData) {
+                        monHoc = lhpData.monHoc?.tenMh || lhpData.tenMonHoc || 'Môn học';
+                    }
+                }
+            }
+
+            menuItems = [
+                {
+                    icon: 'fas fa-eye',
+                    text: `Xem chi tiết: ${monHoc}`,
+                    action: () => viewInstanceDetails(existingInstance.maInstance),
+                    class: 'text-primary'
+                },
+                {
+                    icon: 'fas fa-edit',
+                    text: 'Chỉnh sửa lịch học',
+                    action: () => editInstance(existingInstance.maInstance),
+                    class: 'text-warning'
+                },
+                {
+                    icon: 'fas fa-check',
+                    text: 'Điểm danh',
+                    action: () => takeAttendance(existingInstance.maInstance),
+                    class: 'text-success',
+                    disabled: existingInstance.trangThai !== 'SCHEDULED' && existingInstance.trangThai !== 'CONFIRMED'
+                },
+                { divider: true },
+                {
+                    icon: 'fas fa-trash',
+                    text: 'Xóa lịch học',
+                    action: () => deleteInstance(existingInstance.maInstance),
+                    class: 'text-danger'
+                }
+            ];
+        } else if (isOccupied) {
+            // Occupied cell (part of multi-period instance)
+            menuItems = [
+                {
+                    icon: 'fas fa-info-circle',
+                    text: 'Ô này thuộc về lịch học khác',
+                    action: () => {},
+                    class: 'text-muted',
+                    disabled: true
+                }
+            ];
+        } else {
+            // Empty cell
+            menuItems = [
+                {
+                    icon: 'fas fa-plus',
+                    text: 'Tạo lịch học mới',
+                    action: () => openCreateTemplateModal(dayValue, period),
+                    class: 'text-success'
+                },
+                {
+                    icon: 'fas fa-copy',
+                    text: 'Sao chép từ tuần khác',
+                    action: () => openCopyFromWeekModal(dayValue, period),
+                    class: 'text-info'
+                }
+            ];
+        }
+
+        showContextMenu(event.clientX, event.clientY, {
+            title: `${dayLabel} - Tiết ${period}`,
+            subtitle: timeSlot ? timeSlot.time : '',
+            items: menuItems
+        });
+    }
+
+    function showContextMenu(x, y, options) {
+        // Remove existing context menu
+        const existingMenu = document.getElementById('contextMenu');
+        if (existingMenu) {
+            existingMenu.remove();
+        }
+
+        const menu = document.createElement('div');
+        menu.id = 'contextMenu';
+        menu.className = 'context-menu';
+        menu.style.cssText = `
+            position: fixed;
+            top: ${y}px;
+            left: ${x}px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 9999;
+            min-width: 200px;
+            padding: 8px 0;
+            font-size: 14px;
+        `;
+
+        let menuHtml = '';
+
+        if (options.title) {
+            menuHtml += `
+                <div style="padding: 8px 16px; font-weight: 600; color: #333; border-bottom: 1px solid #eee;">
+                    ${options.title}
+                    ${options.subtitle ? `<div style="font-size: 12px; color: #666; font-weight: normal;">${options.subtitle}</div>` : ''}
+                </div>
+            `;
+        }
+
+        options.items.forEach(item => {
+            if (item.divider) {
+                menuHtml += '<div style="border-top: 1px solid #eee; margin: 4px 0;"></div>';
+            } else {
+                const disabled = item.disabled ? 'opacity: 0.5; pointer-events: none;' : '';
+                menuHtml += `
+                    <div class="context-menu-item ${item.class || ''}"
+                         style="padding: 8px 16px; cursor: pointer; display: flex; align-items: center; ${disabled}"
+                         onclick="handleContextMenuClick('${item.text}')">
+                        <i class="${item.icon} me-2" style="width: 16px;"></i>
+                        ${item.text}
+                    </div>
+                `;
+
+                // Store action for later execution
+                window.contextMenuActions = window.contextMenuActions || {};
+                window.contextMenuActions[item.text] = item.action;
+            }
+        });
+
+        menu.innerHTML = menuHtml;
+
+        // Add hover effects
+        menu.addEventListener('mouseover', (e) => {
+            if (e.target.classList.contains('context-menu-item')) {
+                e.target.style.backgroundColor = '#f8f9fa';
+            }
+        });
+
+        menu.addEventListener('mouseout', (e) => {
+            if (e.target.classList.contains('context-menu-item')) {
+                e.target.style.backgroundColor = '';
+            }
+        });
+
+        document.body.appendChild(menu);
+
+        // Position menu within viewport
+        const menuRect = menu.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        if (menuRect.right > viewportWidth) {
+            menu.style.left = (x - menuRect.width) + 'px';
+        }
+        if (menuRect.bottom > viewportHeight) {
+            menu.style.top = (y - menuRect.height) + 'px';
+        }
+
+        // Close menu when clicking outside
+        setTimeout(() => {
+            document.addEventListener('click', closeContextMenu);
+            document.addEventListener('contextmenu', closeContextMenu);
+        }, 100);
+    }
+
+    function handleContextMenuClick(actionKey) {
+        if (window.contextMenuActions && window.contextMenuActions[actionKey]) {
+            window.contextMenuActions[actionKey]();
+        }
+        closeContextMenu();
+    }
+
+    function closeContextMenu() {
+        const menu = document.getElementById('contextMenu');
+        if (menu) {
+            menu.remove();
+        }
+        document.removeEventListener('click', closeContextMenu);
+        document.removeEventListener('contextmenu', closeContextMenu);
+    }
+
+    function openCopyFromWeekModal(dayValue, period) {
+        console.log('📋 Opening copy from week modal');
+
+        const modalHtml = `
+        <div class="modal fade" id="copyFromWeekModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-copy me-2"></i>Sao chép lịch từ tuần khác
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Sao chép lịch học từ tuần khác vào <strong>${DAYS_OF_WEEK.find(d => d.value === dayValue)?.label} - Tiết ${period}</strong></p>
+
+                        <div class="mb-3">
+                            <label class="form-label">Chọn tuần nguồn:</label>
+                            <select class="form-select" id="sourceWeekSelect">
+                                <option value="">Chọn tuần...</option>
+                                ${Array.from({length: 20}, (_, i) => i + 1).map(week =>
+            week !== globalState.currentWeek ?
+                `<option value="${week}">Tuần ${week}</option>` : ''
+        ).join('')}
+                            </select>
+                        </div>
+
+                        <div id="sourceSchedulePreview" style="display: none;">
+                            <h6>Lịch học có sẵn:</h6>
+                            <div id="sourceScheduleList"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-info" onclick="executeCopyFromWeek(${dayValue}, ${period})" id="copyFromWeekBtn" disabled>
+                            <i class="fas fa-copy me-2"></i>Sao chép
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+        document.getElementById('modalContainer').innerHTML = modalHtml;
+        const modal = new bootstrap.Modal(document.getElementById('copyFromWeekModal'));
+
+        // Add event listener for week selection
+        document.getElementById('sourceWeekSelect').addEventListener('change', async function() {
+            const selectedWeek = parseInt(this.value);
+            if (selectedWeek) {
+                await loadSourceWeekSchedule(selectedWeek, dayValue, period);
+            }
+        });
+
+        modal.show();
+    }
+
+    async function loadSourceWeekSchedule(sourceWeek, targetDay, targetPeriod) {
+        try {
+            const response = await apiCall(`/weekly-schedule/by-week/${sourceWeek}`);
+            const sourceInstances = Array.isArray(response) ? response : [];
+
+            // Filter instances for the same day and time
+            const matchingInstances = sourceInstances.filter(instance => {
+                const instanceDay = getDayOfWeekFromDate(instance.ngayCuThe);
+                return instanceDay === targetDay &&
+                    instance.tietBatDauThucTe <= targetPeriod &&
+                    instance.tietKetThucThucTe >= targetPeriod;
+            });
+
+            const previewDiv = document.getElementById('sourceSchedulePreview');
+            const listDiv = document.getElementById('sourceScheduleList');
+            const copyBtn = document.getElementById('copyFromWeekBtn');
+
+            if (matchingInstances.length > 0) {
+                previewDiv.style.display = 'block';
+                listDiv.innerHTML = matchingInstances.map(instance => {
+                    // Get LHP info
+                    let monHoc = 'Môn học';
+                    let maLhp = 'N/A';
+                    if (instance.maTemplate) {
+                        const templateParts = instance.maTemplate.split('_');
+                        if (templateParts.length > 1) {
+                            maLhp = templateParts[1];
+                            const lhpData = globalState.lopHocPhanData.find(lhp => lhp.maLhp === maLhp);
+                            if (lhpData) {
+                                monHoc = lhpData.monHoc?.tenMh || lhpData.tenMonHoc || 'Môn học';
+                            }
+                        }
+                    }
+
+                    return `
+                        <div class="border rounded p-2 mb-2" data-instance-id="${instance.maInstance}">
+                            <strong>${monHoc}</strong> (${maLhp})<br>
+                            <small class="text-muted">
+                                ${instance.tenPhongThucTe || 'TBA'} - ${instance.tenGvThucTe || 'TBA'}<br>
+                                Tiết ${instance.tietBatDauThucTe}-${instance.tietKetThucThucTe}
+                            </small>
+                        </div>
+                    `;
+                }).join('');
+                copyBtn.disabled = false;
+            } else {
+                previewDiv.style.display = 'block';
+                listDiv.innerHTML = '<p class="text-muted">Không có lịch học nào trong khung giờ này</p>';
+                copyBtn.disabled = true;
+            }
+
+        } catch (error) {
+            console.error('Error loading source week schedule:', error);
+            showNotification('Lỗi khi tải lịch tuần nguồn', 'error');
+        }
+    }
+
+    async function deleteInstance(instanceId) {
+        if (!confirm('Bạn có chắc chắn muốn xóa lịch học này?')) {
+            return;
+        }
+
+        try {
+            console.log('🗑️ Deleting instance:', instanceId);
+
+            const response = await apiCall(`/weekly-schedule/instances/${instanceId}`, {
+                method: 'DELETE'
+            });
+
+            console.log('📨 Delete instance response:', response);
+
+            if (response && (response.success === true || response.success === undefined)) {
+                showNotification('Xóa lịch học thành công!', 'success');
+
+                // Reload instances and refresh display
+                await loadInstances();
+                applyFilters();
+                renderCurrentView();
+            } else {
+                const errorMessage = response?.message || 'Không có phản hồi từ server';
+                showNotification('Lỗi: ' + errorMessage, 'error');
+            }
+
+        } catch (error) {
+            console.error('Error deleting instance:', error);
+            showNotification('Lỗi khi xóa lịch học: ' + error.message, 'error');
+        }
+    }
+
+    function executeCopyFromWeek(targetDay, targetPeriod) {
+        showNotification('Chức năng sao chép lịch đang được phát triển', 'info');
+        bootstrap.Modal.getInstance(document.getElementById('copyFromWeekModal')).hide();
     }
 
     console.log('✅ Weekly Schedule System loaded successfully');

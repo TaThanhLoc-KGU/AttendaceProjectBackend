@@ -425,4 +425,80 @@ public class WeeklyScheduleService {
         // Find the target day in that week
         return weekStart.with(targetDay);
     }
+    // Add these methods to WeeklyScheduleService.java
+
+    /**
+     * Xóa instance cụ thể
+     */
+    @Transactional
+    public void deleteInstance(String maInstance) {
+        log.info("🗑️ Deleting instance: {}", maInstance);
+
+        ScheduleInstance instance = scheduleInstanceRepository.findById(maInstance)
+                .orElseThrow(() -> new ResourceNotFoundException("Instance not found: " + maInstance));
+
+        // Check if instance can be deleted
+        if (instance.getTrangThai() == ScheduleInstance.TrangThaiInstance.IN_PROGRESS) {
+            throw new BusinessException("Không thể xóa lịch học đang diễn ra");
+        }
+
+        if (instance.getTrangThai() == ScheduleInstance.TrangThaiInstance.COMPLETED) {
+            // Soft delete for completed instances
+            instance.setIsActive(false);
+            instance.setUpdatedBy("system_delete");
+            scheduleInstanceRepository.save(instance);
+            log.info("✅ Soft deleted completed instance: {}", maInstance);
+        } else {
+            // Hard delete for scheduled instances
+            scheduleInstanceRepository.delete(instance);
+            log.info("✅ Hard deleted instance: {}", maInstance);
+        }
+    }
+
+    /**
+     * Xóa template và tất cả instances liên quan
+     */
+    @Transactional
+    public void deleteTemplate(String maTemplate) {
+        log.info("🗑️ Deleting template: {}", maTemplate);
+
+        WeeklySchedule template = weeklyScheduleRepository.findById(maTemplate)
+                .orElseThrow(() -> new ResourceNotFoundException("Template not found: " + maTemplate));
+
+        // Check if template can be deleted
+        if (template.getTrangThai() == WeeklySchedule.TrangThaiTemplate.ACTIVE) {
+            // Deactivate all related instances first
+            List<ScheduleInstance> instances = scheduleInstanceRepository
+                    .findByWeeklyScheduleMaTemplateAndIsActiveTrue(maTemplate);
+
+            // Check if any instance is in progress or completed
+            boolean hasInProgressOrCompleted = instances.stream()
+                    .anyMatch(instance ->
+                            instance.getTrangThai() == ScheduleInstance.TrangThaiInstance.IN_PROGRESS ||
+                                    instance.getTrangThai() == ScheduleInstance.TrangThaiInstance.COMPLETED
+                    );
+
+            if (hasInProgressOrCompleted) {
+                throw new BusinessException("Không thể xóa template có lịch học đã diễn ra hoặc hoàn thành");
+            }
+
+            // Soft delete all scheduled instances
+            instances.forEach(instance -> {
+                if (instance.getTrangThai() == ScheduleInstance.TrangThaiInstance.SCHEDULED ||
+                        instance.getTrangThai() == ScheduleInstance.TrangThaiInstance.CONFIRMED) {
+                    instance.setIsActive(false);
+                    instance.setUpdatedBy("system_template_delete");
+                }
+            });
+            scheduleInstanceRepository.saveAll(instances);
+        }
+
+        // Soft delete template
+        template.setIsActive(false);
+        template.setTrangThai(WeeklySchedule.TrangThaiTemplate.DELETED);
+        template.setUpdatedBy("system_delete");
+        weeklyScheduleRepository.save(template);
+
+        log.info("✅ Template deleted (soft): {}", maTemplate);
+    }
 }

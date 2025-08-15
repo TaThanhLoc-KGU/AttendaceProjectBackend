@@ -125,12 +125,14 @@ public class WeeklySchedule {
         }
     }
 
+    // Update this enum in WeeklySchedule.java
     public enum TrangThaiTemplate {
         DRAFT("Bản nháp"),
         ACTIVE("Đang áp dụng"),
         PAUSED("Tạm dừng"),
         COMPLETED("Đã hoàn thành"),
-        CANCELLED("Đã hủy");
+        CANCELLED("Đã hủy"),
+        DELETED("Đã xóa");  // Add this line
 
         private final String displayName;
 
