@@ -334,15 +334,6 @@ public interface DiemDanhRepository extends JpaRepository<DiemDanh, Long> {
 
 
     /**
-     * Find attendance by either legacy or week-based schedule ID
-     */
-    @Query("SELECT dd FROM DiemDanh dd WHERE " +
-            "(dd.scheduleInstance.maInstance = :scheduleId OR dd.lichHoc.maLich = :scheduleId) " +
-            "AND dd.ngayDiemDanh = :ngayDiemDanh")
-    List<DiemDanh> findByScheduleIdAndDate(@Param("scheduleId") String scheduleId,
-                                           @Param("ngayDiemDanh") LocalDate ngayDiemDanh);
-
-    /**
      * Find all attendance for a LopHocPhan (both schedule types)
      */
     @Query("SELECT dd FROM DiemDanh dd WHERE " +
@@ -418,4 +409,130 @@ public interface DiemDanhRepository extends JpaRepository<DiemDanh, Long> {
             "dd.lichHoc.lopHocPhan.giangVien.maGv = :maGv) " +
             "AND dd.ngayDiemDanh = :date")
     List<DiemDanh> findByTeacherAndDate(@Param("maGv") String maGv, @Param("date") LocalDate date);
+
+    /**
+     * Tìm điểm danh theo schedule ID và ngày (hỗ trợ cả 2 loại schedule)
+     */
+    @Query("SELECT dd FROM DiemDanh dd " +
+            "WHERE dd.ngayDiemDanh = :date " +
+            "AND (dd.lichHoc.maLich = :scheduleId OR dd.scheduleInstance.maInstance = :scheduleId)")
+    List<DiemDanh> findByScheduleIdAndDate(@Param("scheduleId") String scheduleId,
+                                           @Param("date") LocalDate date);
+
+    /**
+     * Tìm điểm danh theo schedule, ngày và sinh viên
+     */
+    @Query("SELECT dd FROM DiemDanh dd " +
+            "WHERE dd.ngayDiemDanh = :date " +
+            "AND dd.sinhVien.maSv = :maSv " +
+            "AND (dd.lichHoc.maLich = :scheduleId OR dd.scheduleInstance.maInstance = :scheduleId)")
+    List<DiemDanh> findByScheduleIdAndDateAndStudent(@Param("scheduleId") String scheduleId,
+                                                     @Param("date") LocalDate date,
+                                                     @Param("maSv") String maSv);
+
+    /**
+     * Tìm điểm danh của giảng viên theo ngày
+     */
+    @Query("SELECT dd FROM DiemDanh dd " +
+            "WHERE dd.ngayDiemDanh = :date " +
+            "AND (dd.lichHoc.lopHocPhan.giangVien.maGv = :maGv " +
+            "     OR dd.scheduleInstance.weeklySchedule.lopHocPhan.giangVien.maGv = :maGv)")
+    List<DiemDanh> findByLecturerAndDate(@Param("maGv") String maGv,
+                                         @Param("date") LocalDate date);
+
+    /**
+     * Đếm số sinh viên đã điểm danh cho 1 schedule
+     */
+    @Query("SELECT COUNT(dd) FROM DiemDanh dd " +
+            "WHERE dd.ngayDiemDanh = :date " +
+            "AND (dd.lichHoc.maLich = :scheduleId OR dd.scheduleInstance.maInstance = :scheduleId)")
+    Long countByScheduleIdAndDate(@Param("scheduleId") String scheduleId,
+                                  @Param("date") LocalDate date);
+
+    /**
+     * Thống kê điểm danh của giảng viên theo ngày
+     */
+    @Query("SELECT dd.trangThai, COUNT(dd) FROM DiemDanh dd " +
+            "WHERE dd.ngayDiemDanh = :date " +
+            "AND (dd.lichHoc.lopHocPhan.giangVien.maGv = :maGv " +
+            "     OR dd.scheduleInstance.weeklySchedule.lopHocPhan.giangVien.maGv = :maGv) " +
+            "GROUP BY dd.trangThai")
+    List<Object[]> getAttendanceStatsByLecturerAndDate(@Param("maGv") String maGv,
+                                                       @Param("date") LocalDate date);
+
+    /**
+     * Tìm lịch sử điểm danh của sinh viên trong lớp học phần
+     */
+    @Query("SELECT dd FROM DiemDanh dd " +
+            "WHERE dd.sinhVien.maSv = :maSv " +
+            "AND (dd.lichHoc.lopHocPhan.maLhp = :maLhp " +
+            "     OR dd.scheduleInstance.weeklySchedule.lopHocPhan.maLhp = :maLhp) " +
+            "AND (:fromDate IS NULL OR dd.ngayDiemDanh >= :fromDate) " +
+            "AND (:toDate IS NULL OR dd.ngayDiemDanh <= :toDate) " +
+            "ORDER BY dd.ngayDiemDanh DESC")
+    List<DiemDanh> findStudentAttendanceHistory(@Param("maSv") String maSv,
+                                                @Param("maLhp") String maLhp,
+                                                @Param("fromDate") LocalDate fromDate,
+                                                @Param("toDate") LocalDate toDate);
+
+    /**
+     * Thống kê tỷ lệ tham gia của sinh viên trong lớp
+     */
+    @Query("SELECT sv.maSv, sv.hoTen, " +
+            "COUNT(CASE WHEN dd.trangThai = 'CO_MAT' THEN 1 END) as present, " +
+            "COUNT(CASE WHEN dd.trangThai = 'VANG_MAT' THEN 1 END) as absent, " +
+            "COUNT(CASE WHEN dd.trangThai = 'DI_TRE' THEN 1 END) as late, " +
+            "COUNT(dd) as total " +
+            "FROM DiemDanh dd " +
+            "JOIN dd.sinhVien sv " +
+            "WHERE (dd.lichHoc.lopHocPhan.maLhp = :maLhp " +
+            "       OR dd.scheduleInstance.weeklySchedule.lopHocPhan.maLhp = :maLhp) " +
+            "AND (:fromDate IS NULL OR dd.ngayDiemDanh >= :fromDate) " +
+            "AND (:toDate IS NULL OR dd.ngayDiemDanh <= :toDate) " +
+            "GROUP BY sv.maSv, sv.hoTen " +
+            "ORDER BY sv.hoTen")
+    List<Object[]> getStudentAttendanceStatsByClass(@Param("maLhp") String maLhp,
+                                                    @Param("fromDate") LocalDate fromDate,
+                                                    @Param("toDate") LocalDate toDate);
+
+    /**
+     * Tìm sinh viên chưa điểm danh trong một tiết học
+     */
+    @Query("SELECT dk.sinhVien FROM DangKyHoc dk " +
+            "WHERE dk.lopHocPhan.maLhp = :maLhp " +
+            "AND dk.isActive = true " +
+            "AND dk.sinhVien.maSv NOT IN (" +
+            "    SELECT dd.sinhVien.maSv FROM DiemDanh dd " +
+            "    WHERE dd.ngayDiemDanh = :date " +
+            "    AND (dd.lichHoc.maLich = :scheduleId OR dd.scheduleInstance.maInstance = :scheduleId)" +
+            ")")
+    List<Object[]> findStudentsNotAttended(@Param("maLhp") String maLhp,
+                                           @Param("scheduleId") String scheduleId,
+                                           @Param("date") LocalDate date);
+
+    /**
+     * Xóa điểm danh theo schedule và ngày (để reset)
+     */
+    @Query("DELETE FROM DiemDanh dd " +
+            "WHERE dd.ngayDiemDanh = :date " +
+            "AND (dd.lichHoc.maLich = :scheduleId OR dd.scheduleInstance.maInstance = :scheduleId)")
+    void deleteByScheduleIdAndDate(@Param("scheduleId") String scheduleId,
+                                   @Param("date") LocalDate date);
+
+    /**
+     * Thống kê điểm danh theo tuần cho giảng viên
+     */
+    @Query("SELECT EXTRACT(WEEK FROM dd.ngayDiemDanh) as week, " +
+            "COUNT(CASE WHEN dd.trangThai = 'CO_MAT' THEN 1 END) as present, " +
+            "COUNT(CASE WHEN dd.trangThai = 'VANG_MAT' THEN 1 END) as absent, " +
+            "COUNT(dd) as total " +
+            "FROM DiemDanh dd " +
+            "WHERE (dd.lichHoc.lopHocPhan.giangVien.maGv = :maGv " +
+            "       OR dd.scheduleInstance.weeklySchedule.lopHocPhan.giangVien.maGv = :maGv) " +
+            "AND dd.ngayDiemDanh BETWEEN :fromDate AND :toDate " +
+            "GROUP BY EXTRACT(WEEK FROM dd.ngayDiemDanh) " +
+            "ORDER BY week")
+    List<Object[]> getWeeklyAttendanceStatsByLecturer(@Param("maGv") String maGv,
+                                                      @Param("fromDate") LocalDate fromDate,
+                                                      @Param("toDate") LocalDate toDate);
 }

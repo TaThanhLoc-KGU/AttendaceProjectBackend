@@ -123,4 +123,82 @@ public interface ScheduleInstanceRepository extends JpaRepository<ScheduleInstan
     @Query("SELECT si FROM ScheduleInstance si WHERE si.ngayCuThe < :cutoffDate " +
             "AND si.trangThai = 'SCHEDULED' AND si.isActive = true")
     List<ScheduleInstance> findExpiredScheduledInstances(@Param("cutoffDate") LocalDate cutoffDate);
+
+    /**
+     * Tìm schedule instances theo ngày và giảng viên
+     */
+    @Query("SELECT si FROM ScheduleInstance si " +
+            "WHERE si.ngayCuThe = :date " +
+            "AND si.weeklySchedule.lopHocPhan.giangVien.maGv = :maGv " +
+            "AND si.isActive = true " +
+            "ORDER BY si.weeklySchedule.tietBatDau")
+    List<ScheduleInstance> findByDateAndLecturer(@Param("date") LocalDate date,
+                                                 @Param("maGv") String maGv);
+
+    /**
+     * Tìm schedule instances của giảng viên trong khoảng thời gian
+     */
+    @Query("SELECT si FROM ScheduleInstance si " +
+            "WHERE si.ngayCuThe BETWEEN :fromDate AND :toDate " +
+            "AND si.weeklySchedule.lopHocPhan.giangVien.maGv = :maGv " +
+            "AND si.isActive = true " +
+            "ORDER BY si.ngayCuThe, si.weeklySchedule.tietBatDau")
+    List<ScheduleInstance> findByDateRangeAndLecturer(@Param("fromDate") LocalDate fromDate,
+                                                      @Param("toDate") LocalDate toDate,
+                                                      @Param("maGv") String maGv);
+
+    /**
+     * Tìm schedule instances theo giảng viên và lớp học phần
+     */
+    @Query("SELECT si FROM ScheduleInstance si " +
+            "WHERE si.weeklySchedule.lopHocPhan.giangVien.maGv = :maGv " +
+            "AND si.weeklySchedule.lopHocPhan.maLhp = :maLhp " +
+            "AND si.isActive = true " +
+            "ORDER BY si.ngayCuThe, si.weeklySchedule.tietBatDau")
+    List<ScheduleInstance> findByLecturerAndClass(@Param("maGv") String maGv,
+                                                  @Param("maLhp") String maLhp);
+
+    /**
+     * Đếm số buổi dạy của giảng viên theo ngày
+     */
+    @Query("SELECT si.ngayCuThe, COUNT(si) FROM ScheduleInstance si " +
+            "WHERE si.weeklySchedule.lopHocPhan.giangVien.maGv = :maGv " +
+            "AND si.ngayCuThe BETWEEN :fromDate AND :toDate " +
+            "AND si.isActive = true " +
+            "GROUP BY si.ngayCuThe " +
+            "ORDER BY si.ngayCuThe")
+    List<Object[]> countByLecturerAndDateRange(@Param("maGv") String maGv,
+                                               @Param("fromDate") LocalDate fromDate,
+                                               @Param("toDate") LocalDate toDate);
+
+    /**
+     * Tìm schedule instances có xung đột thời gian
+     */
+    @Query("SELECT si FROM ScheduleInstance si " +
+            "WHERE si.ngayCuThe = :date " +
+            "AND si.weeklySchedule.lopHocPhan.giangVien.maGv = :maGv " +
+            "AND si.isActive = true " +
+            "AND ((si.weeklySchedule.tietBatDau <= :tietBatDau AND " +
+            "      (si.weeklySchedule.tietBatDau + si.weeklySchedule.soTiet - 1) >= :tietBatDau) " +
+            "     OR (si.weeklySchedule.tietBatDau <= :tietKetThuc AND " +
+            "         (si.weeklySchedule.tietBatDau + si.weeklySchedule.soTiet - 1) >= :tietKetThuc) " +
+            "     OR (si.weeklySchedule.tietBatDau >= :tietBatDau AND " +
+            "         (si.weeklySchedule.tietBatDau + si.weeklySchedule.soTiet - 1) <= :tietKetThuc))")
+    List<ScheduleInstance> findConflictingInstances(@Param("date") LocalDate date,
+                                                    @Param("maGv") String maGv,
+                                                    @Param("tietBatDau") Integer tietBatDau,
+                                                    @Param("tietKetThuc") Integer tietKetThuc);
+
+    /**
+     * Thống kê schedule instances theo tuần
+     */
+    @Query("SELECT si.tuanHoc, COUNT(si), " +
+            "COUNT(DISTINCT si.weeklySchedule.lopHocPhan.giangVien.maGv) as uniqueLecturers " +
+            "FROM ScheduleInstance si " +
+            "WHERE si.isActive = true " +
+            "AND si.tuanHoc BETWEEN :fromWeek AND :toWeek " +
+            "GROUP BY si.tuanHoc " +
+            "ORDER BY si.tuanHoc")
+    List<Object[]> getWeeklyStats(@Param("fromWeek") Integer fromWeek,
+                                  @Param("toWeek") Integer toWeek);
 }

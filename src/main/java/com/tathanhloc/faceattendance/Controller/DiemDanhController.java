@@ -245,8 +245,8 @@ public class DiemDanhController {
      * API lấy tỷ lệ điểm danh từng sinh viên
      */
     @GetMapping("/stats/students/{maLhp}")
-    public ResponseEntity<List<StudentAttendanceDTO>> getStudentAttendanceByClass(@PathVariable String maLhp) {
-        List<StudentAttendanceDTO> stats = diemDanhService.getStudentAttendanceByClass(maLhp);
+    public ResponseEntity<List<StudentAttendanceStatsDTO>> getStudentAttendanceByClass(@PathVariable String maLhp) {
+        List<StudentAttendanceStatsDTO> stats = diemDanhService.getStudentAttendanceByClass(maLhp);
         return ResponseEntity.ok(stats);
     }
 

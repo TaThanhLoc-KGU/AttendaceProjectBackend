@@ -615,7 +615,7 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
     /**
      * Lấy tỷ lệ điểm danh của từng sinh viên trong lớp
      */
-    public List<StudentAttendanceDTO> getStudentAttendanceByClass(String maLhp) {
+    public List<StudentAttendanceStatsDTO> getStudentAttendanceByClass(String maLhp) {
         // Lấy danh sách sinh viên đăng ký lớp
         List<DangKyHocDTO> registrations = dangKyHocService.getByMaLhp(maLhp);
 
@@ -635,7 +635,7 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
             long total = presentCount + absentCount + lateCount + excusedCount;
             double attendanceRate = total > 0 ? (double) (presentCount + lateCount) / total * 100 : 0;
 
-            return StudentAttendanceDTO.builder()
+            return StudentAttendanceStatsDTO.builder()
                     .maSv(maSv)
                     .presentCount(presentCount)
                     .absentCount(absentCount)

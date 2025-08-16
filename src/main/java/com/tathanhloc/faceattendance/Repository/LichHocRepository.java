@@ -42,4 +42,66 @@ public interface LichHocRepository extends JpaRepository<LichHoc, String> {
                                                          @Param("hocKy") String hocKy,
                                                          @Param("namHoc") String namHoc);
 
+    /**
+     * Tìm lịch học của giảng viên theo thứ trong tuần
+     */
+    @Query("SELECT lh FROM LichHoc lh " +
+            "WHERE lh.lopHocPhan.giangVien.maGv = :maGv " +
+            "AND lh.thu = :thu " +
+            "AND lh.isActive = true")
+    List<LichHoc> findByMaGvAndThu(@Param("maGv") String maGv, @Param("thu") Integer thu);
+
+    /**
+     * Tìm lịch học của giảng viên trong khoảng thời gian
+     */
+    @Query("SELECT lh FROM LichHoc lh " +
+            "WHERE lh.lopHocPhan.giangVien.maGv = :maGv " +
+            "AND lh.isActive = true " +
+            "ORDER BY lh.thu, lh.tietBatDau")
+    List<LichHoc> findByMaGvOrderByThuAndTiet(@Param("maGv") String maGv);
+
+    /**
+     * Tìm lịch học theo giảng viên và lớp học phần
+     */
+    @Query("SELECT lh FROM LichHoc lh " +
+            "WHERE lh.lopHocPhan.giangVien.maGv = :maGv " +
+            "AND lh.lopHocPhan.maLhp = :maLhp " +
+            "AND lh.isActive = true")
+    List<LichHoc> findByMaGvAndMaLhp(@Param("maGv") String maGv, @Param("maLhp") String maLhp);
+
+    /**
+     * Đếm số tiết dạy của giảng viên theo thứ
+     */
+    @Query("SELECT lh.thu, COUNT(lh) FROM LichHoc lh " +
+            "WHERE lh.lopHocPhan.giangVien.maGv = :maGv " +
+            "AND lh.isActive = true " +
+            "GROUP BY lh.thu " +
+            "ORDER BY lh.thu")
+    List<Object[]> countByMaGvGroupByThu(@Param("maGv") String maGv);
+
+    /**
+     * Tìm lịch học có xung đột thời gian cho giảng viên
+     */
+    @Query("SELECT lh FROM LichHoc lh " +
+            "WHERE lh.lopHocPhan.giangVien.maGv = :maGv " +
+            "AND lh.thu = :thu " +
+            "AND lh.isActive = true " +
+            "AND ((lh.tietBatDau <= :tietBatDau AND (lh.tietBatDau + lh.soTiet - 1) >= :tietBatDau) " +
+            "     OR (lh.tietBatDau <= :tietKetThuc AND (lh.tietBatDau + lh.soTiet - 1) >= :tietKetThuc) " +
+            "     OR (lh.tietBatDau >= :tietBatDau AND (lh.tietBatDau + lh.soTiet - 1) <= :tietKetThuc))")
+    List<LichHoc> findConflictingSchedules(@Param("maGv") String maGv,
+                                           @Param("thu") Integer thu,
+                                           @Param("tietBatDau") Integer tietBatDau,
+                                           @Param("tietKetThuc") Integer tietKetThuc);
+
+    /**
+     * Thống kê giảng viên theo số tiết dạy
+     */
+    @Query("SELECT lh.lopHocPhan.giangVien.maGv, lh.lopHocPhan.giangVien.hoTen, " +
+            "SUM(lh.soTiet) as totalPeriods, COUNT(DISTINCT lh.lopHocPhan.maLhp) as totalClasses " +
+            "FROM LichHoc lh " +
+            "WHERE lh.isActive = true " +
+            "GROUP BY lh.lopHocPhan.giangVien.maGv, lh.lopHocPhan.giangVien.hoTen " +
+            "ORDER BY totalPeriods DESC")
+    List<Object[]> getTeacherWorkloadStats();
 }

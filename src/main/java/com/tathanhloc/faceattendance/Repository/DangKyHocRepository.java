@@ -85,6 +85,64 @@ public interface DangKyHocRepository extends JpaRepository<DangKyHoc, DangKyHocI
     List<DangKyHoc> findBySinhVienMaSvAndIsActiveTrue(String maSv);
 
 
+    /**
+     * Tìm danh sách đăng ký theo mã lớp học phần và trạng thái
+     */
+    @Query("SELECT dk FROM DangKyHoc dk " +
+            "WHERE dk.lopHocPhan.maLhp = :maLhp " +
+            "AND dk.isActive = :isActive " +
+            "ORDER BY dk.sinhVien.hoTen")
+    List<DangKyHoc> findByMaLhpAndActive(@Param("maLhp") String maLhp,
+                                         @Param("isActive") boolean isActive);
 
+    /**
+     * Đếm số sinh viên đăng ký theo lớp học phần
+     */
+    @Query("SELECT COUNT(dk) FROM DangKyHoc dk " +
+            "WHERE dk.lopHocPhan.maLhp = :maLhp " +
+            "AND dk.isActive = :isActive")
+    int countByMaLhpAndActive(@Param("maLhp") String maLhp,
+                              @Param("isActive") boolean isActive);
 
+    /**
+     * Tìm lớp học phần mà sinh viên đã đăng ký
+     */
+    @Query("SELECT dk FROM DangKyHoc dk " +
+            "WHERE dk.sinhVien.maSv = :maSv " +
+            "AND dk.isActive = true " +
+            "ORDER BY dk.lopHocPhan.monHoc.tenMh")
+    List<DangKyHoc> findActiveClassesByStudent(@Param("maSv") String maSv);
+
+    /**
+     * Kiểm tra sinh viên có đăng ký lớp học phần không
+     */
+    @Query("SELECT COUNT(dk) > 0 FROM DangKyHoc dk " +
+            "WHERE dk.sinhVien.maSv = :maSv " +
+            "AND dk.lopHocPhan.maLhp = :maLhp " +
+            "AND dk.isActive = true")
+    boolean existsByMaSvAndMaLhpAndActive(@Param("maSv") String maSv,
+                                          @Param("maLhp") String maLhp);
+
+    /**
+     * Thống kê đăng ký theo lớp học phần
+     */
+    @Query("SELECT lhp.maLhp, lhp.monHoc.tenMh, COUNT(dk) as studentCount " +
+            "FROM DangKyHoc dk " +
+            "JOIN dk.lopHocPhan lhp " +
+            "WHERE dk.isActive = true " +
+            "GROUP BY lhp.maLhp, lhp.monHoc.tenMh " +
+            "ORDER BY studentCount DESC")
+    List<Object[]> getClassRegistrationStats();
+
+    /**
+     * Tìm sinh viên đăng ký nhiều lớp của cùng một giảng viên
+     */
+    @Query("SELECT dk.sinhVien.maSv, dk.sinhVien.hoTen, COUNT(dk) as classCount " +
+            "FROM DangKyHoc dk " +
+            "WHERE dk.lopHocPhan.giangVien.maGv = :maGv " +
+            "AND dk.isActive = true " +
+            "GROUP BY dk.sinhVien.maSv, dk.sinhVien.hoTen " +
+            "HAVING COUNT(dk) > 1 " +
+            "ORDER BY classCount DESC")
+    List<Object[]> findStudentsWithMultipleClassesByLecturer(@Param("maGv") String maGv);
 }
