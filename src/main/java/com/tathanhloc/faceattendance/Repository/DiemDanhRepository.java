@@ -5,6 +5,7 @@ import com.tathanhloc.faceattendance.DTO.SubjectAttendanceDTO;
 import com.tathanhloc.faceattendance.Enum.TrangThaiDiemDanhEnum;
 import com.tathanhloc.faceattendance.Model.DiemDanh;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -537,9 +538,10 @@ List<Object[]> getWeeklyAttendanceStatsByLecturer(@Param("maGv") String maGv,
                                                   @Param("fromDate") LocalDate fromDate,
                                                   @Param("toDate") LocalDate toDate);
 
-    List<DiemDanh> findByMaLhp(String maLhp);
-    List<DiemDanh> findByInstanceId(String instanceId);
-    List<DiemDanh> findByMaLhpAndTuanHoc(String maLhp, Integer tuanHoc);
-    void deleteByInstanceId(String instanceId);
-
+    /**
+     * Delete by instance ID
+     */
+    @Modifying
+    @Query("DELETE FROM DiemDanh dd WHERE dd.scheduleInstance.maInstance = :instanceId")
+    void deleteByInstanceId(@Param("instanceId") String instanceId);
 }

@@ -1,5 +1,6 @@
 package com.tathanhloc.faceattendance.DTO;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -24,6 +25,7 @@ public class SaveAttendanceSessionDTO {
     private String classId;
 
     @NotNull(message = "Ngày học không được để trống")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate sessionDate;
 
     @NotNull(message = "Tuần học không được để trống")
@@ -40,7 +42,8 @@ public class SaveAttendanceSessionDTO {
         private String studentId;
 
         @NotBlank(message = "Trạng thái không được để trống")
-        @Pattern(regexp = "PRESENT|ABSENT|LATE", message = "Trạng thái không hợp lệ")
+        @Pattern(regexp = "CO_MAT|VANG_MAT|DI_TRE|VANG_CO_PHEP",
+                message = "Trạng thái không hợp lệ")
         private String status;
 
         private String timestamp;

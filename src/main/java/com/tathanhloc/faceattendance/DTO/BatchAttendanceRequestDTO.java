@@ -18,6 +18,7 @@ public class BatchAttendanceRequestDTO {
     @Valid
     private List<TeacherAttendanceRequestDTO> attendanceList;
 
+
     private String batchNote;  // Ghi chu chung cho ca batch
     private String batchType;  // "ALL_PRESENT", "MANUAL", "IMPORT"
 }

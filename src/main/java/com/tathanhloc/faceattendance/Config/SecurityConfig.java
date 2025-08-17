@@ -114,10 +114,12 @@ public class SecurityConfig {
                         // ===== EXISTING ROLE-BASED ACCESS =====
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/lecturer/**").hasRole("GIANGVIEN")
+                        .requestMatchers("/teacher/**").hasRole("GIANGVIEN")
                         .requestMatchers("/student/**").hasRole("SINHVIEN")
                         .requestMatchers("/api/**").authenticated()
                         .requestMatchers("/api/stream/**").authenticated()
                         .requestMatchers("/stream/**").authenticated()
+
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
