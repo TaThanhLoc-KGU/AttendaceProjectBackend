@@ -425,4 +425,30 @@ public class DiemDanhController {
             ));
         }
     }
+
+    /**
+     * API lưu phiên điểm danh - cho phép lưu nhiều bản ghi điểm danh cùng lúc
+     * POST /api/diemdanh/save-session
+     */
+    @PostMapping("/save-session")
+    public ResponseEntity<Map<String, Object>> saveAttendanceSession(@RequestBody AttendanceSessionRequestDTO request) {
+        try {
+            log.info("Saving attendance session for class: {}, date: {}", request.getMaLhp(), request.getNgayDiemDanh());
+
+            Map<String, Object> result = diemDanhService.saveAttendanceSession(request);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Lưu phiên điểm danh thành công",
+                    "data", result
+            ));
+
+        } catch (Exception e) {
+            log.error("Error saving attendance session:", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Lỗi khi lưu phiên điểm danh: " + e.getMessage()
+            ));
+        }
+    }
 }

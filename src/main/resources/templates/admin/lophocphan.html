@@ -1149,6 +1149,159 @@
             mainContent.classList.toggle('expanded');
         }
     }
+    // ===== MISSING FUNCTIONS =====
+
+    // Function để xem chi tiết lớp học phần
+    async function viewLhpDetails(maLhp) {
+        try {
+            showLoading(true);
+
+            // Lấy thông tin lớp học phần
+            const lhpResponse = await fetch(`${API_BASE}/lophocphan/${maLhp}`);
+            if (!lhpResponse.ok) throw new Error('Failed to load LHP details');
+
+            const lhp = await lhpResponse.json();
+
+            // Lấy thông tin môn học
+            const subject = subjectData.find(s => s.maMh === lhp.maMh) || {};
+
+            // Lấy thông tin giảng viên
+            const teacher = teacherData.find(t => t.maGv === lhp.maGv) || {};
+
+            // Lấy danh sách sinh viên
+            const studentsResponse = await fetch(`${API_BASE}/lophocphan/${maLhp}/sinhvien`);
+            const students = studentsResponse.ok ? await studentsResponse.json() : [];
+
+            // Hiển thị modal chi tiết
+            showLhpDetailsModal(lhp, subject, teacher, students);
+
+        } catch (error) {
+            console.error('Error loading LHP details:', error);
+            showNotification('Lỗi khi tải chi tiết lớp học phần', 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Function để hiển thị modal chi tiết
+    function showLhpDetailsModal(lhp, subject, teacher, students) {
+        const modalHtml = `
+        <div class="modal fade" id="detailsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Chi tiết lớp học phần: ${lhp.maLhp}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Thông tin lớp học phần</h6>
+                                <table class="table table-borderless">
+                                    <tr><td class="fw-bold">Mã LHP:</td><td>${lhp.maLhp}</td></tr>
+                                    <tr><td class="fw-bold">Môn học:</td><td>${subject.tenMh || 'N/A'}</td></tr>
+                                    <tr><td class="fw-bold">Mã môn:</td><td>${lhp.maMh}</td></tr>
+                                    <tr><td class="fw-bold">Nhóm:</td><td>${lhp.nhom}</td></tr>
+                                    <tr><td class="fw-bold">Học kỳ:</td><td>HK${lhp.hocKy} - ${lhp.namHoc}</td></tr>
+                                    <tr><td class="fw-bold">Trạng thái:</td><td>
+                                        <span class="badge ${lhp.isActive ? 'bg-success' : 'bg-secondary'}">
+                                            ${lhp.isActive ? 'Hoạt động' : 'Ngưng'}
+                                        </span>
+                                    </td></tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-success">Thông tin giảng viên</h6>
+                                <table class="table table-borderless">
+                                    <tr><td class="fw-bold">Mã GV:</td><td>${lhp.maGv}</td></tr>
+                                    <tr><td class="fw-bold">Họ tên:</td><td>${teacher.hoTen || 'N/A'}</td></tr>
+                                    <tr><td class="fw-bold">Email:</td><td>${teacher.email || 'N/A'}</td></tr>
+                                    <tr><td class="fw-bold">SĐT:</td><td>${teacher.sdt || 'N/A'}</td></tr>
+                                </table>
+
+                                <h6 class="text-info mt-3">Thống kê sinh viên</h6>
+                                <table class="table table-borderless">
+                                    <tr><td class="fw-bold">Tổng SV:</td><td>${students.length}</td></tr>
+                                    <tr><td class="fw-bold">SV hoạt động:</td><td>${students.filter(s => s.isActive).length}</td></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <h6 class="text-warning">Danh sách sinh viên</h6>
+                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                <table class="table table-striped table-sm">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>STT</th>
+                                            <th>Mã SV</th>
+                                            <th>Họ tên</th>
+                                            <th>Email</th>
+                                            <th>Trạng thái</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${students.length > 0 ? students.map((student, index) => `
+                                            <tr>
+                                                <td>${index + 1}</td>
+                                                <td>${student.maSv}</td>
+                                                <td>${student.hoTen}</td>
+                                                <td>${student.email || 'N/A'}</td>
+                                                <td>
+                                                    <span class="badge ${student.isActive ? 'bg-success' : 'bg-secondary'}">
+                                                        ${student.isActive ? 'Hoạt động' : 'Ngưng'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        `).join('') : '<tr><td colspan="5" class="text-center">Chưa có sinh viên nào</td></tr>'}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Đóng
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="editLhp('${lhp.maLhp}'); bootstrap.Modal.getInstance(document.getElementById('detailsModal')).hide();">
+                            <i class="fas fa-edit me-2"></i>Chỉnh sửa
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="manageLhpStudents('${lhp.maLhp}'); bootstrap.Modal.getInstance(document.getElementById('detailsModal')).hide();">
+                            <i class="fas fa-users me-2"></i>Quản lý SV
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+        // Remove existing modal if any
+        const existingModal = document.getElementById('detailsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+        modal.show();
+
+        // Clean up when modal is hidden
+        document.getElementById('detailsModal').addEventListener('hidden.bs.modal', function () {
+            this.remove();
+        });
+    }
+
+    // Function alias để tương thích với tên function được gọi trong HTML
+    function manageLhpStudents(maLhp) {
+        // Gọi function manageStudents đã có sẵn
+        manageStudents(maLhp);
+    }
 </script>
 </body>
 </html>

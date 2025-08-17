@@ -1301,4 +1301,145 @@ public class DiemDanhService extends BaseService<DiemDanh, Long, DiemDanhDTO> {
         }
     }
 
+    /**
+     * Lưu phiên điểm danh - cho phép lưu nhiều bản ghi điểm danh cùng lúc
+     */
+    @Transactional
+    public Map<String, Object> saveAttendanceSession(AttendanceSessionRequestDTO request) {
+        log.info("Saving attendance session for class: {}, date: {}", request.getMaLhp(), request.getNgayDiemDanh());
+        
+        Map<String, Object> result = new HashMap<>();
+        List<DiemDanhDTO> savedRecords = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+        
+        try {
+            // Validate request
+            if (request.getMaLhp() == null || request.getNgayDiemDanh() == null) {
+                throw new BusinessException("Mã lớp học phần và ngày điểm danh không được để trống");
+            }
+            
+            if (request.getAttendanceRecords() == null || request.getAttendanceRecords().isEmpty()) {
+                throw new BusinessException("Danh sách điểm danh không được để trống");
+            }
+            
+            // Kiểm tra lớp học phần tồn tại bằng cách tìm đăng ký học
+            List<DangKyHoc> existingRegistrations = dangKyHocRepository.findByLopHocPhanMaLhp(request.getMaLhp());
+            if (existingRegistrations.isEmpty()) {
+                throw new BusinessException("Lớp học phần không tồn tại hoặc chưa có sinh viên đăng ký: " + request.getMaLhp());
+            }
+            
+            // Tìm lịch học phù hợp nếu chưa có maLich
+            String maLichToUse = request.getMaLich();
+            if (maLichToUse == null) {
+                // Tìm lịch học theo ngày và lớp học phần
+                int dayOfWeek = request.getNgayDiemDanh().getDayOfWeek().getValue();
+                List<LichHoc> possibleSchedules = lichHocRepository.findByLopHocPhanMaLhp(request.getMaLhp())
+                    .stream()
+                    .filter(lh -> lh.getThu().equals(dayOfWeek) && lh.isActive())
+                    .collect(Collectors.toList());
+                
+                if (!possibleSchedules.isEmpty()) {
+                    maLichToUse = possibleSchedules.get(0).getMaLich();
+                    log.info("Found matching schedule: {}", maLichToUse);
+                } else {
+                    throw new BusinessException("Không tìm thấy lịch học phù hợp cho lớp " + request.getMaLhp() + " vào ngày " + request.getNgayDiemDanh());
+                }
+            }
+            
+            // Make maLichToUse effectively final for lambda
+            final String finalMaLichToUse = maLichToUse;
+            
+            // Xử lý từng bản ghi điểm danh
+            for (AttendanceSessionRequestDTO.StudentAttendanceRecord record : request.getAttendanceRecords()) {
+                try {
+                    // Kiểm tra sinh viên có đăng ký lớp này không
+                    boolean isEnrolled = dangKyHocRepository.existsByLopHocPhanMaLhpAndSinhVienMaSv(
+                        request.getMaLhp(), record.getMaSv());
+                    
+                    if (!isEnrolled) {
+                        errors.add("Sinh viên " + record.getMaSv() + " chưa đăng ký lớp học phần này");
+                        continue;
+                    }
+                    
+                    // Kiểm tra xem đã có bản ghi điểm danh chưa - tìm theo tất cả các trường có sẵn
+                    List<DiemDanh> existingRecords = diemDanhRepository.findByLichHocMaLichAndSinhVienMaSv(
+                        finalMaLichToUse, record.getMaSv())
+                        .stream()
+                        .filter(dd -> dd.getNgayDiemDanh().equals(request.getNgayDiemDanh()))
+                        .collect(Collectors.toList());
+                    
+                    DiemDanh diemDanh;
+                    if (!existingRecords.isEmpty()) {
+                        // Cập nhật bản ghi hiện có
+                        diemDanh = existingRecords.get(0);
+                        diemDanh.setTrangThai(record.getTrangThai());
+                        if (record.getThoiGianVao() != null) {
+                            diemDanh.setThoiGianVao(record.getThoiGianVao());
+                        }
+                        if (record.getThoiGianRa() != null) {
+                            diemDanh.setThoiGianRa(record.getThoiGianRa());
+                        }
+                        if (record.getGhiChu() != null) {
+                            diemDanh.setGhiChu(record.getGhiChu());
+                        }
+                        // Note: updatedAt is automatically handled by @UpdateTimestamp
+                        log.info("Updated existing attendance record for student: {}", record.getMaSv());
+                    } else {
+                        // Tạo bản ghi mới
+                        SinhVien sinhVien = sinhVienRepository.findById(record.getMaSv())
+                            .orElseThrow(() -> new BusinessException("Sinh viên không tồn tại: " + record.getMaSv()));
+                        
+                        LichHoc lichHoc = lichHocRepository.findById(finalMaLichToUse)
+                            .orElseThrow(() -> new BusinessException("Lịch học không tồn tại: " + finalMaLichToUse));
+                        
+                        diemDanh = DiemDanh.builder()
+                            .sinhVien(sinhVien)
+                            .lichHoc(lichHoc)
+                            .ngayDiemDanh(request.getNgayDiemDanh())
+                            .trangThai(record.getTrangThai())
+                            .thoiGianVao(record.getThoiGianVao())
+                            .thoiGianRa(record.getThoiGianRa())
+                            .ghiChu(record.getGhiChu())
+                            .createdBy(request.getGiangVienId())
+                            // createdAt and updatedAt are automatically handled by Hibernate annotations
+                            .build();
+                        
+                        log.info("Created new attendance record for student: {}", record.getMaSv());
+                    }
+                    
+                    DiemDanh saved = diemDanhRepository.save(diemDanh);
+                    savedRecords.add(toDTO(saved));
+                    
+                } catch (Exception e) {
+                    log.error("Error processing attendance for student {}: {}", record.getMaSv(), e.getMessage());
+                    errors.add("Lỗi khi xử lý điểm danh cho sinh viên " + record.getMaSv() + ": " + e.getMessage());
+                }
+            }
+            
+            // Tạo kết quả trả về
+            result.put("totalProcessed", request.getAttendanceRecords().size());
+            result.put("totalSaved", savedRecords.size());
+            result.put("totalErrors", errors.size());
+            result.put("savedRecords", savedRecords);
+            result.put("errors", errors);
+            result.put("sessionInfo", Map.of(
+                "maLhp", request.getMaLhp(),
+                "maLich", finalMaLichToUse,
+                "ngayDiemDanh", request.getNgayDiemDanh(),
+                "sessionName", request.getSessionName() != null ? request.getSessionName() : "Phiên điểm danh " + request.getNgayDiemDanh(),
+                "giangVienId", request.getGiangVienId(),
+                "ghiChu", request.getGhiChu()
+            ));
+            
+            log.info("Attendance session saved successfully. Processed: {}, Saved: {}, Errors: {}", 
+                request.getAttendanceRecords().size(), savedRecords.size(), errors.size());
+                
+            return result;
+            
+        } catch (Exception e) {
+            log.error("Error saving attendance session: {}", e.getMessage(), e);
+            throw new BusinessException("Lỗi khi lưu phiên điểm danh: " + e.getMessage());
+        }
+    }
+
 }

@@ -2,6 +2,9 @@ package com.tathanhloc.faceattendance.Controller;
 
 import com.tathanhloc.faceattendance.DTO.*;
 import com.tathanhloc.faceattendance.Enum.TrangThaiDiemDanhEnum;
+import com.tathanhloc.faceattendance.Repository.DangKyHocRepository;
+import com.tathanhloc.faceattendance.Repository.DiemDanhRepository;
+import com.tathanhloc.faceattendance.Repository.LichHocRepository;
 import com.tathanhloc.faceattendance.Security.CustomUserDetails;
 import com.tathanhloc.faceattendance.Service.TeacherAttendanceService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +40,9 @@ import java.util.Map;
 public class TeacherAttendanceController {
 
     private final TeacherAttendanceService teacherAttendanceService;
+    private final DangKyHocRepository dangKyHocRepository;
+    private final LichHocRepository lichHocRepository;
+    private final DiemDanhRepository diemDanhRepository;
 
     /**
      * Lấy lịch dạy của giảng viên theo ngày
@@ -352,6 +359,90 @@ public class TeacherAttendanceController {
         }
     }
 
+    /**
+     * Lưu phiên điểm danh
+     */
+    @PostMapping("/save-session")
+    public ResponseEntity<ApiResponse<String>> saveAttendanceSession(
+            @Valid @RequestBody SaveAttendanceSessionDTO saveRequest,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        try {
+            String maGv = getUserLecturerCode(userDetails);
+
+            // Verify teacher owns this session
+            boolean hasPermission = teacherAttendanceService.verifySessionPermission(saveRequest.getInstanceId(), maGv);
+            if (!hasPermission) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.error("Không có quyền điểm danh cho phiên này"));
+            }
+
+            teacherAttendanceService.saveAttendanceSession(saveRequest, maGv);
+
+            return ResponseEntity.ok(ApiResponse.success("", "Lưu điểm danh thành công"));
+
+        } catch (Exception e) {
+            log.error("❌ Error saving attendance session: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Lỗi khi lưu điểm danh: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Transform frontend data format to our API format
+     */
+    private AttendanceSessionRequestDTO transformToApiFormat(Map<String, Object> frontendData, String maGv) {
+        String classId = (String) frontendData.get("classId");
+        String sessionDate = (String) frontendData.get("sessionDate");
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> attendances = (List<Map<String, Object>>) frontendData.get("attendances");
+
+        List<AttendanceSessionRequestDTO.StudentAttendanceRecord> records = attendances.stream()
+            .map(this::transformAttendanceRecord)
+            .toList();
+
+        return AttendanceSessionRequestDTO.builder()
+            .maLhp(classId)
+            .ngayDiemDanh(LocalDate.parse(sessionDate))
+            .giangVienId(maGv)
+            .sessionName("Phiên điểm danh " + sessionDate)
+            .attendanceRecords(records)
+            .build();
+    }
+
+    /**
+     * Transform individual attendance record
+     */
+    private AttendanceSessionRequestDTO.StudentAttendanceRecord transformAttendanceRecord(Map<String, Object> record) {
+        String studentId = (String) record.get("studentId");
+        String status = (String) record.get("status");
+        String note = (String) record.get("note");
+
+        TrangThaiDiemDanhEnum trangThai = mapStatusToEnum(status);
+        LocalDateTime timestamp = LocalDateTime.now();
+
+        return AttendanceSessionRequestDTO.StudentAttendanceRecord.builder()
+            .maSv(studentId)
+            .trangThai(trangThai)
+            .thoiGianVao(timestamp)
+            .ghiChu(note)
+            .build();
+    }
+
+    /**
+     * Map frontend status to enum
+     */
+    private TrangThaiDiemDanhEnum mapStatusToEnum(String status) {
+        return switch (status.toUpperCase()) {
+            case "PRESENT", "CO_MAT" -> TrangThaiDiemDanhEnum.CO_MAT;
+            case "ABSENT", "VANG_MAT" -> TrangThaiDiemDanhEnum.VANG_MAT;
+            case "LATE", "DI_TRE" -> TrangThaiDiemDanhEnum.DI_TRE;
+            case "EXCUSED", "VANG_CO_PHEP" -> TrangThaiDiemDanhEnum.VANG_CO_PHEP;
+            default -> TrangThaiDiemDanhEnum.VANG_MAT;
+        };
+    }
+
     // ===== HELPER METHODS =====
 
     /**
@@ -373,4 +464,81 @@ public class TeacherAttendanceController {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("Lỗi hệ thống: " + e.getMessage()));
     }
+
+    /**
+     * Lấy thông tin tóm tắt điểm danh của lớp
+     */
+    @GetMapping("/class-summary/{maLhp}")
+    public ResponseEntity<ApiResponse<AttendanceClassSummaryDTO>> getClassAttendanceSummary(
+            @PathVariable String maLhp,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        try {
+            String maGv = getUserLecturerCode(userDetails);
+
+            // Verify teacher owns this class
+            LopHocPhan lhp = lopHocPhanRepository.findById(maLhp).orElse(null);
+            if (lhp == null || !lhp.getMaGv().equals(maGv)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.error("Không có quyền truy cập lớp học này"));
+            }
+
+            AttendanceClassSummaryDTO summary = teacherAttendanceService.getClassAttendanceSummary(maLhp);
+            return ResponseEntity.ok(ApiResponse.success(summary, "Lấy tóm tắt điểm danh thành công"));
+
+        } catch (Exception e) {
+            log.error("❌ Error getting class attendance summary: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Lỗi khi lấy tóm tắt điểm danh: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Lấy tóm tắt điểm danh theo tuần của lớp
+     */
+    @GetMapping("/weekly-summary/{maLhp}")
+    public ResponseEntity<ApiResponse<List<WeeklyAttendanceSummaryDTO>>> getWeeklyAttendanceSummary(
+            @PathVariable String maLhp,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        try {
+            String maGv = getUserLecturerCode(userDetails);
+
+            // Verify permission
+            LopHocPhan lhp = lopHocPhanRepository.findById(maLhp).orElse(null);
+            if (lhp == null || !lhp.getMaGv().equals(maGv)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.error("Không có quyền truy cập lớp học này"));
+            }
+
+            List<WeeklyAttendanceSummaryDTO> weeklySummary = teacherAttendanceService.getWeeklyAttendanceSummary(maLhp);
+            return ResponseEntity.ok(ApiResponse.success(weeklySummary, "Lấy tóm tắt theo tuần thành công"));
+
+        } catch (Exception e) {
+            log.error("❌ Error getting weekly attendance summary: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Lỗi khi lấy tóm tắt theo tuần: " + e.getMessage()));
+        }
+    }
+    /**
+     * Lấy thông tin điểm danh theo session/instance
+     */
+    @GetMapping("/session/{instanceId}")
+    public ResponseEntity<ApiResponse<AttendanceSessionDTO>> getAttendanceSession(
+            @PathVariable String instanceId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        try {
+            String maGv = getUserLecturerCode(userDetails);
+            AttendanceSessionDTO session = teacherAttendanceService.getAttendanceSession(instanceId, maGv);
+
+            return ResponseEntity.ok(ApiResponse.success(session, "Lấy phiên điểm danh thành công"));
+
+        } catch (Exception e) {
+            log.error("❌ Error getting attendance session: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Lỗi khi lấy phiên điểm danh: " + e.getMessage()));
+        }
+    }
 }
+

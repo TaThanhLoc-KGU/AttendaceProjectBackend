@@ -522,17 +522,24 @@ public interface DiemDanhRepository extends JpaRepository<DiemDanh, Long> {
     /**
      * Thống kê điểm danh theo tuần cho giảng viên
      */
-    @Query("SELECT EXTRACT(WEEK FROM dd.ngayDiemDanh) as week, " +
-            "COUNT(CASE WHEN dd.trangThai = 'CO_MAT' THEN 1 END) as present, " +
-            "COUNT(CASE WHEN dd.trangThai = 'VANG_MAT' THEN 1 END) as absent, " +
-            "COUNT(dd) as total " +
-            "FROM DiemDanh dd " +
-            "WHERE (dd.lichHoc.lopHocPhan.giangVien.maGv = :maGv " +
-            "       OR dd.scheduleInstance.weeklySchedule.lopHocPhan.giangVien.maGv = :maGv) " +
-            "AND dd.ngayDiemDanh BETWEEN :fromDate AND :toDate " +
-            "GROUP BY EXTRACT(WEEK FROM dd.ngayDiemDanh) " +
-            "ORDER BY week")
-    List<Object[]> getWeeklyAttendanceStatsByLecturer(@Param("maGv") String maGv,
-                                                      @Param("fromDate") LocalDate fromDate,
-                                                      @Param("toDate") LocalDate toDate);
+@Query(value = "SELECT EXTRACT(WEEK FROM dd.ngay_diem_danh) as week, " +
+        "COUNT(CASE WHEN dd.trang_thai = 'CO_MAT' THEN 1 END) as present, " +
+        "COUNT(CASE WHEN dd.trang_thai = 'VANG_MAT' THEN 1 END) as absent, " +
+        "COUNT(dd.id) as total " +
+        "FROM diem_danh dd " +
+        "JOIN lop_hoc_phan lhp ON dd.ma_lhp = lhp.ma_lhp " +
+        "WHERE (lhp.ma_gv = :maGv) " +
+        "AND dd.ngay_diem_danh BETWEEN :fromDate AND :toDate " +
+        "GROUP BY EXTRACT(WEEK FROM dd.ngay_diem_danh) " +
+        "ORDER BY week",
+        nativeQuery = true)
+List<Object[]> getWeeklyAttendanceStatsByLecturer(@Param("maGv") String maGv,
+                                                  @Param("fromDate") LocalDate fromDate,
+                                                  @Param("toDate") LocalDate toDate);
+
+    List<DiemDanh> findByMaLhp(String maLhp);
+    List<DiemDanh> findByInstanceId(String instanceId);
+    List<DiemDanh> findByMaLhpAndTuanHoc(String maLhp, Integer tuanHoc);
+    void deleteByInstanceId(String instanceId);
+
 }

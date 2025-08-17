@@ -299,7 +299,7 @@
   async function loadKhoaOptions() {
     try {
       console.log('📚 Loading khoa options...');
-      const response = await fetch('/api/admin/khoa');
+      const response = await fetch('/api/khoa');
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -328,7 +328,7 @@
   async function loadLopOptions() {
     try {
       console.log('📖 Loading lop hoc phan options...');
-      const response = await fetch('/api/admin/lophocphan');
+      const response = await fetch('/api/lophocphan');
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -357,7 +357,7 @@
   async function loadOverallStats() {
     try {
       console.log('📊 Loading overall statistics...');
-      const response = await fetch('/api/admin/diemdanh/statistics');
+      const response = await fetch('/api/diemdanh/statistics');
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -391,12 +391,32 @@
       showLoading();
       console.log('🔍 Loading attendance report...');
 
-      const params = getFilterParams();
-      const url = `/api/admin/diemdanh/report?${params}`;
+      // ✅ THAY ĐỔI: Sử dụng POST method với endpoint có sẵn
+      const scope = document.getElementById('reportScope').value;
+      const fromDate = document.getElementById('fromDate').value;
+      const toDate = document.getElementById('toDate').value;
 
-      console.log('🌐 Request URL:', url);
+      // Tạo request body cho POST request
+      const requestBody = {
+        dateFrom: fromDate || '',
+        dateTo: toDate || '',
+        // Các filter khác có thể thêm vào
+        subject: null,  // Có thể filter theo môn học
+        lecturer: null, // Có thể filter theo giảng viên
+        class: scope === 'lop' ? document.getElementById('lopSelect').value : null
+      };
 
-      const response = await fetch(url);
+      // ✅ ĐỔI: từ GET /api/admin/diemdanh/report thành POST /api/diemdanh/filtered-report
+      const response = await fetch('/api/diemdanh/filtered-report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      console.log('🌐 Request URL: POST /api/diemdanh/filtered-report');
+      console.log('📤 Request body:', requestBody);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -405,32 +425,18 @@
       const data = await response.json();
       console.log('📥 Received data:', data);
 
-      if (data.success !== false) {
-        // Handle different response formats
-        let reportData = [];
-        let statistics = {};
-
-        if (Array.isArray(data)) {
-          reportData = data;
-        } else if (data.data) {
-          reportData = Array.isArray(data.data) ? data.data : data.data.records || [];
-          statistics = data.data.statistics || {};
-        } else {
-          reportData = data.records || [];
-          statistics = data.statistics || {};
-        }
-
-        AppState.reportData = reportData;
-        AppState.totalRecords = reportData.length;
+      // Xử lý dữ liệu trả về
+      if (Array.isArray(data)) {
+        AppState.reportData = data;
+        AppState.totalRecords = data.length;
         AppState.currentPage = 1; // Reset to first page
 
-        updateStatistics(statistics);
         updateTable();
 
         console.log(`✅ Loaded ${AppState.totalRecords} records`);
         showSuccess(`Đã tải ${AppState.totalRecords} bản ghi`);
       } else {
-        throw new Error(data.message || 'Không thể tải báo cáo');
+        throw new Error('Invalid data format received');
       }
     } catch (error) {
       console.error('❌ Error loading report:', error);

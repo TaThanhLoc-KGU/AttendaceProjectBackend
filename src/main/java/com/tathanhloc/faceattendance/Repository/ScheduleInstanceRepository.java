@@ -201,4 +201,5 @@ public interface ScheduleInstanceRepository extends JpaRepository<ScheduleInstan
             "ORDER BY si.tuanHoc")
     List<Object[]> getWeeklyStats(@Param("fromWeek") Integer fromWeek,
                                   @Param("toWeek") Integer toWeek);
+
 }

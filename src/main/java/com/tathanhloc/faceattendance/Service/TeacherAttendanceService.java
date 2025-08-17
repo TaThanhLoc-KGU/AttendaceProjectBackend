@@ -9,6 +9,7 @@ import com.tathanhloc.faceattendance.Repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -36,6 +37,7 @@ public class TeacherAttendanceService {
     private final GiangVienRepository giangVienRepository;
     private final HocKyService hocKyService;
     private final WeeklyScheduleService weeklyScheduleService;
+    private final DiemDanhService diemDanhService; // Add this injection
 
     /**
      * Lấy lịch dạy của giảng viên theo ngày
@@ -540,5 +542,228 @@ public class TeacherAttendanceService {
         }
 
         return dangKyHocRepository.countByMaLhpAndActive(maLhp, true);
+    }
+
+    public AttendanceClassSummaryDTO getClassAttendanceSummary(String maLhp) {
+        // Get total students in class
+        List<SinhVien> students = sinhVienRepository.findByLopHocPhan(maLhp);
+
+        // Get all attendance records for this class
+        List<DiemDanh> attendanceRecords = diemDanhRepository.findByMaLhp(maLhp);
+
+        // Get all sessions for this class
+        List<ScheduleInstance> sessions = scheduleInstanceRepository.findByLopHocPhan(maLhp);
+
+        // Calculate statistics
+        int totalStudents = students.size();
+        int totalSessions = sessions.size();
+        int completedSessions = (int) sessions.stream().filter(s ->
+                s.getTrangThai() == ScheduleInstance.TrangThaiInstance.COMPLETED).count();
+
+        int totalPresent = (int) attendanceRecords.stream().filter(a ->
+                TrangThaiDiemDanhEnum.CO_MAT.equals(a.getTrangThai())).count();
+        int totalAbsent = (int) attendanceRecords.stream().filter(a ->
+                TrangThaiDiemDanhEnum.VANG_MAT.equals(a.getTrangThai())).count();
+        int totalLate = (int) attendanceRecords.stream().filter(a ->
+                TrangThaiDiemDanhEnum.DI_TRE.equals(a.getTrangThai())).count();
+
+        double overallRate = attendanceRecords.size() > 0 ?
+                (double) (totalPresent + totalLate) / attendanceRecords.size() * 100 : 0;
+
+        return AttendanceClassSummaryDTO.builder()
+                .maLhp(maLhp)
+                .totalStudents(totalStudents)
+                .totalSessions(totalSessions)
+                .completedSessions(completedSessions)
+                .averageAttendanceRate(overallRate)
+                .overallAttendanceRate(overallRate)
+                .totalPresent(totalPresent)
+                .totalAbsent(totalAbsent)
+                .totalLate(totalLate)
+                .build();
+    }
+
+    public AttendanceSessionDTO getAttendanceSession(String instanceId, String maGv) {
+        // Get schedule instance
+        ScheduleInstance instance = scheduleInstanceRepository.findById(instanceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiên học: " + instanceId));
+
+        // Verify permission
+        if (!verifySessionPermission(instanceId, maGv)) {
+            throw new AccessDeniedException("Không có quyền truy cập phiên học này");
+        }
+
+        String maLhp = instance.getWeeklySchedule().getMaLhp();
+
+        // Get students in class
+        List<SinhVien> students = sinhVienRepository.findByLopHocPhan(maLhp);
+
+        // Get existing attendance records for this session
+        List<DiemDanh> attendanceRecords = diemDanhRepository.findByInstanceId(instanceId);
+
+        // Build student attendance list
+        List<AttendanceSessionDTO.StudentAttendanceDTO> studentAttendances = students.stream()
+                .map(student -> {
+                    DiemDanh attendance = attendanceRecords.stream()
+                            .filter(a -> a.getMaSv().equals(student.getMaSv()))
+                            .findFirst().orElse(null);
+
+                    return AttendanceSessionDTO.StudentAttendanceDTO.builder()
+                            .maSv(student.getMaSv())
+                            .hoTen(student.getHoTen())
+                            .email(student.getEmail())
+                            .trangThai(attendance != null ? attendance.getTrangThai().name() : "UNSET")
+                            .thoiGianDiemDanh(attendance != null ?
+                                    attendance.getThoiGianDiemDanh()?.format(DateTimeFormatter.ofPattern("HH:mm:ss")) : null)
+                        .ghiChu(attendance != null ? attendance.getGhiChu() : null)
+                            .build();
+                }).collect(Collectors.toList());
+
+        // Calculate summary
+        int presentCount = (int) studentAttendances.stream().filter(s -> "PRESENT".equals(s.getTrangThai())).count();
+        int absentCount = (int) studentAttendances.stream().filter(s -> "ABSENT".equals(s.getTrangThai())).count();
+        int lateCount = (int) studentAttendances.stream().filter(s -> "LATE".equals(s.getTrangThai())).count();
+        double attendanceRate = students.size() > 0 ? (double) (presentCount + lateCount) / students.size() * 100 : 0;
+
+        AttendanceSessionDTO.AttendanceSummaryDTO summary = AttendanceSessionDTO.AttendanceSummaryDTO.builder()
+                .totalStudents(students.size())
+                .presentCount(presentCount)
+                .absentCount(absentCount)
+                .lateCount(lateCount)
+                .attendanceRate(attendanceRate)
+                .build();
+
+        return AttendanceSessionDTO.builder()
+                .instanceId(instanceId)
+                .maLhp(maLhp)
+                .sessionDate(instance.getNgayCuThe())
+                .week(instance.getTuanHoc())
+                .phongHoc(instance.getTenPhongThucTe())
+                .tietBatDau(instance.getTietBatDauThucTe())
+                .tietKetThuc(instance.getTietKetThucThucTe())
+                .trangThai(instance.getTrangThai().name())
+                .summary(summary)
+                .students(studentAttendances)
+                .build();
+    }
+
+    @Transactional
+    public void saveAttendanceSession(SaveAttendanceSessionDTO saveRequest, String maGv) {
+        String instanceId = saveRequest.getInstanceId();
+
+        // Verify permission
+        if (!verifySessionPermission(instanceId, maGv)) {
+            throw new AccessDeniedException("Không có quyền điểm danh cho phiên này");
+        }
+
+        // Get schedule instance
+        ScheduleInstance instance = scheduleInstanceRepository.findById(instanceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiên học: " + instanceId));
+
+        // Delete existing attendance records for this session
+        diemDanhRepository.deleteByInstanceId(instanceId);
+
+        // Create new attendance records
+        List<DiemDanh> attendanceRecords = saveRequest.getAttendances().stream()
+                .map(att -> {
+                    DiemDanh diemDanh = new DiemDanh();
+                    diemDanh.setMaSv(att.getStudentId());
+                    diemDanh.setMaLhp(saveRequest.getClassId());
+                    diemDanh.setInstanceId(instanceId);
+                    diemDanh.setTuanHoc(saveRequest.getWeek());
+                    diemDanh.setNgayDiemDanh(saveRequest.getSessionDate());
+                    diemDanh.setTrangThai(TrangThaiDiemDanhEnum.valueOf(att.getStatus()));
+                    diemDanh.setGhiChu(att.getNote());
+                    diemDanh.setMaGv(maGv);
+
+                    if (att.getTimestamp() != null) {
+                        try {
+                            diemDanh.setThoiGianDiemDanh(LocalTime.parse(att.getTimestamp()));
+                        } catch (Exception e) {
+                            diemDanh.setThoiGianDiemDanh(LocalTime.now());
+                        }
+                    } else {
+                        diemDanh.setThoiGianDiemDanh(LocalTime.now());
+                    }
+
+                    return diemDanh;
+                }).collect(Collectors.toList());
+
+        diemDanhRepository.saveAll(attendanceRecords);
+
+        // Update schedule instance status
+        instance.setTrangThai(ScheduleInstance.TrangThaiInstance.COMPLETED);
+        scheduleInstanceRepository.save(instance);
+
+        log.info("✅ Saved attendance for session: {} with {} records", instanceId, attendanceRecords.size());
+    }
+
+    public boolean verifySessionPermission(String instanceId, String maGv) {
+        try {
+            ScheduleInstance instance = scheduleInstanceRepository.findById(instanceId).orElse(null);
+            if (instance == null) return false;
+
+            String sessionMaGv = instance.getGiangVienThucTe() != null ?
+                    instance.getGiangVienThucTe().getMaGv() :
+                    instance.getWeeklySchedule().getLopHocPhan().getMaGv();
+
+            return maGv.equals(sessionMaGv);
+        } catch (Exception e) {
+            log.error("Error verifying session permission: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    public List<WeeklyAttendanceSummaryDTO> getWeeklyAttendanceSummary(String maLhp) {
+        // Get all schedule instances for this class
+        List<ScheduleInstance> instances = scheduleInstanceRepository.findByLopHocPhan(maLhp);
+
+        // Group by week
+        Map<Integer, List<ScheduleInstance>> weeklyInstances = instances.stream()
+                .collect(Collectors.groupingBy(ScheduleInstance::getTuanHoc));
+
+        return weeklyInstances.entrySet().stream()
+                .map(entry -> {
+                    Integer week = entry.getKey();
+                    List<ScheduleInstance> weekInstances = entry.getValue();
+
+                    // Calculate weekly stats
+                    int totalSessions = weekInstances.size();
+                    int completedSessions = (int) weekInstances.stream()
+                            .filter(i -> i.getTrangThai() == ScheduleInstance.TrangThaiInstance.COMPLETED)
+                            .count();
+
+                    // Get attendance records for this week
+                    List<DiemDanh> weekAttendance = diemDanhRepository.findByMaLhpAndTuanHoc(maLhp, week);
+
+                    int presentCount = (int) weekAttendance.stream()
+                            .filter(a -> TrangThaiDiemDanhEnum.CO_MAT.equals(a.getTrangThai())).count();
+                    int absentCount = (int) weekAttendance.stream()
+                            .filter(a -> TrangThaiDiemDanhEnum.VANG_MAT.equals(a.getTrangThai())).count();
+                    int lateCount = (int) weekAttendance.stream()
+                            .filter(a -> TrangThaiDiemDanhEnum.DI_TRE.equals(a.getTrangThai())).count();
+
+                    double attendanceRate = weekAttendance.size() > 0 ?
+                            (double) (presentCount + lateCount) / weekAttendance.size() * 100 : 0;
+
+                    LocalDate weekStartDate = weekInstances.stream()
+                            .map(ScheduleInstance::getNgayCuThe)
+                            .filter(Objects::nonNull)
+                            .min(LocalDate::compareTo)
+                            .orElse(null);
+
+                    return WeeklyAttendanceSummaryDTO.builder()
+                            .week(week)
+                            .weekStartDate(weekStartDate)
+                            .totalSessions(totalSessions)
+                            .completedSessions(completedSessions)
+                            .attendanceRate(attendanceRate)
+                            .presentCount(presentCount)
+                            .absentCount(absentCount)
+                            .lateCount(lateCount)
+                            .build();
+                })
+                .sorted(Comparator.comparing(WeeklyAttendanceSummaryDTO::getWeek))
+                .collect(Collectors.toList());
     }
 }

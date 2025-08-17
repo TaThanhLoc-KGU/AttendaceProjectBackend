@@ -3,306 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lịch giảng dạy - Face Attendance</title>
+    <title>Lịch Giảng Dạy - Hệ Thống Điểm Danh</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
     <link th:href="@{/css/sidebar.css}" rel="stylesheet">
 
     <style>
-        :root {
-            --primary-color: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --secondary-color: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --success-color: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --warning-color: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            --danger-color: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            --border-radius: 15px;
-            --box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        .schedule-container {
+            background: #f8f9fa;
             min-height: 100vh;
         }
 
-        .main-content {
-            padding: 0;
-            background: transparent;
-        }
-
-        /* ===== HEADER STYLES ===== */
-        .page-header {
-            background: var(--primary-color);
-            margin: 2rem;
-            border-radius: var(--border-radius);
+        .header-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 2rem;
-            box-shadow: var(--box-shadow);
+            padding: 2rem 0;
+            margin-bottom: 2rem;
         }
 
-        .page-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .page-subtitle {
-            opacity: 0.9;
-            font-size: 1.1rem;
-        }
-
-        /* ===== CONTROLS STYLES ===== */
-        .controls-section {
+        .view-toggle {
             background: white;
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            margin: 0 2rem 2rem 2rem;
-            box-shadow: var(--box-shadow);
-        }
-
-        .view-mode-toggle {
-            display: inline-flex;
-            background: #f8f9fa;
             border-radius: 12px;
-            padding: 0.25rem;
-            margin-bottom: 1rem;
+            padding: 0.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        .view-mode-toggle button {
-            padding: 0.75rem 1.5rem;
+        .view-toggle .btn {
             border: none;
-            background: transparent;
+            padding: 0.75rem 1.5rem;
             border-radius: 8px;
-            font-weight: 600;
+            font-weight: 500;
             transition: all 0.3s ease;
-            color: #6c757d;
         }
 
-        .view-mode-toggle button.active {
-            background: var(--primary-color);
+        .view-toggle .btn.active {
+            background: #667eea;
             color: white;
             box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
         }
 
-        .view-mode-toggle button:hover:not(.active) {
-            background: #e9ecef;
+        .week-navigation {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+
+        .week-title {
+            font-size: 1.25rem;
+            font-weight: 600;
             color: #495057;
         }
 
-        /* ===== SCHEDULE CALENDAR STYLES ===== */
-        .schedule-calendar {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: 80px repeat(7, 1fr);
+            gap: 1px;
+            background: #dee2e6;
+            border-radius: 12px;
             overflow: hidden;
-            margin: 0 2rem 2rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
 
-        .calendar-header {
-            background: var(--primary-color);
-            color: white;
-            padding: 1.5rem;
-            text-align: center;
-            position: relative;
-        }
-
-        .calendar-controls {
-            position: absolute;
-            right: 1.5rem;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-
-        .calendar-nav-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            margin: 0 0.25rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .calendar-nav-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.1);
-        }
-
-        .calendar-grid {
-            display: flex;
-            min-height: 720px;
-        }
-
-        .time-column {
-            background: #f8f9fa;
-            border-right: 2px solid #e9ecef;
-            min-width: 120px;
-        }
-
-        .time-slot {
-            border-bottom: 1px solid #e9ecef;
-            padding: 0.75rem;
-            font-size: 0.875rem;
-            text-align: center;
-            height: 60px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            font-weight: 500;
-        }
-
-        .day-column {
-            border-right: 1px solid #e9ecef;
-            min-height: 720px;
-            position: relative;
-            flex: 1;
-            min-width: 140px;
-        }
-
-        .day-header {
+        .schedule-header {
             background: #495057;
             color: white;
-            padding: 1.5rem 1rem;
+            padding: 1rem;
             text-align: center;
             font-weight: 600;
-            font-size: 1rem;
-            border-bottom: 2px solid #dee2e6;
-            position: relative;
-            min-height: 100px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            font-size: 0.9rem;
         }
 
-        .day-content {
-            position: relative;
-            height: 720px;
-            background: #fafafa;
-        }
-
-        /* ===== SCHEDULE ITEMS ===== */
-        .schedule-item {
-            position: absolute;
-            background: var(--primary-color);
+        .period-header {
+            background: #6c757d;
             color: white;
-            border-radius: 10px;
-            padding: 10px 14px;
-            margin: 3px;
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-orientation: mixed;
+        }
+
+        .schedule-cell {
+            background: white;
+            min-height: 60px;
+            padding: 0.25rem;
+            position: relative;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .schedule-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.4rem;
+            border-radius: 4px;
+            margin-bottom: 0.25rem;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 0.85rem;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.2);
-            z-index: 10;
-            left: 6px;
-            right: 6px;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.2);
-            min-height: 54px; /* Tối thiểu cho 1 tiết (60px - 6px margin) */
-        }
-
-        .schedule-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-            z-index: 15;
-        }
-
-        .schedule-item .title {
-            font-weight: 600;
-            font-size: 0.9rem;
-            margin-bottom: 4px;
+            font-size: 0.75rem;
             line-height: 1.2;
         }
 
-        .schedule-item .info {
-            font-size: 0.75rem;
+        .schedule-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        .schedule-item .subject {
+            font-weight: 600;
+            margin-bottom: 0.1rem;
+        }
+
+        .schedule-item .class-room {
+            font-size: 0.65rem;
             opacity: 0.9;
-            line-height: 1.1;
         }
 
-        .schedule-item .room {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 2px 6px;
-            border-radius: 8px;
-            display: inline-block;
-            margin-top: 4px;
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-
-        /* ===== TABLE VIEW STYLES ===== */
-        .admin-table-wrapper {
+        .table-view {
             background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
+            border-radius: 12px;
             overflow: hidden;
-            margin: 0 2rem 2rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
 
-        .admin-table-header {
-            background: var(--primary-color);
+        .table-view .table th {
+            background: #495057;
             color: white;
-            padding: 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .admin-table-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .table-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .list-view-table {
-            margin: 0;
-        }
-
-        .list-view-table thead th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #495057;
-            padding: 1rem;
             border: none;
-            text-align: center;
-        }
-
-        .list-view-table tbody td {
             padding: 1rem;
-            text-align: center;
-            border-bottom: 1px solid #f1f3f4;
+            font-weight: 600;
+        }
+
+        .table-view .table td {
+            padding: 1rem;
             vertical-align: middle;
+            border-color: #dee2e6;
         }
 
-        .list-view-table .schedule-row {
+        .schedule-row:hover {
+            background-color: #f8f9fa;
             cursor: pointer;
-            transition: all 0.3s ease;
-            border-left: 3px solid transparent;
         }
 
-        .list-view-table .schedule-row:hover {
-            background-color: rgba(102, 126, 234, 0.08);
-            transform: translateX(3px);
-            border-left-color: #667eea;
-        }
-
-        /* ===== STATS CARDS ===== */
-        .stats-overview {
+        .stats-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
-            margin: 0 2rem 2rem 2rem;
+            margin-bottom: 2rem;
         }
 
         .stat-card {
@@ -310,74 +162,54 @@
             border-radius: 12px;
             padding: 1.5rem;
             text-align: center;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            border-left: 4px solid #667eea;
-            transition: all 0.3s ease;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
         }
 
         .stat-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
 
         .stat-number {
             font-size: 2rem;
             font-weight: 700;
             color: #667eea;
-            margin-bottom: 0.5rem;
         }
 
-        .stat-label {
-            color: #6c757d;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        /* ===== BADGES ===== */
-        .subject-badge {
-            background: var(--success-color);
-            color: white;
-            padding: 0.4rem 0.8rem;
-            border-radius: 15px;
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-        .room-badge {
-            background: var(--warning-color);
-            color: white;
-            padding: 0.3rem 0.6rem;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.8rem;
-        }
-
-        .semester-badge {
-            background: var(--secondary-color);
-            color: white;
-            padding: 0.25rem 0.6rem;
-            border-radius: 10px;
-            font-weight: 500;
-            font-size: 0.75rem;
-        }
-
-        /* ===== LOADING & EMPTY STATES ===== */
-        .loading-state {
-            text-align: center;
-            padding: 3rem;
-            color: #6c757d;
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
         }
 
         .loading-spinner {
-            width: 3rem;
-            height: 3rem;
-            margin: 0 auto 1rem;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .empty-state {
             text-align: center;
             padding: 3rem;
             color: #6c757d;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
         }
 
         .empty-state i {
@@ -386,456 +218,204 @@
             opacity: 0.5;
         }
 
-        /* ===== RESPONSIVE ===== */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification.success { background: #28a745; }
+        .notification.error { background: #dc3545; }
+        .notification.warning { background: #ffc107; color: #212529; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .time-label {
+            font-size: 0.7rem;
+            color: #6c757d;
+            text-align: center;
+            padding: 0.25rem;
+        }
+
         @media (max-width: 768px) {
-            .page-header,
-            .controls-section,
-            .schedule-calendar,
-            .admin-table-wrapper {
-                margin: 1rem;
+            .schedule-grid {
+                grid-template-columns: 60px repeat(7, 1fr);
             }
 
-            .page-title {
-                font-size: 2rem;
-            }
-
-            .stats-overview {
-                grid-template-columns: 1fr;
-                margin: 0 1rem 1rem 1rem;
-            }
-
-            .day-header {
-                padding: 1.2rem 0.5rem;
-                min-height: 70px;
-                font-size: 0.9rem;
+            .period-header {
+                font-size: 0.7rem;
+                padding: 0.5rem 0.25rem;
             }
 
             .schedule-item {
-                font-size: 0.75rem;
-                padding: 8px 10px;
-                left: 4px;
-                right: 4px;
+                font-size: 0.65rem;
+                padding: 0.3rem;
             }
 
-            .schedule-item .title {
-                font-size: 0.8rem;
-            }
-
-            .schedule-item .info {
-                font-size: 0.7rem;
-            }
-
-            .list-view-table {
-                font-size: 0.9rem;
-            }
-
-            .list-view-table thead th,
-            .list-view-table tbody td {
-                padding: 0.75rem 0.5rem;
-            }
-        }
-        /* Modal Styles */
-        .info-card {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 1.5rem;
-            height: 100%;
-            border: 1px solid #e9ecef;
-        }
-
-        .info-title {
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid #e9ecef;
-        }
-
-        .info-content {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .info-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem 0;
-        }
-
-        .info-label {
-            font-weight: 500;
-            color: #6c757d;
-            min-width: 100px;
-        }
-
-        .info-value {
-            font-weight: 600;
-            color: #495057;
-            text-align: right;
-            background: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 6px;
-            border: 1px solid #dee2e6;
-            min-width: 100px;
-        }
-
-        .modal-header {
-            border-radius: 0;
-        }
-
-        .modal-body {
-            padding: 2rem;
-        }
-
-        @media (max-width: 768px) {
-            .info-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.25rem;
-            }
-
-            .info-label {
-                min-width: auto;
-            }
-
-            .info-value {
-                width: 100%;
-                text-align: left;
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
 </head>
+
 <body>
-<div class="main-wrapper">
-    <!-- Include Sidebar Component -->
-    <div th:replace="~{components/sidebar :: sidebar}"></div>
+<!-- Sidebar -->
+<div th:replace="~{components/sidebar :: sidebar}"></div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Page Header -->
-        <div class="page-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="page-title">
-                        <i class="fas fa-calendar-check me-3"></i>Lịch giảng dạy
+<!-- Main Content -->
+<div class="main-content">
+    <!-- Header Section -->
+    <div class="header-section">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-0">
+                        <i class="fas fa-calendar-alt me-3"></i>
+                        Lịch Giảng Dạy
                     </h1>
-                    <p class="page-subtitle mb-0">
-                        Xem và quản lý lịch giảng dạy của bạn theo tuần hoặc danh sách
-                    </p>
+                    <p class="mt-2 mb-0 opacity-75">Xem và quản lý lịch giảng dạy của bạn</p>
                 </div>
-                <div>
-                    <button class="btn btn-light" onclick="exportSchedule()">
-                        <i class="fas fa-download me-2"></i>Xuất lịch
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Error Display -->
-        <div th:if="${error}" class="alert alert-danger mx-4">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            <span th:text="${error}"></span>
-        </div>
-
-        <!-- Controls Section -->
-        <div class="controls-section">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Chế độ xem:</label>
-                    <div class="view-mode-toggle">
-                        <button type="button" class="active" data-view="calendar" onclick="switchView('calendar')">
-                            <i class="fas fa-calendar me-2"></i>Lịch tuần
+                <div class="col-md-6 text-md-end">
+                    <div class="view-toggle">
+                        <button class="btn active" data-view="week" onclick="switchView('week')">
+                            <i class="fas fa-calendar-week me-2"></i>Tuần
                         </button>
-                        <button type="button" data-view="list" onclick="switchView('list')">
-                            <i class="fas fa-list me-2"></i>Danh sách
-                        </button>
-                    </div>
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label fw-bold">Học kỳ:</label>
-                    <select class="form-select" id="semesterFilter">
-                        <option value="">Tất cả</option>
-                        <option value="1">Học kỳ 1</option>
-                        <option value="2">Học kỳ 2</option>
-                        <option value="3">Học kỳ hè</option>
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label fw-bold">Năm học:</label>
-                    <select class="form-select" id="yearFilter">
-                        <option value="">Tất cả</option>
-                        <option value="2024-2025" selected>2024-2025</option>
-                        <option value="2023-2024">2023-2024</option>
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label fw-bold">Môn học:</label>
-                    <select class="form-select" id="subjectFilter">
-                        <option value="">Tất cả môn</option>
-                        <!-- Will be populated by JavaScript -->
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-primary" onclick="loadScheduleData()">
-                            <i class="fas fa-search me-2"></i>Lọc
-                        </button>
-                        <button class="btn btn-outline-secondary" onclick="resetFilters()">
-                            <i class="fas fa-undo me-2"></i>Reset
-                        </button>
-                        <button class="btn btn-success" onclick="refreshData()">
-                            <i class="fas fa-sync-alt me-2"></i>Làm mới
+                        <button class="btn" data-view="table" onclick="switchView('table')">
+                            <i class="fas fa-table me-2"></i>Bảng
                         </button>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
+    <div class="container-fluid">
         <!-- Statistics Cards -->
-        <div class="stats-overview" id="statsOverview">
-            <!-- Will be populated by JavaScript -->
+        <div class="stats-row" id="statsRow">
+            <div class="stat-card">
+                <div class="stat-number" id="totalToday">0</div>
+                <div class="text-muted">Lớp hôm nay</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalWeek">0</div>
+                <div class="text-muted">Lớp tuần này</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalSubjects">0</div>
+                <div class="text-muted">Môn giảng dạy</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="activePeriods">0</div>
+                <div class="text-muted">Tiết trong tuần</div>
+            </div>
         </div>
 
-        <!-- Calendar View -->
-        <div id="calendarViewContainer" class="schedule-calendar">
-            <div class="calendar-header">
-                <h4 class="mb-1" id="calendarTitle">Lịch tuần hiện tại</h4>
-                <div class="calendar-controls">
-                    <button class="calendar-nav-btn" onclick="previousWeek()">
-                        <i class="fas fa-chevron-left"></i>
+        <!-- Week Navigation -->
+        <div class="week-navigation">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <button class="btn btn-outline-secondary" onclick="previousWeek()">
+                        <i class="fas fa-chevron-left me-2"></i>Tuần trước
                     </button>
-                    <button class="calendar-nav-btn" onclick="currentWeek()">
-                        <i class="fas fa-home"></i>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="week-title" id="weekTitle">Tuần hiện tại</div>
+                    <small class="text-muted" id="weekDate">Loading...</small>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-outline-secondary me-2" onclick="currentWeek()">
+                        <i class="fas fa-home me-2"></i>Hiện tại
                     </button>
-                    <button class="calendar-nav-btn" onclick="nextWeek()">
-                        <i class="fas fa-chevron-right"></i>
+                    <button class="btn btn-outline-secondary" onclick="nextWeek()">
+                        Tuần sau<i class="fas fa-chevron-right ms-2"></i>
                     </button>
                 </div>
             </div>
-            <div class="calendar-grid">
-                <!-- Time Column -->
-                <!-- Time Column -->
-                <div class="time-column">
-                    <div class="day-header">Tiết học</div>
-                    <div class="time-slot">Tiết 1<br><small>7:00-7:50</small></div>
-                    <div class="time-slot">Tiết 2<br><small>7:55-8:45</small></div>
-                    <div class="time-slot">Tiết 3<br><small>8:50-9:40</small></div>
-                    <div class="time-slot">Tiết 4<br><small>9:45-10:35</small></div>
-                    <div class="time-slot">Tiết 5<br><small>10:40-11:30</small></div>
-                    <div class="time-slot">Tiết 6<br><small>13:00-13:50</small></div>
-                    <div class="time-slot">Tiết 7<br><small>13:55-14:45</small></div>
-                    <div class="time-slot">Tiết 8<br><small>14:50-15:40</small></div>
-                    <div class="time-slot">Tiết 9<br><small>15:45-16:35</small></div>
-                    <div class="time-slot">Tiết 10<br><small>16:40-17:30</small></div>
-                    <div class="time-slot">Tiết 11<br><small>18:00-18:50</small></div>
-                    <div class="time-slot">Tiết 12<br><small>18:55-19:45</small></div>
-                </div>
-
-                <!-- Day Columns -->
-                <div class="day-column" data-day="2">
-                    <div class="day-header">Thứ 2</div>
-                    <div class="day-content" id="day-2"></div>
-                </div>
-                <div class="day-column" data-day="3">
-                    <div class="day-header">Thứ 3</div>
-                    <div class="day-content" id="day-3"></div>
-                </div>
-                <div class="day-column" data-day="4">
-                    <div class="day-header">Thứ 4</div>
-                    <div class="day-content" id="day-4"></div>
-                </div>
-                <div class="day-column" data-day="5">
-                    <div class="day-header">Thứ 5</div>
-                    <div class="day-content" id="day-5"></div>
-                </div>
-                <div class="day-column" data-day="6">
-                    <div class="day-header">Thứ 6</div>
-                    <div class="day-content" id="day-6"></div>
-                </div>
-                <div class="day-column" data-day="7">
-                    <div class="day-header">Thứ 7</div>
-                    <div class="day-content" id="day-7"></div>
-                </div>
-                <div class="day-column" data-day="8">
-                    <div class="day-header">Chủ nhật</div>
-                    <div class="day-content" id="day-8"></div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button class="btn btn-success me-2" onclick="refreshData()">
+                        <i class="fas fa-sync me-2"></i>Làm mới
+                    </button>
+                    <button class="btn btn-info" onclick="exportSchedule()">
+                        <i class="fas fa-download me-2"></i>Xuất Excel
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- List View -->
-        <div id="listViewContainer" class="admin-table-wrapper" style="display: none;">
-            <div class="admin-table-header">
-                <h5 class="admin-table-title">
-                    <i class="fas fa-list me-2"></i>Danh sách lịch học
-                </h5>
-                <div class="table-actions">
-                    <button class="btn btn-light btn-sm me-2" onclick="refreshData()">
-                        <i class="fas fa-sync-alt me-1"></i>Làm mới
-                    </button>
-                    <button class="btn btn-light btn-sm" onclick="exportToExcel()">
-                        <i class="fas fa-file-excel me-1"></i>Xuất Excel
-                    </button>
-                </div>
+        <!-- Week View -->
+        <div id="weekView" class="view-content">
+            <div class="schedule-grid" id="scheduleGrid">
+                <!-- Grid will be generated dynamically -->
             </div>
-            <div class="table-responsive">
-                <table class="table list-view-table mb-0">
+        </div>
+
+        <!-- Table View -->
+        <div id="tableView" class="view-content" style="display: none;">
+            <div class="table-view">
+                <table class="table table-hover mb-0" id="scheduleTable">
                     <thead>
                     <tr>
-                        <th width="80">STT</th>
-                        <th width="100">Thứ</th>
-                        <th width="120">Tiết học</th>
+                        <th width="50">STT</th>
                         <th>Môn học</th>
-                        <th width="100">Lớp</th>
-                        <th width="100">Phòng</th>
-                        <th width="80">Số tiết</th>
-                        <th width="120">Học kỳ</th>
-                        <th width="100">Thao tác</th>
+                        <th>Lớp</th>
+                        <th>Thời gian</th>
+                        <th>Phòng</th>
+                        <th>Học kỳ</th>
+                        <th width="150">Thao tác</th>
                     </tr>
                     </thead>
                     <tbody id="scheduleTableBody">
-                    <!-- Will be populated by JavaScript -->
+                    <!-- Table rows will be generated dynamically -->
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Loading States -->
-        <div id="loadingState" class="loading-state" style="display: none;">
-            <div class="spinner-border loading-spinner text-primary" role="status">
-                <span class="visually-hidden">Đang tải...</span>
-            </div>
-            <p>Đang tải lịch giảng dạy...</p>
-        </div>
-
         <!-- Empty State -->
-        <div id="emptyState" class="empty-state" style="display: none;">
+        <div class="empty-state" id="emptyState" style="display: none;">
             <i class="fas fa-calendar-times"></i>
-            <h4>Không có lịch giảng dạy</h4>
-            <p>Không tìm thấy lịch học nào với bộ lọc hiện tại</p>
+            <h3>Không có lịch giảng dạy</h3>
+            <p>Hiện tại bạn chưa có lịch giảng dạy nào trong tuần này.</p>
+            <button class="btn btn-primary" onclick="currentWeek()">
+                <i class="fas fa-home me-2"></i>Về tuần hiện tại
+            </button>
         </div>
     </div>
 </div>
 
 <!-- Schedule Details Modal -->
-<div class="modal fade" id="scheduleDetailsModal" tabindex="-1">
+<div class="modal fade" id="scheduleModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header" style="background: var(--primary-color); color: white;">
+            <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="fas fa-calendar-alt me-2"></i>Chi tiết lịch giảng dạy
+                    <i class="fas fa-info-circle me-2"></i>
+                    Chi tiết lịch học
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div class="row g-4">
-                    <!-- Subject Info -->
-                    <div class="col-md-6">
-                        <div class="info-card">
-                            <h6 class="info-title">
-                                <i class="fas fa-book me-2 text-primary"></i>Thông tin môn học
-                            </h6>
-                            <div class="info-content">
-                                <div class="info-item">
-                                    <span class="info-label">Tên môn học:</span>
-                                    <span class="info-value" id="modalSubjectName">N/A</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Mã môn học:</span>
-                                    <span class="info-value" id="modalSubjectCode">N/A</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Mã lớp:</span>
-                                    <span class="info-value" id="modalClassCode">N/A</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Nhóm:</span>
-                                    <span class="info-value" id="modalGroup">N/A</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Schedule Info -->
-                    <div class="col-md-6">
-                        <div class="info-card">
-                            <h6 class="info-title">
-                                <i class="fas fa-clock me-2 text-success"></i>Thông tin lịch học
-                            </h6>
-                            <div class="info-content">
-                                <div class="info-item">
-                                    <span class="info-label">Thứ:</span>
-                                    <span class="info-value" id="modalDay">N/A</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Tiết học:</span>
-                                    <span class="info-value" id="modalPeriods">N/A</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Số tiết:</span>
-                                    <span class="info-value" id="modalNumPeriods">N/A</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Thời gian:</span>
-                                    <span class="info-value" id="modalTime">N/A</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Location Info -->
-                    <div class="col-md-6">
-                        <div class="info-card">
-                            <h6 class="info-title">
-                                <i class="fas fa-map-marker-alt me-2 text-warning"></i>Địa điểm
-                            </h6>
-                            <div class="info-content">
-                                <div class="info-item">
-                                    <span class="info-label">Phòng học:</span>
-                                    <span class="info-value" id="modalRoom">N/A</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Mã phòng:</span>
-                                    <span class="info-value" id="modalRoomCode">N/A</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Academic Info -->
-                    <div class="col-md-6">
-                        <div class="info-card">
-                            <h6 class="info-title">
-                                <i class="fas fa-graduation-cap me-2 text-info"></i>Học kỳ
-                            </h6>
-                            <div class="info-content">
-                                <div class="info-item">
-                                    <span class="info-label">Học kỳ:</span>
-                                    <span class="info-value" id="modalSemester">N/A</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Năm học:</span>
-                                    <span class="info-value" id="modalAcademicYear">N/A</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="modal-body" id="scheduleModalBody">
+                <!-- Content will be populated dynamically -->
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>Đóng
                 </button>
-                <button type="button" class="btn btn-primary" id="viewClassDetailsBtn">
-                    <i class="fas fa-eye me-2"></i>Xem chi tiết lớp
+                <button type="button" class="btn btn-primary" id="viewClassBtn">
+                    <i class="fas fa-eye me-2"></i>Xem lớp học
                 </button>
-                <button type="button" class="btn btn-success" onclick="openAttendanceFromModal()">
+                <button type="button" class="btn btn-success" id="attendanceBtn">
                     <i class="fas fa-user-check me-2"></i>Điểm danh
                 </button>
             </div>
@@ -843,806 +423,890 @@
     </div>
 </div>
 
-<!-- Hidden Data -->
-<input type="hidden" th:value="${maGv}" id="hiddenMaGv">
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay" style="display: none;">
+    <div class="loading-spinner"></div>
+</div>
 
-<!-- Bootstrap JS -->
+<!-- Hidden Data -->
+<input type="hidden" th:value="${maGv}" id="lecturerCode">
+
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script th:src="@{/js/sidebar.js}"></script>
 
 <script>
     // Global State
-    const globalState = {
-        currentViewMode: 'calendar',
-        scheduleData: [],
-        filteredData: [],
-        currentWeek: 0,
-        maGv: document.getElementById('hiddenMaGv')?.value || '',
+    const AppState = {
+        currentView: 'week',
+        currentWeek: 1, // Tuần học kỳ (1-20), không phải week number
+        lecturerCode: document.getElementById('lecturerCode')?.value || '',
+        weekData: {},
+        allSchedules: [],
+        statistics: {},
         lastRefresh: null
     };
 
-    // Initialize
+    // Time slots configuration
+    const TIME_SLOTS = {
+        1: { start: '07:00', end: '07:50' },
+        2: { start: '07:55', end: '08:45' },
+        3: { start: '08:50', end: '09:40' },
+        4: { start: '09:45', end: '10:35' },
+        5: { start: '10:40', end: '11:30' },
+        6: { start: '13:00', end: '13:50' },
+        7: { start: '13:55', end: '14:45' },
+        8: { start: '14:50', end: '15:40' },
+        9: { start: '15:45', end: '16:35' },
+        10: { start: '16:40', end: '17:30' },
+        11: { start: '18:00', end: '18:50' },
+        12: { start: '18:55', end: '19:45' }
+    };
+
+    const DAY_NAMES = {
+        2: 'Thứ 2',
+        3: 'Thứ 3',
+        4: 'Thứ 4',
+        5: 'Thứ 5',
+        6: 'Thứ 6',
+        7: 'Thứ 7',
+        8: 'Chủ nhật'
+    };
+
+    // Utility Functions
+    const Utils = {
+        showLoading(show = true) {
+            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        },
+
+        showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => notification.remove(), 5000);
+        },
+
+        formatDate(date) {
+            return new Date(date).toLocaleDateString('vi-VN');
+        },
+
+        formatTime(period) {
+            return TIME_SLOTS[period] ? `${TIME_SLOTS[period].start}-${TIME_SLOTS[period].end}` : 'N/A';
+        },
+
+        getDayName(dayNumber) {
+            return DAY_NAMES[dayNumber] || 'N/A';
+        },
+
+        getPeriodRange(start, count) {
+            return `Tiết ${start}-${start + count - 1}`;
+        }
+    };
+
+    // Initialize Application
     document.addEventListener('DOMContentLoaded', function() {
-        initializeApplication();
+        console.log('🚀 Initializing Teaching Schedule Application (Week-based)');
+        console.log('👨‍🏫 Lecturer Code:', AppState.lecturerCode);
+
+        initializeApp();
     });
 
-    function initializeApplication() {
-        console.log('🚀 Initializing Teaching Schedule Application');
-        console.log('👨‍🏫 Lecturer ID:', globalState.maGv);
-
-        bindEventListeners();
-        loadScheduleData();
-    }
-
-    function bindEventListeners() {
-        // Filter changes
-        document.getElementById('semesterFilter').addEventListener('change', loadScheduleData);
-        document.getElementById('yearFilter').addEventListener('change', loadScheduleData);
-        document.getElementById('subjectFilter').addEventListener('change', loadScheduleData);
-    }
-
-    async function loadScheduleData() {
+    async function initializeApp() {
         try {
-            showLoading(true);
-            showEmptyState(false);
+            Utils.showLoading(true);
 
-            const semester = document.getElementById('semesterFilter').value;
-            const year = document.getElementById('yearFilter').value;
-            const subject = document.getElementById('subjectFilter').value;
+            // Set current week to academic week 1
+            AppState.currentWeek = getCurrentAcademicWeek();
 
-            // Build API URL
-            let url = `/api/lichhoc/by-giangvien/${globalState.maGv}`;
-            const params = new URLSearchParams();
-            if (semester) params.append('semester', semester);
-            if (year) params.append('year', year);
-            if (subject) params.append('subject', subject);
-            if (params.toString()) url += '?' + params.toString();
+            updateWeekDisplay();
+            await loadWeekData();
+            Utils.showNotification('Đã tải lịch giảng dạy thành công', 'success');
+        } catch (error) {
+            console.error('❌ Error initializing app:', error);
+            Utils.showNotification('Lỗi khi tải dữ liệu: ' + error.message, 'error');
+            showEmptyState();
+        } finally {
+            Utils.showLoading(false);
+        }
+    }
 
-            console.log('📡 Loading schedule data from:', url);
+    // Get current academic week (1-20)
+    function getCurrentAcademicWeek() {
+        // For now, return week 1. This should be calculated based on current semester
+        // TODO: Get from current semester configuration
+        return 1;
+    }
 
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
+    // Data Loading Functions
+    async function loadWeekData() {
+        try {
+            console.log(`📅 Loading week-based data (tuanHoc: ${AppState.currentWeek})...`);
+            console.log(`👨‍🏫 Lecturer code: ${AppState.lecturerCode}`);
 
-            globalState.scheduleData = await response.json();
-            globalState.filteredData = [...globalState.scheduleData];
+            // Method 1: Try getting all teacher schedules first (more reliable)
+            await loadTeacherSchedules();
 
-            console.log('✅ Loaded', globalState.scheduleData.length, 'schedule items');
+            // Filter by current week
+            filterDataByWeek();
 
-            // Debug: Log structure of first item
-            if (globalState.scheduleData.length > 0) {
-                console.log('📋 First schedule item:', globalState.scheduleData[0]);
-                console.log('🔤 Available fields:', Object.keys(globalState.scheduleData[0]));
-            }
-
-            // Populate subject filter
-            populateSubjectFilter();
-
-            // Render statistics
-            renderStatistics();
-
-            // Render current view
+            // Update displays
             renderCurrentView();
-
-            globalState.lastRefresh = new Date();
+            updateStatistics();
 
         } catch (error) {
-            console.error('❌ Error loading schedule:', error);
-            showError('Không thể tải lịch giảng dạy: ' + error.message);
-        } finally {
-            showLoading(false);
+            console.error('❌ Error loading week data:', error);
+            AppState.weekData = { events: [], totalEvents: 0 };
+            showEmptyState();
+            throw error;
         }
     }
 
-    function populateSubjectFilter() {
-        const subjectFilter = document.getElementById('subjectFilter');
-        const currentValue = subjectFilter.value;
+    async function loadTeacherSchedules() {
+        try {
+            console.log(`📡 Loading all schedules for teacher: ${AppState.lecturerCode}`);
 
-        // Get unique subjects
-        const subjects = [...new Set(globalState.scheduleData.map(item => ({
-            maMh: item.maMh,
-            tenMonHoc: item.tenMonHoc
-        })).filter(s => s.maMh))];
+            const url = `/api/weekly-schedule/by-teacher/${AppState.lecturerCode}`;
+            console.log(`🔗 Teacher schedule URL: ${url}`);
 
-        // Clear existing options (except "Tất cả môn")
-        subjectFilter.innerHTML = '<option value="">Tất cả môn</option>';
+            const response = await fetch(url);
+            console.log(`📡 Response status: ${response.status}`);
 
-        // Add subject options
-        subjects.forEach(subject => {
-            const option = document.createElement('option');
-            option.value = subject.maMh;
-            option.textContent = `${subject.tenMonHoc} (${subject.maMh})`;
-            subjectFilter.appendChild(option);
+            if (!response.ok) {
+                console.warn(`⚠️ Teacher API failed, trying week-based API...`);
+                await loadWeekSchedules();
+                return;
+            }
+
+            const teacherSchedules = await response.json();
+            console.log('📥 Raw teacher schedules received:', teacherSchedules);
+
+            if (!Array.isArray(teacherSchedules) || teacherSchedules.length === 0) {
+                console.log('📊 No schedules found for teacher');
+                AppState.allSchedules = [];
+                return;
+            }
+
+            // Convert ScheduleInstanceDTO to basic event format
+            const basicEvents = teacherSchedules.map((schedule, index) => {
+                try {
+                    return convertInstanceToEvent(schedule);
+                } catch (error) {
+                    console.error(`❌ Error converting schedule ${index}:`, error, schedule);
+                    return null;
+                }
+            }).filter(Boolean);
+
+            console.log('📊 Basic events converted:', basicEvents.length);
+
+            // Enrich with template data để lấy thông tin môn học
+            console.log('🔄 Enriching events with template data...');
+            AppState.allSchedules = await enrichEventsWithTemplateData(basicEvents);
+
+            console.log('✅ Final enriched schedules:', AppState.allSchedules.length);
+            console.log('📋 Sample enriched schedule:', AppState.allSchedules[0]);
+
+        } catch (error) {
+            console.error('❌ Error loading teacher schedules:', error);
+            await loadWeekSchedules();
+        }
+    }
+
+    async function loadWeekSchedules() {
+        try {
+            console.log(`📡 Loading week schedules for tuanHoc: ${AppState.currentWeek}`);
+
+            const url = `/api/weekly-schedule/by-week/${AppState.currentWeek}`;
+            console.log(`🔗 Week schedule URL: ${url}`);
+
+            const response = await fetch(url);
+            console.log(`📡 Response status: ${response.status}`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const weekSchedules = await response.json();
+            console.log('📥 Week schedules received:', weekSchedules);
+
+            // Filter for this lecturer and convert to events
+            const lecturerSchedules = Array.isArray(weekSchedules)
+                ? weekSchedules.filter(instance => {
+                    // Check if this instance belongs to lecturer
+                    const maGv = getTeacherCodeFromInstance(instance);
+                    return maGv === AppState.lecturerCode;
+                })
+                : [];
+
+            AppState.allSchedules = lecturerSchedules.map(convertInstanceToEvent);
+            console.log('✅ Filtered and converted week schedules:', AppState.allSchedules);
+
+        } catch (error) {
+            console.error('❌ Error loading week schedules:', error);
+            AppState.allSchedules = [];
+        }
+    }
+
+    function filterDataByWeek() {
+        console.log(`🔍 Filtering data for week ${AppState.currentWeek}`);
+        console.log(`📊 All schedules available:`, AppState.allSchedules.length);
+
+        if (!AppState.allSchedules || AppState.allSchedules.length === 0) {
+            console.log('📊 No schedules to filter');
+            AppState.weekData = { events: [], totalEvents: 0, rawInstances: [] };
+            return;
+        }
+
+        // Log available weeks for debugging
+        const availableWeeks = [...new Set(AppState.allSchedules.map(s => s.weekNumber).filter(Boolean))];
+        console.log(`📅 Available weeks in data:`, availableWeeks);
+
+        // Filter all schedules for current week
+        const weekEvents = AppState.allSchedules.filter(event => {
+            const matches = event.weekNumber === AppState.currentWeek;
+            if (!matches) {
+                console.log(`📊 Schedule week ${event.weekNumber} doesn't match current week ${AppState.currentWeek}`);
+            }
+            return matches;
         });
 
-        // Restore previous selection
-        subjectFilter.value = currentValue;
+        console.log(`📊 Events for week ${AppState.currentWeek}:`, weekEvents.length);
+
+        AppState.weekData = {
+            events: weekEvents,
+            totalEvents: weekEvents.length,
+            rawInstances: weekEvents
+        };
+
+        console.log('✅ Week data filtered:', AppState.weekData);
     }
 
-    function renderStatistics() {
-        const totalClasses = globalState.filteredData.length;
-        const uniqueSubjects = new Set(globalState.filteredData.map(item => item.maMh)).size;
-        const totalPeriods = globalState.filteredData.reduce((sum, item) => sum + (item.soTiet || 0), 0);
-        const uniqueRooms = new Set(globalState.filteredData.map(item => item.maPhong)).size;
+    // Helper function to extract teacher code from ScheduleInstanceDTO
+    function getTeacherCodeFromInstance(instance) {
+        // Try different possible paths for teacher code
+        const paths = [
+            instance.maGvOverride,
+            instance.weeklySchedule?.lopHocPhan?.maGv,
+            instance.weeklySchedule?.lopHocPhan?.giangVien?.maGv,
+            instance.tenGvThucTe // This might contain teacher code
+        ];
 
-        document.getElementById('statsOverview').innerHTML = `
-        <div class="stat-card">
-            <div class="stat-number">${totalClasses}</div>
-            <div class="stat-label">Tổng số lớp</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">${uniqueSubjects}</div>
-            <div class="stat-label">Môn học</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">${totalPeriods}</div>
-            <div class="stat-label">Tổng tiết dạy</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">${uniqueRooms}</div>
-            <div class="stat-label">Phòng học</div>
-        </div>
-    `;
+        for (const path of paths) {
+            if (path && path !== 'N/A') {
+                return path;
+            }
+        }
+
+        return null;
     }
 
-    function switchView(viewMode) {
-        globalState.currentViewMode = viewMode;
+    function convertInstanceToEvent(instance) {
+        console.log('🔄 Converting instance to event:', instance);
 
-        // Update active button
-        document.querySelectorAll('.view-mode-toggle button').forEach(btn => {
+        try {
+            const tietBatDau = instance.tietBatDauThucTe || 1;
+            const soTiet = instance.soTietThucTe || 1;
+            const tenPhong = instance.tenPhongThucTe || 'N/A';
+            const tenGv = instance.tenGvThucTe || 'N/A';
+
+            const event = {
+                id: instance.maInstance || 'unknown',
+                title: `Loading...`, // Will be updated after enrichment
+                dayOfWeek: 2, // Will be updated from template
+                startPeriod: tietBatDau,
+                endPeriod: tietBatDau + soTiet - 1,
+                room: tenPhong,
+                teacher: tenGv,
+                semester: '',
+                academicYear: '',
+                classCode: 'N/A', // Will be updated from template
+                subjectCode: 'N/A', // Will be updated from template
+
+                instanceId: instance.maInstance,
+                ngayHoc: instance.ngayCuThe,
+                trangThai: instance.trangThai,
+                weekNumber: instance.tuanHoc || 1,
+                hasOverrides: instance.hasOverrides || false,
+                maTemplate: instance.maTemplate
+            };
+
+            return event;
+        } catch (error) {
+            console.error('❌ Error in convertInstanceToEvent:', error);
+            throw error;
+        }
+    }
+    // Simplified enrichEventsWithTemplateData
+    async function enrichEventsWithTemplateData(events) {
+        const enrichedEvents = [];
+
+        for (const event of events) {
+            try {
+                const template = await loadTemplateDetails(event.maTemplate);
+
+                if (template) {
+                    // Template có structure đơn giản, access trực tiếp
+                    event.title = `${template.tenMonHoc || 'N/A'} - ${template.maLhp || 'N/A'}`;
+                    event.classCode = template.maLhp || 'N/A';
+                    event.subjectCode = template.maMh || 'N/A';
+                    event.semester = template.hocKy || '';
+                    event.academicYear = template.namHoc || '';
+                    event.dayOfWeek = template.thu || 2;
+                    event.teacher = template.tenGiangVien || event.teacher; // Fallback to instance teacher
+
+                    console.log('✅ Enriched event with template data:', {
+                        title: event.title,
+                        classCode: event.classCode,
+                        subjectCode: event.subjectCode,
+                        teacher: event.teacher
+                    });
+                } else {
+                    console.warn('⚠️ No template data found for:', event.maTemplate);
+                    event.title = `${event.maTemplate} - No Data`;
+                }
+
+                enrichedEvents.push(event);
+            } catch (error) {
+                console.error('❌ Error enriching event:', error);
+                // Keep original event even if enrichment fails
+                event.title = `${event.maTemplate} - Error`;
+                enrichedEvents.push(event);
+            }
+        }
+
+        return enrichedEvents;
+    }
+
+    // Cache for template details
+    const templateCache = new Map();
+
+    // Keep the loadTemplateDetails function as is
+    async function loadTemplateDetails(maTemplate) {
+        if (templateCache.has(maTemplate)) {
+            return templateCache.get(maTemplate);
+        }
+
+        try {
+            console.log('🔍 Loading template details for:', maTemplate);
+            const response = await fetch(`/api/weekly-schedule/templates/${maTemplate}`);
+            if (response.ok) {
+                const template = await response.json();
+                console.log('📥 Template loaded:', {
+                    maTemplate: template.maTemplate,
+                    tenMonHoc: template.tenMonHoc,
+                    maLhp: template.maLhp,
+                    maMh: template.maMh
+                });
+                templateCache.set(maTemplate, template);
+                return template;
+            } else {
+                console.error('❌ Template API failed:', response.status);
+            }
+        } catch (error) {
+            console.error('❌ Error loading template:', maTemplate, error);
+        }
+
+        return null;
+    }
+
+
+    // View Management
+    function switchView(viewType) {
+        AppState.currentView = viewType;
+
+        // Update toggle buttons
+        document.querySelectorAll('.view-toggle .btn').forEach(btn => {
             btn.classList.remove('active');
+            if (btn.getAttribute('data-view') === viewType) {
+                btn.classList.add('active');
+            }
         });
-        document.querySelector(`[data-view="${viewMode}"]`).classList.add('active');
 
-        // Toggle views
-        const calendarView = document.getElementById('calendarViewContainer');
-        const listView = document.getElementById('listViewContainer');
+        // Show/hide view elements
+        document.getElementById('weekView').style.display = viewType === 'week' ? 'block' : 'none';
+        document.getElementById('tableView').style.display = viewType === 'table' ? 'block' : 'none';
 
-        if (viewMode === 'calendar') {
-            calendarView.style.display = 'block';
-            listView.style.display = 'none';
-            renderCalendarView();
-        } else {
-            calendarView.style.display = 'none';
-            listView.style.display = 'block';
-            renderListView();
-        }
+        renderCurrentView();
     }
 
     function renderCurrentView() {
-        if (globalState.filteredData.length === 0) {
-            showEmptyState(true);
+        console.log(`🖥️ Rendering current view: ${AppState.currentView}`);
+        console.log(`📊 Week data available:`, AppState.weekData);
+
+        if (!AppState.weekData || !AppState.weekData.events || AppState.weekData.events.length === 0) {
+            console.log('📊 No data available, showing empty state');
+            showEmptyState();
             return;
         }
 
-        showEmptyState(false);
+        // Hide empty state without triggering recursive call
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('weekView').style.display = AppState.currentView === 'week' ? 'block' : 'none';
+        document.getElementById('tableView').style.display = AppState.currentView === 'table' ? 'block' : 'none';
 
-        if (globalState.currentViewMode === 'calendar') {
-            renderCalendarView();
+        if (AppState.currentView === 'week') {
+            renderWeekView();
         } else {
-            renderListView();
+            renderTableView();
         }
     }
 
-    function renderCalendarView() {
-        // Clear all day contents
-        for (let day = 2; day <= 8; day++) {
-            const dayContent = document.getElementById(`day-${day}`);
-            if (dayContent) {
-                dayContent.innerHTML = '';
-            }
-        }
+    function renderWeekView() {
+        const grid = document.getElementById('scheduleGrid');
+        if (!grid) return;
 
-        // Render schedule items
-        globalState.filteredData.forEach(schedule => {
-            const dayContent = document.getElementById(`day-${schedule.thu}`);
-            if (!dayContent) return;
+        grid.innerHTML = '';
 
-            const scheduleItem = createScheduleItem(schedule);
-            dayContent.appendChild(scheduleItem);
+        // Create header row
+        const headers = ['Tiết', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+        headers.forEach(header => {
+            const headerCell = document.createElement('div');
+            headerCell.className = 'schedule-header';
+            headerCell.textContent = header;
+            grid.appendChild(headerCell);
         });
 
-        // Update calendar title
-        updateCalendarTitle();
+        // Create grid for 12 periods x 7 days
+        for (let period = 1; period <= 12; period++) {
+            // Period header
+            const periodCell = document.createElement('div');
+            periodCell.className = 'period-header';
+            periodCell.innerHTML = `
+                <div>T${period}</div>
+                <div class="time-label">${Utils.formatTime(period)}</div>
+            `;
+            grid.appendChild(periodCell);
+
+            // Day cells
+            for (let day = 2; day <= 8; day++) {
+                const dayCell = document.createElement('div');
+                dayCell.className = 'schedule-cell';
+
+                // Find schedules for this day and period from week data
+                const schedules = findSchedulesForDayPeriod(day, period);
+
+                schedules.forEach(schedule => {
+                    const item = createScheduleItem(schedule);
+                    dayCell.appendChild(item);
+                });
+
+                grid.appendChild(dayCell);
+            }
+        }
+    }
+
+    function renderTableView() {
+        const tbody = document.getElementById('scheduleTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        // Get all schedules from week data
+        const allSchedules = getAllSchedulesFromWeekData();
+
+        if (allSchedules.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-4">
+                        <i class="fas fa-calendar-times fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">Không có lịch giảng dạy nào trong tuần này</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        allSchedules.forEach((schedule, index) => {
+            const row = createTableRow(schedule, index + 1);
+            tbody.appendChild(row);
+        });
+    }
+
+    // Helper Functions
+    function findSchedulesForDayPeriod(day, period) {
+        const schedules = [];
+
+        if (AppState.weekData && AppState.weekData.events) {
+            AppState.weekData.events.forEach(event => {
+                // Check if this period falls within the event's time range
+                if (event.dayOfWeek === day &&
+                    period >= event.startPeriod &&
+                    period <= event.endPeriod) {
+                    schedules.push(event);
+                }
+            });
+        }
+
+        return schedules;
+    }
+
+    function getAllSchedulesFromWeekData() {
+        if (!AppState.weekData || !AppState.weekData.events) {
+            console.log('📊 No week data available for table');
+            return [];
+        }
+
+        console.log('📊 Getting all schedules for table view:', AppState.weekData.events.length);
+
+        return AppState.weekData.events.sort((a, b) => {
+            if (a.dayOfWeek !== b.dayOfWeek) {
+                return a.dayOfWeek - b.dayOfWeek;
+            }
+            return a.startPeriod - b.startPeriod;
+        });
     }
 
     function createScheduleItem(schedule) {
         const item = document.createElement('div');
         item.className = 'schedule-item';
-
-        // Safe fallback values
-        const tenMonHoc = schedule.tenMonHoc || schedule.maMh || 'Môn học';
-        const maLhp = schedule.maLhp || 'N/A';
-        const tenPhong = schedule.tenPhong || schedule.maPhong || 'N/A';
-        const tietBatDau = schedule.tietBatDau || 1;
-        const soTiet = schedule.soTiet || 1;
-
-        // Calculate position: mỗi tiết 60px, bắt đầu từ tiết 1
-        const top = (tietBatDau - 1) * 60;
-        const height = soTiet * 60 - 6; // -6 for margins between items
-
-        item.style.top = `${top}px`;
-        item.style.height = `${height}px`;
-
-        // Calculate time for display
-        const timeRange = calculateTimeRange(tietBatDau, soTiet);
-
         item.innerHTML = `
-        <div class="title">${tenMonHoc}</div>
-        <div class="info">
-            Lớp: ${maLhp}<br>
-            Tiết: ${tietBatDau}-${tietBatDau + soTiet - 1}<br>
-            <small>${timeRange}</small>
-        </div>
-        <div class="room">${tenPhong}</div>
-    `;
-
-        // Add click event
-        item.addEventListener('click', () => showScheduleDetailsModal(schedule));
-
+            <div class="subject">${schedule.title || 'N/A'}</div>
+            <div class="class-room">${schedule.room || 'N/A'}</div>
+        `;
+        item.onclick = () => showScheduleModal(schedule);
         return item;
     }
-    function validatePeriod(tietBatDau, soTiet) {
-        const maxPeriod = 12;
-        const endPeriod = tietBatDau + soTiet - 1;
 
-        if (tietBatDau < 1 || tietBatDau > maxPeriod) {
-            console.warn(`Invalid start period: ${tietBatDau}`);
-            return false;
-        }
+    function createTableRow(schedule, index) {
+        const row = document.createElement('tr');
+        row.className = 'schedule-row';
+        row.onclick = () => showScheduleModal(schedule);
 
-        if (endPeriod > maxPeriod) {
-            console.warn(`Period extends beyond max: ${endPeriod} > ${maxPeriod}`);
-            return false;
-        }
+        const classCode = schedule.classCode || 'N/A';
+        const timeRange = `${Utils.formatTime(schedule.startPeriod)} (${Utils.getPeriodRange(schedule.startPeriod, schedule.endPeriod - schedule.startPeriod + 1)})`;
+        const dayTime = `${Utils.getDayName(schedule.dayOfWeek)}, ${timeRange}`;
 
-        return true;
-    }
+        console.log(`📊 Creating table row ${index}: ${schedule.title}, Class: ${classCode}`);
 
-    // Sử dụng trong createScheduleItem
-    function createScheduleItem(schedule) {
-        const item = document.createElement('div');
-        item.className = 'schedule-item';
-
-        const tenMonHoc = schedule.tenMonHoc || schedule.maMh || 'Môn học';
-        const maLhp = schedule.maLhp || 'N/A';
-        const tenPhong = schedule.tenPhong || schedule.maPhong || 'N/A';
-        const tietBatDau = schedule.tietBatDau || 1;
-        const soTiet = schedule.soTiet || 1;
-
-        // Validate period
-        if (!validatePeriod(tietBatDau, soTiet)) {
-            console.error('Invalid schedule period:', schedule);
-            return null;
-        }
-
-        // Rest of the function remains the same...
-    }
-
-    function renderListView() {
-        const tbody = document.getElementById('scheduleTableBody');
-
-        if (globalState.filteredData.length === 0) {
-            tbody.innerHTML = `
-            <tr>
-                <td colspan="9" class="text-center text-muted py-4">
-                    <i class="fas fa-calendar-times fa-2x mb-2"></i><br>
-                    Không có dữ liệu lịch học
-                </td>
-            </tr>
+        row.innerHTML = `
+            <td>${index}</td>
+            <td>
+                <div class="fw-bold">${schedule.title || 'N/A'}</div>
+                <small class="text-muted">${schedule.semester || ''} - ${schedule.academicYear || ''}</small>
+            </td>
+            <td>
+                <span class="badge bg-primary">${classCode}</span>
+            </td>
+            <td>
+                <div>${dayTime}</div>
+            </td>
+            <td>
+                <i class="fas fa-map-marker-alt text-muted me-1"></i>
+                ${schedule.room || 'N/A'}
+            </td>
+            <td>
+                <div>HK${schedule.semester || ''} - ${schedule.academicYear || ''}</div>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="event.stopPropagation(); viewClass('${classCode}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-success" onclick="event.stopPropagation(); openAttendance('${classCode}')">
+                    <i class="fas fa-user-check"></i>
+                </button>
+            </td>
         `;
-            return;
-        }
 
-        // Debug: Log first item to see structure
-        console.log('📋 Sample schedule item structure:', globalState.filteredData[0]);
-
-        // Sort by day then by period
-        const sortedData = [...globalState.filteredData].sort((a, b) => {
-            if (a.thu !== b.thu) return a.thu - b.thu;
-            return a.tietBatDau - b.tietBatDau;
-        });
-
-        tbody.innerHTML = sortedData.map((schedule, index) => {
-            // Safe fallback values with debug info
-            const tenMonHoc = schedule.tenMonHoc || 'Chưa có tên môn';
-            const maMh = schedule.maMh || schedule.maMh || 'N/A';
-            const maLhp = schedule.maLhp || 'N/A';
-            const tenPhong = schedule.tenPhong || schedule.maPhong || 'N/A';
-            const hocKy = schedule.hocKy || 'N/A';
-            const namHoc = schedule.namHoc || 'N/A';
-            const soTiet = schedule.soTiet || 1;
-            const tietBatDau = schedule.tietBatDau || 1;
-            const thu = schedule.thu || 2;
-
-            // Debug log for missing maMh
-            if (!schedule.maMh) {
-                console.warn('⚠️ Missing maMh for schedule:', {
-                    maLich: schedule.maLich,
-                    tenMonHoc: schedule.tenMonHoc,
-                    maLhp: schedule.maLhp,
-                    availableFields: Object.keys(schedule)
-                });
-            }
-
-            return `
-            <tr class="schedule-row" onclick="showScheduleDetailsModal(${JSON.stringify(schedule).replace(/"/g, '&quot;')})">
-                <td class="fw-bold">${index + 1}</td>
-                <td class="fw-bold">${getDayName(thu)}</td>
-                <td>
-                    <span class="badge bg-primary">
-                        Tiết ${tietBatDau}-${tietBatDau + soTiet - 1}
-                    </span>
-                </td>
-                <td>
-                    <div class="text-start">
-                        <div class="fw-bold">${tenMonHoc}</div>
-                        <small class="text-muted">${maMh}</small>
-                    </div>
-                </td>
-                <td>
-                    <span class="subject-badge">${maLhp}</span>
-                </td>
-                <td>
-                    <span class="room-badge">${tenPhong}</span>
-                </td>
-                <td class="fw-bold">${soTiet}</td>
-                <td>
-                    <span class="semester-badge">HK${hocKy} - ${namHoc}</span>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); showScheduleDetailsModal(${JSON.stringify(schedule).replace(/"/g, '&quot;')})">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-        }).join('');
+        return row;
     }
 
-    function populateSubjectFilter() {
-        const subjectFilter = document.getElementById('subjectFilter');
-        const currentValue = subjectFilter.value;
-
-        // Debug: Check what fields are available
-        console.log('🔍 Checking available subject fields:', globalState.scheduleData.map(item => ({
-            maMh: item.maMh,
-            tenMonHoc: item.tenMonHoc,
-            maLhp: item.maLhp,
-            availableFields: Object.keys(item).filter(key => key.includes('m') || key.includes('M'))
-        })).slice(0, 3));
-
-        // Get unique subjects - try both maMh and maLhp as fallback
-        const subjects = [...new Set(globalState.scheduleData
-            .map(item => {
-                const maMh = item.maMh || item.maLhp; // fallback to maLhp if maMh not available
-                const tenMonHoc = item.tenMonHoc || item.maLhp;
-                return maMh ? { maMh, tenMonHoc } : null;
-            })
-            .filter(s => s && s.maMh)
-        )];
-
-        console.log('📚 Found subjects:', subjects);
-
-        // Clear existing options (except "Tất cả môn")
-        subjectFilter.innerHTML = '<option value="">Tất cả môn</option>';
-
-        // Add subject options
-        subjects.forEach(subject => {
-            const option = document.createElement('option');
-            option.value = subject.maMh;
-            option.textContent = `${subject.tenMonHoc} (${subject.maMh})`;
-            subjectFilter.appendChild(option);
-        });
-
-        // Restore previous selection
-        subjectFilter.value = currentValue;
-    }
-
-    function showScheduleDetails(scheduleOrEvent) {
-        let schedule;
-
-        if (scheduleOrEvent && scheduleOrEvent.currentTarget) {
-            // Called from table row click
-            const row = scheduleOrEvent.currentTarget;
-            schedule = JSON.parse(row.getAttribute('data-schedule'));
-        } else {
-            // Called from calendar item click
-            schedule = scheduleOrEvent;
-        }
-
-        if (!schedule) return;
-
-        const details = `
-        📚 Môn học: ${schedule.tenMonHoc || 'N/A'} (${schedule.maMh || 'N/A'})
-        🏫 Lớp: ${schedule.maLhp}
-        📅 Thời gian: ${getDayName(schedule.thu)} - Tiết ${schedule.tietBatDau}-${schedule.tietBatDau + schedule.soTiet - 1}
-        🏢 Phòng: ${schedule.tenPhong || schedule.maPhong}
-        📖 Số tiết: ${schedule.soTiet}
-        📚 Học kỳ: HK${schedule.hocKy} - ${schedule.namHoc}
-    `;
-
-        alert(details);
-    }
-
-    function viewClassDetails(maLhp) {
-        window.location.href = `/lecturer/lophoc/${maLhp}`;
-    }
-
-    // Calendar Navigation
+    // Week Navigation
     function previousWeek() {
-        globalState.currentWeek--;
-        updateCalendarTitle();
-    }
-
-    function currentWeek() {
-        globalState.currentWeek = 0;
-        updateCalendarTitle();
+        if (AppState.currentWeek > 1) {
+            AppState.currentWeek--;
+            updateWeekDisplay();
+            loadWeekData();
+        }
     }
 
     function nextWeek() {
-        globalState.currentWeek++;
-        updateCalendarTitle();
+        if (AppState.currentWeek < 20) { // Max 20 weeks per semester
+            AppState.currentWeek++;
+            updateWeekDisplay();
+            loadWeekData();
+        }
     }
 
-    function updateCalendarTitle() {
+    function currentWeek() {
+        AppState.currentWeek = getCurrentAcademicWeek();
+        updateWeekDisplay();
+        loadWeekData();
+    }
+
+    function updateWeekDisplay() {
+        const titleElement = document.getElementById('weekTitle');
+        const dateElement = document.getElementById('weekDate');
+
+        titleElement.textContent = `Tuần ${AppState.currentWeek}`;
+        dateElement.textContent = `Tuần học kỳ ${AppState.currentWeek}`;
+    }
+
+    // Statistics
+    function updateStatistics() {
+        console.log('📊 Updating statistics...');
+
+        const todayCount = getTodayScheduleCount();
+        const weekCount = AppState.weekData && AppState.weekData.events ? AppState.weekData.events.length : 0;
+        const subjectCount = getUniqueSubjectCount();
+        const periodCount = getTotalPeriodCount();
+
+        console.log(`📊 Stats calculated - Today: ${todayCount}, Week: ${weekCount}, Subjects: ${subjectCount}, Periods: ${periodCount}`);
+
+        document.getElementById('totalToday').textContent = todayCount;
+        document.getElementById('totalWeek').textContent = weekCount;
+        document.getElementById('totalSubjects').textContent = subjectCount;
+        document.getElementById('activePeriods').textContent = periodCount;
+    }
+
+    function getTodayScheduleCount() {
+        if (!AppState.weekData || !AppState.weekData.events) return 0;
+
         const today = new Date();
-        const targetDate = new Date(today.getTime() + (globalState.currentWeek * 7 * 24 * 60 * 60 * 1000));
+        const todayOfWeek = today.getDay() === 0 ? 8 : today.getDay() + 1; // Convert to backend format
 
-        const startOfWeek = new Date(targetDate);
-        startOfWeek.setDate(targetDate.getDate() - targetDate.getDay() + 1);
-
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-        const formatDate = (date) => {
-            return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-        };
-
-        document.getElementById('calendarTitle').textContent =
-            `Tuần ${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}`;
+        return AppState.weekData.events.filter(event =>
+            event.dayOfWeek === todayOfWeek
+        ).length;
     }
 
-    // Utility Functions
-    function getDayName(day) {
-        const days = ['', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
-        return days[day] || 'N/A';
-    }
+    function getUniqueSubjectCount() {
+        if (!AppState.weekData || !AppState.weekData.events) return 0;
 
-    function resetFilters() {
-        document.getElementById('semesterFilter').value = '';
-        document.getElementById('yearFilter').value = '2024-2025';
-        document.getElementById('subjectFilter').value = '';
-        loadScheduleData();
-    }
-
-    function refreshData() {
-        console.log('🔄 Refreshing data...');
-        loadScheduleData();
-    }
-
-    function exportSchedule() {
-        exportToExcel();
-    }
-
-    function exportToExcel() {
-        if (globalState.filteredData.length === 0) {
-            alert('Không có dữ liệu để xuất');
-            return;
-        }
-
-        const data = globalState.filteredData;
-        let csvContent = "STT,Thứ,Tiết bắt đầu,Số tiết,Môn học,Mã môn,Lớp,Phòng,Học kỳ,Năm học\n";
-
-        data.forEach((item, index) => {
-            const dayName = getDayName(item.thu);
-            csvContent += `${index + 1},"${dayName}",${item.tietBatDau},${item.soTiet},"${item.tenMonHoc || ''}","${item.maMh || ''}","${item.maLhp}","${item.tenPhong || item.maPhong}","${item.hocKy}","${item.namHoc}"\n`;
+        const subjects = new Set();
+        AppState.weekData.events.forEach(event => {
+            if (event.subjectCode && event.subjectCode !== 'N/A') {
+                subjects.add(event.subjectCode);
+            }
         });
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `lich-giangday-${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        return subjects.size;
     }
 
-    // UI State Management
-    function showLoading(show) {
-        const loadingState = document.getElementById('loadingState');
-        const calendarView = document.getElementById('calendarViewContainer');
-        const listView = document.getElementById('listViewContainer');
+    function getTotalPeriodCount() {
+        if (!AppState.weekData || !AppState.weekData.events) return 0;
 
-        if (show) {
-            loadingState.style.display = 'block';
-            calendarView.style.display = 'none';
-            listView.style.display = 'none';
-        } else {
-            loadingState.style.display = 'none';
-            if (globalState.currentViewMode === 'calendar') {
-                calendarView.style.display = 'block';
-            } else {
-                listView.style.display = 'block';
-            }
-        }
+        return AppState.weekData.events.reduce((total, event) => {
+            const periods = event.endPeriod - event.startPeriod + 1;
+            return total + periods;
+        }, 0);
     }
 
-    function showEmptyState(show) {
-        const emptyState = document.getElementById('emptyState');
-        const calendarView = document.getElementById('calendarViewContainer');
-        const listView = document.getElementById('listViewContainer');
-
-        if (show) {
-            emptyState.style.display = 'block';
-            calendarView.style.display = 'none';
-            listView.style.display = 'none';
-        } else {
-            emptyState.style.display = 'none';
-        }
-    }
-
-    function showError(message) {
-        console.error('💥 Error:', message);
-
-        // Create and show alert
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert alert-danger alert-dismissible fade show mx-4';
-        alertDiv.innerHTML = `
-        <i class="fas fa-exclamation-triangle me-2"></i>
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-
-        // Insert after page header
-        const pageHeader = document.querySelector('.page-header');
-        pageHeader.insertAdjacentElement('afterend', alertDiv);
-
-        // Auto dismiss after 5 seconds
-        setTimeout(() => {
-            if (alertDiv.parentNode) {
-                const alert = new bootstrap.Alert(alertDiv);
-                alert.close();
-            }
-        }, 5000);
-    }
-
-
-    function renderListView() {
-        const tbody = document.getElementById('scheduleTableBody');
-
-        if (globalState.filteredData.length === 0) {
-            tbody.innerHTML = `
-            <tr>
-                <td colspan="9" class="text-center text-muted py-4">
-                    <i class="fas fa-calendar-times fa-2x mb-2"></i><br>
-                    Không có dữ liệu lịch học
-                </td>
-            </tr>
-        `;
-            return;
-        }
-
-        // Sort by day then by period
-        const sortedData = [...globalState.filteredData].sort((a, b) => {
-            if (a.thu !== b.thu) return a.thu - b.thu;
-            return a.tietBatDau - b.tietBatDau;
-        });
-
-        tbody.innerHTML = sortedData.map((schedule, index) => {
-            // Safe fallback values
-            const tenMonHoc = schedule.tenMonHoc || schedule.maMh || 'Chưa có tên';
-            const maMh = schedule.maMh || 'N/A';
-            const maLhp = schedule.maLhp || 'N/A';
-            const tenPhong = schedule.tenPhong || schedule.maPhong || 'N/A';
-            const hocKy = schedule.hocKy || 'N/A';
-            const namHoc = schedule.namHoc || 'N/A';
-            const soTiet = schedule.soTiet || 1;
-            const tietBatDau = schedule.tietBatDau || 1;
-            const thu = schedule.thu || 2;
-
-            return `
-            <tr class="schedule-row" onclick="showScheduleDetailsModal(${JSON.stringify(schedule).replace(/"/g, '&quot;')})">
-                <td class="fw-bold">${index + 1}</td>
-                <td class="fw-bold">${getDayName(thu)}</td>
-                <td>
-                    <span class="badge bg-primary">
-                        Tiết ${tietBatDau}-${tietBatDau + soTiet - 1}
-                    </span>
-                </td>
-                <td>
-                    <div class="text-start">
-                        <div class="fw-bold">${tenMonHoc}</div>
-                        <small class="text-muted">${maMh}</small>
-                    </div>
-                </td>
-                <td>
-                    <span class="subject-badge">${maLhp}</span>
-                </td>
-                <td>
-                    <span class="room-badge">${tenPhong}</span>
-                </td>
-                <td class="fw-bold">${soTiet}</td>
-                <td>
-                    <span class="semester-badge">HK${hocKy} - ${namHoc}</span>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); showScheduleDetailsModal(${JSON.stringify(schedule).replace(/"/g, '&quot;')})">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-        }).join('');
-    }
-
-    function createScheduleItem(schedule) {
-        const item = document.createElement('div');
-        item.className = 'schedule-item';
-
-        // Safe fallback values
-        const tenMonHoc = schedule.tenMonHoc || schedule.maMh || 'Môn học';
-        const maLhp = schedule.maLhp || 'N/A';
-        const tenPhong = schedule.tenPhong || schedule.maPhong || 'N/A';
-        const tietBatDau = schedule.tietBatDau || 1;
-        const soTiet = schedule.soTiet || 1;
-
-        // Calculate position (60px per period)
-        const top = (tietBatDau - 1) * 60;
-        const height = soTiet * 60 - 6; // -6 for margins
-
-        item.style.top = `${top}px`;
-        item.style.height = `${height}px`;
-
-        item.innerHTML = `
-        <div class="title">${tenMonHoc}</div>
-        <div class="info">
-            Lớp: ${maLhp}<br>
-            Tiết: ${tietBatDau}-${tietBatDau + soTiet - 1}
-        </div>
-        <div class="room">${tenPhong}</div>
-    `;
-
-        // Add click event
-        item.addEventListener('click', () => showScheduleDetailsModal(schedule));
-
-        return item;
-    }
-
-    function showScheduleDetailsModal(schedule) {
-        if (!schedule) {
-            console.error('No schedule data provided');
-            return;
-        }
-
-        // Safe fallback values
-        const tenMonHoc = schedule.tenMonHoc || schedule.maMh || 'Chưa có tên';
-        const maMh = schedule.maMh || 'N/A';
-        const maLhp = schedule.maLhp || 'N/A';
-        const nhom = schedule.nhom || 'N/A';
-        const thu = schedule.thu || 2;
-        const tietBatDau = schedule.tietBatDau || 1;
-        const soTiet = schedule.soTiet || 1;
-        const tenPhong = schedule.tenPhong || 'N/A';
-        const maPhong = schedule.maPhong || 'N/A';
-        const hocKy = schedule.hocKy || 'N/A';
-        const namHoc = schedule.namHoc || 'N/A';
-
-        // Calculate time range
-        const timeRange = calculateTimeRange(tietBatDau, soTiet);
-
-        // Populate modal data
-        document.getElementById('modalSubjectName').textContent = tenMonHoc;
-        document.getElementById('modalSubjectCode').textContent = maMh;
-        document.getElementById('modalClassCode').textContent = maLhp;
-        document.getElementById('modalGroup').textContent = nhom;
-        document.getElementById('modalDay').textContent = getDayName(thu);
-        document.getElementById('modalPeriods').textContent = `Tiết ${tietBatDau} - ${tietBatDau + soTiet - 1}`;
-        document.getElementById('modalNumPeriods').textContent = `${soTiet} tiết`;
-        document.getElementById('modalTime').textContent = timeRange;
-        document.getElementById('modalRoom').textContent = tenPhong;
-        document.getElementById('modalRoomCode').textContent = maPhong;
-        document.getElementById('modalSemester').textContent = `Học kỳ ${hocKy}`;
-        document.getElementById('modalAcademicYear').textContent = namHoc;
-
-        // Set up view class details button
-        const viewClassBtn = document.getElementById('viewClassDetailsBtn');
-        viewClassBtn.onclick = () => {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('scheduleDetailsModal'));
-            modal.hide();
-            window.location.href = `/lecturer/lophoc/${maLhp}`;
-        };
-
-        // Store current schedule for other actions
-        window.currentSchedule = schedule;
-
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('scheduleDetailsModal'));
+    // Modal Functions
+    function showScheduleModal(schedule) {
+        const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+        populateModal(schedule);
         modal.show();
     }
 
-    function calculateTimeRange(tietBatDau, soTiet) {
-        // Chuẩn thời gian tiết học: tiết 1 bắt đầu 7:00, mỗi tiết 50 phút
-        const periodTimes = {
-            1: { start: '07:00', end: '07:50' },
-            2: { start: '07:55', end: '08:45' },
-            3: { start: '08:50', end: '09:40' },
-            4: { start: '09:45', end: '10:35' },
-            5: { start: '10:40', end: '11:30' },
-            6: { start: '13:00', end: '13:50' }, // Nghỉ trưa từ 11:30-13:00
-            7: { start: '13:55', end: '14:45' },
-            8: { start: '14:50', end: '15:40' },
-            9: { start: '15:45', end: '16:35' },
-            10: { start: '16:40', end: '17:30' },
-            11: { start: '18:00', end: '18:50' }, // Nghỉ tối từ 17:30-18:00
-            12: { start: '18:55', end: '19:45' }
+    function populateModal(schedule) {
+        const modalBody = document.getElementById('scheduleModalBody');
+        const viewClassBtn = document.getElementById('viewClassBtn');
+        const attendanceBtn = document.getElementById('attendanceBtn');
+
+        if (!modalBody || !schedule) {
+            console.error('❌ Modal elements or schedule missing');
+            return;
+        }
+
+        console.log('📋 Populating modal with schedule:', schedule);
+
+        const classCode = schedule.classCode || 'N/A';
+        const timeRange = `${Utils.formatTime(schedule.startPeriod)} (${Utils.getPeriodRange(schedule.startPeriod, schedule.endPeriod - schedule.startPeriod + 1)})`;
+        const dayTime = `${Utils.getDayName(schedule.dayOfWeek)}, ${timeRange}`;
+
+        modalBody.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-primary">Thông tin môn học</h6>
+                    <table class="table table-borderless">
+                        <tr><td class="fw-bold">Tiêu đề:</td><td>${schedule.title || 'N/A'}</td></tr>
+                        <tr><td class="fw-bold">Mã lớp:</td><td><span class="badge bg-primary">${classCode}</span></td></tr>
+                        <tr><td class="fw-bold">Mã môn:</td><td>${schedule.subjectCode || 'N/A'}</td></tr>
+                        <tr><td class="fw-bold">Giảng viên:</td><td>${schedule.teacher || 'N/A'}</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-success">Thời gian & Địa điểm</h6>
+                    <table class="table table-borderless">
+                        <tr><td class="fw-bold">Thời gian:</td><td>${dayTime}</td></tr>
+                        <tr><td class="fw-bold">Phòng học:</td><td>${schedule.room || 'N/A'}</td></tr>
+                        <tr><td class="fw-bold">Số tiết:</td><td>${schedule.endPeriod - schedule.startPeriod + 1} tiết</td></tr>
+                        <tr><td class="fw-bold">Học kỳ:</td><td>HK${schedule.semester || ''} - ${schedule.academicYear || ''}</td></tr>
+                        <tr><td class="fw-bold">Tuần học:</td><td>Tuần ${schedule.weekNumber || AppState.currentWeek}</td></tr>
+                    </table>
+                </div>
+            </div>
+            ${schedule.hasOverrides ? '<div class="alert alert-info mt-3"><i class="fas fa-info-circle me-2"></i>Lịch này có chỉnh sửa so với template gốc</div>' : ''}
+        `;
+
+        // Setup button events
+        viewClassBtn.onclick = () => {
+            console.log(`👁️ View class clicked: ${classCode}`);
+            viewClass(classCode);
         };
-
-        if (!periodTimes[tietBatDau]) {
-            return 'Thời gian không xác định';
-        }
-
-        const startTime = periodTimes[tietBatDau].start;
-        const endPeriod = tietBatDau + soTiet - 1;
-
-        if (!periodTimes[endPeriod]) {
-            return `${startTime} - ?`;
-        }
-
-        const endTime = periodTimes[endPeriod].end;
-        return `${startTime} - ${endTime}`;
+        attendanceBtn.onclick = () => {
+            console.log(`✅ Attendance clicked: ${classCode}`);
+            openAttendance(classCode);
+        };
     }
 
-    function openAttendanceFromModal() {
-        if (window.currentSchedule) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('scheduleDetailsModal'));
-            modal.hide();
-            // Redirect to attendance page for this class
-            window.location.href = `/lecturer/lophoc/${window.currentSchedule.maLhp}`;
+    // Action Functions
+    function viewClass(classCode) {
+        if (classCode && classCode !== 'N/A') {
+            window.location.href = `/lecturer/lophoc/${classCode}`;
         }
     }
 
-    // Remove old functions and replace with new ones
-    function showScheduleDetails(scheduleOrEvent) {
-        // This function is now deprecated, redirect to modal version
-        let schedule;
-
-        if (scheduleOrEvent && scheduleOrEvent.currentTarget) {
-            const row = scheduleOrEvent.currentTarget;
-            schedule = JSON.parse(row.getAttribute('data-schedule'));
-        } else {
-            schedule = scheduleOrEvent;
-        }
-
-        showScheduleDetailsModal(schedule);
-    }
-
-    function viewClassDetails(maLhp) {
-        // Instead of direct redirect, show modal first
-        const schedule = globalState.filteredData.find(s => s.maLhp === maLhp);
-        if (schedule) {
-            showScheduleDetailsModal(schedule);
-        } else {
-            window.location.href = `/lecturer/lophoc/${maLhp}`;
+    function openAttendance(classCode) {
+        if (classCode && classCode !== 'N/A') {
+            window.location.href = `/lecturer/diemdanh?class=${classCode}`;
         }
     }
+
+    async function refreshData() {
+        try {
+            Utils.showLoading(true);
+            await loadWeekData();
+            Utils.showNotification('Đã làm mới dữ liệu', 'success');
+            AppState.lastRefresh = new Date();
+        } catch (error) {
+            Utils.showNotification('Lỗi khi làm mới dữ liệu: ' + error.message, 'error');
+        } finally {
+            Utils.showLoading(false);
+        }
+    }
+
+    function exportSchedule() {
+        try {
+            const schedules = getAllSchedulesFromWeekData();
+
+            if (schedules.length === 0) {
+                Utils.showNotification('Không có dữ liệu để xuất', 'warning');
+                return;
+            }
+
+            // Create CSV content
+            const headers = ['STT', 'Môn học', 'Mã lớp', 'Thời gian', 'Phòng', 'Học kỳ', 'Tuần'];
+            const csvContent = [
+                headers.join(','),
+                ...schedules.map((schedule, index) => {
+                    const timeRange = `${Utils.formatTime(schedule.startPeriod)}`;
+                    const dayTime = `${Utils.getDayName(schedule.dayOfWeek)} ${timeRange}`;
+
+                    return [
+                        index + 1,
+                        `"${schedule.title || 'N/A'}"`,
+                        schedule.classCode || 'N/A',
+                        `"${dayTime}"`,
+                        `"${schedule.room || 'N/A'}"`,
+                        `HK${schedule.semester || ''} - ${schedule.academicYear || ''}`,
+                        `Tuần ${schedule.weekNumber || AppState.currentWeek}`
+                    ].join(',');
+                })
+            ].join('\n');
+
+            // Download file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `lich-giangday-tuan${AppState.currentWeek}-${Utils.formatDate(new Date())}.csv`;
+            link.click();
+
+            Utils.showNotification('Đã xuất lịch giảng dạy thành công', 'success');
+        } catch (error) {
+            Utils.showNotification('Lỗi khi xuất file: ' + error.message, 'error');
+        }
+    }
+
+    // Utility Functions
+    function showEmptyState() {
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('weekView').style.display = 'none';
+        document.getElementById('tableView').style.display = 'none';
+    }
+
+    function hideEmptyState() {
+        document.getElementById('emptyState').style.display = 'none';
+        // Don't call renderCurrentView() here to avoid infinite loop
+    }
+
+    // Auto-refresh every 10 minutes for current week
+    setInterval(() => {
+        if (document.visibilityState === 'visible' && AppState.currentWeek === getCurrentAcademicWeek()) {
+            console.log('🔄 Auto-refreshing current week data...');
+            refreshData();
+        }
+    }, 10 * 60 * 1000);
 
     // Make functions globally accessible
     window.switchView = switchView;
-    window.loadScheduleData = loadScheduleData;
-    window.resetFilters = resetFilters;
+    window.previousWeek = previousWeek;
+    window.nextWeek = nextWeek;
+    window.currentWeek = currentWeek;
     window.refreshData = refreshData;
     window.exportSchedule = exportSchedule;
-    window.exportToExcel = exportToExcel;
-    window.previousWeek = previousWeek;
-    window.currentWeek = currentWeek;
-    window.nextWeek = nextWeek;
-    window.showScheduleDetails = showScheduleDetails;
-    window.viewClassDetails = viewClassDetails;
-</script>
+    window.viewClass = viewClass;
+    window.openAttendance = openAttendance;
+    window.showScheduleModal = showScheduleModal;
 
+    // Debug functions for testing
+    window.debugWeekData = () => {
+        console.log('🔍 Current AppState:', AppState);
+        console.log('🔍 Week Data:', AppState.weekData);
+        console.log('🔍 Current Week:', AppState.currentWeek);
+        console.log('🔍 Lecturer Code:', AppState.lecturerCode);
+        console.log('🔍 All Schedules:', AppState.allSchedules);
+    };
+    window.debugRawData = async () => {
+        try {
+            const response = await fetch(`/api/weekly-schedule/by-teacher/${AppState.lecturerCode}`);
+            const data = await response.json();
+
+            console.log('🔍 Raw API Response:', data);
+
+            if (data && data.length > 0) {
+                console.log('🔍 First schedule item:', data[0]);
+                console.log('🔍 weeklySchedule:', data[0].weeklySchedule);
+                console.log('🔍 lopHocPhan:', data[0].weeklySchedule?.lopHocPhan);
+                console.log('🔍 monHoc:', data[0].weeklySchedule?.lopHocPhan?.monHoc);
+
+                // Log all keys to see available properties
+                console.log('🔍 Available keys in first item:', Object.keys(data[0]));
+                if (data[0].weeklySchedule) {
+                    console.log('🔍 Available keys in weeklySchedule:', Object.keys(data[0].weeklySchedule));
+                }
+                if (data[0].weeklySchedule?.lopHocPhan) {
+                    console.log('🔍 Available keys in lopHocPhan:', Object.keys(data[0].weeklySchedule.lopHocPhan));
+                }
+            }
+
+            return data;
+        } catch (error) {
+            console.error('🔍 Debug error:', error);
+        }
+    };
+    window.debugTemplate = async (maTemplate) => {
+        try {
+            console.log('🔍 Testing template API for:', maTemplate);
+            const response = await fetch(`/api/weekly-schedule/templates/${maTemplate}`);
+            console.log('🔍 Template response status:', response.status);
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('🔍 Template data:', data);
+                console.log('🔍 Template keys:', Object.keys(data));
+                if (data.lopHocPhan) {
+                    console.log('🔍 lopHocPhan:', data.lopHocPhan);
+                    console.log('🔍 lopHocPhan keys:', Object.keys(data.lopHocPhan));
+                }
+            } else {
+                console.log('🔍 Template API failed');
+            }
+        } catch (error) {
+            console.error('🔍 Template debug error:', error);
+        }
+    };
+</script>
 </body>
 </html>
